@@ -1,6 +1,18 @@
 // Auth state
 let isAdmin = false;
 let adminPassword = '';
+let debugMode = false; // Will be set from config
+
+export function initAuth(config) {
+    debugMode = config.DebugMode;
+    if (debugMode) {
+        isAdmin = true;
+        adminPassword = config.AdminPassword;
+        document.body.classList.add('admin-mode');
+        document.getElementById('adminLoginBtn').style.display = 'none';
+        document.getElementById('adminLogoutBtn').style.display = 'inline-block';
+    }
+}
 
 export function showAdminLogin() {
     new bootstrap.Modal(document.getElementById('adminLoginModal')).show();

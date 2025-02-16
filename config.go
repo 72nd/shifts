@@ -11,6 +11,8 @@ type Config struct {
 	InfoTextDE    string
 	InfoTextEN    string
 	DayZero       string // Format: "2024-03-20"
+	DebugMode     bool   // Enables debug features
+	Version       string // Schipla version
 }
 
 func LoadConfig() Config {
@@ -19,6 +21,8 @@ func LoadConfig() Config {
 		AdminPassword: getEnvOrDefault("ADMIN_PASSWORD", "admin123"),
 		Title:         getEnvOrDefault("SITE_TITLE", "25s3"),
 		DayZero:       getEnvOrDefault("DAY_ZERO", ""),
+		DebugMode:     getEnvOrDefault("DEBUG_MODE", "") == "true",
+		Version:       "0.1.0", // Hardcoded for now, could be set via build flag later
 	}
 
 	// Read German info text

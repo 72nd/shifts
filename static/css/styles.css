@@ -1,10 +1,33 @@
 /* General Styles */
 body {
     background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .container {
     max-width: 1200px;
+}
+
+/* Debug Banner */
+.debug-banner {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    border-bottom: 1px solid #ffc107;
+}
+
+.debug-banner .alert {
+    border-radius: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Footer */
+.footer {
+    margin-top: auto !important;
+    border-top: 1px solid #dee2e6;
 }
 
 /* Tables */

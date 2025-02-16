@@ -19,6 +19,13 @@ var (
 		"markdown": func(s string) template.HTML {
 			return template.HTML(blackfriday.Run([]byte(s)))
 		},
+		"json": func(v interface{}) template.JS {
+			b, err := json.Marshal(v)
+			if err != nil {
+				return template.JS("{}")
+			}
+			return template.JS(b)
+		},
 	}).ParseGlob("templates/*.html"))
 	config    Config
 	sanitizer *bluemonday.Policy
