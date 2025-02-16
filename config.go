@@ -22,7 +22,7 @@ func LoadConfig() Config {
 		Title:         getEnvOrDefault("SITE_TITLE", "25s3"),
 		DayZero:       getEnvOrDefault("DAY_ZERO", ""),
 		DebugMode:     getEnvOrDefault("DEBUG_MODE", "") == "true",
-		Version:       "0.1.0", // Hardcoded for now, could be set via build flag later
+		Version:       "0.2.0", // Hardcoded for now, could be set via build flag later
 	}
 
 	// Read German info text
