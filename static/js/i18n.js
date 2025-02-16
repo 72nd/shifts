@@ -120,7 +120,12 @@ const translations = {
         // Sort functionality
         'sort_shift_types': 'Schichttypen sortieren',
         'sort_shift_types_hint': 'Ziehen Sie die Einträge mit der Maus, um die Reihenfolge anzupassen.',
-        'error_updating_sort_order': 'Fehler beim Speichern der Reihenfolge'
+        'error_updating_sort_order': 'Fehler beim Speichern der Reihenfolge',
+
+        // Day Delta Helper
+        'set_date': 'Datum setzen',
+        'set_day_relative_to_event': 'Tag relativ zum Event ({date}) setzen:',
+        'day_delta_placeholder': 'z.B. -1 für einen Tag davor',
     },
     en: {
         // Navigation & Headers
@@ -236,7 +241,12 @@ const translations = {
         // Sort functionality
         'sort_shift_types': 'Sort Shift Types',
         'sort_shift_types_hint': 'Drag and drop items to adjust the order.',
-        'error_updating_sort_order': 'Error saving the sort order'
+        'error_updating_sort_order': 'Error saving the sort order',
+
+        // Day Delta Helper
+        'set_date': 'Set date',
+        'set_day_relative_to_event': 'Set day relative to event ({date}):',
+        'day_delta_placeholder': 'e.g. -1 for one day before',
     }
 };
 

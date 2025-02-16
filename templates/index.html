@@ -176,22 +176,26 @@
                             <!-- Options will be populated dynamically -->
                         </select>
                     </div>
-                    {{if .Config.DayZero}}
-                    <div class="mb-3">
-                        <label for="dayDelta" class="form-label">Tag relativ zum {{.Config.DayZero}}</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" id="dayDelta" name="dayDelta" 
-                                   min="-30" max="30" step="1">
-                            <button class="btn btn-outline-secondary" type="button" onclick="applyDayDelta()">
-                                <i class="bi bi-calendar-check"></i> Datum setzen
-                            </button>
-                        </div>
-                        <div class="form-text">Negative Werte für Tage vor dem Event, positive für Tage danach.</div>
-                    </div>
-                    {{end}}
                     <div class="mb-3">
                         <label for="startTime" class="form-label" data-i18n="start_time">Startzeit</label>
                         <input type="datetime-local" class="form-control" id="startTime" name="startTime" required>
+                        {{if .Config.DayZero}}
+                        <div class="mt-2">
+                            <small class="text-muted d-block mb-1">
+                                <span data-language="de">Tag relativ zum Event ({{.Config.DayZero | formatDate}}) setzen:</span>
+                                <span data-language="en">Set day relative to event ({{.Config.DayZero | formatDate}}):</span>
+                            </small>
+                            <div class="input-group input-group-sm">
+                                <input type="number" class="form-control" id="dayDelta" name="dayDelta" 
+                                       min="-30" max="30" step="1" data-i18n-placeholder="day_delta_placeholder">
+                                <button class="btn btn-outline-secondary" type="button" onclick="applyDayDelta()">
+                                    <i class="bi bi-calendar-check"></i>
+                                    <span data-language="de">Datum setzen</span>
+                                    <span data-language="en">Set date</span>
+                                </button>
+                            </div>
+                        </div>
+                        {{end}}
                     </div>
                     <div class="mb-3">
                         <label for="duration" class="form-label" data-i18n="duration_minutes">Dauer (Minuten)</label>

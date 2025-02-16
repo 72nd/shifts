@@ -26,6 +26,13 @@ var (
 			}
 			return template.JS(b)
 		},
+		"formatDate": func(dateStr string) string {
+			date, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				return dateStr
+			}
+			return date.Format("02.01.2006")
+		},
 	}).ParseGlob("templates/*.html"))
 	config    Config
 	sanitizer *bluemonday.Policy

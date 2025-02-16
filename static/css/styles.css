@@ -383,4 +383,18 @@ html[lang="en"] [data-language="en"]:not(.language-btn):not(.description-toggle)
     .day-summary {
         display: none;
     }
+}
+
+/* Form Helpers */
+.input-group-sm .form-control {
+    font-size: 0.875rem;
+}
+
+.input-group-sm .btn {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.input-group-sm .btn i {
+    font-size: 0.875rem;
 } 

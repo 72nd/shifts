@@ -206,13 +206,13 @@ function createFilterControls(shiftTypes) {
         <div class="row mb-3">
             <div class="col">
                 <button class="btn btn-outline-primary me-2 admin-controls" data-bs-toggle="modal" data-bs-target="#newShiftTypeModal" data-i18n="new_shift_type">
-                    <i class="bi bi-plus-circle"></i> Neuer Schichttyp
+                    <i class="bi bi-plus-circle me-1"></i> ${t('new_shift_type')}
                 </button>
                 <button class="btn btn-outline-primary me-2 admin-controls" data-bs-toggle="modal" data-bs-target="#newShiftModal" data-i18n="new_shift">
-                    <i class="bi bi-calendar-plus"></i> Neue Schicht
+                    <i class="bi bi-calendar-plus me-1"></i> ${t('new_shift')}
                 </button>
                 <button class="btn btn-outline-primary admin-controls" onclick="showSortModal()" data-i18n="sort_shift_types">
-                    <i class="bi bi-arrow-down-up"></i> Sortieren
+                    <i class="bi bi-arrow-down-up me-1"></i> ${t('sort_shift_types')}
                 </button>
             </div>
         </div>
@@ -387,16 +387,16 @@ function createShiftTypeCards(shiftTypes) {
                         ${summary.totalNeeded > 0 ? `
                             <div class="day-summary">
                                 ${summary.emptyShifts > 0 ? `
-                                    <span title="Komplett leere Schichten">
-                                        <i class="bi bi-exclamation-triangle"></i> ${summary.emptyShifts} leer
+                                    <span title="${t('completely_empty_shifts')}">
+                                        <i class="bi bi-exclamation-triangle"></i> ${summary.emptyShifts} ${t('empty_shifts')}
                                     </span>
                                 ` : ''}
                                 ${summary.criticalShifts > 0 ? `
-                                    <span title="Kritisch besetzte Schichten">
-                                        <i class="bi bi-exclamation-circle"></i> ${summary.criticalShifts} kritisch
+                                    <span title="${t('critically_staffed_shifts')}">
+                                        <i class="bi bi-exclamation-circle"></i> ${summary.criticalShifts} ${t('critical_shifts')}
                                     </span>
                                 ` : ''}
-                                <span title="Benötigte Helfer">
+                                <span title="${t('needed_helpers')}">
                                     <i class="bi bi-person-plus"></i> ${summary.totalNeeded}
                                 </span>
                             </div>
@@ -467,26 +467,26 @@ function createShiftTypeCards(shiftTypes) {
                                                 <button class="btn btn-outline-success" 
                                                         onclick="showJoinModal('${typeId}', '${shift.id}')"
                                                         ${occupancyRate < 1 ? '' : 'disabled'}
-                                                        aria-label="Für Schicht eintragen"
-                                                        title="Eintragen">
+                                                        aria-label="${t('sign_up_for_shift')}"
+                                                        title="${t('sign_up')}">
                                                     <i class="bi bi-person-plus" aria-hidden="true"></i>
                                                 </button>
                                                 <button class="btn btn-outline-primary admin-controls" 
                                                         onclick="duplicateShift('${typeId}', '${shift.id}')"
-                                                        aria-label="Schicht duplizieren"
-                                                        title="Duplizieren">
+                                                        aria-label="${t('duplicate_shift')}"
+                                                        title="${t('duplicate_shift')}">
                                                     <i class="bi bi-files" aria-hidden="true"></i>
                                                 </button>
                                                 <button class="btn btn-outline-primary admin-controls" 
                                                         onclick="showEditShiftModal('${typeId}', '${shift.id}')"
-                                                        aria-label="Schicht bearbeiten"
-                                                        title="Bearbeiten">
+                                                        aria-label="${t('edit_shift')}"
+                                                        title="${t('edit')}">
                                                     <i class="bi bi-pencil" aria-hidden="true"></i>
                                                 </button>
                                                 <button class="btn btn-outline-danger admin-controls" 
                                                         onclick="deleteShift('${typeId}', '${shift.id}')"
-                                                        aria-label="Schicht löschen"
-                                                        title="Löschen">
+                                                        aria-label="${t('delete_shift')}"
+                                                        title="${t('delete')}">
                                                     <i class="bi bi-trash" aria-hidden="true"></i>
                                                 </button>
                                             </div>
@@ -550,12 +550,12 @@ export async function createShift() {
         required: parseInt(formData.get('required'))
     };
 
-    let startTime = new Date(shiftData.startTime);
+    let currentStartTime = shiftData.startTime;
 
     for (let i = 0; i < repeatCount; i++) {
         const shift = {
             id: uuidv4(),
-            startTime: startTime.toISOString(),
+            startTime: currentStartTime,
             duration: shiftData.duration,
             required: shiftData.required,
             participants: []
@@ -571,11 +571,12 @@ export async function createShift() {
             });
             
             if (!response.ok) {
-                throw new Error('Fehler beim Erstellen der Schicht');
+                throw new Error(t('error_creating_shift'));
             }
 
-            // Calculate next start time
-            startTime = new Date(startTime.getTime() + shift.duration * 60000);
+            const nextDate = new Date(currentStartTime);
+            nextDate.setMinutes(nextDate.getMinutes() + shift.duration);
+            currentStartTime = nextDate.toISOString().slice(0, 16);
         } catch (error) {
             alert(error.message);
             break;
@@ -829,7 +830,7 @@ function saveSortOrder() {
         loadShiftTypes();
     })
     .catch(error => {
-        console.error('Error updating sort order:', error);
+        console.error(t('error_updating_sort_order'), error);
         showError('error_updating_sort_order');
     });
 }
@@ -856,7 +857,7 @@ function duplicateShift(typeId, shiftId) {
                 form.reset(); // Reset form first
                 
                 form.elements.shiftType.value = typeId;
-                form.elements.startTime.value = new Date(shift.startTime).toISOString().slice(0, 16);
+                form.elements.startTime.value = shift.startTime.slice(0, 16);
                 form.elements.duration.value = shift.duration;
                 form.elements.required.value = shift.required;
                 form.elements.repeatCount.value = 1;
@@ -868,17 +869,18 @@ function duplicateShift(typeId, shiftId) {
 
 function applyDayDelta() {
     const dayDelta = parseInt(document.getElementById('dayDelta').value);
-    const dayZeroStr = document.querySelector('label[for="dayDelta"]').textContent.split(' ')[3]; // Extract date from label
+    const dateText = document.querySelector('#newShiftForm small.text-muted').textContent;
+    const match = dateText.match(/\d{2}\.\d{2}\.\d{4}/);
     
-    if (!isNaN(dayDelta) && dayZeroStr) {
-        const dayZero = new Date(dayZeroStr);
-        const targetDate = new Date(dayZero);
-        targetDate.setDate(dayZero.getDate() + dayDelta);
+    if (!isNaN(dayDelta) && match) {
+        const [day, month, year] = match[0].split('.');
+        // Create date strings that explicitly avoid timezone conversion
+        const dayZeroStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00`;
+        const targetDate = new Date(dayZeroStr);
+        targetDate.setDate(targetDate.getDate() + dayDelta);
         
-        // Set the time to 00:00
-        targetDate.setHours(0, 0, 0, 0);
-        
-        // Format for datetime-local input
-        document.getElementById('startTime').value = targetDate.toISOString().slice(0, 16);
+        // Format as YYYY-MM-DDT00:00
+        const targetDateStr = targetDate.toISOString().slice(0, 16);
+        document.getElementById('startTime').value = targetDateStr;
     }
-} 
+}
