@@ -1,0 +1,363 @@
+/* General Styles */
+body {
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* Tables */
+.table {
+    font-size: 0.875rem;
+    margin-bottom: 0;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+    padding: 0.5rem 0.75rem;
+    line-height: 1.2;
+}
+
+.table thead th {
+    border-bottom: 1px solid #e9ecef;
+    color: #6c757d;
+    font-weight: 600;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+
+.table .text-end {
+    text-align: right;
+}
+
+/* Remove full row coloring */
+.table-danger, .table-warning, .table-info, .table-success {
+    --bs-table-bg: transparent;
+    --bs-table-color: inherit;
+}
+
+/* Progress Bars */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 999px;
+    height: 4px;
+    margin-top: 0.25rem;
+}
+
+.progress-bar {
+    border-radius: 999px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.progress-bar-danger {
+    background-color: var(--bs-danger) !important;
+}
+
+.progress-bar-warning {
+    background-color: var(--bs-warning) !important;
+}
+
+.progress-bar-success {
+    background-color: var(--bs-success) !important;
+}
+
+/* Cards and Sections */
+.shift-type-card {
+    margin-bottom: 1.5rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.shift-type-header {
+    padding: 1rem 1.5rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.shift-type-header h3 {
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.shift-type-header p {
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.day-section {
+    padding: 0.75rem 1.5rem;
+}
+
+.day-section:not(:last-child) {
+    margin-bottom: 0.75rem;
+}
+
+.day-section h5 {
+    color: #2c3e50;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Participants and Badges */
+.mt-1.small {
+    margin-top: 0.25rem !important;
+}
+
+.badge {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    color: #2c3e50;
+    padding: 0.15rem 0.4rem;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge .btn-link {
+    color: #dc3545;
+    padding: 0;
+    margin-left: 0.25rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.badge .btn-link:hover {
+    color: #dc3545;
+    opacity: 1;
+}
+
+/* Buttons and Controls */
+.btn-group-sm .btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.875rem;
+}
+
+.btn-group-sm .btn i {
+    font-size: 0.9rem;
+}
+
+.shift-type-header .btn-group {
+    display: inline-flex;
+}
+
+.shift-type-header .btn-group .btn {
+    margin: 0;
+    border-radius: 0;
+}
+
+.shift-type-header .btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.shift-type-header .btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Admin Controls */
+.admin-controls {
+    display: none !important;
+}
+
+body.admin-mode .admin-controls {
+    display: inline-flex !important;
+}
+
+/* Filter Card */
+.filter-card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.filter-card .card-body {
+    padding: 1rem 1.5rem;
+}
+
+.filter-card .form-label {
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.filter-card .form-select {
+    font-size: 0.9rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+
+/* Description Styles */
+.description-container {
+    position: relative;
+    max-width: 100%;
+}
+
+.description {
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.description.truncated {
+    max-height: 3em;
+}
+
+.description.expanded {
+    max-height: 1000px;
+}
+
+.description-toggle {
+    padding: 0;
+    color: #0d6efd;
+    text-decoration: none;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.description-toggle:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
+.description-toggle .bi {
+    transition: transform 0.3s ease;
+}
+
+.description.expanded + .description-toggle .bi {
+    transform: rotate(180deg);
+}
+
+/* Day Summary */
+.day-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.day-summary i {
+    font-size: 1rem;
+}
+
+.day-summary .text-danger i {
+    color: var(--bs-danger);
+}
+
+.day-summary .text-warning i {
+    color: #ffc107;
+}
+
+.day-summary .text-primary i {
+    color: var(--bs-primary);
+}
+
+/* Empty shift highlight */
+tr[data-shift-info] td:first-child {
+    border-left: 3px solid transparent;
+}
+
+tr[data-empty="true"] td:first-child {
+    border-left: 3px solid var(--bs-danger);
+}
+
+/* Info Card */
+.info-card {
+    background-color: #f8f9fa;
+    margin-bottom: 0.5rem;
+}
+
+.info-card .description-toggle {
+    display: inline-flex;
+}
+
+.info-card .description {
+    margin-bottom: 0;
+}
+
+.info-card .description.truncated {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.info-card .description.expanded {
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    display: block;
+}
+
+.info-card .description.truncated + .description-toggle {
+    display: inline-flex;
+}
+
+/* Language-specific content */
+[data-language]:not(.language-btn):not(.description-toggle) {
+    display: none;
+}
+
+html[lang="de"] [data-language="de"]:not(.language-btn):not(.description-toggle),
+html[lang="en"] [data-language="en"]:not(.language-btn):not(.description-toggle) {
+    display: block;
+}
+
+.language-btn.active {
+    background-color: var(--bs-secondary);
+    color: white;
+    border-color: var(--bs-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .shift-type-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .day-section {
+        padding: 0.75rem 1rem;
+    }
+
+    .filter-card .row > div {
+        margin-bottom: 0.75rem;
+    }
+
+    .filter-card .row > div:last-child {
+        margin-bottom: 0;
+    }
+
+    .table td {
+        padding: 0.4rem 0.5rem;
+    }
+    
+    .badge {
+        padding: 0.3rem 0.5rem;
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.85rem;
+    }
+
+    .day-summary {
+        display: none;
+    }
+} 

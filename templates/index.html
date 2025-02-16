@@ -1,0 +1,290 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+{{if or .Config.InfoTextDE .Config.InfoTextEN}}
+<div class="card info-card mb-3">
+    <div class="card-body">
+        <div class="description-container">
+            <div class="description truncated" id="info-text-de" data-language="de">{{.Config.InfoTextDE | markdown}}</div>
+            <button class="btn btn-link btn-sm description-toggle" 
+                    onclick="toggleDescription('info-text-de')"
+                    data-language="de">
+                <i class="bi bi-chevron-down"></i> <span data-i18n="show_more">Mehr anzeigen</span>
+            </button>
+            
+            <div class="description truncated" id="info-text-en" data-language="en">{{.Config.InfoTextEN | markdown}}</div>
+            <button class="btn btn-link btn-sm description-toggle" 
+                    onclick="toggleDescription('info-text-en')"
+                    data-language="en">
+                <i class="bi bi-chevron-down"></i> <span data-i18n="show_more">Show more</span>
+            </button>
+        </div>
+    </div>
+</div>
+{{end}}
+
+<div id="shiftTypesContainer">
+    <!-- Shift types will be loaded here dynamically -->
+</div>
+{{end}}
+
+{{define "modals"}}
+<!-- Admin Login Modal -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="admin_login">Admin Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adminLoginForm" onsubmit="loginAdmin(); return false;">
+                    <div class="mb-3">
+                        <label for="password" class="form-label" data-i18n="password">Passwort</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="admin_login">Admin Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Shift Type Modal -->
+<div class="modal fade" id="newShiftTypeModal" tabindex="-1" aria-labelledby="newShiftTypeModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="new_shift_type">Neuer Schichttyp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newShiftTypeForm" onsubmit="createShiftType(); return false;">
+                    <div class="mb-3">
+                        <label for="titleDE" class="form-label">Titel (DE) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="titleDE" name="titleDE" required 
+                               minlength="2" maxlength="100"
+                               pattern="[a-zA-Z0-9\s\-_.,!?()]*"
+                               data-bs-toggle="tooltip" 
+                               title="Bitte geben Sie einen deutschen Titel ein">
+                        <div class="invalid-feedback">Bitte geben Sie einen deutschen Titel ein</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="titleEN" class="form-label">Title (EN) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="titleEN" name="titleEN" required
+                               minlength="2" maxlength="100"
+                               pattern="[a-zA-Z0-9\s\-_.,!?()]*"
+                               data-bs-toggle="tooltip" 
+                               title="Please enter an English title">
+                        <div class="invalid-feedback">Please enter an English title</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descriptionDE" class="form-label">Beschreibung (DE)</label>
+                        <textarea class="form-control" id="descriptionDE" name="descriptionDE" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descriptionEN" class="form-label">Description (EN)</label>
+                        <textarea class="form-control" id="descriptionEN" name="descriptionEN" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label" data-i18n="location">Ort</label>
+                        <input type="text" class="form-control" id="location" name="location"
+                               minlength="2" maxlength="100"
+                               pattern="[a-zA-Z0-9\s\-_.,!?()]*">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label" data-i18n="shift_type_password">Passwort</label>
+                        <input type="text" class="form-control font-monospace" id="password" name="password">
+                        <div class="form-text" data-i18n="shift_type_password_hint">
+                            Optional: Wenn gesetzt, müssen sich Helfende bei der zuständigen Crew melden, um das Passwort zu erfahren.
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="create">Erstellen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shift Type Modal -->
+<div class="modal fade" id="editShiftTypeModal" tabindex="-1" aria-labelledby="editShiftTypeModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="edit_shift_type">Schichttyp bearbeiten</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editShiftTypeForm" onsubmit="updateShiftType(); return false;">
+                    <input type="hidden" name="id">
+                    <div class="mb-3">
+                        <label for="editTitleDE" class="form-label">Titel (DE)</label>
+                        <input type="text" class="form-control" id="editTitleDE" name="titleDE" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTitleEN" class="form-label">Title (EN)</label>
+                        <input type="text" class="form-control" id="editTitleEN" name="titleEN" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescriptionDE" class="form-label">Beschreibung (DE)</label>
+                        <textarea class="form-control" id="editDescriptionDE" name="descriptionDE" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescriptionEN" class="form-label">Description (EN)</label>
+                        <textarea class="form-control" id="editDescriptionEN" name="descriptionEN" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLocation" class="form-label" data-i18n="location">Ort</label>
+                        <input type="text" class="form-control" id="editLocation" name="location">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label" data-i18n="shift_type_password">Passwort</label>
+                        <input type="text" class="form-control font-monospace" id="editPassword" name="password">
+                        <div class="form-text" data-i18n="shift_type_password_hint">
+                            Optional: Wenn gesetzt, müssen sich Helfende bei der zuständigen Crew melden, um das Passwort zu erfahren.
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="save">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Shift Modal -->
+<div class="modal fade" id="newShiftModal" tabindex="-1" aria-labelledby="newShiftModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="new_shift">Neue Schicht</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newShiftForm" onsubmit="createShift(); return false;">
+                    <div class="mb-3">
+                        <label for="shiftType" class="form-label" data-i18n="shift_type_filter">Schichttyp</label>
+                        <select class="form-select" id="shiftType" name="shiftType" required>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                    {{if .Config.DayZero}}
+                    <div class="mb-3">
+                        <label for="dayDelta" class="form-label">Tag relativ zum {{.Config.DayZero}}</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="dayDelta" name="dayDelta" 
+                                   min="-30" max="30" step="1">
+                            <button class="btn btn-outline-secondary" type="button" onclick="applyDayDelta()">
+                                <i class="bi bi-calendar-check"></i> Datum setzen
+                            </button>
+                        </div>
+                        <div class="form-text">Negative Werte für Tage vor dem Event, positive für Tage danach.</div>
+                    </div>
+                    {{end}}
+                    <div class="mb-3">
+                        <label for="startTime" class="form-label" data-i18n="start_time">Startzeit</label>
+                        <input type="datetime-local" class="form-control" id="startTime" name="startTime" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="duration" class="form-label" data-i18n="duration_minutes">Dauer (Minuten)</label>
+                        <input type="number" class="form-control" id="duration" name="duration" required 
+                               min="1" max="1440">
+                    </div>
+                    <div class="mb-3">
+                        <label for="required" class="form-label" data-i18n="required_people">Benötigte Personen</label>
+                        <input type="number" class="form-control" id="required" name="required" required 
+                               min="1" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="repeatCount" class="form-label" data-i18n="consecutive_shifts">Anzahl aufeinanderfolgender Schichten</label>
+                        <input type="number" class="form-control" id="repeatCount" name="repeatCount" required min="1" value="1">
+                        <div class="form-text" data-i18n="creates_multiple_shifts">Erstellt mehrere Schichten, die direkt aufeinander folgen</div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="create">Erstellen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shift Modal -->
+<div class="modal fade" id="editShiftModal" tabindex="-1" aria-labelledby="editShiftModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="edit_shift">Schicht bearbeiten</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editShiftForm" onsubmit="updateShift(); return false;">
+                    <input type="hidden" name="typeId">
+                    <input type="hidden" name="shiftId">
+                    <div class="mb-3">
+                        <label for="editStartTime" class="form-label" data-i18n="start_time">Startzeit</label>
+                        <input type="datetime-local" class="form-control" id="editStartTime" name="startTime" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDuration" class="form-label" data-i18n="duration_minutes">Dauer (Minuten)</label>
+                        <input type="number" class="form-control" id="editDuration" name="duration" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRequired" class="form-label" data-i18n="required_people">Benötigte Personen</label>
+                        <input type="number" class="form-control" id="editRequired" name="required" required min="1">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="save">Speichern</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Join Shift Modal -->
+<div class="modal fade" id="joinShiftModal" tabindex="-1" aria-labelledby="joinShiftModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="sign_up_for_shift">Für Schicht eintragen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="joinShiftForm" onsubmit="joinShift(); return false;">
+                    <input type="hidden" name="typeId">
+                    <input type="hidden" name="shiftId">
+                    <div class="mb-3">
+                        <label for="participantName" class="form-label" data-i18n="name">Name</label>
+                        <input type="text" class="form-control" id="participantName" name="name" required
+                               minlength="2" maxlength="50"
+                               pattern="[a-zA-Z0-9\s\-_.,]*">
+                        <div class="form-text" data-i18n="name_hint"></div>
+                    </div>
+                    <div class="mb-3 d-none" id="passwordField">
+                        <label for="shiftPassword" class="form-label" data-i18n="shift_password">Passwort</label>
+                        <input type="password" class="form-control" id="shiftPassword" name="password">
+                        <div class="form-text" data-i18n="shift_password_hint">
+                            Diese Schicht ist passwortgeschützt. Bitte melde dich bei der zuständigen Crew, um das Passwort zu erfahren.
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="sign_up">Eintragen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 
