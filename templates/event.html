@@ -1,0 +1,141 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+<div class="row mb-4">
+    <div class="col">
+        <!-- Admin controls -->
+        <div class="mb-4">
+            <button class="btn btn-primary admin-controls" onclick="showNewShiftTypeModal()">
+                <i class="bi bi-plus-circle me-1"></i>
+                <span data-i18n="add_shift_type">Schichttyp hinzufügen</span>
+            </button>
+            <button class="btn btn-outline-primary admin-controls" onclick="showSortModal()">
+                <i class="bi bi-sort-down me-1"></i>
+                <span data-i18n="sort_shift_types">Schichttypen sortieren</span>
+            </button>
+        </div>
+
+        <!-- Info text if available -->
+        {{if or .Config.InfoTextDE .Config.InfoTextEN}}
+        <div class="card info-card mb-3">
+            <div class="card-body">
+                <div class="description-container">
+                    <div class="description truncated" id="info-text-de" data-language="de">{{.Config.InfoTextDE | markdown}}</div>
+                    <button class="btn btn-link btn-sm description-toggle" 
+                            onclick="toggleDescription('info-text-de')"
+                            data-language="de">
+                        <i class="bi bi-chevron-down"></i> <span data-i18n="show_more">Mehr anzeigen</span>
+                    </button>
+                    
+                    <div class="description truncated" id="info-text-en" data-language="en">{{.Config.InfoTextEN | markdown}}</div>
+                    <button class="btn btn-link btn-sm description-toggle" 
+                            onclick="toggleDescription('info-text-en')"
+                            data-language="en">
+                        <i class="bi bi-chevron-down"></i> <span data-i18n="show_more">Show more</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Shift types container -->
+        <div id="shiftTypesContainer">
+            <!-- Shift types will be loaded here dynamically -->
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "modals"}}
+<!-- Admin Login Modal -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="admin_login">Admin Login</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adminLoginForm" onsubmit="loginAdmin(); return false;">
+                    <div class="mb-3">
+                        <label for="password" class="form-label" data-i18n="password">Passwort</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="login">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Shift Type Modal -->
+<div class="modal fade" id="newShiftTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="new_shift_type">Neuer Schichttyp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newShiftTypeForm" onsubmit="createShiftType(); return false;">
+                    <div class="mb-3">
+                        <label for="titleDE" class="form-label" data-i18n="title_de">Titel (Deutsch)</label>
+                        <input type="text" class="form-control" id="titleDE" name="titleDE" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="titleEN" class="form-label" data-i18n="title_en">Title (English)</label>
+                        <input type="text" class="form-control" id="titleEN" name="titleEN" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descriptionDE" class="form-label" data-i18n="description_de">Beschreibung (Deutsch)</label>
+                        <textarea class="form-control" id="descriptionDE" name="descriptionDE" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descriptionEN" class="form-label" data-i18n="description_en">Description (English)</label>
+                        <textarea class="form-control" id="descriptionEN" name="descriptionEN" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label" data-i18n="location">Ort</label>
+                        <input type="text" class="form-control" id="location" name="location">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label" data-i18n="shift_type_password">Passwort</label>
+                        <input type="text" class="form-control" id="password" name="password">
+                        <div class="form-text" data-i18n="shift_type_password_hint">
+                            Optional: Wenn gesetzt, müssen sich Helfende bei der zuständigen Crew melden, um das Passwort zu erfahren.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                <button type="submit" form="newShiftTypeForm" class="btn btn-primary" data-i18n="create">Erstellen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sort Modal -->
+<div class="modal fade" id="sortModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="sort_shift_types">Schichttypen sortieren</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sortableList" class="list-group">
+                    <!-- Shift types will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="saveSortOrder()" data-i18n="save">Speichern</button>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 

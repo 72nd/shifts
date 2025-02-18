@@ -1,0 +1,97 @@
+<!-- Admin controls in shift type header -->
+<div class="btn-group admin-controls">
+    <button class="btn btn-outline-primary" 
+            onclick="showNewShiftForType('${typeId}')"
+            aria-label="Schicht hinzufügen"
+            title="Schicht hinzufügen">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+        <span data-i18n="add_shift">Schicht hinzufügen</span>
+    </button>
+    <button class="btn btn-outline-primary"
+            onclick="editShiftType('${typeId}')"
+            aria-label="Schichttyp bearbeiten"
+            title="Bearbeiten">
+        <i class="bi bi-pencil" aria-hidden="true"></i>
+        <span data-i18n="edit_shift_type">Schichttyp bearbeiten</span>
+    </button>
+    <button class="btn btn-outline-danger"
+            onclick="deleteShiftType('${typeId}')"
+            aria-label="Schichttyp löschen"
+            title="Löschen">
+        <i class="bi bi-trash" aria-hidden="true"></i>
+        <span data-i18n="delete_shift_type">Schichttyp löschen</span>
+    </button>
+</div>
+
+<!-- Admin controls in shift item -->
+<button class="btn btn-outline-primary admin-controls" 
+        onclick="duplicateShift('${typeId}', '${shift.id}')"
+        aria-label="Schicht duplizieren"
+        title="Duplizieren">
+    <i class="bi bi-files" aria-hidden="true"></i>
+    <span data-i18n="duplicate_shift">Schicht duplizieren</span>
+</button>
+
+<!-- New Shift Modal -->
+<div class="modal fade" id="newShiftModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="add_shift">Schicht hinzufügen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newShiftForm">
+                    <input type="hidden" name="shiftType" id="shiftType">
+                    <div class="mb-3">
+                        <label for="startTime" class="form-label" data-i18n="start_time">Startzeit</label>
+                        <input type="datetime-local" class="form-control" id="startTime" name="startTime" required>
+                        <small class="text-muted">
+                            <span data-i18n="day_delta_helper">Tag relativ zum Event</span>: 
+                            <input type="number" id="dayDelta" class="form-control-sm" style="width: 60px"
+                                   placeholder="-1" onchange="applyDayDelta()">
+                            <span data-i18n="day_delta_placeholder">z.B. -1 für einen Tag davor</span>
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="duration" class="form-label" data-i18n="shift_duration">Dauer (Minuten)</label>
+                        <input type="number" class="form-control" id="duration" name="duration" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="required" class="form-label" data-i18n="required_participants">Benötigte Teilnehmer</label>
+                        <input type="number" class="form-control" id="required" name="required" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="repeatCount" class="form-label" data-i18n="repeat_count">Anzahl Wiederholungen</label>
+                        <input type="number" class="form-control" id="repeatCount" name="repeatCount" value="1" min="1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="createShift()" data-i18n="save">Speichern</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sort Modal -->
+<div class="modal fade" id="sortModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="sort_shift_types">Schichttypen sortieren</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sortableList" class="list-group">
+                    <!-- Shift types will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="saveSortOrder()" data-i18n="save_sort_order">Sortierung speichern</button>
+            </div>
+        </div>
+    </div>
+</div> 
