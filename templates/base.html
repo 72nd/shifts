@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Config.Title}} – Schichtplanung</title>
+    <title>{{if .Event}}{{.Event.Title}} - {{end}}Schipla</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/static/css/styles.css" rel="stylesheet">
     {{block "head" .}}{{end}}
 </head>
@@ -24,38 +24,52 @@
     </div>
     {{end}}
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <span class="fw-bold">{{.Config.Title}}</span> – <span data-i18n="shift_planning">Schichtplanung</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <a class="navbar-brand" href="/">Schipla</a>
+            {{if .Event}}
+            <span class="navbar-text text-light ms-2">
+                {{.Event.Title}}
+                <small class="text-muted ms-2">
+                    {{formatDate .Event.StartDate}} - {{formatDate .Event.EndDate}}
+                </small>
+            </span>
+            {{end}}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarContent">
-                <div class="ms-auto d-flex align-items-center">
-                    <div class="btn-group me-3">
-                        <button class="btn btn-outline-secondary language-btn active" data-language="de" onclick="setLanguage('de')">DE</button>
-                        <button class="btn btn-outline-secondary language-btn" data-language="en" onclick="setLanguage('en')">EN</button>
-                    </div>
-                    <div>
-                        <button id="adminLoginBtn" class="btn btn-outline-primary" onclick="showAdminLogin()" data-i18n="admin_login">
-                            Admin Login
-                        </button>
-                        <button id="adminLogoutBtn" class="btn btn-outline-danger" onclick="logoutAdmin()" style="display: none;" data-i18n="admin_logout">
-                            Admin Logout
-                        </button>
-                    </div>
-                </div>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe"></i>
+                            <span data-i18n="current_language">Deutsch</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="setLanguage('de')">
+                                    <span class="me-2">🇩🇪</span>
+                                    <span data-i18n="language_de">Deutsch</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="setLanguage('en')">
+                                    <span class="me-2">🇬🇧</span>
+                                    <span data-i18n="language_en">English</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container">
-        {{block "content" .}}{{end}}
+    <div class="container my-4">
+        {{template "content" .}}
     </div>
 
-    {{block "modals" .}}{{end}}
+    {{template "modals" .}}
 
     <footer class="footer mt-5 py-3 bg-light">
         <div class="container text-center text-muted">
@@ -68,18 +82,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         // Make server config available to JavaScript
-        window.serverConfig = {{.Config | json}};
-
-        // Handle modal focus
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('shown.bs.modal', () => {
-                // Find and focus the first input, select, or textarea
-                const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
-                if (firstInput) {
-                    firstInput.focus();
-                }
-            });
-        });
+        window.serverConfig = JSON.parse(`{{.Config | json}}`);
     </script>
     <script type="module" src="/static/js/main.js"></script>
     {{block "scripts" .}}{{end}}

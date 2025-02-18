@@ -152,16 +152,19 @@ export function loadShiftTypes() {
         .then(response => response.json())
         .then(shiftTypes => {
             const container = document.getElementById('shiftTypesContainer');
+            if (!container) return; // Wenn der Container nicht existiert, brechen wir ab
+            
             container.innerHTML = '';
             
             // Update shift type select in new shift form
             const select = document.querySelector('#newShiftForm select[name="shiftType"]');
-            select.innerHTML = '';
-            
-            Object.entries(shiftTypes).forEach(([id, shiftType]) => {
-                // Add to select options
-                select.innerHTML += `<option value="${id}">${getLocalizedTitle(shiftType)}</option>`;
-            });
+            if (select) {
+                select.innerHTML = '';
+                Object.entries(shiftTypes).forEach(([id, shiftType]) => {
+                    // Add to select options
+                    select.innerHTML += `<option value="${id}">${getLocalizedTitle(shiftType)}</option>`;
+                });
+            }
 
             // Create filter controls
             const filterControls = createFilterControls(shiftTypes);

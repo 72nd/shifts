@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -9,6 +10,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday/v2"
@@ -26,17 +28,16 @@ var (
 			}
 			return template.JS(b)
 		},
-		"formatDate": func(dateStr string) string {
-			date, err := time.Parse("2006-01-02", dateStr)
-			if err != nil {
-				return dateStr
-			}
-			return date.Format("02.01.2006")
+		"formatDate": func(t time.Time) string {
+			return t.Format("02.01.2006")
 		},
 	}).ParseGlob("templates/*.html"))
 	config    Config
 	sanitizer *bluemonday.Policy
 )
+
+// Temporary constant for transition period
+const defaultEventID = "default"
 
 func init() {
 	config = LoadConfig()
@@ -44,6 +45,21 @@ func init() {
 
 	// Initialize HTML sanitizer with UGC policy (User Generated Content)
 	sanitizer = bluemonday.UGCPolicy()
+
+	// Create default event if it doesn't exist
+	if _, err := getEvent(defaultEventID); err == sql.ErrNoRows {
+		defaultEvent := Event{
+			ID:            defaultEventID,
+			Title:         config.Title,
+			StartDate:     time.Now(),
+			EndDate:       time.Now().AddDate(0, 1, 0), // 1 month duration
+			AdminPassword: config.AdminPassword,
+			CreatedAt:     time.Now(),
+		}
+		if err := createEvent(defaultEvent); err != nil {
+			log.Printf("Warning: Could not create default event: %v", err)
+		}
+	}
 }
 
 func main() {
@@ -54,7 +70,9 @@ func main() {
 
 	// Routes
 	r.HandleFunc("/", homeHandler).Methods("GET")
+	r.HandleFunc("/events/{id}", eventHandler).Methods("GET")
 	r.HandleFunc("/admin/verify", verifyAdminHandler).Methods("POST")
+	r.HandleFunc("/api/events", createEventHandler).Methods("POST")
 	r.HandleFunc("/shifttypes", getShiftTypesHandler).Methods("GET")
 	r.HandleFunc("/shifttypes", adminMiddleware(createShiftTypeHandler)).Methods("POST")
 	r.HandleFunc("/shifttypes/{id}", adminMiddleware(updateShiftTypeHandler)).Methods("PUT")
@@ -100,7 +118,46 @@ func verifyAdminHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	shiftTypes, err := getShiftTypes()
+	// Get all events
+	events, err := getAllEvents()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Config Config
+		Events []Event
+		Event  *Event
+	}{
+		Config: config,
+		Events: events,
+		Event:  nil,
+	}
+
+	// Set content type before writing response
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	if err := templates.ExecuteTemplate(w, "index.html", data); err != nil {
+		// Log the error but don't try to write a new error response
+		log.Printf("Template execution error: %v", err)
+		return
+	}
+}
+
+func eventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	eventID := vars["id"]
+
+	// Get event details
+	event, err := getEvent(eventID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get shift types for this event
+	shiftTypes, err := getShiftTypes(eventID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -108,17 +165,22 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		Config     Config
+		Event      *Event
 		ShiftTypes map[string]ShiftType
 	}{
 		Config:     config,
+		Event:      event,
 		ShiftTypes: shiftTypes,
 	}
 
-	templates.ExecuteTemplate(w, "index.html", data)
+	if err := templates.ExecuteTemplate(w, "event.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func getShiftTypesHandler(w http.ResponseWriter, r *http.Request) {
-	shiftTypes, err := getShiftTypes()
+	shiftTypes, err := getShiftTypes(defaultEventID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -132,6 +194,9 @@ func createShiftTypeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// Set the event ID for the transition period
+	shiftType.EventID = defaultEventID
 
 	if err := validateAndSanitizeShiftType(&shiftType); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -156,6 +221,9 @@ func updateShiftTypeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// Set the event ID for the transition period
+	shiftType.EventID = defaultEventID
 
 	if err := validateAndSanitizeShiftType(&shiftType); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -239,7 +307,7 @@ func joinShiftHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if shift type requires password
-	shiftTypes, err := getShiftTypes()
+	shiftTypes, err := getShiftTypes(defaultEventID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -285,7 +353,7 @@ func leaveShiftHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if shift type requires password
-	shiftTypes, err := getShiftTypes()
+	shiftTypes, err := getShiftTypes(defaultEventID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -391,4 +459,28 @@ func updateShiftTypeSort(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func createEventHandler(w http.ResponseWriter, r *http.Request) {
+	var event Event
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Generate a unique ID for the event
+	event.ID = generateUUID()
+	event.CreatedAt = time.Now()
+
+	if err := createEvent(event); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(event)
+}
+
+func generateUUID() string {
+	return uuid.New().String()
 }

@@ -9,8 +9,15 @@ export function initAuth(config) {
         isAdmin = true;
         adminPassword = config.AdminPassword;
         document.body.classList.add('admin-mode');
-        document.getElementById('adminLoginBtn').style.display = 'none';
-        document.getElementById('adminLogoutBtn').style.display = 'inline-block';
+        
+        // Nur versuchen, die Admin-UI zu aktualisieren, wenn wir auf einer Seite mit Admin-Funktionalität sind
+        const hasAdminUI = document.querySelector('.admin-controls');
+        if (hasAdminUI) {
+            const loginBtn = document.getElementById('adminLoginBtn');
+            const logoutBtn = document.getElementById('adminLogoutBtn');
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'inline-block';
+        }
     }
 }
 
