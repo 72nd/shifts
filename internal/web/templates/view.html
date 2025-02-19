@@ -1,0 +1,166 @@
+{{ template "base.html" . }}
+
+{{ define "content" }}
+<div x-data="shiftPlanView" x-init="init()" class="container mx-auto px-4 py-4">
+    <!-- Loading State -->
+    <template x-if="data.isLoading">
+        <div class="flex justify-center items-center min-h-[50vh]">
+            <span class="loading loading-spinner loading-lg"></span>
+        </div>
+    </template>
+
+    <!-- Error State -->
+    <template x-if="data.error">
+        <div class="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="data.error"></span>
+        </div>
+    </template>
+
+    <!-- Content (only shown when data is loaded) -->
+    <template x-if="isReady">
+        <div>
+            <!-- Plan Header -->
+            <div class="bg-base-200 rounded-box p-4 mb-4">
+                <h1 class="text-2xl font-bold mb-1" x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? data.plan.title_de : data.plan.title_en) : data.plan.title_en"></h1>
+                <p class="text-base-content/70 text-sm" x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? data.plan.description_de : data.plan.description_en) : data.plan.description_en"></p>
+                <div class="flex gap-4 mt-2">
+                    <span class="badge badge-neutral">
+                        <span x-text="formatDate(data.plan.start_date)"></span>
+                        -
+                        <span x-text="formatDate(data.plan.end_date)"></span>
+                    </span>
+                    <template x-if="data.plan.is_multilingual">
+                        <div class="flex gap-2">
+                            <button @click="data.currentLang = 'de'" :class="{ 'btn-primary': data.currentLang === 'de' }" class="btn btn-xs">DE</button>
+                            <button @click="data.currentLang = 'en'" :class="{ 'btn-primary': data.currentLang === 'en' }" class="btn btn-xs">EN</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Shift Types -->
+            <template x-for="type in data.shiftTypes" :key="type.id">
+                <div class="bg-base-200 rounded-box p-4 mb-4">
+                    <!-- Type Header -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h2 class="text-xl font-bold" x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? type.title_de : type.title_en) : type.title_en"></h2>
+                            <p class="text-base-content/70 text-sm" x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? type.description_de : type.description_en) : type.description_en"></p>
+                            <p class="text-xs mt-1">
+                                <span class="font-semibold" x-text="$store.i18n.t('shift_plans.view.location')"></span>:
+                                <span x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? type.location_de : type.location_en) : type.location_en"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Shifts grouped by date -->
+                    <template x-for="dateGroup in type.shiftsByDate" :key="dateGroup.date">
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <h3 class="text-base font-medium" x-text="formatDate(dateGroup.date)"></h3>
+                                <div class="flex-1 border-t-2 border-base-200"></div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="table table-xs w-full border-collapse [&_td]:border-t [&_td]:border-base-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-48 bg-base-200/50" x-text="$store.i18n.t('shift_plans.view.time')"></th>
+                                            <th class="w-16 hidden md:table-cell bg-base-200/50" x-text="$store.i18n.t('shift_plans.view.duration')"></th>
+                                            <th class="bg-base-200/50" x-text="$store.i18n.t('shift_plans.view.participants')"></th>
+                                            <th class="w-20 bg-base-200/50"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="shift in dateGroup.shifts" :key="shift.id">
+                                            <tr x-data="{ expanded: false }" 
+                                                :class="{ 'border-b border-base-200': expanded }"
+                                                @click="expanded = !expanded"
+                                                class="cursor-pointer hover:bg-base-300/50">
+                                                <td class="align-middle">
+                                                    <div class="whitespace-nowrap font-medium" x-text="formatTime(shift.start_time, shift.duration)"></div>
+                                                    <div class="text-xs text-base-content/60 mt-0.5 line-clamp-1"
+                                                         x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en">
+                                                    </div>
+                                                </td>
+                                                <td class="whitespace-nowrap hidden md:table-cell align-middle" x-text="formatDuration(shift.duration)"></td>
+                                                <td class="py-3 align-middle">
+                                                    <div class="space-y-2">
+                                                        <!-- Progress bar -->
+                                                        <div class="w-full bg-base-300 rounded-full h-2 relative">
+                                                            <div class="absolute -top-5 left-0 text-xs">
+                                                                <span x-text="shift.participants ? shift.participants.length : 0"></span>
+                                                                /
+                                                                <span x-text="shift.required"></span>
+                                                            </div>
+                                                            <div class="bg-primary rounded-full h-2 transition-all duration-300"
+                                                                 :style="'width: ' + ((shift.participants ? shift.participants.length : 0) / shift.required * 100) + '%'"
+                                                                 :class="{
+                                                                     'bg-error': (shift.participants && shift.participants.length > shift.required),
+                                                                     'bg-success': (shift.participants && shift.participants.length === shift.required),
+                                                                     'bg-primary': (!shift.participants || shift.participants.length < shift.required)
+                                                                 }">
+                                                            </div>
+                                                        </div>
+                                                        <!-- Participants list -->
+                                                        <div class="flex flex-wrap gap-1">
+                                                            <template x-for="participant in shift.participants || []" :key="participant.id">
+                                                                <span class="badge badge-sm" x-text="participant.name"></span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-right">
+                                                    <button @click.stop="joinShift(shift)" 
+                                                            :disabled="shift.participants && shift.participants.length >= shift.required"
+                                                            class="btn btn-xs btn-primary"
+                                                            x-text="$store.i18n.t('shift_plans.view.join')">
+                                                    </button>
+                                                    <div class="text-xs text-primary mt-1" x-show="!expanded">
+                                                        <i class="bi bi-chevron-down"></i>
+                                                        Details
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <!-- Expanded details row -->
+                                            <tr x-show="expanded" x-collapse>
+                                                <td colspan="4" class="bg-base-200/50 px-4 py-3">
+                                                    <div class="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <h4 class="font-medium mb-2">Kommentar</h4>
+                                                            <p class="text-sm text-base-content/70"
+                                                               x-text="data.plan.is_multilingual ? (data.currentLang === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en">
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <h4 class="font-medium mb-2">Teilnehmende</h4>
+                                                            <div class="flex flex-wrap gap-2">
+                                                                <template x-for="participant in shift.participants || []" :key="participant.id">
+                                                                    <div class="badge badge-neutral gap-2">
+                                                                        <i class="bi bi-person"></i>
+                                                                        <span x-text="participant.name"></span>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script src="/static/js/shift-plan-view.js"></script>
+{{ end }} 

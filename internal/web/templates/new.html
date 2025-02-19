@@ -1,0 +1,126 @@
+{{ template "base.html" . }}
+
+{{ define "content" }}
+<div class="hero bg-base-200 rounded-box">
+    <div class="hero-content text-center py-6">
+        <div class="max-w-md">
+            <h1 class="text-4xl font-bold" x-text="$store.i18n.t('shift_plans.new.hero_title')">Create a New Shift Plan</h1>
+            <p class="mt-2" x-text="$store.i18n.t('shift_plans.new.hero_subtitle')">Organize your shifts easily and efficiently</p>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 mt-6">
+    <form x-data="{
+        isMultilingual: true,
+        titleDE: '',
+        titleEN: '',
+        descriptionDE: '',
+        descriptionEN: '',
+        startDate: '',
+        endDate: '',
+        
+        async submit() {
+            try {
+                // Parse dates to RFC3339 format
+                const start = new Date(this.startDate);
+                const end = new Date(this.endDate);
+                
+                const response = await fetch('/api/shift-plans', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title_de: this.isMultilingual ? this.titleDE : null,
+                        title_en: this.titleEN,
+                        description_de: this.isMultilingual ? this.descriptionDE : null,
+                        description_en: this.descriptionEN,
+                        start_date: start.toISOString(),
+                        end_date: end.toISOString(),
+                        is_multilingual: this.isMultilingual
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to create shift plan');
+                }
+                
+                const data = await response.json();
+                window.location.href = `/shift-plans/success?url=${encodeURIComponent(data.url)}&password=${encodeURIComponent(data.password)}`;
+            } catch (error) {
+                console.error('Error:', error);
+                alert($store.i18n.t('shift_plans.new.error_creating'));
+            }
+        }
+    }" @submit.prevent="submit" class="max-w-2xl mx-auto space-y-6">
+        
+        <!-- Language Selection -->
+        <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-4">
+                <input type="checkbox" x-model="isMultilingual" class="checkbox" />
+                <span class="label-text" x-text="$store.i18n.t('shift_plans.new.multilingual')">Bilingual Shift Plan</span>
+            </label>
+        </div>
+
+        <!-- Title Fields -->
+        <div class="space-y-4">
+            <template x-if="isMultilingual">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text" x-text="$store.i18n.t('shift_plans.new.title_de')">Title (German)</span>
+                    </label>
+                    <input type="text" x-model="titleDE" class="input input-bordered" required />
+                </div>
+            </template>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" x-text="isMultilingual ? $store.i18n.t('shift_plans.new.title_en') : $store.i18n.t('shift_plans.new.title')">Title</span>
+                </label>
+                <input type="text" x-model="titleEN" class="input input-bordered" required />
+            </div>
+        </div>
+
+        <!-- Description Fields -->
+        <div class="space-y-4">
+            <template x-if="isMultilingual">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text" x-text="$store.i18n.t('shift_plans.new.description_de')">Description (German)</span>
+                    </label>
+                    <textarea x-model="descriptionDE" class="textarea textarea-bordered h-24" required></textarea>
+                </div>
+            </template>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" x-text="isMultilingual ? $store.i18n.t('shift_plans.new.description_en') : $store.i18n.t('shift_plans.new.description')">Description</span>
+                </label>
+                <textarea x-model="descriptionEN" class="textarea textarea-bordered h-24" required></textarea>
+            </div>
+        </div>
+
+        <!-- Date Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" x-text="$store.i18n.t('shift_plans.new.start_date')">Start Date</span>
+                </label>
+                <input type="date" x-model="startDate" class="input input-bordered" required />
+            </div>
+            
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" x-text="$store.i18n.t('shift_plans.new.end_date')">End Date</span>
+                </label>
+                <input type="date" x-model="endDate" class="input input-bordered" required />
+            </div>
+        </div>
+
+        <div class="form-control mt-6">
+            <button type="submit" class="btn btn-primary" x-text="$store.i18n.t('shift_plans.new.create_button')">Create Shift Plan</button>
+        </div>
+    </form>
+</div>
+{{ end }} 

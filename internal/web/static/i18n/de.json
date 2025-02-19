@@ -1,0 +1,67 @@
+{
+    "common": {
+        "language": "Deutsch",
+        "made_with": "Erstellt mit ❤️ von Schipla"
+    },
+    "nav": {
+        "home": "Start",
+        "theme": {
+            "light": "Hell",
+            "dark": "Dunkel"
+        },
+        "language": "Sprache"
+    },
+    "home": {
+        "title": "Schichtplanung leicht gemacht",
+        "subtitle": "Erstelle und verwalte Schichtpläne mühelos. Perfekt für Veranstaltungen, Freiwilligenarbeit und Teamorganisation.",
+        "create_plan": "Neuen Plan erstellen",
+        "join_plan": "Bestehendem Plan beitreten",
+        "plan_token": "Plan-Token",
+        "enter_token": "Token eingeben",
+        "join": "Beitreten"
+    },
+    "shift_plans": {
+        "new": {
+            "title": "Neuer Schichtplan",
+            "hero_title": "Erstelle einen neuen Schichtplan",
+            "hero_subtitle": "Organisiere deine Schichten einfach und effizient",
+            "multilingual": "Zweisprachiger Schichtplan (Deutsch & Englisch)",
+            "title_de": "Titel (Deutsch)",
+            "title_en": "Titel (Englisch)",
+            "title": "Titel",
+            "description_de": "Beschreibung (Deutsch)",
+            "description_en": "Beschreibung (Englisch)",
+            "description": "Beschreibung",
+            "start_date": "Startdatum",
+            "end_date": "Enddatum",
+            "password": "Administrator-Passwort",
+            "password_hint": "Wird für administrative Änderungen benötigt",
+            "create_button": "Schichtplan erstellen",
+            "error_creating": "Fehler beim Erstellen des Schichtplans"
+        },
+        "success": {
+            "title": "Schichtplan erstellt",
+            "hero_title": "Schichtplan erfolgreich erstellt!",
+            "hero_subtitle": "Bitte speichere die folgenden Informationen sicher ab",
+            "warning": "WICHTIG: Notiere dir die URL und das Passwort! Ohne diese Informationen kannst du nicht mehr auf den Schichtplan zugreifen.",
+            "plan_url": "Schichtplan URL",
+            "admin_password": "Administrator-Passwort",
+            "view_plan": "Zum Schichtplan",
+            "print": "Drucken"
+        },
+        "view": {
+            "date": "Datum",
+            "time": "Uhrzeit",
+            "duration": "Dauer",
+            "required": "Benötigt",
+            "participants": "Teilnehmer",
+            "comment": "Kommentar",
+            "location": "Ort",
+            "join": "Teilnehmen",
+            "enter_name": "Bitte gib deinen Namen ein",
+            "error_joining": "Fehler beim Beitreten zur Schicht",
+            "hours": "{hours} Stunden",
+            "hours_minutes": "{hours} Stunden {minutes} Minuten"
+        }
+    }
+} 

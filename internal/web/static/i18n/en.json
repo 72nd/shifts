@@ -1,0 +1,67 @@
+{
+    "common": {
+        "language": "English",
+        "made_with": "Made with ❤️ by Schipla"
+    },
+    "nav": {
+        "home": "Home",
+        "theme": {
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "language": "Language"
+    },
+    "home": {
+        "title": "Shift Planning Made Easy",
+        "subtitle": "Create and manage shift plans effortlessly. Perfect for events, volunteer work, and team organization.",
+        "create_plan": "Create New Plan",
+        "join_plan": "Join Existing Plan",
+        "plan_token": "Plan Token",
+        "enter_token": "Enter token",
+        "join": "Join"
+    },
+    "shift_plans": {
+        "new": {
+            "title": "New Shift Plan",
+            "hero_title": "Create a New Shift Plan",
+            "hero_subtitle": "Organize your shifts easily and efficiently",
+            "multilingual": "Bilingual Shift Plan (German & English)",
+            "title_de": "Title (German)",
+            "title_en": "Title (English)",
+            "title": "Title",
+            "description_de": "Description (German)",
+            "description_en": "Description (English)",
+            "description": "Description",
+            "start_date": "Start Date",
+            "end_date": "End Date",
+            "password": "Administrator Password",
+            "password_hint": "Required for administrative changes",
+            "create_button": "Create Shift Plan",
+            "error_creating": "Error creating shift plan"
+        },
+        "success": {
+            "title": "Shift Plan Created",
+            "hero_title": "Shift Plan Successfully Created!",
+            "hero_subtitle": "Please save the following information securely",
+            "warning": "IMPORTANT: Make sure to save the URL and password! Without this information, you won't be able to access the shift plan again.",
+            "plan_url": "Shift Plan URL",
+            "admin_password": "Administrator Password",
+            "view_plan": "View Shift Plan",
+            "print": "Print"
+        },
+        "view": {
+            "date": "Date",
+            "time": "Time",
+            "duration": "Duration",
+            "required": "Required",
+            "participants": "Participants",
+            "comment": "Comment",
+            "location": "Location",
+            "join": "Join",
+            "enter_name": "Please enter your name",
+            "error_joining": "Error joining shift",
+            "hours": "{hours} hours",
+            "hours_minutes": "{hours} hours {minutes} minutes"
+        }
+    }
+} 

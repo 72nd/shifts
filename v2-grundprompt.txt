@@ -1,0 +1,113 @@
+= Grundprompt v2
+
+Gerne möchte ich dir erzählen, was wir dieses mal alles anders machen möchten. Da es relativ viel ist wird es wohl auch weniger ein Übertragen als ein Neuschreiben. Die eigentliche Funktionalität der Sichtplanansicht ist aber super und soll deshlab funktional so übernommen werden.
+
+== Was wir erreichen wollen
+
+Schichtplanung (z.B. für Veranstaltungen) ist oft ein komplexes Unterfangen. Oft ist ein Hauptproblem, dass die Applikationen dafür nicht wirklich kollaboratives Arbeiten ermöglichen. Das soll unsere Applikation ändern. Organisatoren sollen selbstständig neue Schichtpläne anlegen können, die Sie dann verwalten können. Die jeweiligen Schichtpläne funktinieren dann genau so wie in der alten Version. 
+
+Das Nutzerinterface sollte einfach gehalten und zweckdienlich sein.
+
+== User Storie
+
+Hier beschreiben wir, wie das fertige System für den User funktionieren soll.
+
+
+== Technische Entscheidungen
+
+Programmiersprache Backend: Go ist eine super Wahl für das Backend und mit der neune Projektstruktur wird das auf alle Fälle was. Nutze bitte gerne weiterhin gorilla/mux als Router, go-sqlite3 für das Datenbackend und bluemonday für die Sanitazion.
+
+Config-Management: Ich finde den Ansatz mit der Konfiguration mittels Env-Variabeln supper. Aktuell braucht es da nur den Port des HTTP-Services und ein Flag für den Debug-Mode an- und abzuschalten.
+
+Logging: Baue bitte gleich von Beginn an ein schönes und gutes Logging für die Backendapplikation ein. Nutze dafür das builtin slog Packet von Go.
+
+Frontend: Da würde ich dieses mal einen anderen Ansatz wählen und Alpine.js einsetzen. Und da würde ich sehr in der Architekturvorstellung von Alpine bleiben. Also dass das HTML mit den Templatingfunktionen von Alpine sich um die Darstellung kümmert und wir im Datenmodell den Zustand halten und die Client-Server-Kommunikation abbilden.
+
+i18n: Lokalisierung ist natürlich ein großes Thema. Ich habe sehr gute Erfahrungen mit diesem Alpine.js Plugin gemacht: https://github.com/rehhouari/alpinejs-i18n Lies dir am Besten mal das README auf GitHub durch. Allgemein wäre es super, wenn die Daten für die Übersetzung vom Backend zur Verfügung gestellt werden und in JSON-files definiert werden. Wie auch allgemein müssen wir aber die Komplexität nicht zu groß machen, da über den hier beschriebenen Funktionsumfang nicht viel an Funktionalität noch hinzufügen werden. Vermeide also zu komplexe Verschachtlungen in der Definitionsdatei der Übersetzungen.
+
+UI-Komponenten: Da es sicher ein paar komplexere Komponenten in der UI geben wird, könnten wir uns überlegen, diese mittels der golang html-templates in eigene Dateien auszulagern.
+
+Frontenlibrary: Ich würde sehr gerne Tailwind mit daisyUI nutzen. Wenn du daisyUI nicht so gut kennst, nutze einfach Tailwind.
+
+Kein NPM: Weder für das Entwickeln noch für das Betreiben soll eine NPM Installation notwendig sein.
+
+Barrierefreiheit: Nutze wenn immer möglich die vorgesehenen HTML-Elemente oder nutze Aria-Tags.
+
+
+== Code
+
+Der in diesem Text beschriebene Leistungsunfang entspricht dem Endzustand. Es werden also nicht wirklich mehr Features dazukommen. Deshalb musst du auch nicht unnötige Absraktionen einbauen. Code also nach dem Prinzip KISS (keep it simple stupid). Wartbarkeit ist ganz wichtig und der Code sollte auch immer von Menschen schnell und gut verstanden werden können.
+
+Verwende für Bezeichnungen im Code (Variablennamen etc.), Kommentare und Log-Outputs immer Englisch.
+
+
+== i18n und Sprachverwendung
+
+Die Anwendung soll einfach in verschiedene Sprachen lokalisierbar sein. Wir starten mit Deutsch und Englisch.
+
+Nutze auf Deutsch wenn immer möglich genderneutrale Formulierungen wie Personen oder Studierende. Sonst gendere bitte mit Doppelpunkt. Du darfst und sollst den Nutzer immer mit Du ansprechen. So wird das Tool nahbarer und wirkt sympatisch.
+
+Auch gewisse Felder, welcher der Nutzer ausfüllt, die eine Eingabe für beide Sprachen benötigen. Bsp.: Titel des Schichttyps.
+
+
+== Datenstrukturen
+
+Es soll in etwa folgende Datenstrukturen existieren. Alle Felder die in Klammern ein i18n haben, müssen für jede Sprachversion vorliegen. Also Titel (i18n) bedeutet, dass der Nutzer sowohl einen Deutschen wie auch einen Englischen Titel definieren muss.
+
+=== Schichtplan
+
+Der Schichtplan ist das neue große Feature. Im Gegensatz zu Früher kann eine Instanz der Applikation nun viele Schichtpläne vorhalten. Hierfür braucht es auf alle Fälle eine zusätzliche Datenstruktur, welche die Schichttypen und Schichten einem Schichtplan zuordnet. Grundsätzlich hat die Datenstruktur folgende Felder:
+
+- Titel (i18n)
+- Beschreibung (i18n)
+- Startdatum (Zeitraum ab wann Schichten erstellt werden können)
+- Enddatum (Zeitraum bis wann Schichten erstellt werden können)
+- Token: Eine nicht erratbare Zeichnkette die dazu genutzt werden kann, eine URL für den Schichtplan zu bilden. Damit dann Menschen, die die URL kennen auf den Schichtplan zugreifen können (sowas in Richtung example.com/plan/TOKEN).
+- Admin-Passwort, zufälliges 20-stelliges Passwort, welches bennötigt wird, um den Schichtplan zu bearbeiten.
+
+Es ist wichtig, dass nur Menschen auf den Schichtplan Zugriff haben dürfen, welche diese geheime URL kennen. Es gibt also keine Übersicht über alle existierenden Schichtpläne.
+
+
+=== Schichttyp
+
+Ein Schichttyp fasst Schichten eines gewissen Typs zusammen. (Siehe alte Version des Programms.) Ein Beispiel wäre der Schichttyp Getränkestand. Ein Schichttyp hat folgende Felder
+
+- Titel (i18n, also sowohl Deutsch wie Englisch, Textfeld).
+- Beschreibung (i18n, also sowohl Deutsch wie Englisch, Textarea)
+- Ort (i18n, also sowohl Deutsch wie Englisch, Textfeld)
+- Passwort (optional)
+
+Alles weitere findest du in der alten Version. Es funktioniert eigentlich alles genau so wie früher. Auch die Möglichkeit, ein Schichttyp mit einem Passwort zu schützen.
+
+=== Schicht
+
+Auch die funktioniert eigentlich genau so wie früher. Es gibt ne Startzeit und ne Dauer in Minuten sowie die Anzahl der bennötigten Personen. Neu soll auch ein optionales Kommentarfeld hinzukommen (i18n-siert), welches zusätzliche Informationen über die Schicht enthält.
+
+== Ansichten
+
+Folgende Ansichten (grob) wird die Applikation brauchen. Allgemein: Es gibt eine Navbar, welche den Sprachwechsel beinhaltet und auf die Hilfeseite verweist.
+
+=== Startseite
+
+Startseite: Die Startseite bietet einen kurzen Begrüßungstext. Darüber hinaus kann auf der Startseite ein neuer Schichtplan erstellt werden. Beim Erstellen müssen die Informationen für den Schichtplan wie Titel, Beschreibung sowie Start- und Enddatum.
+
+Wurde ein Schichtplan erfolgreich angelegt, zeigt eine Ansicht die geheime URL zum Schichtplan und das Adminpasswort an. Die URL und das Passwort kann auch bequem mit einem Klick in die Zwischenablage kopiert werden. Es gibt ein Button der auf den Schichtplan verklinkt. Diese Ansicht erklärt auch, dass man sich das Passwort und die URL gut merken soll, da man sonst nie mehr Zugriff auf den Schichtplan hat.
+
+=== Hilfeseite
+
+Die Hilfeseite erklärt die Webapplikation. Als Basis davon dient pro Sprache eine Markdowndatei, welche Serverseitig gerendert wird.
+
+=== Schichtplan
+
+Der Schichtplan funktioniert genau so wie in der alten Version. Auch das Layout kann übernommen werden. Oberhalb des Schichtplans wird die kurze Beschreibung des Plans angezeigt.
+
+Die Ansicht kann nach Schichttypen, Tage, Status und Namen der Menschen gefiltert werden.
+
+Man kann sich als Admin einloggen. Hat man sich eingeloggt, kann man Schichttypen und Schichten anlegen und bearbeiten. Weiter kann man die Schichttypen sortieren. Die Schichten werden pro Tag in einer Tabelle gruppiert wie bei der alten Version. Wie auch bei der alten Version liegt das Hauptaugenmerk auf einer kompakten Darstellung, damit viele Schichten angezeigt werden können.
+
+Jeder Benutzer (auch ohne Login) kann sich und andere Menschen aus Schichten ein- und austragen.
+
+
+== Wie wir nun vorgehen
+
+Nun ist das natürlich ziemlich viel, was es zu machen gibt. Deshalb wählen wir ein schrittweises und überlegtes Vorgehen. Ich werde dir nun dann in Schritten sagen, was wir machen werden. Das wird toll!

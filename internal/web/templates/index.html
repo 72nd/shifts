@@ -1,0 +1,36 @@
+{{ template "base.html" . }}
+
+{{ define "content" }}
+<div x-data="indexPage">
+    <div class="hero bg-base-200 rounded-box">
+        <div class="hero-content text-center py-12">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold" x-text="$store.i18n.t('home.title')">Shift Planning Made Easy</h1>
+                <p class="py-6" x-text="$store.i18n.t('home.subtitle')">Create and manage shift plans effortlessly. Perfect for events, volunteer work, and team organization.</p>
+                <button @click="createNewPlan" class="btn btn-primary" x-text="$store.i18n.t('home.create_plan')">Create New Plan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider my-12">OR</div>
+
+    <div class="card bg-base-200">
+        <div class="card-body">
+            <h2 class="card-title" x-text="$store.i18n.t('home.join_plan')">Join Existing Plan</h2>
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text" x-text="$store.i18n.t('home.plan_token')">Plan Token</span>
+                </label>
+                <div class="input-group">
+                    <input type="text" x-model="planToken" :placeholder="$store.i18n.t('home.enter_token')" class="input input-bordered flex-1" />
+                    <button @click="joinPlan" class="btn btn-primary" x-text="$store.i18n.t('home.join')">Join</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script src="/static/js/index.js"></script>
+{{ end }} 
