@@ -73,7 +73,27 @@
             "expand_details": "Show details",
             "collapse_details": "Hide details",
             "hours": "{hours} hours",
-            "hours_minutes": "{hours} hours {minutes} minutes"
+            "hours_minutes": "{hours} hours {minutes} minutes",
+            "filter": {
+                "title": "Filters",
+                "active": "Active",
+                "active_count": "filters active",
+                "types": "Shift Types",
+                "days": "Days",
+                "all_days": "All Days",
+                "status": "Status",
+                "status_all": "All Shifts",
+                "status_empty": "Completely Empty",
+                "status_critical": "Critical (< 50%)",
+                "status_full": "Fully Staffed",
+                "search": "Search",
+                "search_placeholder": "Search by name...",
+                "clear": "Clear filters",
+                "selected": "selected",
+                "select_types": "Select shift types...",
+                "n_types_selected": "{count} shift types selected",
+                "all_types": "All Shift Types"
+            }
         }
     }
 } 

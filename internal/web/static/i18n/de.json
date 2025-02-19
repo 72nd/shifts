@@ -73,7 +73,27 @@
             "expand_details": "Details anzeigen",
             "collapse_details": "Details ausblenden",
             "hours": "{hours} Stunden",
-            "hours_minutes": "{hours} Stunden {minutes} Minuten"
+            "hours_minutes": "{hours} Stunden {minutes} Minuten",
+            "filter": {
+                "title": "Filter",
+                "active": "Aktiv",
+                "active_count": "Filter aktiv",
+                "types": "Schichttypen",
+                "days": "Tage",
+                "all_days": "Alle Tage",
+                "status": "Status",
+                "status_all": "Alle Schichten",
+                "status_empty": "Komplett leer",
+                "status_critical": "Kritisch (< 50%)",
+                "status_full": "Voll besetzt",
+                "search": "Suche",
+                "search_placeholder": "Nach Namen suchen...",
+                "clear": "Filter zurücksetzen",
+                "selected": "ausgewählt",
+                "select_types": "Schichttypen auswählen...",
+                "n_types_selected": "{count} Schichttypen ausgewählt",
+                "all_types": "Alle Schichttypen"
+            }
         }
     }
 } 
