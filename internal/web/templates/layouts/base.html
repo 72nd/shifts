@@ -6,59 +6,44 @@
     <title>Schipla</title>
     
     <!-- DaisyUI -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet">
+    <link href="/static/vendor/daisyui.min.css" rel="stylesheet">
     
     <!-- Tailwind (must be after DaisyUI) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/vendor/tailwind.min.js"></script>
     
     <!-- Alpine.js and plugins -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="https://unpkg.com/@rehhouari/alpinejs-i18n@1.x.x/dist/cdn.min.js"></script>
+    <script defer src="/static/vendor/alpine.min.js"></script>
+    <script src="/static/vendor/alpine-i18n.min.js"></script>
     
     <!-- Initialize translations -->
     <script>
+        // Wait for Alpine and i18n plugin to load
         document.addEventListener('alpine:init', () => {
-            Alpine.store('i18n', {
-                locale: 'de',
-                fallback: 'en',
-                messages: {},
-                async init() {
-                    // Load translations
-                    const [de, en] = await Promise.all([
-                        fetch('/static/i18n/de.json').then(r => r.json()),
-                        fetch('/static/i18n/en.json').then(r => r.json())
-                    ]);
-                    
-                    this.messages = {
-                        de,
-                        en
-                    };
-
-                    // Load saved language preference
-                    const savedLocale = localStorage.getItem('locale');
-                    if (savedLocale) {
-                        this.locale = savedLocale;
-                    }
-                },
-                t(key) {
-                    const keys = key.split('.');
-                    let value = this.messages[this.locale];
-                    for (const k of keys) {
-                        value = value?.[k];
-                    }
-                    if (value === undefined && this.fallback) {
-                        value = this.messages[this.fallback];
-                        for (const k of keys) {
-                            value = value?.[k];
-                        }
-                    }
-                    return value || key;
-                },
-                change(locale) {
-                    this.locale = locale;
-                    localStorage.setItem('locale', locale);
-                }
+            // Default locale
+            const locale = localStorage.getItem('locale') || 'de';
+            
+            // Load translations
+            Promise.all([
+                fetch('/static/i18n/de.json').then(r => r.json()),
+                fetch('/static/i18n/en.json').then(r => r.json())
+            ]).then(([de, en]) => {
+                // Initialize AlpineI18n with translations
+                window.AlpineI18n.create(locale, {
+                    de,
+                    en
+                });
+                
+                // Set fallback locale
+                window.AlpineI18n.fallbackLocale = 'en';
+                
+                // Listen to locale changes to persist in localStorage
+                document.addEventListener('alpine-i18n:locale-change', () => {
+                    localStorage.setItem('locale', window.AlpineI18n.locale);
+                });
             });
+
+            // Register i18n plugin
+            // Alpine.plugin(window.AlpineI18n);
         });
     </script>
     
@@ -83,25 +68,25 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-base-100" x-data x-init="$store.i18n.init()">
+<body class="min-h-screen bg-base-100" x-data>
     <!-- Navigation -->
     <nav class="navbar bg-base-200">
         <div class="container">
             <div class="flex-1">
-                <a href="/" class="text-xl font-semibold" x-text="$store.i18n.t('nav.home')">Home</a>
+                <a href="/" class="text-xl font-semibold" x-text="$t('nav.home')">Home</a>
             </div>
             <div class="flex items-center gap-2">
                 <!-- Language selector -->
                 <div class="dropdown dropdown-end">
                     <label tabindex="0" class="btn btn-ghost normal-case">
-                        <span x-text="$store.i18n.t('common.language')">Language</span>
+                        <span x-text="$t('common.language')">Language</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </label>
                     <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a @click="$store.i18n.change('de')" :class="{ 'active': $store.i18n.locale === 'de' }">Deutsch</a></li>
-                        <li><a @click="$store.i18n.change('en')" :class="{ 'active': $store.i18n.locale === 'en' }">English</a></li>
+                        <li><a @click="$locale('de')" :class="{ 'active': $locale === 'de' }">Deutsch</a></li>
+                        <li><a @click="$locale('en')" :class="{ 'active': $locale === 'en' }">English</a></li>
                     </ul>
                 </div>
                 
@@ -129,7 +114,7 @@
     <!-- Footer -->
     <footer class="footer footer-center p-4 bg-base-200 text-base-content">
         <div>
-            <p x-text="$store.i18n.t('common.made_with')">Made with ❤️ using Go</p>
+            <p x-text="$t('common.made_with')">Made with ❤️ using Go</p>
         </div>
     </footer>
 

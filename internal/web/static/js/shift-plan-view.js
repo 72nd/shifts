@@ -1,23 +1,26 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
-        // Reaktive Datenstruktur
-        data: Alpine.reactive({
-            plan: null,
-            shiftTypes: [],
-            currentLang: 'de',
-            isLoading: true,
-            error: null
-        }),
+        // State
+        plan: null,
+        shiftTypes: [],
+        isLoading: true,
+        error: null,
+        
+        // Modal state
+        currentShift: null,
+        currentParticipant: null,
+        joinName: '',
+        joinNameError: null,
 
         // Computed property für den Ladezustand
         get isReady() {
-            return !this.data.isLoading && !this.data.error && this.data.plan;
+            return !this.isLoading && !this.error && this.plan;
         },
 
         // Initialisierung
         init() {
             // Setze Standardwerte
-            this.data.plan = {
+            this.plan = {
                 is_multilingual: false,
                 title_en: '',
                 title_de: '',
@@ -63,8 +66,8 @@ document.addEventListener('alpine:init', () => {
 
         // Daten laden
         async loadPlan(token) {
-            this.data.isLoading = true;
-            this.data.error = null;
+            this.isLoading = true;
+            this.error = null;
 
             try {
                 // Plan laden
@@ -75,7 +78,7 @@ document.addEventListener('alpine:init', () => {
                 const planData = await planResponse.json();
                 
                 // Stelle sicher, dass alle Properties existieren
-                this.data.plan = {
+                this.plan = {
                     is_multilingual: planData.is_multilingual || false,
                     title_en: planData.title_en || '',
                     title_de: planData.title_de || '',
@@ -94,19 +97,17 @@ document.addEventListener('alpine:init', () => {
                 const types = await typesResponse.json();
                 
                 // Gruppiere Schichten nach Datum für jeden Typ
-                this.data.shiftTypes = types.map(type => ({
+                this.shiftTypes = types.map(type => ({
                     ...type,
                     shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
 
-                // Sprache setzen
-                this.data.currentLang = this.data.plan.is_multilingual ? 'de' : 'en';
             } catch (error) {
                 console.error('Error loading plan:', error);
-                this.data.error = error.message;
+                this.error = error.message;
                 
                 // Zurücksetzen auf sicheren Zustand
-                this.data.plan = {
+                this.plan = {
                     is_multilingual: false,
                     title_en: '',
                     title_de: '',
@@ -116,35 +117,97 @@ document.addEventListener('alpine:init', () => {
                     end_date: '',
                     token: ''
                 };
-                this.data.shiftTypes = [];
+                this.shiftTypes = [];
             } finally {
-                this.data.isLoading = false;
+                this.isLoading = false;
             }
         },
 
-        // Teilnehmer hinzufügen
-        async joinShift(shift) {
-            if (!shift || !this.data.plan.token) return;
+        // Modal functions
+        openJoinModal(shift) {
+            if (!shift) return;
+            this.currentShift = shift;
+            this.joinName = '';
+            this.joinNameError = null;
+            const modal = document.getElementById('join_modal');
+            if (modal) modal.showModal();
+        },
+
+        closeJoinModal() {
+            this.currentShift = null;
+            this.joinName = '';
+            this.joinNameError = null;
+            const modal = document.getElementById('join_modal');
+            if (modal) modal.close();
+        },
+
+        async submitJoinModal() {
+            if (!this.joinName?.trim()) {
+                this.joinNameError = this.$t('shift_plans.view.error_name_required');
+                return;
+            }
+
+            // Check if name already exists in this shift
+            const nameExists = this.currentShift.participants?.some(
+                p => p.name.toLowerCase() === this.joinName.trim().toLowerCase()
+            );
+
+            if (nameExists) {
+                this.joinNameError = this.$t('shift_plans.view.error_name_exists');
+                return;
+            }
 
             try {
-                const name = prompt(this.$store.i18n.t('shift_plans.view.enter_name'));
-                if (!name) return;
-
-                const response = await fetch(`/api/shifts/${shift.id}/participants`, {
+                const response = await fetch(`/api/shifts/${this.currentShift.id}/participants`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ name: this.joinName.trim() })
                 });
 
                 if (!response.ok) {
                     throw new Error('Failed to join shift');
                 }
 
-                // Daten neu laden
-                await this.loadPlan(this.data.plan.token);
+                // Daten neu laden und Modal schließen
+                await this.loadPlan(this.plan.token);
+                this.closeJoinModal();
             } catch (error) {
                 console.error('Error joining shift:', error);
-                alert(this.$store.i18n.t('shift_plans.view.error_joining'));
+                this.joinNameError = this.$t('shift_plans.view.error_joining');
+            }
+        },
+
+        openRemoveModal(shift, participant) {
+            if (!shift || !participant) return;
+            this.currentShift = shift;
+            this.currentParticipant = participant;
+            const modal = document.getElementById('remove_modal');
+            if (modal) modal.showModal();
+        },
+
+        closeRemoveModal() {
+            this.currentShift = null;
+            this.currentParticipant = null;
+            const modal = document.getElementById('remove_modal');
+            if (modal) modal.close();
+        },
+
+        async submitRemoveModal() {
+            try {
+                const response = await fetch(`/api/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to remove participant');
+                }
+
+                // Daten neu laden und Modal schließen
+                await this.loadPlan(this.plan.token);
+                this.closeRemoveModal();
+            } catch (error) {
+                console.error('Error removing participant:', error);
+                alert(this.$t('shift_plans.view.error_removing'));
             }
         },
 
@@ -162,11 +225,12 @@ document.addEventListener('alpine:init', () => {
                     day: 'numeric'
                 };
                 
-                const locale = this.data.currentLang === 'de' ? 'de-DE' : 'en-US';
+                // Use the current language from Alpine store
+                const locale = this.$locale() === 'de' ? 'de-DE' : 'en-US';
                 const formatted = date.toLocaleDateString(locale, options);
                 
-                // Für Deutsch: Ersten Buchstaben groß schreiben
-                if (this.data.currentLang === 'de') {
+                // For German: Capitalize first letter
+                if (this.$locale() === 'de') {
                     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
                 }
                 return formatted;
@@ -184,7 +248,7 @@ document.addEventListener('alpine:init', () => {
                 
                 // Format start time in 24h format
                 const startTime = startDate.toLocaleTimeString(
-                    this.data.currentLang === 'de' ? 'de-DE' : 'en-US',
+                    this.$locale() === 'de' ? 'de-DE' : 'en-US',
                     {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -196,7 +260,7 @@ document.addEventListener('alpine:init', () => {
                 const endDate = new Date(startDate.getTime());
                 endDate.setMinutes(endDate.getMinutes() + duration);
                 const endTime = endDate.toLocaleTimeString(
-                    this.data.currentLang === 'de' ? 'de-DE' : 'en-US',
+                    this.$locale() === 'de' ? 'de-DE' : 'en-US',
                     {
                         hour: '2-digit',
                         minute: '2-digit',

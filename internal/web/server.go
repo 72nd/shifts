@@ -109,6 +109,7 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/shift-plans/{token}", s.handleGetShiftPlan).Methods("GET")
 	api.HandleFunc("/shift-plans/{token}/types", s.handleGetShiftTypes).Methods("GET")
 	api.HandleFunc("/shifts/{id}/participants", s.handleAddParticipant).Methods("POST")
+	api.HandleFunc("/shifts/{id}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
 	// Plan routes
 	plans := s.router.PathPrefix("/shift-plans/{token}").Subrouter()
@@ -314,4 +315,51 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(participant)
+}
+
+func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	shiftID, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the participant from the database first to get their name
+	participants, err := s.db.GetParticipantsByShift(shiftID)
+	if err != nil {
+		s.logger.Error("failed to get participants", "error", err)
+		http.Error(w, "Failed to get participants", http.StatusInternalServerError)
+		return
+	}
+
+	participantID, err := strconv.ParseInt(vars["participantId"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid participant ID", http.StatusBadRequest)
+		return
+	}
+
+	// Find the participant with the matching ID
+	var participantName string
+	for _, p := range participants {
+		if p.ID == participantID {
+			participantName = p.Name
+			break
+		}
+	}
+
+	if participantName == "" {
+		http.Error(w, "Participant not found", http.StatusNotFound)
+		return
+	}
+
+	// Remove the participant using their name
+	err = s.db.RemoveParticipant(shiftID, participantName)
+	if err != nil {
+		s.logger.Error("failed to remove participant", "error", err)
+		http.Error(w, "Failed to remove participant", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -1,7 +1,9 @@
 {
     "common": {
         "language": "Deutsch",
-        "made_with": "Erstellt mit ❤️ von Schipla"
+        "made_with": "Erstellt mit ❤️ von Schipla",
+        "cancel": "Abbrechen",
+        "remove": "Entfernen"
     },
     "nav": {
         "home": "Start",
@@ -58,8 +60,18 @@
             "comment": "Kommentar",
             "location": "Ort",
             "join": "Teilnehmen",
+            "join_shift": "An Schicht teilnehmen",
             "enter_name": "Bitte gib deinen Namen ein",
+            "name_placeholder": "Dein Name",
             "error_joining": "Fehler beim Beitreten zur Schicht",
+            "error_name_required": "Bitte gib einen Namen ein",
+            "error_name_exists": "Dieser Name existiert bereits in dieser Schicht",
+            "remove_participant": "Teilnehmer entfernen",
+            "confirm_remove_participant_1": "Möchtest du ",
+            "confirm_remove_participant_2": " wirklich aus dieser Schicht entfernen?",
+            "error_removing": "Fehler beim Entfernen des Teilnehmers",
+            "expand_details": "Details anzeigen",
+            "collapse_details": "Details ausblenden",
             "hours": "{hours} Stunden",
             "hours_minutes": "{hours} Stunden {minutes} Minuten"
         }

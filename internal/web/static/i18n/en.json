@@ -1,7 +1,9 @@
 {
     "common": {
         "language": "English",
-        "made_with": "Made with ❤️ by Schipla"
+        "made_with": "Made with ❤️ by Schipla",
+        "cancel": "Cancel",
+        "remove": "Remove"
     },
     "nav": {
         "home": "Home",
@@ -58,8 +60,18 @@
             "comment": "Comment",
             "location": "Location",
             "join": "Join",
+            "join_shift": "Join Shift",
             "enter_name": "Please enter your name",
+            "name_placeholder": "Your name",
             "error_joining": "Error joining shift",
+            "error_name_required": "Please enter a name",
+            "error_name_exists": "This name already exists in this shift",
+            "remove_participant": "Remove Participant",
+            "confirm_remove_participant_1": "Are you sure you want to remove ",
+            "confirm_remove_participant_2": " from this shift?",
+            "error_removing": "Error removing participant",
+            "expand_details": "Show details",
+            "collapse_details": "Hide details",
             "hours": "{hours} hours",
             "hours_minutes": "{hours} hours {minutes} minutes"
         }
