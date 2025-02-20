@@ -1,0 +1,152 @@
+{{ define "shift-modal" }}
+<dialog id="shift_modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-2" x-text="shiftModal.currentShift ? $t('shift_plans.view.edit_shift') : $t('shift_plans.view.new_shift')"></h3>
+        
+        <!-- Error Message Box (for general errors) -->
+        <div x-show="shiftModal.errors.general" class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="shiftModal.errors.general"></span>
+        </div>
+        
+        <form @submit.prevent="shiftModal.submit()" class="space-y-3">
+            <!-- Shift Type Selector (only shown when creating a new shift) -->
+            <div x-show="!shiftModal.currentShift" class="form-control w-full">
+                <label class="label py-0">
+                    <span class="label-text font-medium" x-text="$t('shift_plans.view.shift_type')"></span>
+                </label>
+                <select x-model="shiftModal.form.type_id" 
+                        class="select select-bordered select-sm w-full"
+                        :class="{ 'select-error': shiftModal.errors.type_id }">
+                    <option value="" disabled x-text="$t('shift_plans.view.select_shift_type')"></option>
+                    <template x-for="type in shiftTypes" :key="type.id">
+                        <option :value="type.id" 
+                                x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
+                        </option>
+                    </template>
+                </select>
+                <label class="label py-0" x-show="shiftModal.errors.type_id">
+                    <span class="label-text-alt text-error" x-text="shiftModal.errors.type_id"></span>
+                </label>
+            </div>
+
+            <!-- Time Related Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Start Time with Day Helper -->
+                <div class="form-control w-full">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="$t('shift_plans.view.start_time')"></span>
+                    </label>
+                    <input type="datetime-local" 
+                           x-model="shiftModal.form.start_time"
+                           class="input input-bordered input-sm w-full"
+                           :class="{ 'input-error': shiftModal.errors.start_time }" />
+                    <!-- Day Helper Component -->
+                    <div class="mt-1 flex items-center gap-2 text-sm opacity-70">
+                        <span x-text="$t('shift_plans.view.relative_day')"></span>
+                        <input type="number" 
+                               x-model="shiftModal.form.relative_day"
+                               @input="shiftModal.updateStartTimeFromRelativeDay($event.target.value)"
+                               class="input input-bordered input-xs w-20" />
+                    </div>
+                    <label class="label py-0" x-show="shiftModal.errors.start_time">
+                        <span class="label-text-alt text-error" x-text="shiftModal.errors.start_time"></span>
+                    </label>
+                </div>
+
+                <!-- Duration -->
+                <div class="form-control w-full">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="$t('shift_plans.view.duration')"></span>
+                        <span class="label-text-alt" x-text="$t('shift_plans.view.duration_unit')"></span>
+                    </label>
+                    <input type="number" 
+                           x-model="shiftModal.form.duration"
+                           min="1"
+                           class="input input-bordered input-sm w-full"
+                           :class="{ 'input-error': shiftModal.errors.duration }" />
+                    <label class="label py-0" x-show="shiftModal.errors.duration">
+                        <span class="label-text-alt text-error" x-text="shiftModal.errors.duration"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Required Participants -->
+            <div class="form-control w-full">
+                <label class="label py-0">
+                    <span class="label-text font-medium" x-text="$t('shift_plans.view.required_participants')"></span>
+                </label>
+                <input type="number" 
+                       x-model="shiftModal.form.required"
+                       min="1"
+                       class="input input-bordered input-sm w-full"
+                       :class="{ 'input-error': shiftModal.errors.required }" />
+                <label class="label py-0" x-show="shiftModal.errors.required">
+                    <span class="label-text-alt text-error" x-text="shiftModal.errors.required"></span>
+                </label>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-if="plan.is_multilingual">
+                    <!-- German Comment -->
+                    <div class="form-control w-full">
+                        <label class="label py-0">
+                            <span class="label-text font-medium" x-text="$t('shift_plans.view.comment_de')"></span>
+                            <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
+                        </label>
+                        <textarea x-model="shiftModal.form.comment_de"
+                                  class="textarea textarea-bordered textarea-sm w-full h-16"
+                                  :class="{ 'textarea-error': shiftModal.errors.comment_de }"></textarea>
+                    </div>
+                </template>
+
+                <!-- English Comment -->
+                <div class="form-control w-full" :class="{ 'md:col-span-2': !plan.is_multilingual }">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="plan.is_multilingual ? $t('shift_plans.view.comment_en') : $t('shift_plans.view.comment')"></span>
+                        <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
+                    </label>
+                    <textarea x-model="shiftModal.form.comment_en"
+                              class="textarea textarea-bordered textarea-sm w-full h-16"
+                              :class="{ 'textarea-error': shiftModal.errors.comment_en }"></textarea>
+                </div>
+            </div>
+
+            <!-- Footer: Batch Creation + Actions -->
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-base-content/20">
+                <!-- Batch Creation Modifier -->
+                <div x-show="!shiftModal.currentShift" class="flex items-center gap-4">
+                    <div>
+                        <span class="font-medium opacity-70" x-text="$t('shift_plans.view.consecutive_shifts')"></span>
+                        <p class="text-xs mt-0.5 opacity-50" x-text="$t('shift_plans.view.consecutive_shifts_help')"></p>
+                    </div>
+                    <input type="number" 
+                           x-model="shiftModal.form.consecutive_shifts"
+                           min="1"
+                           class="input input-bordered input-sm w-20"
+                           :class="{ 'input-error': shiftModal.errors.consecutive_shifts }" />
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2">
+                    <button type="button" 
+                            @click="shiftModal.close()" 
+                            class="btn btn-sm" 
+                            x-text="$t('common.cancel')">
+                    </button>
+                    <button type="submit" 
+                            class="btn btn-sm btn-primary" 
+                            x-text="shiftModal.currentShift ? $t('common.save') : $t('common.create')">
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{{ end }} 

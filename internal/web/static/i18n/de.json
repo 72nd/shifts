@@ -6,7 +6,8 @@
         "remove": "Entfernen",
         "save": "Speichern",
         "create": "Erstellen",
-        "delete": "Löschen"
+        "delete": "Löschen",
+        "optional": "Optional"
     },
     "nav": {
         "home": "Start",
@@ -58,6 +59,7 @@
             "date": "Datum",
             "time": "Uhrzeit",
             "duration": "Dauer",
+            "duration_unit": "Minuten",
             "required": "Benötigt",
             "participants": "Teilnehmer",
             "comment": "Kommentar",
@@ -123,7 +125,31 @@
             "confirm_delete_shift_type_2": " wirklich löschen?",
             "error_deleting_shift_type": "Fehler beim Löschen des Schichttyps",
             "banner_title": "Willkommen bei Ihrem Schichtplan",
-            "banner_subtitle": "Verwalten Sie Ihre Schichten effizient"
+            "banner_subtitle": "Verwalten Sie Ihre Schichten effizient",
+            "new_shift": "Neue Schicht",
+            "edit_shift": "Schicht bearbeiten",
+            "start_time": "Startzeit",
+            "duration": "Dauer",
+            "duration_unit": "Minuten",
+            "required_participants": "Benötigte Teilnehmer",
+            "comment_de": "Kommentar (Deutsch)",
+            "comment_en": "Kommentar (Englisch)",
+            "comment": "Kommentar",
+            "cancel": "Abbrechen",
+            "shift_type": "Schichttyp",
+            "error_start_time_required": "Bitte gib eine Startzeit ein",
+            "error_duration_required": "Bitte gib eine Dauer ein",
+            "error_required_participants_required": "Bitte gib die Anzahl benötigter Teilnehmer ein",
+            "error_comment_required": "Bitte gib einen Kommentar ein",
+            "error_creating_shift": "Fehler beim Erstellen der Schicht",
+            "error_updating_shift": "Fehler beim Aktualisieren der Schicht",
+            "add_shift": "Neue Schicht hinzufügen",
+            "error_shift_type_required": "Bitte wähle einen Schichttyp aus",
+            "error_invalid_shift_type": "Ungültiger Schichttyp ausgewählt",
+            "select_shift_type": "Schichttyp auswählen...",
+            "consecutive_shifts": "Mehrere Schichten erstellen",
+            "consecutive_shifts_help": "Erstellt mehrere aufeinanderfolgende Schichten mit den gleichen Eigenschaften.",
+            "relative_day": "Tag (relativ zum Start)"
         }
     }
 } 

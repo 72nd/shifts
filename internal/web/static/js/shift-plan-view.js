@@ -1,3 +1,7 @@
+// Import the modal classes
+import { Modal } from './modal.js';
+import { ShiftModal } from './shift-modal.js';
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
         // State
@@ -42,6 +46,32 @@ document.addEventListener('alpine:init', () => {
             location_de: null,
             location_en: null
         },
+
+        // Shift Modal state
+        currentShift: null,
+        currentShiftType: null,
+        shiftForm: {
+            type_id: '',
+            start_time: '',
+            duration: 60,
+            required: 1,
+            comment_de: '',
+            comment_en: '',
+            consecutive_shifts: 1,
+            relative_day: 1
+        },
+        shiftErrors: {
+            type_id: null,
+            start_time: null,
+            duration: null,
+            required: null,
+            comment_de: null,
+            comment_en: null,
+            general: null
+        },
+
+        // Initialize modals
+        shiftModal: new ShiftModal(),
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -682,6 +712,28 @@ document.addEventListener('alpine:init', () => {
                         : 'shift_plans.view.error_creating_shift_type'
                 );
             }
+        },
+
+        // Shift Modal functions
+        openShiftModal(shift = null, type = null) {
+            this.shiftModal.openWith(shift, type);
+        },
+
+        // Helper function to calculate relative day from a date
+        getRelativeDayFromDate(date) {
+            const startDate = new Date(this.plan.start_date);
+            const targetDate = new Date(date);
+            const diffTime = targetDate - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            return diffDays;
+        },
+
+        // Helper function to update start time based on relative day
+        updateStartTimeFromRelativeDay(day) {
+            const startDate = new Date(this.plan.start_date);
+            startDate.setDate(startDate.getDate() + (parseInt(day) - 1));
+            startDate.setHours(10, 0, 0, 0);
+            this.shiftForm.start_time = startDate.toISOString().slice(0, 16);
         }
     }));
 }); 

@@ -6,7 +6,8 @@
         "remove": "Remove",
         "save": "Save",
         "create": "Create",
-        "delete": "Delete"
+        "delete": "Delete",
+        "optional": "Optional"
     },
     "nav": {
         "home": "Home",
@@ -58,6 +59,7 @@
             "date": "Date",
             "time": "Time",
             "duration": "Duration",
+            "duration_unit": "Minutes",
             "required": "Required",
             "participants": "Participants",
             "comment": "Comment",
@@ -123,7 +125,30 @@
             "confirm_delete_shift_type_2": "?",
             "error_deleting_shift_type": "Error deleting shift type",
             "banner_title": "Welcome to your Shift Plan",
-            "banner_subtitle": "Manage your shifts efficiently"
+            "banner_subtitle": "Manage your shifts efficiently",
+            "new_shift": "New Shift",
+            "edit_shift": "Edit Shift",
+            "start_time": "Start Time",
+            "duration": "Duration",
+            "duration_unit": "Minutes",
+            "required_participants": "Required Participants",
+            "comment_de": "Comment (German)",
+            "comment_en": "Comment (English)",
+            "cancel": "Cancel",
+            "shift_type": "Shift Type",
+            "error_start_time_required": "Please enter a start time",
+            "error_duration_required": "Please enter a duration",
+            "error_required_participants_required": "Please enter the number of required participants",
+            "error_comment_required": "Please enter a comment",
+            "error_creating_shift": "Error creating shift",
+            "error_updating_shift": "Error updating shift",
+            "add_shift": "Add New Shift",
+            "error_shift_type_required": "Please select a shift type",
+            "error_invalid_shift_type": "Invalid shift type selected",
+            "select_shift_type": "Select shift type...",
+            "consecutive_shifts": "Create Multiple Shifts",
+            "consecutive_shifts_help": "Creates multiple consecutive shifts with the same properties.",
+            "relative_day": "Day (relative to start)"
         }
     }
 } 

@@ -63,18 +63,24 @@
                 </div>
             </div>
 
+            <!-- Admin Actions -->
+            <div x-show="isAdmin" class="flex justify-end gap-2 mb-4">
+                <button @click="openShiftModal(null)" class="btn btn-outline btn-success gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.add_shift')"></span>
+                </button>
+                <button @click="openShiftTypeModal()" class="btn btn-outline btn-success gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.add_shift_type')"></span>
+                </button>
+            </div>
+
             <!-- Include filters partial -->
             {{ template "filters" . }}
-
-            <!-- Add new shift type button (only visible for admins) -->
-            <button x-show="isAdmin" 
-                    @click="openShiftTypeModal()"
-                    class="btn btn-primary w-full mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span x-text="$t('shift_plans.view.add_shift_type')"></span>
-            </button>
 
             <!-- Shift Types -->
             <template x-for="type in shiftTypes" :key="type.id">

@@ -15,8 +15,14 @@
                     x-text="plan.is_multilingual ? ($locale() === 'de' ? type.location_de : type.location_en) : type.location_en"></span>
             </p>
         </div>
-        <!-- Edit and Delete buttons (only visible for admins) -->
+        <!-- Admin buttons -->
         <div x-show="isAdmin" class="btn-group">
+            <button @click="openShiftModal(null, type)"
+                    class="btn btn-square btn-outline btn-sm btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+            </button>
             <button @click="openShiftTypeModal(type)"
                     class="btn btn-square btn-outline btn-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,6 +103,13 @@
                                     </td>
                                     <td class="text-right align-middle">
                                         <div class="flex justify-end items-center gap-2">
+                                            <button x-show="isAdmin"
+                                                    @click="openShiftModal(shift, type)"
+                                                    class="btn btn-square btn-outline btn-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                            </button>
                                             <button @click="openJoinModal(shift)"
                                                 :disabled="shift.participants?.length >= shift.required"
                                                 class="btn btn-square btn-outline btn-success btn-sm"
