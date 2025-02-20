@@ -1,5 +1,4 @@
 // Import the modal classes
-import { Modal } from './modal.js';
 import { ShiftModal } from './shift-modal.js';
 
 document.addEventListener('alpine:init', () => {
@@ -47,31 +46,8 @@ document.addEventListener('alpine:init', () => {
             location_en: null
         },
 
-        // Shift Modal state
-        currentShift: null,
-        currentShiftType: null,
-        shiftForm: {
-            type_id: '',
-            start_time: '',
-            duration: 60,
-            required: 1,
-            comment_de: '',
-            comment_en: '',
-            consecutive_shifts: 1,
-            relative_day: 1
-        },
-        shiftErrors: {
-            type_id: null,
-            start_time: null,
-            duration: null,
-            required: null,
-            comment_de: null,
-            comment_en: null,
-            general: null
-        },
-
         // Initialize modals
-        shiftModal: new ShiftModal(),
+        shiftModal: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -217,6 +193,9 @@ document.addEventListener('alpine:init', () => {
                 token: ''
             };
             
+            // Initialize ShiftModal with empty data
+            this.shiftModal = new ShiftModal('', []);
+            
             // Hole Token aus URL
             const pathParts = window.location.pathname.split('/');
             const token = pathParts[pathParts.length - 1];
@@ -304,6 +283,10 @@ document.addEventListener('alpine:init', () => {
                     shifts: type.shifts || [], // Ensure shifts is at least an empty array
                     shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
+
+                // Update ShiftModal with new data
+                this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes);
+                this.shiftModal.setTokens(this.plan.token, this.adminToken);
 
             } catch (error) {
                 console.error('Error loading plan:', error);

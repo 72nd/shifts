@@ -1,8 +1,10 @@
 import { Modal } from './modal.js';
 
 export class ShiftModal extends Modal {
-    constructor() {
+    constructor(planStartDate, shiftTypes) {
         super('shift_modal');
+        this.planStartDate = planStartDate;
+        this.shiftTypes = shiftTypes;
         this.reset();
     }
 
@@ -38,7 +40,7 @@ export class ShiftModal extends Modal {
             this.relative_day = this.getRelativeDayFromDate(startTime);
         } else {
             // Create mode
-            const startDate = new Date(window.shiftPlanView.plan.start_date);
+            const startDate = new Date(this.planStartDate);
             startDate.setHours(10, 0, 0, 0);
             startDate.setMinutes(startDate.getMinutes() - startDate.getTimezoneOffset());
             
@@ -55,25 +57,25 @@ export class ShiftModal extends Modal {
 
         // Validate required fields
         if (!this.start_time) {
-            this.errors.start_time = window.AlpineI18n.t('shift_plans.view.error_start_time_required');
+            this.errors.start_time = AlpineI18n.t('shift_plans.view.error_start_time_required');
             isValid = false;
         }
 
         const duration = parseInt(this.duration);
         if (isNaN(duration) || duration < 1) {
-            this.errors.duration = window.AlpineI18n.t('shift_plans.view.error_duration_required');
+            this.errors.duration = AlpineI18n.t('shift_plans.view.error_duration_required');
             isValid = false;
         }
 
         const required = parseInt(this.required);
         if (isNaN(required) || required < 1) {
-            this.errors.required = window.AlpineI18n.t('shift_plans.view.error_required_participants_required');
+            this.errors.required = AlpineI18n.t('shift_plans.view.error_required_participants_required');
             isValid = false;
         }
 
         // Validate shift type selection when creating a new shift
         if (!this.currentShift && !this.type_id) {
-            this.errors.type_id = window.AlpineI18n.t('shift_plans.view.error_shift_type_required');
+            this.errors.type_id = AlpineI18n.t('shift_plans.view.error_shift_type_required');
             isValid = false;
         }
 
@@ -86,10 +88,10 @@ export class ShiftModal extends Modal {
         try {
             // Find the current shift type based on type_id
             const typeId = this.currentShift ? this.currentShiftType.id : this.type_id;
-            const type = window.shiftPlanView.shiftTypes.find(t => t.id === parseInt(typeId));
+            const type = this.shiftTypes.find(t => t.id === parseInt(typeId));
             
             if (!type) {
-                this.errors.general = window.AlpineI18n.t('shift_plans.view.error_invalid_shift_type');
+                this.errors.general = AlpineI18n.t('shift_plans.view.error_invalid_shift_type');
                 return;
             }
 
@@ -99,26 +101,27 @@ export class ShiftModal extends Modal {
                 await this.createShifts(type);
             }
 
-            // Reload data and close modal
-            await window.shiftPlanView.loadPlan(window.shiftPlanView.plan.token);
+            // Signal successful completion
             this.close();
+            return true;
         } catch (error) {
             console.error('Error saving shift:', error);
-            this.errors.general = window.AlpineI18n.t(
+            this.errors.general = AlpineI18n.t(
                 this.currentShift 
                     ? 'shift_plans.view.error_updating_shift'
                     : 'shift_plans.view.error_creating_shift'
             );
+            return false;
         }
     }
 
     async updateShift(type) {
-        const url = `/api/shift-plans/${window.shiftPlanView.plan.token}/types/${type.id}/shifts/${this.currentShift.id}`;
+        const url = `/api/shift-plans/${this.planToken}/types/${type.id}/shifts/${this.currentShift.id}`;
         const response = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Admin-Token': window.shiftPlanView.adminToken
+                'X-Admin-Token': this.adminToken
             },
             body: JSON.stringify({
                 start_time: this.start_time,
@@ -142,11 +145,11 @@ export class ShiftModal extends Modal {
             const shiftStartTime = new Date(baseStartTime);
             shiftStartTime.setMinutes(shiftStartTime.getMinutes() + (i * duration));
 
-            const response = await fetch(`/api/shift-plans/${window.shiftPlanView.plan.token}/types/${type.id}/shifts`, {
+            const response = await fetch(`/api/shift-plans/${this.planToken}/types/${type.id}/shifts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Admin-Token': window.shiftPlanView.adminToken
+                    'X-Admin-Token': this.adminToken
                 },
                 body: JSON.stringify({
                     start_time: shiftStartTime.toISOString().slice(0, 16),
@@ -162,13 +165,13 @@ export class ShiftModal extends Modal {
     }
 
     getRelativeDayFromDate(date) {
-        const planStart = new Date(window.shiftPlanView.plan.start_date);
+        const planStart = new Date(this.planStartDate);
         const timeDiff = date.getTime() - planStart.getTime();
         return Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
     }
 
     updateStartTimeFromRelativeDay() {
-        const planStart = new Date(window.shiftPlanView.plan.start_date);
+        const planStart = new Date(this.planStartDate);
         const currentStartTime = new Date(this.start_time);
         const hours = currentStartTime.getHours();
         const minutes = currentStartTime.getMinutes();
@@ -177,5 +180,10 @@ export class ShiftModal extends Modal {
         planStart.setHours(hours, minutes, 0, 0);
         
         this.start_time = planStart.toISOString().slice(0, 16);
+    }
+
+    setTokens(planToken, adminToken) {
+        this.planToken = planToken;
+        this.adminToken = adminToken;
     }
 } 

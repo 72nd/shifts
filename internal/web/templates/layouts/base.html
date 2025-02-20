@@ -12,8 +12,7 @@
     <script src="/static/vendor/tailwind.min.js"></script>
     
     <!-- Alpine.js and plugins -->
-    <script defer src="/static/vendor/alpine.min.js"></script>
-    <script src="/static/vendor/alpine-i18n.min.js"></script>
+    <script defer src="/static/vendor/alpine-i18n.min.js"></script>
     
     <!-- Initialize translations -->
     <script>
@@ -41,9 +40,6 @@
                     localStorage.setItem('locale', window.AlpineI18n.locale);
                 });
             });
-
-            // Register i18n plugin
-            // Alpine.plugin(window.AlpineI18n);
         });
     </script>
     
@@ -118,8 +114,10 @@
         </div>
     </footer>
 
-    <!-- Application scripts -->
-    <script src="/static/js/app.js"></script>
+    <!-- Application scripts (must be loaded before Alpine.js) -->
     {{ block "scripts" . }}{{ end }}
+
+    <!-- Alpine.js must be loaded last -->
+    <script defer src="/static/vendor/alpine.min.js"></script>
 </body>
 </html>

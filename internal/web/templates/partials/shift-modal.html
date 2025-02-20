@@ -17,7 +17,7 @@
                 <label class="label py-0">
                     <span class="label-text font-medium" x-text="$t('shift_plans.view.shift_type')"></span>
                 </label>
-                <select x-model="shiftModal.form.type_id" 
+                <select x-model="shiftModal.type_id" 
                         class="select select-bordered select-sm w-full"
                         :class="{ 'select-error': shiftModal.errors.type_id }">
                     <option value="" disabled x-text="$t('shift_plans.view.select_shift_type')"></option>
@@ -40,15 +40,15 @@
                         <span class="label-text font-medium" x-text="$t('shift_plans.view.start_time')"></span>
                     </label>
                     <input type="datetime-local" 
-                           x-model="shiftModal.form.start_time"
+                           x-model="shiftModal.start_time"
                            class="input input-bordered input-sm w-full"
                            :class="{ 'input-error': shiftModal.errors.start_time }" />
                     <!-- Day Helper Component -->
                     <div class="mt-1 flex items-center gap-2 text-sm opacity-70">
                         <span x-text="$t('shift_plans.view.relative_day')"></span>
                         <input type="number" 
-                               x-model="shiftModal.form.relative_day"
-                               @input="shiftModal.updateStartTimeFromRelativeDay($event.target.value)"
+                               x-model="shiftModal.relative_day"
+                               @input="shiftModal.updateStartTimeFromRelativeDay()"
                                class="input input-bordered input-xs w-20" />
                     </div>
                     <label class="label py-0" x-show="shiftModal.errors.start_time">
@@ -63,7 +63,7 @@
                         <span class="label-text-alt" x-text="$t('shift_plans.view.duration_unit')"></span>
                     </label>
                     <input type="number" 
-                           x-model="shiftModal.form.duration"
+                           x-model="shiftModal.duration"
                            min="1"
                            class="input input-bordered input-sm w-full"
                            :class="{ 'input-error': shiftModal.errors.duration }" />
@@ -79,7 +79,7 @@
                     <span class="label-text font-medium" x-text="$t('shift_plans.view.required_participants')"></span>
                 </label>
                 <input type="number" 
-                       x-model="shiftModal.form.required"
+                       x-model="shiftModal.required"
                        min="1"
                        class="input input-bordered input-sm w-full"
                        :class="{ 'input-error': shiftModal.errors.required }" />
@@ -97,7 +97,7 @@
                             <span class="label-text font-medium" x-text="$t('shift_plans.view.comment_de')"></span>
                             <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                         </label>
-                        <textarea x-model="shiftModal.form.comment_de"
+                        <textarea x-model="shiftModal.comment_de"
                                   class="textarea textarea-bordered textarea-sm w-full h-16"
                                   :class="{ 'textarea-error': shiftModal.errors.comment_de }"></textarea>
                     </div>
@@ -109,7 +109,7 @@
                         <span class="label-text font-medium" x-text="plan.is_multilingual ? $t('shift_plans.view.comment_en') : $t('shift_plans.view.comment')"></span>
                         <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                     </label>
-                    <textarea x-model="shiftModal.form.comment_en"
+                    <textarea x-model="shiftModal.comment_en"
                               class="textarea textarea-bordered textarea-sm w-full h-16"
                               :class="{ 'textarea-error': shiftModal.errors.comment_en }"></textarea>
                 </div>
@@ -124,7 +124,7 @@
                         <p class="text-xs mt-0.5 opacity-50" x-text="$t('shift_plans.view.consecutive_shifts_help')"></p>
                     </div>
                     <input type="number" 
-                           x-model="shiftModal.form.consecutive_shifts"
+                           x-model="shiftModal.consecutive_shifts"
                            min="1"
                            class="input input-bordered input-sm w-20"
                            :class="{ 'input-error': shiftModal.errors.consecutive_shifts }" />
