@@ -129,8 +129,8 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/shift-plans/{token}/types/{id}", s.adminMiddleware(s.handleUpdateShiftType)).Methods("PUT")
 	api.HandleFunc("/shift-plans/{token}/types/{id}", s.adminMiddleware(s.handleDeleteShiftType)).Methods("DELETE")
 	api.HandleFunc("/shift-plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
-	api.HandleFunc("/shifts/{id}/participants", s.handleAddParticipant).Methods("POST")
-	api.HandleFunc("/shifts/{id}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
+	api.HandleFunc("/shift-plans/{token}/shifts/{id}/participants", s.handleAddParticipant).Methods("POST")
+	api.HandleFunc("/shift-plans/{token}/shifts/{id}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
 	// Plan routes
 	plans := s.router.PathPrefix("/shift-plans/{token}").Subrouter()
@@ -313,9 +313,34 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	token := vars["token"]
 	shiftID, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		return
+	}
+
+	// Verify the shift belongs to the plan
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to verify shift plan", http.StatusInternalServerError)
+		return
+	}
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Verify the shift belongs to this plan
+	belongs, err := s.db.VerifyShiftBelongsToPlan(shiftID, plan.ID)
+	if err != nil {
+		s.logger.Error("failed to verify shift ownership", "error", err)
+		http.Error(w, "Failed to verify shift ownership", http.StatusInternalServerError)
+		return
+	}
+	if !belongs {
+		http.Error(w, "Shift not found", http.StatusNotFound)
 		return
 	}
 
@@ -340,9 +365,34 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	token := vars["token"]
 	shiftID, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		return
+	}
+
+	// Verify the shift belongs to the plan
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to verify shift plan", http.StatusInternalServerError)
+		return
+	}
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Verify the shift belongs to this plan
+	belongs, err := s.db.VerifyShiftBelongsToPlan(shiftID, plan.ID)
+	if err != nil {
+		s.logger.Error("failed to verify shift ownership", "error", err)
+		http.Error(w, "Failed to verify shift ownership", http.StatusInternalServerError)
+		return
+	}
+	if !belongs {
+		http.Error(w, "Shift not found", http.StatusNotFound)
 		return
 	}
 

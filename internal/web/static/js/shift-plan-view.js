@@ -334,7 +334,7 @@ document.addEventListener('alpine:init', () => {
             }
 
             try {
-                const response = await fetch(`/api/shifts/${this.currentShift.id}/participants`, {
+                const response = await fetch(`/api/shift-plans/${this.plan.token}/shifts/${this.currentShift.id}/participants`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: this.joinName.trim() })
@@ -373,7 +373,7 @@ document.addEventListener('alpine:init', () => {
 
         async submitRemoveModal() {
             try {
-                const response = await fetch(`/api/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`, {
+                const response = await fetch(`/api/shift-plans/${this.plan.token}/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`, {
                     method: 'DELETE'
                 });
 

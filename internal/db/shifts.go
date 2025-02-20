@@ -274,3 +274,22 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 
 	return s, nil
 }
+
+// VerifyShiftBelongsToPlan checks if a shift belongs to a specific plan
+func (db *DB) VerifyShiftBelongsToPlan(shiftID, planID int64) (bool, error) {
+	var exists bool
+	query := `
+        SELECT EXISTS(
+            SELECT 1 
+            FROM shifts s
+            JOIN shift_types t ON s.type_id = t.id
+            WHERE s.id = ? AND t.plan_id = ?
+        )
+    `
+	err := db.QueryRow(query, shiftID, planID).Scan(&exists)
+	if err != nil {
+		db.logError("VerifyShiftBelongsToPlan", err, shiftID, planID)
+		return false, fmt.Errorf("failed to verify shift ownership: %w", err)
+	}
+	return exists, nil
+}
