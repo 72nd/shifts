@@ -1,5 +1,7 @@
 // Import the modal classes
 import { ShiftModal } from './shift-modal.js';
+import { ShiftTypeModal } from './shift-type-modal.js';
+import { DeleteTypeModal } from './delete-type-modal.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -48,6 +50,8 @@ document.addEventListener('alpine:init', () => {
 
         // Initialize modals
         shiftModal: null,
+        shiftTypeModal: null,
+        deleteTypeModal: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -193,8 +197,13 @@ document.addEventListener('alpine:init', () => {
                 token: ''
             };
             
-            // Initialize ShiftModal with empty data
+            // Initialize modals with empty data
             this.shiftModal = new ShiftModal('', []);
+            this.shiftTypeModal = new ShiftTypeModal(false);
+            this.deleteTypeModal = new DeleteTypeModal();
+            
+            this.shiftTypeModal.setCallbacks(type => this.handleShiftTypeSuccess(type));
+            this.deleteTypeModal.setCallbacks(type => this.handleDeleteTypeSuccess(type));
             
             // Hole Token aus URL
             const pathParts = window.location.pathname.split('/');
@@ -284,9 +293,17 @@ document.addEventListener('alpine:init', () => {
                     shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
 
-                // Update ShiftModal with new data
+                // Update modals with new data
                 this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes);
                 this.shiftModal.setTokens(this.plan.token, this.adminToken);
+
+                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual);
+                this.shiftTypeModal.setTokens(this.plan.token, this.adminToken);
+                this.shiftTypeModal.setCallbacks(type => this.handleShiftTypeSuccess(type));
+
+                this.deleteTypeModal = new DeleteTypeModal();
+                this.deleteTypeModal.setTokens(this.plan.token, this.adminToken);
+                this.deleteTypeModal.setCallbacks(type => this.handleDeleteTypeSuccess(type));
 
             } catch (error) {
                 console.error('Error loading plan:', error);
@@ -542,158 +559,22 @@ document.addEventListener('alpine:init', () => {
 
         // Shift Type Modal functions
         openShiftTypeModal(type = null) {
-            this.currentShiftType = type;
-            this.shiftTypeErrors = {
-                title_de: null,
-                title_en: null,
-                description_de: null,
-                description_en: null,
-                location_de: null,
-                location_en: null
-            };
-            
-            if (type) {
-                // Edit mode: Fill form with existing data
-                this.shiftTypeForm = {
-                    title_de: type.title_de || '',
-                    title_en: type.title_en || '',
-                    description_de: type.description_de || '',
-                    description_en: type.description_en || '',
-                    location_de: type.location_de || '',
-                    location_en: type.location_en || ''
-                };
+            this.shiftTypeModal.openWith(type);
+        },
+
+        handleShiftTypeSuccess(type) {
+            // If editing an existing type, update it in the list
+            const existingIndex = this.shiftTypes.findIndex(t => t.id === type.id);
+            if (existingIndex !== -1) {
+                // Preserve the shifts when updating
+                type.shifts = this.shiftTypes[existingIndex].shifts || [];
+                type.shiftsByDate = this.groupShiftsByDate(type.shifts);
+                this.shiftTypes.splice(existingIndex, 1, type);
             } else {
-                // Create mode: Reset form
-                this.shiftTypeForm = {
-                    title_de: '',
-                    title_en: '',
-                    description_de: '',
-                    description_en: '',
-                    location_de: '',
-                    location_en: ''
-                };
-            }
-            
-            const modal = document.getElementById('shift_type_modal');
-            if (modal) modal.showModal();
-        },
-
-        closeShiftTypeModal() {
-            this.currentShiftType = null;
-            this.shiftTypeForm = this.getEmptyShiftTypeForm();
-            this.shiftTypeErrors = {};
-            document.getElementById('shift_type_modal').close();
-        },
-
-        openDeleteShiftTypeModal(type) {
-            this.currentShiftType = type;
-            document.getElementById('delete_shift_type_modal').showModal();
-        },
-
-        closeDeleteShiftTypeModal() {
-            this.currentShiftType = null;
-            document.getElementById('delete_shift_type_modal').close();
-        },
-
-        async submitDeleteShiftType() {
-            try {
-                const response = await fetch(`/api/shift-plans/${this.plan.token}/types/${this.currentShiftType.id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-Admin-Token': this.adminToken
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to delete shift type');
-                }
-
-                // Remove the shift type from the list
-                this.shiftTypes = this.shiftTypes.filter(type => type.id !== this.currentShiftType.id);
-                this.closeDeleteShiftTypeModal();
-            } catch (error) {
-                console.error('Error deleting shift type:', error);
-                alert(this.$t('shift_plans.view.error_deleting_shift_type'));
-            }
-        },
-
-        async submitShiftTypeModal() {
-            // Reset errors
-            this.shiftTypeErrors = {
-                title_de: null,
-                title_en: null,
-                description_de: null,
-                description_en: null,
-                location_de: null,
-                location_en: null
-            };
-            
-            let hasErrors = false;
-            
-            // For multilingual plans, validate both languages
-            if (this.plan.is_multilingual) {
-                // German validation
-                if (!this.shiftTypeForm.title_de?.trim()) {
-                    this.shiftTypeErrors.title_de = this.$t('shift_plans.view.error_title_required');
-                    hasErrors = true;
-                }
-                if (!this.shiftTypeForm.description_de?.trim()) {
-                    this.shiftTypeErrors.description_de = this.$t('shift_plans.view.error_description_required');
-                    hasErrors = true;
-                }
-                if (!this.shiftTypeForm.location_de?.trim()) {
-                    this.shiftTypeErrors.location_de = this.$t('shift_plans.view.error_location_required');
-                    hasErrors = true;
-                }
-            }
-            
-            // Always validate English (as it's the default language)
-            if (!this.shiftTypeForm.title_en?.trim()) {
-                this.shiftTypeErrors.title_en = this.$t('shift_plans.view.error_title_required');
-                hasErrors = true;
-            }
-            if (!this.shiftTypeForm.description_en?.trim()) {
-                this.shiftTypeErrors.description_en = this.$t('shift_plans.view.error_description_required');
-                hasErrors = true;
-            }
-            if (!this.shiftTypeForm.location_en?.trim()) {
-                this.shiftTypeErrors.location_en = this.$t('shift_plans.view.error_location_required');
-                hasErrors = true;
-            }
-            
-            if (hasErrors) {
-                return;
-            }
-            
-            try {
-                const url = this.currentShiftType
-                    ? `/api/shift-plans/${this.plan.token}/types/${this.currentShiftType.id}`
-                    : `/api/shift-plans/${this.plan.token}/types`;
-                
-                const response = await fetch(url, {
-                    method: this.currentShiftType ? 'PUT' : 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Admin-Token': this.adminToken
-                    },
-                    body: JSON.stringify(this.shiftTypeForm)
-                });
-
-                if (!response.ok) {
-                    throw new Error(this.currentShiftType ? 'Failed to update shift type' : 'Failed to create shift type');
-                }
-
-                // Reload data and close modal
-                await this.loadPlan(this.plan.token);
-                this.closeShiftTypeModal();
-            } catch (error) {
-                console.error('Error saving shift type:', error);
-                // Show error in the first error field
-                this.shiftTypeErrors.title_en = this.$t(
-                    this.currentShiftType 
-                        ? 'shift_plans.view.error_updating_shift_type'
-                        : 'shift_plans.view.error_creating_shift_type'
-                );
+                // Add new type to the list
+                type.shifts = [];
+                type.shiftsByDate = [];
+                this.shiftTypes.push(type);
             }
         },
 
@@ -717,6 +598,18 @@ document.addEventListener('alpine:init', () => {
             startDate.setDate(startDate.getDate() + (parseInt(day) - 1));
             startDate.setHours(10, 0, 0, 0);
             this.shiftForm.start_time = startDate.toISOString().slice(0, 16);
+        },
+
+        openDeleteShiftTypeModal(type) {
+            this.deleteTypeModal.openWith(type);
+        },
+
+        handleDeleteTypeSuccess(type) {
+            // Remove the type from the list
+            const index = this.shiftTypes.findIndex(t => t.id === type.id);
+            if (index !== -1) {
+                this.shiftTypes.splice(index, 1);
+            }
         }
     }));
 }); 
