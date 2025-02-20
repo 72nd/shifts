@@ -11,6 +11,29 @@
     <!-- Tailwind (must be after DaisyUI) -->
     <script src="/static/vendor/tailwind.min.js"></script>
     
+    <!-- Theme initialization (must be before Alpine) -->
+    <script>
+        // Check for saved theme preference or default to 'light'
+        const theme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Initialize theme toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeController = document.querySelector('.theme-controller');
+            if (themeController) {
+                // Set initial state
+                themeController.checked = theme === 'dark';
+                
+                // Add change listener
+                themeController.addEventListener('change', (e) => {
+                    const newTheme = e.target.checked ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+        });
+    </script>
+    
     <!-- Alpine.js and plugins -->
     <script defer src="/static/vendor/alpine-i18n.min.js"></script>
     
