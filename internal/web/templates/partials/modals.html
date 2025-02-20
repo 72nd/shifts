@@ -60,31 +60,40 @@
 
 <!-- Admin Login Modal -->
 <dialog id="admin_modal" class="modal">
-    <form method="dialog" class="modal-box" @submit.prevent="submitAdminLogin">
+    <div class="modal-box">
         <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.admin_login')"></h3>
+        
+        <!-- Error Message Box -->
+        <div x-show="adminModal.errors.general" class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="adminModal.errors.general"></span>
+        </div>
+        
         <div class="py-4">
             <div class="form-control w-full">
                 <label class="label">
                     <span class="label-text" x-text="$t('shift_plans.view.admin_password')"></span>
                 </label>
                 <input type="password" 
-                       x-model="adminPassword" 
-                       @keyup.enter="submitAdminLogin()"
+                       x-model="adminModal.password" 
+                       @keyup.enter="adminModal.submit()"
                        class="input input-bordered w-full" 
-                       :class="{ 'input-error': adminError }"
+                       :class="{ 'input-error': adminModal.errors.password }"
                        :placeholder="$t('shift_plans.view.admin_password_placeholder')" />
-                <label class="label" x-show="adminError">
-                    <span class="label-text-alt text-error" x-text="adminError"></span>
+                <label class="label" x-show="adminModal.errors.password">
+                    <span class="label-text-alt text-error" x-text="adminModal.errors.password"></span>
                 </label>
             </div>
         </div>
         <div class="modal-action">
-            <button type="button" @click="closeAdminModal()" class="btn" x-text="$t('common.cancel')"></button>
-            <button type="submit" class="btn btn-primary" x-text="$t('shift_plans.view.admin_login')"></button>
+            <button type="button" @click="adminModal.close()" class="btn" x-text="$t('common.cancel')"></button>
+            <button type="submit" @click="adminModal.submit()" class="btn btn-primary" x-text="$t('shift_plans.view.admin_login')"></button>
         </div>
-    </form>
+    </div>
     <form method="dialog" class="modal-backdrop">
-        <button @click="closeAdminModal()">close</button>
+        <button @click="adminModal.close()">close</button>
     </form>
 </dialog>
 

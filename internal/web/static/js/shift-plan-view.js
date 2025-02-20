@@ -4,6 +4,7 @@ import { ShiftTypeModal } from './shift-type-modal.js';
 import { DeleteTypeModal } from './delete-type-modal.js';
 import { JoinModal } from './join-modal.js';
 import { RemoveModal } from './remove-modal.js';
+import { AdminModal } from './admin-modal.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -25,8 +26,6 @@ document.addEventListener('alpine:init', () => {
 
         // Admin state
         isAdmin: false,
-        adminPassword: '',
-        adminError: null,
         adminToken: '',
 
         // Initialize modals
@@ -35,6 +34,7 @@ document.addEventListener('alpine:init', () => {
         deleteTypeModal: null,
         joinModal: null,
         removeModal: null,
+        adminModal: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -197,6 +197,7 @@ document.addEventListener('alpine:init', () => {
             this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, type => this.handleDeleteTypeSuccess(type));
             this.joinModal = new JoinModal(token, shift => this.handleShiftUpdate(shift));
             this.removeModal = new RemoveModal(token, shift => this.handleShiftUpdate(shift));
+            this.adminModal = new AdminModal(token, token => this.handleAdminSuccess(token));
 
             // Starte Datenladen
             this.loadPlan(token);
@@ -392,57 +393,24 @@ document.addEventListener('alpine:init', () => {
 
         // Admin functions
         openAdminModal() {
-            this.adminPassword = '';
-            this.adminError = null;
-            const modal = document.getElementById('admin_modal');
-            if (modal) modal.showModal();
+            this.adminModal.open();
         },
 
-        closeAdminModal() {
-            this.adminPassword = '';
-            this.adminError = null;
-            const modal = document.getElementById('admin_modal');
-            if (modal) modal.close();
-        },
+        handleAdminSuccess(token) {
+            // Store admin state
+            this.isAdmin = true;
+            this.adminToken = token;
 
-        async submitAdminLogin() {
-            if (!this.adminPassword?.trim()) {
-                this.adminError = this.$t('shift_plans.view.error_password_required');
-                return;
-            }
+            // Save admin token in localStorage
+            localStorage.setItem(`admin_token_${this.plan.token}`, token);
 
-            try {
-                const response = await fetch(`/api/shift-plans/${this.plan.token}/verify-admin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: this.adminPassword.trim() })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Invalid password');
-                }
-
-                // Store admin state
-                this.isAdmin = true;
-                this.adminToken = this.adminPassword.trim();
-
-                // Save admin token in localStorage
-                localStorage.setItem(`admin_token_${this.plan.token}`, this.adminToken);
-
-                this.closeAdminModal();
-
-                // Reload data to get admin-only fields
-                await this.loadPlan(this.plan.token);
-            } catch (error) {
-                console.error('Error logging in:', error);
-                this.adminError = this.$t('shift_plans.view.error_invalid_password');
-            }
+            // Reload data to get admin-only fields
+            this.loadPlan(this.plan.token);
         },
 
         logoutAdmin() {
             this.isAdmin = false;
             this.adminToken = '';
-            this.adminPassword = '';
 
             // Remove admin token from localStorage
             localStorage.removeItem(`admin_token_${this.plan.token}`);
