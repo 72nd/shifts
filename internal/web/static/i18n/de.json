@@ -3,7 +3,10 @@
         "language": "Deutsch",
         "made_with": "Erstellt mit ❤️ von Schipla",
         "cancel": "Abbrechen",
-        "remove": "Entfernen"
+        "remove": "Entfernen",
+        "save": "Speichern",
+        "create": "Erstellen",
+        "delete": "Löschen"
     },
     "nav": {
         "home": "Start",
@@ -30,7 +33,7 @@
             "multilingual": "Zweisprachiger Schichtplan (Deutsch & Englisch)",
             "title_de": "Titel (Deutsch)",
             "title_en": "Titel (Englisch)",
-            "title": "Titel",
+            "title_field": "Titel",
             "description_de": "Beschreibung (Deutsch)",
             "description_en": "Beschreibung (Englisch)",
             "description": "Beschreibung",
@@ -74,6 +77,12 @@
             "collapse_details": "Details ausblenden",
             "hours": "{hours} Stunden",
             "hours_minutes": "{hours} Stunden {minutes} Minuten",
+            "admin_login": "Admin Login",
+            "admin_logout": "Admin Logout",
+            "admin_password": "Administrator-Passwort",
+            "admin_password_placeholder": "Passwort eingeben",
+            "error_password_required": "Bitte gib ein Passwort ein",
+            "error_invalid_password": "Ungültiges Passwort",
             "filter": {
                 "title": "Filter",
                 "active": "Aktiv",
@@ -93,7 +102,26 @@
                 "select_types": "Schichttypen auswählen...",
                 "n_types_selected": "{count} Schichttypen ausgewählt",
                 "all_types": "Alle Schichttypen"
-            }
+            },
+            "add_shift_type": "Neuen Schichttyp hinzufügen",
+            "edit_shift_type": "Schichttyp bearbeiten",
+            "title_de": "Titel (Deutsch)",
+            "title_en": "Titel (Englisch)",
+            "title": "Titel",
+            "description_de": "Beschreibung (Deutsch)",
+            "description_en": "Beschreibung (Englisch)",
+            "description": "Beschreibung",
+            "location_de": "Ort (Deutsch)",
+            "location_en": "Ort (Englisch)",
+            "error_title_required": "Bitte gib einen Titel ein",
+            "error_description_required": "Bitte gib eine Beschreibung ein",
+            "error_location_required": "Bitte gib einen Ort ein",
+            "error_creating_shift_type": "Fehler beim Erstellen des Schichttyps",
+            "error_updating_shift_type": "Fehler beim Aktualisieren des Schichttyps",
+            "delete_shift_type": "Schichttyp löschen",
+            "confirm_delete_shift_type_1": "Möchtest du den Schichttyp ",
+            "confirm_delete_shift_type_2": " wirklich löschen?",
+            "error_deleting_shift_type": "Fehler beim Löschen des Schichttyps"
         }
     }
 } 

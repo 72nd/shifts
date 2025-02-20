@@ -12,6 +12,9 @@ import (
 	"strconv"
 	"time"
 
+	"crypto/sha256"
+	"encoding/hex"
+
 	"github.com/72nd/schipla/internal/db"
 	"github.com/gorilla/mux"
 )
@@ -108,6 +111,10 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/shift-plans", s.handleCreateShiftPlan).Methods("POST")
 	api.HandleFunc("/shift-plans/{token}", s.handleGetShiftPlan).Methods("GET")
 	api.HandleFunc("/shift-plans/{token}/types", s.handleGetShiftTypes).Methods("GET")
+	api.HandleFunc("/shift-plans/{token}/types", s.adminMiddleware(s.handleCreateShiftType)).Methods("POST")
+	api.HandleFunc("/shift-plans/{token}/types/{id}", s.adminMiddleware(s.handleUpdateShiftType)).Methods("PUT")
+	api.HandleFunc("/shift-plans/{token}/types/{id}", s.adminMiddleware(s.handleDeleteShiftType)).Methods("DELETE")
+	api.HandleFunc("/shift-plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
 	api.HandleFunc("/shifts/{id}/participants", s.handleAddParticipant).Methods("POST")
 	api.HandleFunc("/shifts/{id}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
@@ -362,4 +369,201 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// adminMiddleware verifies the admin token for protected routes
+func (s *Server) adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		token := vars["token"]
+		adminToken := r.Header.Get("X-Admin-Token")
+
+		// Get plan to verify admin password
+		plan, err := s.db.GetShiftPlanByToken(token)
+		if err != nil {
+			s.logger.Error("failed to get shift plan", "error", err)
+			http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+			return
+		}
+
+		if plan == nil {
+			http.NotFound(w, r)
+			return
+		}
+
+		// Hash the admin token before comparing
+		hashedToken := hashPassword(adminToken)
+
+		// Verify admin token
+		if hashedToken != plan.AdminPassword {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+// handleVerifyAdmin verifies the admin password for a shift plan
+func (s *Server) handleVerifyAdmin(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	var data struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Get plan to verify admin password
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Hash the password before comparing
+	hashedPassword := hashPassword(data.Password)
+
+	// Verify password
+	if hashedPassword != plan.AdminPassword {
+		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// hashPassword creates a simple hash of the password
+func hashPassword(password string) string {
+	hash := sha256.Sum256([]byte(password))
+	return hex.EncodeToString(hash[:])
+}
+
+// handleCreateShiftType handles the creation of a new shift type
+func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	// Get plan first to verify it exists and get its ID
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Parse request body
+	var shiftType db.NewShiftType
+	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
+		s.logger.Error("failed to decode request body", "error", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Set plan ID
+	shiftType.PlanID = plan.ID
+
+	// Create shift type
+	createdType, err := s.db.CreateShiftType(shiftType)
+	if err != nil {
+		s.logger.Error("failed to create shift type", "error", err)
+		http.Error(w, "Failed to create shift type", http.StatusInternalServerError)
+		return
+	}
+
+	// Return created shift type
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(createdType)
+}
+
+// handleUpdateShiftType handles updating an existing shift type
+func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	typeID, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get plan first to verify it exists
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Parse request body
+	var shiftType db.ShiftType
+	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
+		s.logger.Error("failed to decode request body", "error", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Ensure the ID matches
+	shiftType.ID = typeID
+	shiftType.PlanID = plan.ID
+
+	// Update shift type
+	if err := s.db.UpdateShiftType(typeID, shiftType); err != nil {
+		s.logger.Error("failed to update shift type", "error", err)
+		http.Error(w, "Failed to update shift type", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// handleDeleteShiftType handles deleting an existing shift type
+func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	typeID, err := strconv.ParseInt(vars["id"], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get plan first to verify it exists
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Delete the shift type
+	if err := s.db.DeleteShiftType(plan.ID, typeID); err != nil {
+		s.logger.Error("failed to delete shift type", "error", err)
+		http.Error(w, "failed to delete shift type", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

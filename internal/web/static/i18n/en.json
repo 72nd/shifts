@@ -3,7 +3,10 @@
         "language": "English",
         "made_with": "Made with ❤️ by Schipla",
         "cancel": "Cancel",
-        "remove": "Remove"
+        "remove": "Remove",
+        "save": "Save",
+        "create": "Create",
+        "delete": "Delete"
     },
     "nav": {
         "home": "Home",
@@ -30,7 +33,7 @@
             "multilingual": "Bilingual Shift Plan (German & English)",
             "title_de": "Title (German)",
             "title_en": "Title (English)",
-            "title": "Title",
+            "title_field": "Title",
             "description_de": "Description (German)",
             "description_en": "Description (English)",
             "description": "Description",
@@ -74,6 +77,12 @@
             "collapse_details": "Hide details",
             "hours": "{hours} hours",
             "hours_minutes": "{hours} hours {minutes} minutes",
+            "admin_login": "Admin Login",
+            "admin_logout": "Admin Logout",
+            "admin_password": "Administrator Password",
+            "admin_password_placeholder": "Enter password",
+            "error_password_required": "Please enter a password",
+            "error_invalid_password": "Invalid password",
             "filter": {
                 "title": "Filters",
                 "active": "Active",
@@ -93,7 +102,26 @@
                 "select_types": "Select shift types...",
                 "n_types_selected": "{count} shift types selected",
                 "all_types": "All Shift Types"
-            }
+            },
+            "add_shift_type": "Add New Shift Type",
+            "edit_shift_type": "Edit Shift Type",
+            "title_de": "Title (German)",
+            "title_en": "Title (English)",
+            "title": "Title",
+            "description_de": "Description (German)",
+            "description_en": "Description (English)",
+            "description": "Description",
+            "location_de": "Location (German)",
+            "location_en": "Location (English)",
+            "error_title_required": "Please enter a title",
+            "error_description_required": "Please enter a description",
+            "error_location_required": "Please enter a location",
+            "error_creating_shift_type": "Error creating shift type",
+            "error_updating_shift_type": "Error updating shift type",
+            "delete_shift_type": "Delete Shift Type",
+            "confirm_delete_shift_type_1": "Are you sure you want to delete the shift type ",
+            "confirm_delete_shift_type_2": "?",
+            "error_deleting_shift_type": "Error deleting shift type"
         }
     }
 } 

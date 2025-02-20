@@ -26,26 +26,40 @@
         <div>
             <!-- Plan Header -->
             <div class="bg-base-200 rounded-box p-4 mb-4">
-                <h1 class="text-2xl font-bold mb-1"
-                    x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.title_de : plan.title_en) : plan.title_en">
-                </h1>
-                <p class="text-base-content/70 text-sm"
-                    x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.description_de : plan.description_en) : plan.description_en">
-                </p>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-2xl font-bold mb-1"
+                            x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.title_de : plan.title_en) : plan.title_en">
+                        </h1>
+                        <p class="text-base-content/70 text-sm"
+                            x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.description_de : plan.description_en) : plan.description_en">
+                        </p>
                 <div class="flex gap-4 mt-2">
                     <span class="badge badge-neutral">
-                        <span x-text="formatDate(plan.start_date)"></span>
-                        -
-                        <span x-text="formatDate(plan.end_date)"></span>
-                    </span>
-                    <template x-if="plan.is_multilingual">
-                        <div class="flex gap-2">
-                            <button @click="$locale('de')" :class="{ 'btn-primary': $locale() === 'de' }"
-                                class="btn btn-xs">DE</button>
-                            <button @click="$locale('en')" :class="{ 'btn-primary': $locale() === 'en' }"
-                                class="btn btn-xs">EN</button>
+                                <span x-text="formatDate(plan.start_date)"></span>
+                                -
+                                <span x-text="formatDate(plan.end_date)"></span>
+                            </span>
                         </div>
-                    </template>
+                    </div>
+                    <div>
+                        <button @click="openAdminModal()" 
+                                x-show="!isAdmin"
+                                class="btn btn-outline btn-primary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                            <span x-text="$t('shift_plans.view.admin_login')"></span>
+                        </button>
+                        <button @click="logoutAdmin()" 
+                                x-show="isAdmin"
+                                class="btn btn-outline btn-error btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span x-text="$t('shift_plans.view.admin_logout')"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -112,7 +126,7 @@
                                                    @change="toggleType(type.id)" />
                                             <span class="label-text" 
                                                   x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
-                                            </span>
+                    </span>
                                         </label>
                                     </template>
                                 </div>
@@ -138,7 +152,7 @@
                             <option value="" x-text="$t('shift_plans.view.filter.all_days')"></option>
                             <template x-for="day in availableDays" :key="day">
                                 <option :value="day" x-text="formatDate(day)"></option>
-                            </template>
+                    </template>
                         </select>
                     </div>
 
@@ -185,8 +199,18 @@
                 </div>
             </div>
 
+            <!-- Add new shift type button (only visible for admins) -->
+            <button x-show="isAdmin" 
+                    @click="openShiftTypeModal()"
+                    class="btn btn-primary w-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span x-text="$t('shift_plans.view.add_shift_type')"></span>
+            </button>
+
             <!-- Shift Types -->
-            <template x-for="type in filteredShiftTypes" :key="type.id">
+            <template x-for="type in shiftTypes" :key="type.id">
                 <div class="bg-base-200/70 rounded-box p-4 mb-4">
                     <!-- Type Header -->
                     <div class="flex items-center justify-between mb-2">
@@ -203,96 +227,110 @@
                                     x-text="plan.is_multilingual ? ($locale() === 'de' ? type.location_de : type.location_en) : type.location_en"></span>
                             </p>
                         </div>
+                        <!-- Edit and Delete buttons (only visible for admins) -->
+                        <div x-show="isAdmin" class="btn-group">
+                            <button @click="openShiftTypeModal(type)"
+                                    class="btn btn-square btn-outline btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button @click="openDeleteShiftTypeModal(type)"
+                                    class="btn btn-square btn-outline btn-sm text-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Shifts grouped by date -->
-                    <template x-for="dateGroup in type.shiftsByDate" :key="dateGroup.date">
+                    <template x-if="type.shifts && type.shifts.length > 0">
+                        <template x-for="dateGroup in groupShiftsByDate(type.shifts)" :key="dateGroup.date">
                         <div class="mb-4">
                             <div class="flex items-center gap-2 mb-2">
                                 <h3 class="text-base font-medium" x-text="formatDate(dateGroup.date)"></h3>
-                                <div class="flex-1 border-t-2 border-base-content/10"></div>
+                                    <div class="flex-1 border-t-2 border-base-content/10"></div>
                             </div>
                             <div class="overflow-x-auto">
-                                <table class="table table-xs w-full [&_td]:border-t [&_td]:!border-base-content/40">
+                                    <table class="table table-xs w-full [&_td]:border-t [&_td]:!border-base-content/40">
                                     <thead>
                                         <tr>
-                                            <th class="w-48 bg-base-200/50" x-text="$t('shift_plans.view.time')"></th>
-                                            <th class="w-16 hidden md:table-cell bg-base-200/50" x-text="$t('shift_plans.view.duration')"></th>
-                                            <th class="w-14 bg-base-200/50 text-center">Status</th>
-                                            <th class="bg-base-200/50" x-text="$t('shift_plans.view.participants')"></th>
-                                            <th class="w-12 bg-base-200/50"></th>
+                                                <th class="w-48 bg-base-200/50" x-text="$t('shift_plans.view.time')"></th>
+                                                <th class="w-16 hidden md:table-cell bg-base-200/50" x-text="$t('shift_plans.view.duration')"></th>
+                                                <th class="w-14 bg-base-200/50 text-center">Status</th>
+                                                <th class="bg-base-200/50" x-text="$t('shift_plans.view.participants')"></th>
+                                                <th class="w-12 bg-base-200/50"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <template x-for="shift in dateGroup.shifts" :key="shift.id">
-                                            <tr x-data="{ isExpanded: false }" class="group hover:bg-base-300/50">
+                                                <tr x-data="{ isExpanded: false }" class="group hover:bg-base-300/50">
                                                 <td class="align-middle">
-                                                    <div class="whitespace-nowrap font-medium"
-                                                        x-text="formatTime(shift.start_time, shift.duration)"></div>
-                                                    <div class="text-xs text-base-content/60 mt-0.5"
-                                                        :class="{ 'line-clamp-1': !isExpanded }"
-                                                        x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en">
+                                                        <div class="whitespace-nowrap font-medium"
+                                                            x-text="formatTime(shift.start_time, shift.duration)"></div>
+                                                        <div class="text-xs text-base-content/60 mt-0.5"
+                                                            :class="{ 'line-clamp-1': !isExpanded }"
+                                                            x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en">
                                                     </div>
                                                 </td>
-                                                <td class="whitespace-nowrap hidden md:table-cell align-middle"
-                                                    x-text="formatDuration(shift.duration)">
+                                                    <td class="whitespace-nowrap hidden md:table-cell align-middle"
+                                                        x-text="formatDuration(shift.duration)">
                                                 </td>
-                                                <!-- Simplified Radial Progress -->
-                                                <td class="align-middle text-center">
-                                                    <div class="radial-progress text-[10px]" 
-                                                         x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '2rem', '--thickness': '2.4px' }"
-                                                         :class="{
-                                                             'text-error': !shift.participants || shift.participants.length === 0,
-                                                             'text-success': shift.participants?.length === shift.required,
-                                                             'text-warning': shift.participants?.length < (shift.required * 0.5),
-                                                             'text-primary': shift.participants && shift.participants.length < shift.required
-                                                         }">
-                                                        <span x-text="(shift.participants?.length || 0) + '/' + shift.required"></span>
-                                                    </div>
-                                                </td>
-                                                <td class="py-2 align-middle">
-                                                    <div class="space-y-2">
-                                                        <!-- Participants list with improved badges -->
-                                                        <div class="flex flex-wrap gap-1.5">
-                                                            <template x-for="participant in shift.participants || []" :key="participant.id">
-                                                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-sm transition-colors border border-base-content/20">
-                                                                    <span x-text="participant.name" class="font-medium"></span>
-                                                                    <button @click.stop="openRemoveModal(shift, participant)"
-                                                                            class="inline-flex items-center justify-center h-4 w-4 rounded hover:bg-base-content/10 text-base-content/70 hover:text-error transition-colors"
-                                                                            :aria-label="$t('shift_plans.view.remove_participant')">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                                        </svg>
-                                                                    </button>
-                                                                </div>
-                                                            </template>
+                                                    <td class="align-middle text-center">
+                                                        <div class="radial-progress text-[10px]" 
+                                                             x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '2rem', '--thickness': '2.4px' }"
+                                                             :class="{
+                                                                 'text-error': !shift.participants || shift.participants.length === 0,
+                                                                 'text-success': shift.participants?.length === shift.required,
+                                                                 'text-warning': shift.participants?.length < (shift.required * 0.5),
+                                                                 'text-primary': shift.participants && shift.participants.length < shift.required
+                                                             }">
+                                                            <span x-text="(shift.participants?.length || 0) + '/' + shift.required"></span>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td class="text-right align-middle">
-                                                    <div class="flex justify-end items-center gap-2">
-                                                        <button @click="openJoinModal(shift)"
-                                                            :disabled="shift.participants?.length >= shift.required"
-                                                            class="btn btn-square btn-outline btn-success btn-sm"
-                                                            :class="{ 'btn-disabled': shift.participants?.length >= shift.required }"
-                                                            :aria-label="$t('shift_plans.view.join')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                            </svg>
-                                                        </button>
-                                                        <button @click="isExpanded = !isExpanded"
-                                                            x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
-                                                            class="btn btn-ghost btn-sm btn-square"
-                                                            :aria-expanded="isExpanded"
-                                                            :aria-label="$t(isExpanded ? 'shift_plans.view.collapse_details' : 'shift_plans.view.expand_details')">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4 transition-transform duration-200"
-                                                                :class="{ 'rotate-90': isExpanded }" fill="none"
-                                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M9 5l7 7-7 7" />
-                                                            </svg>
-                                                        </button>
+                                                    </td>
+                                                    <td class="py-2 align-middle">
+                                                        <div class="space-y-2">
+                                                            <div class="flex flex-wrap gap-1.5">
+                                                                <template x-for="participant in shift.participants || []" :key="participant.id">
+                                                                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-sm transition-colors border border-base-content/20">
+                                                                        <span x-text="participant.name" class="font-medium"></span>
+                                                                        <button @click.stop="openRemoveModal(shift, participant)"
+                                                                                class="inline-flex items-center justify-center h-4 w-4 rounded hover:bg-base-content/10 text-base-content/70 hover:text-error transition-colors"
+                                                                                :aria-label="$t('shift_plans.view.remove_participant')">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                            </svg>
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-right align-middle">
+                                                        <div class="flex justify-end items-center gap-2">
+                                                            <button @click="openJoinModal(shift)"
+                                                                :disabled="shift.participants?.length >= shift.required"
+                                                                class="btn btn-square btn-outline btn-success btn-sm"
+                                                                :class="{ 'btn-disabled': shift.participants?.length >= shift.required }"
+                                                                :aria-label="$t('shift_plans.view.join')">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                                </svg>
+                                                            </button>
+                                                            <button @click="isExpanded = !isExpanded"
+                                                                x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
+                                                                class="btn btn-ghost btn-sm btn-square"
+                                                                :aria-expanded="isExpanded"
+                                                                :aria-label="$t(isExpanded ? 'shift_plans.view.collapse_details' : 'shift_plans.view.expand_details')">
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-4 w-4 transition-transform duration-200"
+                                                                    :class="{ 'rotate-90': isExpanded }" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                            </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -301,6 +339,7 @@
                                 </table>
                             </div>
                         </div>
+                        </template>
                     </template>
                 </div>
             </template>
@@ -352,6 +391,159 @@
                     <button @click="closeRemoveModal()">close</button>
                 </form>
             </dialog>
+
+            <!-- Admin Login Modal -->
+            <dialog id="admin_modal" class="modal">
+                <form method="dialog" class="modal-box" @submit.prevent="submitAdminLogin">
+                    <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.admin_login')"></h3>
+                    <div class="py-4">
+                        <div class="form-control w-full">
+                            <label class="label">
+                                <span class="label-text" x-text="$t('shift_plans.view.admin_password')"></span>
+                            </label>
+                            <input type="password" 
+                                   x-model="adminPassword" 
+                                   @keyup.enter="submitAdminLogin()"
+                                   class="input input-bordered w-full" 
+                                   :class="{ 'input-error': adminError }"
+                                   :placeholder="$t('shift_plans.view.admin_password_placeholder')" />
+                            <label class="label" x-show="adminError">
+                                <span class="label-text-alt text-error" x-text="adminError"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-action">
+                        <button type="button" @click="closeAdminModal()" class="btn" x-text="$t('common.cancel')"></button>
+                        <button type="submit" class="btn btn-primary" x-text="$t('shift_plans.view.admin_login')"></button>
+                    </div>
+                </form>
+                <form method="dialog" class="modal-backdrop">
+                    <button @click="closeAdminModal()">close</button>
+                </form>
+            </dialog>
+
+            <!-- Shift Type Modal -->
+            <dialog id="shift_type_modal" class="modal">
+                <form method="dialog" class="modal-box" @submit.prevent="submitShiftTypeModal">
+                    <h3 class="font-bold text-lg" x-text="currentShiftType ? $t('shift_plans.view.edit_shift_type') : $t('shift_plans.view.add_shift_type')"></h3>
+                    
+                    <div class="py-4 space-y-4">
+                        <!-- Title Fields -->
+                        <template x-if="plan.is_multilingual">
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text" x-text="$t('shift_plans.view.title_de')"></span>
+                                </label>
+                                <input type="text" x-model="shiftTypeForm.title_de" 
+                                       class="input input-bordered w-full" 
+                                       :class="{ 'input-error': shiftTypeErrors.title_de }"
+                                       required />
+                                <label class="label" x-show="shiftTypeErrors.title_de">
+                                    <span class="label-text-alt text-error" x-text="shiftTypeErrors.title_de"></span>
+                                </label>
+                            </div>
+                        </template>
+                        
+                        <div class="form-control w-full">
+                            <label class="label">
+                                <span class="label-text" x-text="plan.is_multilingual ? $t('shift_plans.view.title_en') : $t('shift_plans.view.title')"></span>
+                            </label>
+                            <input type="text" x-model="shiftTypeForm.title_en" 
+                                   class="input input-bordered w-full"
+                                   :class="{ 'input-error': shiftTypeErrors.title_en }"
+                                   required />
+                            <label class="label" x-show="shiftTypeErrors.title_en">
+                                <span class="label-text-alt text-error" x-text="shiftTypeErrors.title_en"></span>
+                            </label>
+                        </div>
+
+                        <!-- Description Fields -->
+                        <template x-if="plan.is_multilingual">
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text" x-text="$t('shift_plans.view.description_de')"></span>
+                                </label>
+                                <textarea x-model="shiftTypeForm.description_de" 
+                                          class="textarea textarea-bordered w-full"
+                                          :class="{ 'textarea-error': shiftTypeErrors.description_de }"
+                                          required></textarea>
+                                <label class="label" x-show="shiftTypeErrors.description_de">
+                                    <span class="label-text-alt text-error" x-text="shiftTypeErrors.description_de"></span>
+                                </label>
+                            </div>
+                        </template>
+                        
+                        <div class="form-control w-full">
+                            <label class="label">
+                                <span class="label-text" x-text="plan.is_multilingual ? $t('shift_plans.view.description_en') : $t('shift_plans.view.description')"></span>
+                            </label>
+                            <textarea x-model="shiftTypeForm.description_en" 
+                                      class="textarea textarea-bordered w-full"
+                                      :class="{ 'textarea-error': shiftTypeErrors.description_en }"
+                                      required></textarea>
+                            <label class="label" x-show="shiftTypeErrors.description_en">
+                                <span class="label-text-alt text-error" x-text="shiftTypeErrors.description_en"></span>
+                            </label>
+                        </div>
+
+                        <!-- Location Fields -->
+                        <template x-if="plan.is_multilingual">
+                            <div class="form-control w-full">
+                                <label class="label">
+                                    <span class="label-text" x-text="$t('shift_plans.view.location_de')"></span>
+                                </label>
+                                <input type="text" x-model="shiftTypeForm.location_de" 
+                                       class="input input-bordered w-full"
+                                       :class="{ 'input-error': shiftTypeErrors.location_de }"
+                                       required />
+                                <label class="label" x-show="shiftTypeErrors.location_de">
+                                    <span class="label-text-alt text-error" x-text="shiftTypeErrors.location_de"></span>
+                                </label>
+                            </div>
+                        </template>
+                        
+                        <div class="form-control w-full">
+                            <label class="label">
+                                <span class="label-text" x-text="plan.is_multilingual ? $t('shift_plans.view.location_en') : $t('shift_plans.view.location')"></span>
+                            </label>
+                            <input type="text" x-model="shiftTypeForm.location_en" 
+                                   class="input input-bordered w-full"
+                                   :class="{ 'input-error': shiftTypeErrors.location_en }"
+                                   required />
+                            <label class="label" x-show="shiftTypeErrors.location_en">
+                                <span class="label-text-alt text-error" x-text="shiftTypeErrors.location_en"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-action">
+                        <button type="button" @click="closeShiftTypeModal()" class="btn" x-text="$t('common.cancel')"></button>
+                        <button type="submit" class="btn btn-primary" x-text="currentShiftType ? $t('common.save') : $t('common.create')"></button>
+                    </div>
+                </form>
+                <form method="dialog" class="modal-backdrop">
+                    <button @click="closeShiftTypeModal()">close</button>
+                </form>
+            </dialog>
+
+            <!-- Delete Shift Type Modal -->
+            <dialog id="delete_shift_type_modal" class="modal">
+                <form method="dialog" class="modal-box">
+                    <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.delete_shift_type')"></h3>
+                    <p class="py-4">
+                        <span x-text="$t('shift_plans.view.confirm_delete_shift_type_1')"></span>
+                        <span class="font-medium" x-text="plan.is_multilingual ? ($locale() === 'de' ? currentShiftType?.title_de : currentShiftType?.title_en) : currentShiftType?.title_en"></span>
+                        <span x-text="$t('shift_plans.view.confirm_delete_shift_type_2')"></span>
+                    </p>
+                    <div class="modal-action">
+                        <button type="button" @click="closeDeleteShiftTypeModal()" class="btn" x-text="$t('common.cancel')"></button>
+                        <button type="button" @click="submitDeleteShiftType()" class="btn btn-error" x-text="$t('common.delete')"></button>
+                    </div>
+                </form>
+                <form method="dialog" class="modal-backdrop">
+                    <button @click="closeDeleteShiftTypeModal()">close</button>
+                </form>
+            </dialog>
         </div>
     </template>
 </div>
@@ -359,4 +551,4 @@
 
 {{ define "scripts" }}
 <script src="/static/js/shift-plan-view.js"></script>
-{{ end }}
+{{ end }} 

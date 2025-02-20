@@ -290,7 +290,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
-               title_de, title_en, description_de, description_en
+               is_multilingual, title_de, title_en, description_de, description_en
         FROM shift_plans
         WHERE token = ?
     `
@@ -301,6 +301,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		&startDate,
 		&endDate,
 		&createdAt,
+		&plan.IsMultilingual,
 		&plan.TitleDE,
 		&plan.TitleEN,
 		&plan.DescriptionDE,
@@ -330,7 +331,7 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
-               title_de, title_en, description_de, description_en
+               is_multilingual, title_de, title_en, description_de, description_en
         FROM shift_plans
         WHERE id = ?
     `
@@ -341,6 +342,7 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 		&startDate,
 		&endDate,
 		&createdAt,
+		&plan.IsMultilingual,
 		&plan.TitleDE,
 		&plan.TitleEN,
 		&plan.DescriptionDE,

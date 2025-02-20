@@ -18,6 +18,31 @@ document.addEventListener('alpine:init', () => {
         joinName: '',
         joinNameError: null,
 
+        // Admin state
+        isAdmin: false,
+        adminPassword: '',
+        adminError: null,
+        adminToken: '',
+
+        // Shift Type Modal state
+        currentShiftType: null,
+        shiftTypeForm: {
+            title_de: '',
+            title_en: '',
+            description_de: '',
+            description_en: '',
+            location_de: '',
+            location_en: ''
+        },
+        shiftTypeErrors: {
+            title_de: null,
+            title_en: null,
+            description_de: null,
+            description_en: null,
+            location_de: null,
+            location_en: null
+        },
+
         // Computed property für den Ladezustand
         get isReady() {
             return !this.isLoading && !this.error && this.plan;
@@ -166,6 +191,13 @@ document.addEventListener('alpine:init', () => {
             const pathParts = window.location.pathname.split('/');
             const token = pathParts[pathParts.length - 1];
             
+            // Versuche Admin-Token aus localStorage zu laden
+            const storedToken = localStorage.getItem(`admin_token_${token}`);
+            if (storedToken) {
+                this.isAdmin = true;
+                this.adminToken = storedToken;
+            }
+            
             // Starte Datenladen
             this.loadPlan(token);
         },
@@ -202,15 +234,22 @@ document.addEventListener('alpine:init', () => {
 
             try {
                 // Plan laden
-                const planResponse = await fetch(`/api/shift-plans/${token}`);
+                const headers = {};
+                if (this.isAdmin && this.adminToken) {
+                    headers['X-Admin-Token'] = this.adminToken;
+                }
+
+                const planResponse = await fetch(`/api/shift-plans/${token}`, { headers });
                 if (!planResponse.ok) {
                     throw new Error('Failed to load plan');
                 }
                 const planData = await planResponse.json();
                 
+                console.log('Loaded plan data:', planData); // Debug log
+                
                 // Stelle sicher, dass alle Properties existieren
                 this.plan = {
-                    is_multilingual: planData.is_multilingual || false,
+                    is_multilingual: Boolean(planData.is_multilingual), // Explicitly convert to boolean
                     title_en: planData.title_en || '',
                     title_de: planData.title_de || '',
                     description_en: planData.description_en || '',
@@ -219,17 +258,20 @@ document.addEventListener('alpine:init', () => {
                     end_date: planData.end_date || '',
                     token: planData.token || token
                 };
+                
+                console.log('Processed plan data:', this.plan); // Debug log
 
                 // Schichttypen laden
-                const typesResponse = await fetch(`/api/shift-plans/${token}/types`);
+                const typesResponse = await fetch(`/api/shift-plans/${token}/types`, { headers });
                 if (!typesResponse.ok) {
                     throw new Error('Failed to load shift types');
                 }
                 const types = await typesResponse.json();
                 
-                // Gruppiere Schichten nach Datum für jeden Typ
+                // Ensure each type has a shifts array and group shifts by date
                 this.shiftTypes = types.map(type => ({
                     ...type,
+                    shifts: type.shifts || [], // Ensure shifts is at least an empty array
                     shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
 
@@ -258,7 +300,10 @@ document.addEventListener('alpine:init', () => {
         openJoinModal(shift) {
             if (!shift) return;
             this.currentShift = shift;
-            this.joinName = '';
+            
+            // Load last used name from localStorage
+            this.joinName = localStorage.getItem('last_participant_name') || '';
+            
             this.joinNameError = null;
             const modal = document.getElementById('join_modal');
             if (modal) modal.showModal();
@@ -298,6 +343,9 @@ document.addEventListener('alpine:init', () => {
                 if (!response.ok) {
                     throw new Error('Failed to join shift');
                 }
+
+                // Save name to localStorage after successful join
+                localStorage.setItem('last_participant_name', this.joinName.trim());
 
                 // Daten neu laden und Modal schließen
                 await this.loadPlan(this.plan.token);
@@ -415,6 +463,224 @@ document.addEventListener('alpine:init', () => {
             } catch (error) {
                 console.error('Error formatting duration:', error);
                 return '';
+            }
+        },
+
+        // Admin functions
+        openAdminModal() {
+            this.adminPassword = '';
+            this.adminError = null;
+            const modal = document.getElementById('admin_modal');
+            if (modal) modal.showModal();
+        },
+
+        closeAdminModal() {
+            this.adminPassword = '';
+            this.adminError = null;
+            const modal = document.getElementById('admin_modal');
+            if (modal) modal.close();
+        },
+
+        async submitAdminLogin() {
+            if (!this.adminPassword?.trim()) {
+                this.adminError = this.$t('shift_plans.view.error_password_required');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/shift-plans/${this.plan.token}/verify-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: this.adminPassword.trim() })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Invalid password');
+                }
+
+                // Store admin state
+                this.isAdmin = true;
+                this.adminToken = this.adminPassword.trim();
+                
+                // Save admin token in localStorage
+                localStorage.setItem(`admin_token_${this.plan.token}`, this.adminToken);
+                
+                this.closeAdminModal();
+
+                // Reload data to get admin-only fields
+                await this.loadPlan(this.plan.token);
+            } catch (error) {
+                console.error('Error logging in:', error);
+                this.adminError = this.$t('shift_plans.view.error_invalid_password');
+            }
+        },
+
+        logoutAdmin() {
+            this.isAdmin = false;
+            this.adminToken = '';
+            this.adminPassword = '';
+            
+            // Remove admin token from localStorage
+            localStorage.removeItem(`admin_token_${this.plan.token}`);
+            
+            // Reload data to remove admin-only fields
+            this.loadPlan(this.plan.token);
+        },
+
+        // Shift Type Modal functions
+        openShiftTypeModal(type = null) {
+            this.currentShiftType = type;
+            this.shiftTypeErrors = {
+                title_de: null,
+                title_en: null,
+                description_de: null,
+                description_en: null,
+                location_de: null,
+                location_en: null
+            };
+            
+            if (type) {
+                // Edit mode: Fill form with existing data
+                this.shiftTypeForm = {
+                    title_de: type.title_de || '',
+                    title_en: type.title_en || '',
+                    description_de: type.description_de || '',
+                    description_en: type.description_en || '',
+                    location_de: type.location_de || '',
+                    location_en: type.location_en || ''
+                };
+            } else {
+                // Create mode: Reset form
+                this.shiftTypeForm = {
+                    title_de: '',
+                    title_en: '',
+                    description_de: '',
+                    description_en: '',
+                    location_de: '',
+                    location_en: ''
+                };
+            }
+            
+            const modal = document.getElementById('shift_type_modal');
+            if (modal) modal.showModal();
+        },
+
+        closeShiftTypeModal() {
+            this.currentShiftType = null;
+            this.shiftTypeForm = this.getEmptyShiftTypeForm();
+            this.shiftTypeErrors = {};
+            document.getElementById('shift_type_modal').close();
+        },
+
+        openDeleteShiftTypeModal(type) {
+            this.currentShiftType = type;
+            document.getElementById('delete_shift_type_modal').showModal();
+        },
+
+        closeDeleteShiftTypeModal() {
+            this.currentShiftType = null;
+            document.getElementById('delete_shift_type_modal').close();
+        },
+
+        async submitDeleteShiftType() {
+            try {
+                const response = await fetch(`/api/shift-plans/${this.plan.token}/types/${this.currentShiftType.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Admin-Token': this.adminToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete shift type');
+                }
+
+                // Remove the shift type from the list
+                this.shiftTypes = this.shiftTypes.filter(type => type.id !== this.currentShiftType.id);
+                this.closeDeleteShiftTypeModal();
+            } catch (error) {
+                console.error('Error deleting shift type:', error);
+                alert(this.$t('shift_plans.view.error_deleting_shift_type'));
+            }
+        },
+
+        async submitShiftTypeModal() {
+            // Reset errors
+            this.shiftTypeErrors = {
+                title_de: null,
+                title_en: null,
+                description_de: null,
+                description_en: null,
+                location_de: null,
+                location_en: null
+            };
+            
+            let hasErrors = false;
+            
+            // For multilingual plans, validate both languages
+            if (this.plan.is_multilingual) {
+                // German validation
+                if (!this.shiftTypeForm.title_de?.trim()) {
+                    this.shiftTypeErrors.title_de = this.$t('shift_plans.view.error_title_required');
+                    hasErrors = true;
+                }
+                if (!this.shiftTypeForm.description_de?.trim()) {
+                    this.shiftTypeErrors.description_de = this.$t('shift_plans.view.error_description_required');
+                    hasErrors = true;
+                }
+                if (!this.shiftTypeForm.location_de?.trim()) {
+                    this.shiftTypeErrors.location_de = this.$t('shift_plans.view.error_location_required');
+                    hasErrors = true;
+                }
+            }
+            
+            // Always validate English (as it's the default language)
+            if (!this.shiftTypeForm.title_en?.trim()) {
+                this.shiftTypeErrors.title_en = this.$t('shift_plans.view.error_title_required');
+                hasErrors = true;
+            }
+            if (!this.shiftTypeForm.description_en?.trim()) {
+                this.shiftTypeErrors.description_en = this.$t('shift_plans.view.error_description_required');
+                hasErrors = true;
+            }
+            if (!this.shiftTypeForm.location_en?.trim()) {
+                this.shiftTypeErrors.location_en = this.$t('shift_plans.view.error_location_required');
+                hasErrors = true;
+            }
+            
+            if (hasErrors) {
+                return;
+            }
+            
+            try {
+                const url = this.currentShiftType
+                    ? `/api/shift-plans/${this.plan.token}/types/${this.currentShiftType.id}`
+                    : `/api/shift-plans/${this.plan.token}/types`;
+                
+                const response = await fetch(url, {
+                    method: this.currentShiftType ? 'PUT' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': this.adminToken
+                    },
+                    body: JSON.stringify(this.shiftTypeForm)
+                });
+
+                if (!response.ok) {
+                    throw new Error(this.currentShiftType ? 'Failed to update shift type' : 'Failed to create shift type');
+                }
+
+                // Reload data and close modal
+                await this.loadPlan(this.plan.token);
+                this.closeShiftTypeModal();
+            } catch (error) {
+                console.error('Error saving shift type:', error);
+                // Show error in the first error field
+                this.shiftTypeErrors.title_en = this.$t(
+                    this.currentShiftType 
+                        ? 'shift_plans.view.error_updating_shift_type'
+                        : 'shift_plans.view.error_creating_shift_type'
+                );
             }
         }
     }));

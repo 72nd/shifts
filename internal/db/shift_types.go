@@ -223,7 +223,7 @@ func (db *DB) UpdateShiftTypeOrder(planID int64, typeIDs []int64) error {
 }
 
 // DeleteShiftType deletes a shift type and all its shifts
-func (db *DB) DeleteShiftType(id, planID int64) error {
+func (db *DB) DeleteShiftType(planID, id int64) error {
 	query := `DELETE FROM shift_types WHERE id = ? AND plan_id = ?`
 	result, err := db.Exec(query, id, planID)
 	if err != nil {
