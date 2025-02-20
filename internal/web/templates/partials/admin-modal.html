@@ -1,0 +1,27 @@
+<div class="modal-box" x-show="adminModal" x-cloak>
+    <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" @click="adminModal.close()">✕</button>
+    
+    <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.admin_login')"></h3>
+    
+    <!-- Error message box -->
+    <div class="alert alert-error mt-4" x-show="adminModal.errors.general" x-text="adminModal.errors.general"></div>
+    
+    <div class="form-control w-full mt-4">
+        <label class="label">
+            <span class="label-text" x-text="$t('shift_plans.view.admin_password')"></span>
+        </label>
+        <input type="password" 
+               class="input input-bordered w-full" 
+               :class="{ 'input-error': adminModal.errors.password }"
+               x-model="adminModal.password"
+               @keyup.enter="adminModal.submit()">
+        <label class="label" x-show="adminModal.errors.password">
+            <span class="label-text-alt text-error" x-text="adminModal.errors.password"></span>
+        </label>
+    </div>
+
+    <div class="modal-action">
+        <button class="btn btn-primary" @click="adminModal.submit()" x-text="$t('shift_plans.view.login')"></button>
+        <button class="btn" @click="adminModal.close()" x-text="$t('shift_plans.view.cancel')"></button>
+    </div>
+</div> 
