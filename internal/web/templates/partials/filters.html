@@ -7,8 +7,8 @@
         </div>
         <!-- Clear Filters Button -->
         <button class="btn btn-outline btn-secondary btn-sm gap-2" 
-                @click="clearFilters()"
-                x-show="hasActiveFilters()">
+                @click="filterManager.clearFilters()"
+                x-show="filterManager.hasActiveFilters()">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -21,9 +21,9 @@
         <div class="form-control w-full">
             <label class="label">
                 <span class="label-text" x-text="$t('shift_plans.view.filter.types')"></span>
-                <button @click="selectedTypes = []" 
+                <button @click="filterManager.selectedTypes = []" 
                         class="btn btn-ghost btn-xs" 
-                        x-show="selectedTypes.length > 0">
+                        x-show="filterManager.selectedTypes.length > 0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -32,9 +32,9 @@
             <div class="dropdown w-full">
                 <div tabindex="0" role="button" 
                      class="input input-bordered w-full flex items-center justify-between"
-                     :class="{ 'input-primary': selectedTypes.length > 0 }">
-                    <span x-text="selectedTypes.length ? 
-                        $t('shift_plans.view.filter.n_types_selected', { count: selectedTypes.length }) : 
+                     :class="{ 'input-primary': filterManager.selectedTypes.length > 0 }">
+                    <span x-text="filterManager.selectedTypes.length ? 
+                        $t('shift_plans.view.filter.n_types_selected', { count: filterManager.selectedTypes.length }) : 
                         $t('shift_plans.view.filter.select_types')">
                     </span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -47,8 +47,8 @@
                         <label class="label cursor-pointer hover:bg-base-200 rounded-lg px-3 py-2 gap-2">
                             <input type="checkbox" 
                                    class="checkbox checkbox-sm" 
-                                   :checked="selectedTypes.length === shiftTypes.length"
-                                   @change="toggleAllTypes()" />
+                                   :checked="filterManager.selectedTypes.length === shiftTypes.length"
+                                   @change="filterManager.toggleAllTypes(shiftTypes.map(t => t.id))" />
                             <span class="label-text font-medium" x-text="$t('shift_plans.view.filter.all_types')"></span>
                         </label>
                         <div class="divider my-0"></div>
@@ -57,8 +57,8 @@
                             <label class="label cursor-pointer hover:bg-base-200 rounded-lg px-3 py-2 gap-2">
                                 <input type="checkbox" 
                                        class="checkbox checkbox-sm" 
-                                       :checked="selectedTypes.includes(type.id)"
-                                       @change="toggleType(type.id)" />
+                                       :checked="filterManager.selectedTypes.includes(type.id)"
+                                       @change="filterManager.toggleType(type.id)" />
                                 <span class="label-text" 
                                       x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
                                 </span>
@@ -73,19 +73,19 @@
         <div class="form-control w-full">
             <label class="label">
                 <span class="label-text" x-text="$t('shift_plans.view.filter.days')"></span>
-                <button @click="selectedDay = ''" 
+                <button @click="filterManager.selectedDay = ''" 
                         class="btn btn-ghost btn-xs"
-                        x-show="selectedDay">
+                        x-show="filterManager.selectedDay">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </label>
             <select class="select select-bordered w-full" 
-                    x-model="selectedDay"
-                    :class="{ 'select-primary': selectedDay }">
+                    x-model="filterManager.selectedDay"
+                    :class="{ 'select-primary': filterManager.selectedDay }">
                 <option value="" x-text="$t('shift_plans.view.filter.all_days')"></option>
-                <template x-for="day in availableDays" :key="day">
+                <template x-for="day in filterManager.getAvailableDays(shiftTypes)" :key="day">
                     <option :value="day" x-text="formatDate(day)"></option>
                 </template>
             </select>
@@ -95,17 +95,17 @@
         <div class="form-control w-full">
             <label class="label">
                 <span class="label-text" x-text="$t('shift_plans.view.filter.status')"></span>
-                <button @click="selectedStatus = 'all'" 
+                <button @click="filterManager.selectedStatus = 'all'" 
                         class="btn btn-ghost btn-xs"
-                        x-show="selectedStatus !== 'all'">
+                        x-show="filterManager.selectedStatus !== 'all'">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </label>
             <select class="select select-bordered w-full" 
-                    x-model="selectedStatus"
-                    :class="{ 'select-primary': selectedStatus !== 'all' }">
+                    x-model="filterManager.selectedStatus"
+                    :class="{ 'select-primary': filterManager.selectedStatus !== 'all' }">
                 <option value="all" x-text="$t('shift_plans.view.filter.status_all')"></option>
                 <option value="empty" x-text="$t('shift_plans.view.filter.status_empty')"></option>
                 <option value="critical" x-text="$t('shift_plans.view.filter.status_critical')"></option>
@@ -117,9 +117,9 @@
         <div class="form-control w-full">
             <label class="label">
                 <span class="label-text" x-text="$t('shift_plans.view.filter.search')"></span>
-                <button @click="searchQuery = ''" 
+                <button @click="filterManager.searchQuery = ''" 
                         class="btn btn-ghost btn-xs"
-                        x-show="searchQuery.trim()">
+                        x-show="filterManager.searchQuery.trim()">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -127,8 +127,8 @@
             </label>
             <input type="text" 
                    class="input input-bordered w-full" 
-                   :class="{ 'input-primary': searchQuery.trim() }"
-                   x-model="searchQuery"
+                   :class="{ 'input-primary': filterManager.searchQuery.trim() }"
+                   x-model="filterManager.searchQuery"
                    :placeholder="$t('shift_plans.view.filter.search_placeholder')" />
         </div>
     </div>

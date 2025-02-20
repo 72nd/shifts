@@ -5,6 +5,7 @@ import { DeleteTypeModal } from './delete-type-modal.js';
 import { JoinModal } from './join-modal.js';
 import { RemoveModal } from './remove-modal.js';
 import { AdminModal } from './admin-modal.js';
+import { FilterManager } from './filter-manager.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -28,7 +29,8 @@ document.addEventListener('alpine:init', () => {
         isAdmin: false,
         adminToken: '',
 
-        // Initialize modals
+        // Initialize managers
+        filterManager: null,
         shiftModal: null,
         shiftTypeModal: null,
         deleteTypeModal: null,
@@ -43,127 +45,38 @@ document.addEventListener('alpine:init', () => {
 
         // Computed property für verfügbare Tage
         get availableDays() {
-            const days = new Set();
-            this.shiftTypes.forEach(type => {
-                type.shifts.forEach(shift => {
-                    const date = new Date(shift.start_time);
-                    days.add(date.toISOString().split('T')[0]);
-                });
-            });
-            return [...days].sort();
+            return this.filterManager.getAvailableDays(this.shiftTypes);
         },
 
         // Computed property für gefilterte Schichttypen
         get filteredShiftTypes() {
-            if (!this.shiftTypes) return [];
-
-            return this.shiftTypes
-                .filter(type => this.selectedTypes.length === 0 || this.selectedTypes.includes(type.id))
-                .map(type => ({
-                    ...type,
-                    shiftsByDate: this.filterShiftsByDate(type.shifts)
-                }))
-                .filter(type => type.shiftsByDate.length > 0);
+            return this.filterManager.filterShiftTypes(this.shiftTypes);
         },
 
         // Filter functions
         filterShiftsByDate(shifts) {
-            if (!shifts) return [];
-
-            // Filter shifts based on all criteria
-            const filteredShifts = shifts.filter(shift => {
-                // Day filter
-                if (this.selectedDay) {
-                    const shiftDate = new Date(shift.start_time).toISOString().split('T')[0];
-                    if (shiftDate !== this.selectedDay) return false;
-                }
-
-                // Status filter
-                const participantCount = shift.participants?.length || 0;
-                const percentage = (participantCount / shift.required) * 100;
-
-                switch (this.selectedStatus) {
-                    case 'empty':
-                        if (participantCount > 0) return false;
-                        break;
-                    case 'critical':
-                        if (percentage >= 50 || participantCount === shift.required) return false;
-                        break;
-                    case 'full':
-                        if (participantCount !== shift.required) return false;
-                        break;
-                }
-
-                // Name search
-                if (this.searchQuery.trim()) {
-                    const query = this.searchQuery.trim().toLowerCase();
-                    const hasMatchingParticipant = shift.participants?.some(
-                        p => p.name.toLowerCase().includes(query)
-                    );
-                    if (!hasMatchingParticipant) return false;
-                }
-
-                return true;
-            });
-
-            // Group filtered shifts by date
-            return this.groupShiftsByDate(filteredShifts);
-        },
-
-        // Helper function to check if any filters are active
-        hasActiveFilters() {
-            return this.selectedTypes.length > 0 ||
-                this.selectedDay !== '' ||
-                this.selectedStatus !== 'all' ||
-                this.searchQuery.trim() !== '';
+            return shifts;
         },
 
         // Filter actions
         toggleType(typeId) {
-            const index = this.selectedTypes.indexOf(typeId);
-            if (index === -1) {
-                this.selectedTypes.push(typeId);
-            } else {
-                this.selectedTypes.splice(index, 1);
-            }
+            this.filterManager.toggleType(typeId);
         },
 
         clearFilters() {
-            this.selectedTypes = [];
-            this.selectedDay = '';
-            this.selectedStatus = 'all';
-            this.searchQuery = '';
+            this.filterManager.clearFilters();
         },
 
-        // Helper function to count active filters
         activeFilterCount() {
-            let count = 0;
-            if (this.selectedTypes.length > 0) count++;
-            if (this.selectedDay) count++;
-            if (this.selectedStatus !== 'all') count++;
-            if (this.searchQuery.trim()) count++;
-            return count;
+            return this.filterManager.getActiveFilterCount();
         },
 
-        // Helper function to get names of selected types
         selectedTypeNames() {
-            return this.shiftTypes
-                .filter(type => this.selectedTypes.includes(type.id))
-                .map(type => ({
-                    id: type.id,
-                    name: this.plan.is_multilingual
-                        ? (this.$locale() === 'de' ? type.title_de : type.title_en)
-                        : type.title_en
-                }));
+            return this.filterManager.getSelectedTypeNames(this.shiftTypes, this.plan.is_multilingual, this.$locale());
         },
 
-        // Toggle all types
         toggleAllTypes() {
-            if (this.selectedTypes.length === this.shiftTypes.length) {
-                this.selectedTypes = [];
-            } else {
-                this.selectedTypes = this.shiftTypes.map(type => type.id);
-            }
+            this.filterManager.toggleAllTypes(this.shiftTypes.map(t => t.id));
         },
 
         // Initialisierung
@@ -191,7 +104,8 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken = storedToken;
             }
 
-            // Initialize modals with empty data
+            // Initialize managers
+            this.filterManager = new FilterManager();
             this.shiftModal = new ShiftModal('', [], token, this.adminToken);
             this.shiftTypeModal = new ShiftTypeModal(false, token, this.adminToken, type => this.handleShiftTypeSuccess(type));
             this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, type => this.handleDeleteTypeSuccess(type));

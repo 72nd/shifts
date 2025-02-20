@@ -83,7 +83,7 @@
             {{ template "filters" . }}
 
             <!-- Shift Types -->
-            <template x-for="type in shiftTypes" :key="type.id">
+            <template x-for="type in filteredShiftTypes" :key="type.id">
                 {{ template "shift-type-card" . }}
             </template>
         </div>
