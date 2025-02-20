@@ -2,6 +2,8 @@
 import { ShiftModal } from './shift-modal.js';
 import { ShiftTypeModal } from './shift-type-modal.js';
 import { DeleteTypeModal } from './delete-type-modal.js';
+import { JoinModal } from './join-modal.js';
+import { RemoveModal } from './remove-modal.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -20,8 +22,6 @@ document.addEventListener('alpine:init', () => {
         // Modal state
         currentShift: null,
         currentParticipant: null,
-        joinName: '',
-        joinNameError: null,
 
         // Admin state
         isAdmin: false,
@@ -29,29 +29,12 @@ document.addEventListener('alpine:init', () => {
         adminError: null,
         adminToken: '',
 
-        // Shift Type Modal state
-        currentShiftType: null,
-        shiftTypeForm: {
-            title_de: '',
-            title_en: '',
-            description_de: '',
-            description_en: '',
-            location_de: '',
-            location_en: ''
-        },
-        shiftTypeErrors: {
-            title_de: null,
-            title_en: null,
-            description_de: null,
-            description_en: null,
-            location_de: null,
-            location_en: null
-        },
-
         // Initialize modals
         shiftModal: null,
         shiftTypeModal: null,
         deleteTypeModal: null,
+        joinModal: null,
+        removeModal: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -197,14 +180,6 @@ document.addEventListener('alpine:init', () => {
                 token: ''
             };
             
-            // Initialize modals with empty data
-            this.shiftModal = new ShiftModal('', []);
-            this.shiftTypeModal = new ShiftTypeModal(false);
-            this.deleteTypeModal = new DeleteTypeModal();
-            
-            this.shiftTypeModal.setCallbacks(type => this.handleShiftTypeSuccess(type));
-            this.deleteTypeModal.setCallbacks(type => this.handleDeleteTypeSuccess(type));
-            
             // Hole Token aus URL
             const pathParts = window.location.pathname.split('/');
             const token = pathParts[pathParts.length - 1];
@@ -215,6 +190,13 @@ document.addEventListener('alpine:init', () => {
                 this.isAdmin = true;
                 this.adminToken = storedToken;
             }
+            
+            // Initialize modals with empty data
+            this.shiftModal = new ShiftModal('', []);
+            this.shiftTypeModal = new ShiftTypeModal(false);
+            this.deleteTypeModal = new DeleteTypeModal();
+            this.joinModal = new JoinModal(token, shift => this.handleShiftUpdate(shift));
+            this.removeModal = new RemoveModal(token, shift => this.handleShiftUpdate(shift));
             
             // Starte Datenladen
             this.loadPlan(token);
@@ -305,6 +287,10 @@ document.addEventListener('alpine:init', () => {
                 this.deleteTypeModal.setTokens(this.plan.token, this.adminToken);
                 this.deleteTypeModal.setCallbacks(type => this.handleDeleteTypeSuccess(type));
 
+                this.joinModal = new JoinModal(this.plan.token, shift => this.handleShiftUpdate(shift));
+
+                this.removeModal = new RemoveModal(this.plan.token, shift => this.handleShiftUpdate(shift));
+
             } catch (error) {
                 console.error('Error loading plan:', error);
                 this.error = error.message;
@@ -329,95 +315,12 @@ document.addEventListener('alpine:init', () => {
         // Modal functions
         openJoinModal(shift) {
             if (!shift) return;
-            this.currentShift = shift;
-            
-            // Load last used name from localStorage
-            this.joinName = localStorage.getItem('last_participant_name') || '';
-            
-            this.joinNameError = null;
-            const modal = document.getElementById('join_modal');
-            if (modal) modal.showModal();
-        },
-
-        closeJoinModal() {
-            this.currentShift = null;
-            this.joinName = '';
-            this.joinNameError = null;
-            const modal = document.getElementById('join_modal');
-            if (modal) modal.close();
-        },
-
-        async submitJoinModal() {
-            if (!this.joinName?.trim()) {
-                this.joinNameError = this.$t('shift_plans.view.error_name_required');
-                return;
-            }
-
-            // Check if name already exists in this shift
-            const nameExists = this.currentShift.participants?.some(
-                p => p.name.toLowerCase() === this.joinName.trim().toLowerCase()
-            );
-
-            if (nameExists) {
-                this.joinNameError = this.$t('shift_plans.view.error_name_exists');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/shift-plans/${this.plan.token}/shifts/${this.currentShift.id}/participants`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: this.joinName.trim() })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to join shift');
-                }
-
-                // Save name to localStorage after successful join
-                localStorage.setItem('last_participant_name', this.joinName.trim());
-
-                // Daten neu laden und Modal schließen
-                await this.loadPlan(this.plan.token);
-                this.closeJoinModal();
-            } catch (error) {
-                console.error('Error joining shift:', error);
-                this.joinNameError = this.$t('shift_plans.view.error_joining');
-            }
+            this.joinModal.openWith(shift);
         },
 
         openRemoveModal(shift, participant) {
             if (!shift || !participant) return;
-            this.currentShift = shift;
-            this.currentParticipant = participant;
-            const modal = document.getElementById('remove_modal');
-            if (modal) modal.showModal();
-        },
-
-        closeRemoveModal() {
-            this.currentShift = null;
-            this.currentParticipant = null;
-            const modal = document.getElementById('remove_modal');
-            if (modal) modal.close();
-        },
-
-        async submitRemoveModal() {
-            try {
-                const response = await fetch(`/api/shift-plans/${this.plan.token}/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to remove participant');
-                }
-
-                // Daten neu laden und Modal schließen
-                await this.loadPlan(this.plan.token);
-                this.closeRemoveModal();
-            } catch (error) {
-                console.error('Error removing participant:', error);
-                alert(this.$t('shift_plans.view.error_removing'));
-            }
+            this.removeModal.openWith(shift, participant);
         },
 
         // Formatierungshelfer mit Null-Checks
@@ -583,23 +486,7 @@ document.addEventListener('alpine:init', () => {
             this.shiftModal.openWith(shift, type);
         },
 
-        // Helper function to calculate relative day from a date
-        getRelativeDayFromDate(date) {
-            const startDate = new Date(this.plan.start_date);
-            const targetDate = new Date(date);
-            const diffTime = targetDate - startDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            return diffDays;
-        },
-
-        // Helper function to update start time based on relative day
-        updateStartTimeFromRelativeDay(day) {
-            const startDate = new Date(this.plan.start_date);
-            startDate.setDate(startDate.getDate() + (parseInt(day) - 1));
-            startDate.setHours(10, 0, 0, 0);
-            this.shiftForm.start_time = startDate.toISOString().slice(0, 16);
-        },
-
+        // Delete Type Modal functions
         openDeleteShiftTypeModal(type) {
             this.deleteTypeModal.openWith(type);
         },
@@ -609,6 +496,27 @@ document.addEventListener('alpine:init', () => {
             const index = this.shiftTypes.findIndex(t => t.id === type.id);
             if (index !== -1) {
                 this.shiftTypes.splice(index, 1);
+            }
+        },
+
+        // Helper function to update a shift in the shiftTypes array
+        handleShiftUpdate(updatedShift) {
+            // Find the type that contains this shift
+            const typeIndex = this.shiftTypes.findIndex(type => 
+                type.shifts.some(shift => shift.id === updatedShift.id)
+            );
+            
+            if (typeIndex !== -1) {
+                // Update the shift in the type's shifts array
+                const shiftIndex = this.shiftTypes[typeIndex].shifts.findIndex(
+                    shift => shift.id === updatedShift.id
+                );
+                
+                if (shiftIndex !== -1) {
+                    this.shiftTypes[typeIndex].shifts[shiftIndex] = updatedShift;
+                    // Update the shiftsByDate grouping
+                    this.shiftTypes[typeIndex].shiftsByDate = this.groupShiftsByDate(this.shiftTypes[typeIndex].shifts);
+                }
             }
         }
     }));
