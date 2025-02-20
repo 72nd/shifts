@@ -121,7 +121,9 @@
             "delete_shift_type": "Schichttyp löschen",
             "confirm_delete_shift_type_1": "Möchtest du den Schichttyp ",
             "confirm_delete_shift_type_2": " wirklich löschen?",
-            "error_deleting_shift_type": "Fehler beim Löschen des Schichttyps"
+            "error_deleting_shift_type": "Fehler beim Löschen des Schichttyps",
+            "banner_title": "Willkommen bei Ihrem Schichtplan",
+            "banner_subtitle": "Verwalten Sie Ihre Schichten effizient"
         }
     }
 } 

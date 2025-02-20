@@ -1,0 +1,104 @@
+{{ define "shift-type-modal" }}
+<dialog id="shift_type_modal" class="modal">
+    <form method="dialog" class="modal-box" @submit.prevent="submitShiftTypeModal">
+        <h3 class="font-bold text-lg" x-text="currentShiftType ? $t('shift_plans.view.edit_shift_type') : $t('shift_plans.view.add_shift_type')"></h3>
+        
+        <div class="py-4 space-y-4">
+            <!-- Title Fields -->
+            <template x-if="plan.is_multilingual">
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text" x-text="$t('shift_plans.view.title_de')"></span>
+                    </label>
+                    <input type="text" x-model="shiftTypeForm.title_de" 
+                           class="input input-bordered w-full" 
+                           :class="{ 'input-error': shiftTypeErrors.title_de }"
+                           required />
+                    <label class="label" x-show="shiftTypeErrors.title_de">
+                        <span class="label-text-alt text-error" x-text="shiftTypeErrors.title_de"></span>
+                    </label>
+                </div>
+            </template>
+            
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text" x-text="plan.is_multilingual ? $t('shift_plans.view.title_en') : $t('shift_plans.view.title')"></span>
+                </label>
+                <input type="text" x-model="shiftTypeForm.title_en" 
+                       class="input input-bordered w-full"
+                       :class="{ 'input-error': shiftTypeErrors.title_en }"
+                       required />
+                <label class="label" x-show="shiftTypeErrors.title_en">
+                    <span class="label-text-alt text-error" x-text="shiftTypeErrors.title_en"></span>
+                </label>
+            </div>
+
+            <!-- Description Fields -->
+            <template x-if="plan.is_multilingual">
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text" x-text="$t('shift_plans.view.description_de')"></span>
+                    </label>
+                    <textarea x-model="shiftTypeForm.description_de" 
+                              class="textarea textarea-bordered w-full"
+                              :class="{ 'textarea-error': shiftTypeErrors.description_de }"
+                              required></textarea>
+                    <label class="label" x-show="shiftTypeErrors.description_de">
+                        <span class="label-text-alt text-error" x-text="shiftTypeErrors.description_de"></span>
+                    </label>
+                </div>
+            </template>
+            
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text" x-text="plan.is_multilingual ? $t('shift_plans.view.description_en') : $t('shift_plans.view.description')"></span>
+                </label>
+                <textarea x-model="shiftTypeForm.description_en" 
+                          class="textarea textarea-bordered w-full"
+                          :class="{ 'textarea-error': shiftTypeErrors.description_en }"
+                          required></textarea>
+                <label class="label" x-show="shiftTypeErrors.description_en">
+                    <span class="label-text-alt text-error" x-text="shiftTypeErrors.description_en"></span>
+                </label>
+            </div>
+
+            <!-- Location Fields -->
+            <template x-if="plan.is_multilingual">
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text" x-text="$t('shift_plans.view.location_de')"></span>
+                    </label>
+                    <input type="text" x-model="shiftTypeForm.location_de" 
+                           class="input input-bordered w-full"
+                           :class="{ 'input-error': shiftTypeErrors.location_de }"
+                           required />
+                    <label class="label" x-show="shiftTypeErrors.location_de">
+                        <span class="label-text-alt text-error" x-text="shiftTypeErrors.location_de"></span>
+                    </label>
+                </div>
+            </template>
+            
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text" x-text="plan.is_multilingual ? $t('shift_plans.view.location_en') : $t('shift_plans.view.location')"></span>
+                </label>
+                <input type="text" x-model="shiftTypeForm.location_en" 
+                       class="input input-bordered w-full"
+                       :class="{ 'input-error': shiftTypeErrors.location_en }"
+                       required />
+                <label class="label" x-show="shiftTypeErrors.location_en">
+                    <span class="label-text-alt text-error" x-text="shiftTypeErrors.location_en"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="modal-action">
+            <button type="button" @click="closeShiftTypeModal()" class="btn" x-text="$t('common.cancel')"></button>
+            <button type="submit" class="btn btn-primary" x-text="currentShiftType ? $t('common.save') : $t('common.create')"></button>
+        </div>
+    </form>
+    <form method="dialog" class="modal-backdrop">
+        <button @click="closeShiftTypeModal()">close</button>
+    </form>
+</dialog>
+{{ end }} 

@@ -121,7 +121,9 @@
             "delete_shift_type": "Delete Shift Type",
             "confirm_delete_shift_type_1": "Are you sure you want to delete the shift type ",
             "confirm_delete_shift_type_2": "?",
-            "error_deleting_shift_type": "Error deleting shift type"
+            "error_deleting_shift_type": "Error deleting shift type",
+            "banner_title": "Welcome to your Shift Plan",
+            "banner_subtitle": "Manage your shifts efficiently"
         }
     }
 } 

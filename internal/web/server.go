@@ -58,17 +58,31 @@ func (s *Server) parseTemplates() error {
 		return fmt.Errorf("failed to get template files: %w", err)
 	}
 
+	// Get all partials
+	partials, err := fs.Glob(content, "templates/partials/*.html")
+	if err != nil {
+		return fmt.Errorf("failed to get partial files: %w", err)
+	}
+
 	// Parse each template
 	for _, page := range pages {
 		name := filepath.Base(page)
 
 		// Create a new template with functions
-		ts, err := template.New(name).ParseFS(content, "templates/layouts/base.html", page)
-		if err != nil {
+		tmpl := template.New(name)
+
+		// Parse base layout and all partials first
+		patterns := append([]string{"templates/layouts/base.html"}, partials...)
+		if _, err := tmpl.ParseFS(content, patterns...); err != nil {
+			return fmt.Errorf("failed to parse base and partials for %s: %w", name, err)
+		}
+
+		// Then parse the page template
+		if _, err := tmpl.ParseFS(content, page); err != nil {
 			return fmt.Errorf("failed to parse template %s: %w", name, err)
 		}
 
-		s.templates[name] = ts
+		s.templates[name] = tmpl
 	}
 
 	return nil

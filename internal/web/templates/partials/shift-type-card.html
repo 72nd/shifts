@@ -1,0 +1,133 @@
+{{ define "shift-type-card" }}
+<div class="bg-base-200/70 rounded-box p-4 mb-4">
+    <!-- Type Header -->
+    <div class="flex items-center justify-between mb-2">
+        <div>
+            <h2 class="text-xl font-bold"
+                x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
+            </h2>
+            <p class="text-base-content/70 text-sm"
+                x-text="plan.is_multilingual ? ($locale() === 'de' ? type.description_de : type.description_en) : type.description_en">
+            </p>
+            <p class="text-xs mt-1">
+                <span class="font-semibold" x-text="$t('shift_plans.view.location')"></span>:
+                <span
+                    x-text="plan.is_multilingual ? ($locale() === 'de' ? type.location_de : type.location_en) : type.location_en"></span>
+            </p>
+        </div>
+        <!-- Edit and Delete buttons (only visible for admins) -->
+        <div x-show="isAdmin" class="btn-group">
+            <button @click="openShiftTypeModal(type)"
+                    class="btn btn-square btn-outline btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            </button>
+            <button @click="openDeleteShiftTypeModal(type)"
+                    class="btn btn-square btn-outline btn-sm text-error">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Shifts grouped by date -->
+    <template x-if="type.shifts && type.shifts.length > 0">
+        <template x-for="dateGroup in groupShiftsByDate(type.shifts)" :key="dateGroup.date">
+        <div class="mb-4">
+            <div class="flex items-center gap-2 mb-2">
+                <h3 class="text-base font-medium" x-text="formatDate(dateGroup.date)"></h3>
+                    <div class="flex-1 border-t-2 border-base-content/10"></div>
+            </div>
+            <div class="overflow-x-auto">
+                    <table class="table table-xs w-full [&_td]:border-t [&_td]:!border-base-content/40">
+                    <thead>
+                        <tr>
+                                <th class="w-48 bg-base-200/50" x-text="$t('shift_plans.view.time')"></th>
+                                <th class="w-16 hidden md:table-cell bg-base-200/50" x-text="$t('shift_plans.view.duration')"></th>
+                                <th class="w-14 bg-base-200/50 text-center">Status</th>
+                                <th class="bg-base-200/50" x-text="$t('shift_plans.view.participants')"></th>
+                                <th class="w-12 bg-base-200/50"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="shift in dateGroup.shifts" :key="shift.id">
+                                <tr x-data="{ isExpanded: false }" class="group hover:bg-base-300/50">
+                                <td class="align-middle">
+                                        <div class="whitespace-nowrap font-medium"
+                                            x-text="formatTime(shift.start_time, shift.duration)"></div>
+                                        <div class="text-xs text-base-content/60 mt-0.5"
+                                            :class="{ 'line-clamp-1': !isExpanded }"
+                                            x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en">
+                                    </div>
+                                </td>
+                                    <td class="whitespace-nowrap hidden md:table-cell align-middle"
+                                        x-text="formatDuration(shift.duration)">
+                                </td>
+                                    <td class="align-middle text-center">
+                                        <div class="radial-progress text-[10px]" 
+                                             x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '2rem', '--thickness': '2.4px' }"
+                                             :class="{
+                                                 'text-error': !shift.participants || shift.participants.length === 0,
+                                                 'text-success': shift.participants?.length === shift.required,
+                                                 'text-warning': shift.participants?.length < (shift.required * 0.5),
+                                                 'text-primary': shift.participants && shift.participants.length < shift.required
+                                             }">
+                                            <span x-text="(shift.participants?.length || 0) + '/' + shift.required"></span>
+                                        </div>
+                                    </td>
+                                    <td class="py-2 align-middle">
+                                        <div class="space-y-2">
+                                            <div class="flex flex-wrap gap-1.5">
+                                                <template x-for="participant in shift.participants || []" :key="participant.id">
+                                                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-sm transition-colors border border-base-content/20">
+                                                        <span x-text="participant.name" class="font-medium"></span>
+                                                        <button @click.stop="openRemoveModal(shift, participant)"
+                                                                class="inline-flex items-center justify-center h-4 w-4 rounded hover:bg-base-content/10 text-base-content/70 hover:text-error transition-colors"
+                                                                :aria-label="$t('shift_plans.view.remove_participant')">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-right align-middle">
+                                        <div class="flex justify-end items-center gap-2">
+                                            <button @click="openJoinModal(shift)"
+                                                :disabled="shift.participants?.length >= shift.required"
+                                                class="btn btn-square btn-outline btn-success btn-sm"
+                                                :class="{ 'btn-disabled': shift.participants?.length >= shift.required }"
+                                                :aria-label="$t('shift_plans.view.join')">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
+                                            <button @click="isExpanded = !isExpanded"
+                                                x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
+                                                class="btn btn-ghost btn-sm btn-square"
+                                                :aria-expanded="isExpanded"
+                                                :aria-label="$t(isExpanded ? 'shift_plans.view.collapse_details' : 'shift_plans.view.expand_details')">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-4 w-4 transition-transform duration-200"
+                                                    :class="{ 'rotate-90': isExpanded }" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </template>
+    </template>
+</div>
+{{ end }} 
