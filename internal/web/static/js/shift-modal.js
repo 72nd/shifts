@@ -1,10 +1,12 @@
 import { Modal } from './modal.js';
 
 export class ShiftModal extends Modal {
-    constructor(planStartDate, shiftTypes) {
+    constructor(planStartDate, shiftTypes, planToken, adminToken) {
         super('shift_modal');
         this.planStartDate = planStartDate;
         this.shiftTypes = shiftTypes;
+        this.planToken = planToken;
+        this.adminToken = adminToken;
         this.reset();
     }
 
@@ -180,10 +182,5 @@ export class ShiftModal extends Modal {
         planStart.setHours(hours, minutes, 0, 0);
         
         this.start_time = planStart.toISOString().slice(0, 16);
-    }
-
-    setTokens(planToken, adminToken) {
-        this.planToken = planToken;
-        this.adminToken = adminToken;
     }
 } 

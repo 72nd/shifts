@@ -12,13 +12,13 @@ document.addEventListener('alpine:init', () => {
         shiftTypes: [],
         isLoading: true,
         error: null,
-        
+
         // Filter state
         selectedTypes: [],
         selectedDay: '',
         selectedStatus: 'all',
         searchQuery: '',
-        
+
         // Modal state
         currentShift: null,
         currentParticipant: null,
@@ -56,7 +56,7 @@ document.addEventListener('alpine:init', () => {
         // Computed property für gefilterte Schichttypen
         get filteredShiftTypes() {
             if (!this.shiftTypes) return [];
-            
+
             return this.shiftTypes
                 .filter(type => this.selectedTypes.length === 0 || this.selectedTypes.includes(type.id))
                 .map(type => ({
@@ -81,7 +81,7 @@ document.addEventListener('alpine:init', () => {
                 // Status filter
                 const participantCount = shift.participants?.length || 0;
                 const percentage = (participantCount / shift.required) * 100;
-                
+
                 switch (this.selectedStatus) {
                     case 'empty':
                         if (participantCount > 0) return false;
@@ -113,9 +113,9 @@ document.addEventListener('alpine:init', () => {
         // Helper function to check if any filters are active
         hasActiveFilters() {
             return this.selectedTypes.length > 0 ||
-                   this.selectedDay !== '' ||
-                   this.selectedStatus !== 'all' ||
-                   this.searchQuery.trim() !== '';
+                this.selectedDay !== '' ||
+                this.selectedStatus !== 'all' ||
+                this.searchQuery.trim() !== '';
         },
 
         // Filter actions
@@ -151,8 +151,8 @@ document.addEventListener('alpine:init', () => {
                 .filter(type => this.selectedTypes.includes(type.id))
                 .map(type => ({
                     id: type.id,
-                    name: this.plan.is_multilingual 
-                        ? (this.$locale() === 'de' ? type.title_de : type.title_en) 
+                    name: this.plan.is_multilingual
+                        ? (this.$locale() === 'de' ? type.title_de : type.title_en)
                         : type.title_en
                 }));
         },
@@ -179,25 +179,25 @@ document.addEventListener('alpine:init', () => {
                 end_date: '',
                 token: ''
             };
-            
+
             // Hole Token aus URL
             const pathParts = window.location.pathname.split('/');
             const token = pathParts[pathParts.length - 1];
-            
+
             // Versuche Admin-Token aus localStorage zu laden
             const storedToken = localStorage.getItem(`admin_token_${token}`);
             if (storedToken) {
                 this.isAdmin = true;
                 this.adminToken = storedToken;
             }
-            
+
             // Initialize modals with empty data
-            this.shiftModal = new ShiftModal('', []);
-            this.shiftTypeModal = new ShiftTypeModal(false);
-            this.deleteTypeModal = new DeleteTypeModal();
+            this.shiftModal = new ShiftModal('', [], token, this.adminToken);
+            this.shiftTypeModal = new ShiftTypeModal(false, token, this.adminToken, type => this.handleShiftTypeSuccess(type));
+            this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, type => this.handleDeleteTypeSuccess(type));
             this.joinModal = new JoinModal(token, shift => this.handleShiftUpdate(shift));
             this.removeModal = new RemoveModal(token, shift => this.handleShiftUpdate(shift));
-            
+
             // Starte Datenladen
             this.loadPlan(token);
         },
@@ -205,21 +205,21 @@ document.addEventListener('alpine:init', () => {
         // Gruppiere Schichten nach Datum
         groupShiftsByDate(shifts) {
             const groups = {};
-            
+
             // Sortiere Schichten nach Startzeit
             shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
-            
+
             // Gruppiere nach Datum
             shifts.forEach(shift => {
                 const date = new Date(shift.start_time);
                 const dateKey = date.toISOString().split('T')[0];
-                
+
                 if (!groups[dateKey]) {
                     groups[dateKey] = [];
                 }
                 groups[dateKey].push(shift);
             });
-            
+
             // Konvertiere in Array von Gruppen
             return Object.entries(groups).map(([date, shifts]) => ({
                 date,
@@ -244,9 +244,9 @@ document.addEventListener('alpine:init', () => {
                     throw new Error('Failed to load plan');
                 }
                 const planData = await planResponse.json();
-                
+
                 console.log('Loaded plan data:', planData); // Debug log
-                
+
                 // Stelle sicher, dass alle Properties existieren
                 this.plan = {
                     is_multilingual: Boolean(planData.is_multilingual), // Explicitly convert to boolean
@@ -258,7 +258,7 @@ document.addEventListener('alpine:init', () => {
                     end_date: planData.end_date || '',
                     token: planData.token || token
                 };
-                
+
                 console.log('Processed plan data:', this.plan); // Debug log
 
                 // Schichttypen laden
@@ -267,7 +267,7 @@ document.addEventListener('alpine:init', () => {
                     throw new Error('Failed to load shift types');
                 }
                 const types = await typesResponse.json();
-                
+
                 // Ensure each type has a shifts array and group shifts by date
                 this.shiftTypes = types.map(type => ({
                     ...type,
@@ -276,25 +276,16 @@ document.addEventListener('alpine:init', () => {
                 }));
 
                 // Update modals with new data
-                this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes);
-                this.shiftModal.setTokens(this.plan.token, this.adminToken);
-
-                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual);
-                this.shiftTypeModal.setTokens(this.plan.token, this.adminToken);
-                this.shiftTypeModal.setCallbacks(type => this.handleShiftTypeSuccess(type));
-
-                this.deleteTypeModal = new DeleteTypeModal();
-                this.deleteTypeModal.setTokens(this.plan.token, this.adminToken);
-                this.deleteTypeModal.setCallbacks(type => this.handleDeleteTypeSuccess(type));
-
+                this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes, this.plan.token, this.adminToken);
+                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, this.plan.token, this.adminToken, type => this.handleShiftTypeSuccess(type));
+                this.deleteTypeModal = new DeleteTypeModal(this.plan.token, this.adminToken, type => this.handleDeleteTypeSuccess(type));
                 this.joinModal = new JoinModal(this.plan.token, shift => this.handleShiftUpdate(shift));
-
                 this.removeModal = new RemoveModal(this.plan.token, shift => this.handleShiftUpdate(shift));
 
             } catch (error) {
                 console.error('Error loading plan:', error);
                 this.error = error.message;
-                
+
                 // Zurücksetzen auf sicheren Zustand
                 this.plan = {
                     is_multilingual: false,
@@ -329,18 +320,18 @@ document.addEventListener('alpine:init', () => {
             try {
                 const date = new Date(dateStr);
                 if (isNaN(date.getTime())) return '';
-                
+
                 const options = {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                 };
-                
+
                 // Use the current language from Alpine store
                 const locale = this.$locale() === 'de' ? 'de-DE' : 'en-US';
                 const formatted = date.toLocaleDateString(locale, options);
-                
+
                 // For German: Capitalize first letter
                 if (this.$locale() === 'de') {
                     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
@@ -357,7 +348,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 const startDate = new Date(dateStr);
                 if (isNaN(startDate.getTime())) return '';
-                
+
                 // Format start time in 24h format
                 const startTime = startDate.toLocaleTimeString(
                     this.$locale() === 'de' ? 'de-DE' : 'en-US',
@@ -434,10 +425,10 @@ document.addEventListener('alpine:init', () => {
                 // Store admin state
                 this.isAdmin = true;
                 this.adminToken = this.adminPassword.trim();
-                
+
                 // Save admin token in localStorage
                 localStorage.setItem(`admin_token_${this.plan.token}`, this.adminToken);
-                
+
                 this.closeAdminModal();
 
                 // Reload data to get admin-only fields
@@ -452,10 +443,10 @@ document.addEventListener('alpine:init', () => {
             this.isAdmin = false;
             this.adminToken = '';
             this.adminPassword = '';
-            
+
             // Remove admin token from localStorage
             localStorage.removeItem(`admin_token_${this.plan.token}`);
-            
+
             // Reload data to remove admin-only fields
             this.loadPlan(this.plan.token);
         },
@@ -502,16 +493,16 @@ document.addEventListener('alpine:init', () => {
         // Helper function to update a shift in the shiftTypes array
         handleShiftUpdate(updatedShift) {
             // Find the type that contains this shift
-            const typeIndex = this.shiftTypes.findIndex(type => 
+            const typeIndex = this.shiftTypes.findIndex(type =>
                 type.shifts.some(shift => shift.id === updatedShift.id)
             );
-            
+
             if (typeIndex !== -1) {
                 // Update the shift in the type's shifts array
                 const shiftIndex = this.shiftTypes[typeIndex].shifts.findIndex(
                     shift => shift.id === updatedShift.id
                 );
-                
+
                 if (shiftIndex !== -1) {
                     this.shiftTypes[typeIndex].shifts[shiftIndex] = updatedShift;
                     // Update the shiftsByDate grouping

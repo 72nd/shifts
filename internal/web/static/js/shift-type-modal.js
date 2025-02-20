@@ -1,10 +1,12 @@
 import { Modal } from './modal.js';
 
 export class ShiftTypeModal extends Modal {
-    constructor(isMultilingual) {
+    constructor(isMultilingual, planToken, adminToken, onSuccess) {
         super('shift_type_modal');
         this.isMultilingual = isMultilingual;
-        this.onSuccess = null;
+        this.planToken = planToken;
+        this.adminToken = adminToken;
+        this.onSuccess = onSuccess;
         this.reset();
     }
 
@@ -128,14 +130,5 @@ export class ShiftTypeModal extends Modal {
             );
             return false;
         }
-    }
-
-    setTokens(planToken, adminToken) {
-        this.planToken = planToken;
-        this.adminToken = adminToken;
-    }
-
-    setCallbacks(onSuccess) {
-        this.onSuccess = onSuccess;
     }
 } 

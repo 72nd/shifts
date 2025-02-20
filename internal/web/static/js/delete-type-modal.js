@@ -1,9 +1,11 @@
 import { Modal } from './modal.js';
 
 export class DeleteTypeModal extends Modal {
-    constructor() {
+    constructor(planToken, adminToken, onSuccess) {
         super('delete_shift_type_modal');
-        this.onSuccess = null;
+        this.planToken = planToken;
+        this.adminToken = adminToken;
+        this.onSuccess = onSuccess;
         this.reset();
     }
 
@@ -43,14 +45,5 @@ export class DeleteTypeModal extends Modal {
             this.errors.general = AlpineI18n.t('shift_plans.view.error_deleting_shift_type');
             return false;
         }
-    }
-
-    setTokens(planToken, adminToken) {
-        this.planToken = planToken;
-        this.adminToken = adminToken;
-    }
-
-    setCallbacks(onSuccess) {
-        this.onSuccess = onSuccess;
     }
 } 
