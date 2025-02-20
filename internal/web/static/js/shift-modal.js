@@ -118,7 +118,7 @@ export class ShiftModal extends Modal {
     }
 
     async updateShift(type) {
-        const url = `/api/shift-plans/${this.planToken}/types/${type.id}/shifts/${this.currentShift.id}`;
+        const url = `/api/plans/${this.planToken}/shifts/${this.currentShift.id}`;
         const response = await fetch(url, {
             method: 'PUT',
             headers: {
@@ -130,7 +130,8 @@ export class ShiftModal extends Modal {
                 duration: parseInt(this.duration),
                 required: parseInt(this.required),
                 comment_de: this.comment_de,
-                comment_en: this.comment_en
+                comment_en: this.comment_en,
+                type_id: type.id
             })
         });
 
@@ -147,13 +148,14 @@ export class ShiftModal extends Modal {
             const shiftStartTime = new Date(baseStartTime);
             shiftStartTime.setMinutes(shiftStartTime.getMinutes() + (i * duration));
 
-            const response = await fetch(`/api/shift-plans/${this.planToken}/types/${type.id}/shifts`, {
+            const response = await fetch(`/api/plans/${this.planToken}/shifts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Admin-Token': this.adminToken
                 },
                 body: JSON.stringify({
+                    type_id: type.id,
                     start_time: shiftStartTime.toISOString().slice(0, 16),
                     duration: duration,
                     required: parseInt(this.required),

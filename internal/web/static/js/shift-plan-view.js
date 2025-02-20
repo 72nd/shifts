@@ -154,7 +154,7 @@ document.addEventListener('alpine:init', () => {
                     headers['X-Admin-Token'] = this.adminToken;
                 }
 
-                const planResponse = await fetch(`/api/shift-plans/${token}`, { headers });
+                const planResponse = await fetch(`/api/plans/${token}`, { headers });
                 if (!planResponse.ok) {
                     throw new Error('Failed to load plan');
                 }
@@ -177,7 +177,7 @@ document.addEventListener('alpine:init', () => {
                 console.log('Processed plan data:', this.plan); // Debug log
 
                 // Schichttypen laden
-                const typesResponse = await fetch(`/api/shift-plans/${token}/types`, { headers });
+                const typesResponse = await fetch(`/api/plans/${token}/types`, { headers });
                 if (!typesResponse.ok) {
                     throw new Error('Failed to load shift types');
                 }

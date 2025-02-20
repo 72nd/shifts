@@ -28,7 +28,7 @@ export class AdminModal extends Modal {
         if (!this.validate()) return false;
 
         try {
-            const response = await fetch(`/api/shift-plans/${this.planToken}/verify-admin`, {
+            const response = await fetch(`/api/plans/${this.planToken}/verify-admin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: this.password.trim() })

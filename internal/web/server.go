@@ -107,35 +107,37 @@ func (s *Server) render(w http.ResponseWriter, name string, data interface{}) {
 
 // setupRoutes configures all routes for the application
 func (s *Server) setupRoutes() {
-	// Static file server
-	staticFS, err := fs.Sub(content, "static")
-	if err != nil {
-		s.logger.Error("failed to setup static file server", "error", err)
-		return
-	}
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	// Static files
+	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("internal/web/static"))))
 
-	// Web routes
+	// HTML routes
 	s.router.HandleFunc("/", s.handleIndex).Methods("GET")
 	s.router.HandleFunc("/shift-plans/new", s.handleNewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/shift-plans/success", s.handleShiftPlanSuccess).Methods("GET")
+	s.router.HandleFunc("/shift-plans/{token}", s.handleViewShiftPlan).Methods("GET")
 
 	// API routes
 	api := s.router.PathPrefix("/api").Subrouter()
-	api.HandleFunc("/shift-plans", s.handleCreateShiftPlan).Methods("POST")
-	api.HandleFunc("/shift-plans/{token}", s.handleGetShiftPlan).Methods("GET")
-	api.HandleFunc("/shift-plans/{token}/types", s.handleGetShiftTypes).Methods("GET")
-	api.HandleFunc("/shift-plans/{token}/types", s.adminMiddleware(s.handleCreateShiftType)).Methods("POST")
-	api.HandleFunc("/shift-plans/{token}/types/{id}", s.adminMiddleware(s.handleUpdateShiftType)).Methods("PUT")
-	api.HandleFunc("/shift-plans/{token}/types/{id}", s.adminMiddleware(s.handleDeleteShiftType)).Methods("DELETE")
-	api.HandleFunc("/shift-plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
-	api.HandleFunc("/shift-plans/{token}/shifts/{id}/participants", s.handleAddParticipant).Methods("POST")
-	api.HandleFunc("/shift-plans/{token}/shifts/{id}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
 	// Plan routes
-	plans := s.router.PathPrefix("/shift-plans/{token}").Subrouter()
-	plans.HandleFunc("", s.handleViewShiftPlan).Methods("GET")
-	plans.HandleFunc("/admin", s.handleAdminShiftPlan).Methods("GET")
+	api.HandleFunc("/plans", s.handleCreateShiftPlan).Methods("POST")
+	api.HandleFunc("/plans/{token}", s.handleGetShiftPlan).Methods("GET")
+	api.HandleFunc("/plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
+
+	// Type routes
+	api.HandleFunc("/plans/{token}/types", s.handleGetShiftTypes).Methods("GET")
+	api.HandleFunc("/plans/{token}/types", s.adminMiddleware(s.handleCreateShiftType)).Methods("POST")
+	api.HandleFunc("/plans/{token}/types/{typeId}", s.adminMiddleware(s.handleUpdateShiftType)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/types/{typeId}", s.adminMiddleware(s.handleDeleteShiftType)).Methods("DELETE")
+
+	// Shift routes
+	api.HandleFunc("/plans/{token}/shifts", s.adminMiddleware(s.handleCreateShift)).Methods("POST")
+	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.adminMiddleware(s.handleUpdateShift)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.adminMiddleware(s.handleDeleteShift)).Methods("DELETE")
+
+	// Participant routes
+	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")
+	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
 	// Add middleware
 	s.router.Use(s.loggingMiddleware)
@@ -258,28 +260,6 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.render(w, "view.html", plan)
-}
-
-func (s *Server) handleAdminShiftPlan(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
-		return
-	}
-
-	if plan == nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	if err := s.templates["admin.html"].Execute(w, plan); err != nil {
-		s.logger.Error("failed to render template", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
 }
 
 func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
@@ -630,4 +610,146 @@ func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	var shift db.NewShift
+	if err := json.NewDecoder(r.Body).Decode(&shift); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Get plan ID from token
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	// Get the shift type to verify it belongs to this plan
+	types, err := s.db.GetShiftTypesByPlan(plan.ID)
+	if err != nil {
+		s.logger.Error("failed to get shift types", "error", err)
+		http.Error(w, "Failed to verify shift type", http.StatusInternalServerError)
+		return
+	}
+
+	// Check if the type exists in this plan
+	typeExists := false
+	for _, t := range types {
+		if t.ID == shift.TypeID {
+			typeExists = true
+			break
+		}
+	}
+
+	if !typeExists {
+		http.Error(w, "Shift type not found", http.StatusNotFound)
+		return
+	}
+
+	// Create the shift
+	createdShift, err := s.db.CreateShift(shift)
+	if err != nil {
+		s.logger.Error("failed to create shift", "error", err)
+		http.Error(w, "Failed to create shift", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(createdShift)
+}
+
+func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	shiftId := vars["shiftId"]
+
+	// Parse shift ID
+	id, err := strconv.ParseInt(shiftId, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get plan ID from token
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	// Verify shift belongs to plan
+	belongs, err := s.db.VerifyShiftBelongsToPlan(id, plan.ID)
+	if err != nil {
+		s.logger.Error("failed to verify shift ownership", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if !belongs {
+		http.Error(w, "Shift not found", http.StatusNotFound)
+		return
+	}
+
+	var shift db.Shift
+	if err := json.NewDecoder(r.Body).Decode(&shift); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update the shift
+	if err := s.db.UpdateShift(id, shift); err != nil {
+		s.logger.Error("failed to update shift", "error", err)
+		http.Error(w, "Failed to update shift", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	shiftId := vars["shiftId"]
+
+	// Parse shift ID
+	id, err := strconv.ParseInt(shiftId, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get plan ID from token
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	// Verify shift belongs to plan
+	belongs, err := s.db.VerifyShiftBelongsToPlan(id, plan.ID)
+	if err != nil {
+		s.logger.Error("failed to verify shift ownership", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if !belongs {
+		http.Error(w, "Shift not found", http.StatusNotFound)
+		return
+	}
+
+	// Delete the shift
+	if err := s.db.DeleteShift(id, plan.ID); err != nil {
+		s.logger.Error("failed to delete shift", "error", err)
+		http.Error(w, "Failed to delete shift", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

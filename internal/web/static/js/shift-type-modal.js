@@ -79,8 +79,8 @@ export class ShiftTypeModal extends Modal {
 
         try {
             const url = this.currentType
-                ? `/api/shift-plans/${this.planToken}/types/${this.currentType.id}`
-                : `/api/shift-plans/${this.planToken}/types`;
+                ? `/api/plans/${this.planToken}/types/${this.currentType.id}`
+                : `/api/plans/${this.planToken}/types`;
 
             const response = await fetch(url, {
                 method: this.currentType ? 'PUT' : 'POST',

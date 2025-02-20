@@ -45,7 +45,7 @@ export class JoinModal extends Modal {
         if (!this.validate()) return false;
 
         try {
-            const response = await fetch(`/api/shift-plans/${this.planToken}/shifts/${this.currentShift.id}/participants`, {
+            const response = await fetch(`/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: this.name.trim() })

@@ -21,7 +21,7 @@ export class DeleteTypeModal extends Modal {
 
     async submit() {
         try {
-            const response = await fetch(`/api/shift-plans/${this.planToken}/types/${this.currentType.id}`, {
+            const response = await fetch(`/api/plans/${this.planToken}/types/${this.currentType.id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-Admin-Token': this.adminToken

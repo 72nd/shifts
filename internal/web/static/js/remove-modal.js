@@ -24,7 +24,7 @@ export class RemoveModal extends Modal {
     async submit() {
         try {
             const response = await fetch(
-                `/api/shift-plans/${this.planToken}/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`,
+                `/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`,
                 { method: 'DELETE' }
             );
 
