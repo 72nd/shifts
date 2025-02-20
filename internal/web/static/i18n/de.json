@@ -149,7 +149,10 @@
             "select_shift_type": "Schichttyp auswählen...",
             "consecutive_shifts": "Mehrere Schichten erstellen",
             "consecutive_shifts_help": "Erstellt mehrere aufeinanderfolgende Schichten mit den gleichen Eigenschaften.",
-            "relative_day": "Tag (relativ zum Start)"
+            "relative_day": "Tag (relativ zum Start)",
+            "delete_shift": "Schicht löschen",
+            "confirm_delete_shift": "Möchtest du die Schicht um ",
+            "error_deleting_shift": "Fehler beim Löschen der Schicht"
         }
     }
 } 

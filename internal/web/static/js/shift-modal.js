@@ -1,12 +1,13 @@
 import { Modal } from './modal.js';
 
 export class ShiftModal extends Modal {
-    constructor(planStartDate, shiftTypes, planToken, adminToken) {
+    constructor(planStartDate, shiftTypes, planToken, adminToken, onSuccess) {
         super('shift_modal');
         this.planStartDate = planStartDate;
         this.shiftTypes = shiftTypes;
         this.planToken = planToken;
         this.adminToken = adminToken;
+        this.onSuccess = onSuccess;
         this.reset();
     }
 
@@ -126,7 +127,7 @@ export class ShiftModal extends Modal {
                 'X-Admin-Token': this.adminToken
             },
             body: JSON.stringify({
-                start_time: this.start_time,
+                start_time: new Date(this.start_time).toISOString(),
                 duration: parseInt(this.duration),
                 required: parseInt(this.required),
                 comment_de: this.comment_de,
@@ -136,12 +137,29 @@ export class ShiftModal extends Modal {
         });
 
         if (!response.ok) throw new Error('Failed to update shift');
+
+        // Create updated shift object
+        const updatedShift = {
+            ...this.currentShift,
+            start_time: new Date(this.start_time).toISOString(),
+            duration: parseInt(this.duration),
+            required: parseInt(this.required),
+            comment_de: this.comment_de,
+            comment_en: this.comment_en,
+            type_id: type.id
+        };
+
+        // Notify about successful update
+        if (this.onSuccess) {
+            this.onSuccess([updatedShift]);
+        }
     }
 
     async createShifts(type) {
         const numShifts = parseInt(this.consecutive_shifts) || 1;
         const baseStartTime = new Date(this.start_time);
         const duration = parseInt(this.duration);
+        const createdShifts = [];
 
         // Create all shifts in sequence
         for (let i = 0; i < numShifts; i++) {
@@ -156,7 +174,7 @@ export class ShiftModal extends Modal {
                 },
                 body: JSON.stringify({
                     type_id: type.id,
-                    start_time: shiftStartTime.toISOString().slice(0, 16),
+                    start_time: shiftStartTime.toISOString(),
                     duration: duration,
                     required: parseInt(this.required),
                     comment_de: this.comment_de,
@@ -165,6 +183,14 @@ export class ShiftModal extends Modal {
             });
 
             if (!response.ok) throw new Error('Failed to create shift');
+            
+            const shift = await response.json();
+            createdShifts.push(shift);
+        }
+
+        // Notify about successful creation
+        if (this.onSuccess) {
+            this.onSuccess(createdShifts);
         }
     }
 

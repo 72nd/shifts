@@ -2,6 +2,7 @@
 import { ShiftModal } from './shift-modal.js';
 import { ShiftTypeModal } from './shift-type-modal.js';
 import { DeleteTypeModal } from './delete-type-modal.js';
+import { DeleteShiftModal } from './delete-shift-modal.js';
 import { JoinModal } from './join-modal.js';
 import { RemoveModal } from './remove-modal.js';
 import { AdminModal } from './admin-modal.js';
@@ -34,6 +35,7 @@ document.addEventListener('alpine:init', () => {
         shiftModal: null,
         shiftTypeModal: null,
         deleteTypeModal: null,
+        deleteShiftModal: null,
         joinModal: null,
         removeModal: null,
         adminModal: null,
@@ -106,14 +108,21 @@ document.addEventListener('alpine:init', () => {
 
             // Initialize managers
             this.filterManager = new FilterManager();
-            this.shiftModal = new ShiftModal('', [], token, this.adminToken);
-            this.shiftTypeModal = new ShiftTypeModal(false, token, this.adminToken, type => this.handleShiftTypeSuccess(type));
-            this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, type => this.handleDeleteTypeSuccess(type));
-            this.joinModal = new JoinModal(token, shift => this.handleShiftUpdate(shift));
-            this.removeModal = new RemoveModal(token, shift => this.handleShiftUpdate(shift));
-            this.adminModal = new AdminModal(token, token => this.handleAdminSuccess(token));
+            this.shiftModal = new ShiftModal(
+                this.plan.start_date,
+                this.shiftTypes,
+                token,
+                this.adminToken,
+                this.handleShiftsUpdate.bind(this)
+            );
+            this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, token, this.adminToken, this.handleShiftTypeSuccess.bind(this));
+            this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, this.handleDeleteTypeSuccess.bind(this));
+            this.deleteShiftModal = new DeleteShiftModal(token, this.adminToken, this.handleDeleteShiftSuccess.bind(this));
+            this.joinModal = new JoinModal(token, this.handleShiftUpdate.bind(this));
+            this.removeModal = new RemoveModal(token, this.handleShiftUpdate.bind(this));
+            this.adminModal = new AdminModal(token, this.handleAdminSuccess.bind(this));
 
-            // Starte Datenladen
+            // Load initial data
             this.loadPlan(token);
         },
 
@@ -191,11 +200,12 @@ document.addEventListener('alpine:init', () => {
                 }));
 
                 // Update modals with new data
-                this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes, this.plan.token, this.adminToken);
-                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, this.plan.token, this.adminToken, type => this.handleShiftTypeSuccess(type));
-                this.deleteTypeModal = new DeleteTypeModal(this.plan.token, this.adminToken, type => this.handleDeleteTypeSuccess(type));
-                this.joinModal = new JoinModal(this.plan.token, shift => this.handleShiftUpdate(shift));
-                this.removeModal = new RemoveModal(this.plan.token, shift => this.handleShiftUpdate(shift));
+                this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes, this.plan.token, this.adminToken, this.handleShiftsUpdate.bind(this));
+                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, this.plan.token, this.adminToken, this.handleShiftTypeSuccess.bind(this));
+                this.deleteTypeModal = new DeleteTypeModal(this.plan.token, this.adminToken, this.handleDeleteTypeSuccess.bind(this));
+                this.deleteShiftModal = new DeleteShiftModal(this.plan.token, this.adminToken, this.handleDeleteShiftSuccess.bind(this));
+                this.joinModal = new JoinModal(this.plan.token, this.handleShiftUpdate.bind(this));
+                this.removeModal = new RemoveModal(this.plan.token, this.handleShiftUpdate.bind(this));
 
             } catch (error) {
                 console.error('Error loading plan:', error);
@@ -372,6 +382,24 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        // Delete Shift Modal functions
+        openDeleteShiftModal(shift, type) {
+            this.deleteShiftModal.openWith(shift, type);
+        },
+
+        handleDeleteShiftSuccess(shift, type) {
+            // Remove the shift from its type
+            const typeIndex = this.shiftTypes.findIndex(t => t.id === type.id);
+            if (typeIndex !== -1) {
+                const shiftIndex = this.shiftTypes[typeIndex].shifts.findIndex(s => s.id === shift.id);
+                if (shiftIndex !== -1) {
+                    this.shiftTypes[typeIndex].shifts.splice(shiftIndex, 1);
+                    // Update the shiftsByDate grouping
+                    this.shiftTypes[typeIndex].shiftsByDate = this.groupShiftsByDate(this.shiftTypes[typeIndex].shifts);
+                }
+            }
+        },
+
         // Helper function to update a shift in the shiftTypes array
         handleShiftUpdate(updatedShift) {
             // Find the type that contains this shift
@@ -391,6 +419,29 @@ document.addEventListener('alpine:init', () => {
                     this.shiftTypes[typeIndex].shiftsByDate = this.groupShiftsByDate(this.shiftTypes[typeIndex].shifts);
                 }
             }
+        },
+
+        // Add new method to handle shift updates
+        handleShiftsUpdate(shifts) {
+            // Update or add the shifts to their respective types
+            shifts.forEach(shift => {
+                const typeIndex = this.shiftTypes.findIndex(type => type.id === shift.type_id);
+                if (typeIndex === -1) return;
+
+                const type = this.shiftTypes[typeIndex];
+                type.shifts = type.shifts || [];
+
+                // Find and update existing shift or add new one
+                const shiftIndex = type.shifts.findIndex(s => s.id === shift.id);
+                if (shiftIndex !== -1) {
+                    type.shifts[shiftIndex] = { ...shift };
+                } else {
+                    type.shifts.push(shift);
+                }
+
+                // Sort shifts by start time
+                type.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+            });
         }
     }));
 }); 

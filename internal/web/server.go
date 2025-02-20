@@ -294,7 +294,7 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
-	shiftID, err := strconv.ParseInt(vars["id"], 10, 64)
+	shiftID, err := strconv.ParseInt(vars["shiftId"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
 		return
@@ -346,7 +346,7 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
-	shiftID, err := strconv.ParseInt(vars["id"], 10, 64)
+	shiftID, err := strconv.ParseInt(vars["shiftId"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
 		return
@@ -618,6 +618,7 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 
 	var shift db.NewShift
 	if err := json.NewDecoder(r.Body).Decode(&shift); err != nil {
+		s.logger.Error("failed to decode request body", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -729,6 +730,19 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.logger.Error("failed to get shift plan", "error", err)
 		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	// Verify admin token
+	adminToken := r.Header.Get("X-Admin-Token")
+	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
+	if err != nil {
+		s.logger.Error("failed to verify admin token", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if !isValid {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 

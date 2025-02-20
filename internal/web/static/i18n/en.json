@@ -148,7 +148,10 @@
             "select_shift_type": "Select shift type...",
             "consecutive_shifts": "Create Multiple Shifts",
             "consecutive_shifts_help": "Creates multiple consecutive shifts with the same properties.",
-            "relative_day": "Day (relative to start)"
+            "relative_day": "Day (relative to start)",
+            "delete_shift": "Delete Shift",
+            "confirm_delete_shift": "Are you sure you want to delete the shift at ",
+            "error_deleting_shift": "Error deleting shift"
         }
     }
 } 
