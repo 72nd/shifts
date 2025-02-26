@@ -26,7 +26,7 @@
                 const start = new Date(this.startDate);
                 const end = new Date(this.endDate);
                 
-                const response = await fetch('/api/shift-plans', {
+                const response = await fetch('/api/plans', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -47,7 +47,7 @@
                 }
                 
                 const data = await response.json();
-                window.location.href = `/shift-plans/success?url=${encodeURIComponent(data.url)}&password=${encodeURIComponent(data.password)}`;
+                window.location.href = `/plans/success?url=${encodeURIComponent(data.url)}&password=${encodeURIComponent(data.password)}`;
             } catch (error) {
                 console.error('Error:', error);
                 alert($t('shift_plans.new.error_creating'));

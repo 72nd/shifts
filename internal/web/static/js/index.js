@@ -3,7 +3,7 @@ document.addEventListener('alpine:init', () => {
         planToken: '',
 
         async createNewPlan() {
-            window.location.href = '/shift-plans/new';
+            window.location.href = '/plans/new';
         },
 
         async joinPlan() {
@@ -13,12 +13,12 @@ document.addEventListener('alpine:init', () => {
             }
 
             try {
-                const response = await fetch(`/api/shift-plans/${this.planToken}`);
+                const response = await fetch(`/api/plans/${this.planToken}`);
                 if (!response.ok) {
                     throw new Error('Plan not found');
                 }
 
-                window.location.href = `/shift-plans/${this.planToken}`;
+                window.location.href = `/plans/${this.planToken}`;
             } catch (error) {
                 console.error('Error joining plan:', error);
                 // TODO: Show error message to user

@@ -54,9 +54,9 @@ func (s *Server) setupRoutes() {
 
 	// HTML routes
 	s.router.HandleFunc("/", s.handleIndex).Methods("GET")
-	s.router.HandleFunc("/shift-plans/new", s.handleNewShiftPlan).Methods("GET")
-	s.router.HandleFunc("/shift-plans/success", s.handleShiftPlanSuccess).Methods("GET")
-	s.router.HandleFunc("/shift-plans/{token}", s.handleViewShiftPlan).Methods("GET")
+	s.router.HandleFunc("/plans/new", s.handleNewShiftPlan).Methods("GET")
+	s.router.HandleFunc("/plans/success", s.handleShiftPlanSuccess).Methods("GET")
+	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
 
 	// API routes
 	api := s.router.PathPrefix("/api").Subrouter()
