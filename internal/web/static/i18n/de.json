@@ -7,7 +7,8 @@
         "save": "Speichern",
         "create": "Erstellen",
         "delete": "Löschen",
-        "optional": "Optional"
+        "optional": "Optional",
+        "edit": "Bearbeiten"
     },
     "nav": {
         "home": "Start",
@@ -129,12 +130,9 @@
             "new_shift": "Neue Schicht",
             "edit_shift": "Schicht bearbeiten",
             "start_time": "Startzeit",
-            "duration": "Dauer",
-            "duration_unit": "Minuten",
             "required_participants": "Benötigte Teilnehmer",
             "comment_de": "Kommentar (Deutsch)",
             "comment_en": "Kommentar (Englisch)",
-            "comment": "Kommentar",
             "cancel": "Abbrechen",
             "shift_type": "Schichttyp",
             "error_start_time_required": "Bitte gib eine Startzeit ein",
@@ -152,7 +150,10 @@
             "relative_day": "Tag (relativ zum Start)",
             "delete_shift": "Schicht löschen",
             "confirm_delete_shift": "Möchtest du die Schicht um ",
-            "error_deleting_shift": "Fehler beim Löschen der Schicht"
+            "error_deleting_shift": "Fehler beim Löschen der Schicht",
+            "sort_types": "Schichttypen sortieren",
+            "error_updating_type_order": "Fehler beim Aktualisieren der Reihenfolge",
+            "login": "Anmelden"
         }
     }
 } 

@@ -69,6 +69,7 @@ func (s *Server) setupRoutes() {
 	// Type routes
 	api.HandleFunc("/plans/{token}/types", s.handleGetShiftTypes).Methods("GET")
 	api.HandleFunc("/plans/{token}/types", s.middleware.adminMiddleware(s.handleCreateShiftType)).Methods("POST")
+	api.HandleFunc("/plans/{token}/types/order", s.middleware.adminMiddleware(s.handleUpdateShiftTypeOrder)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/types/{typeId}", s.middleware.adminMiddleware(s.handleUpdateShiftType)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/types/{typeId}", s.middleware.adminMiddleware(s.handleDeleteShiftType)).Methods("DELETE")
 

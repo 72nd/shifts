@@ -54,7 +54,7 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token":    createdPlan.Token,
-		"url":      fmt.Sprintf("/shift-plans/%s", createdPlan.Token),
+		"url":      fmt.Sprintf("/plans/%s", createdPlan.Token),
 		"password": createdPlan.AdminPassword,
 	})
 }
@@ -96,4 +96,39 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.templates.render(w, "view.html", plan)
+}
+
+func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	// Get plan to verify ownership
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Parse request body
+	var data struct {
+		TypeIDs []int64 `json:"type_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update type order
+	if err := s.db.UpdateShiftTypeOrder(plan.ID, data.TypeIDs); err != nil {
+		s.logger.Error("failed to update shift type order", "error", err)
+		http.Error(w, "Failed to update shift type order", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

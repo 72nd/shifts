@@ -7,7 +7,8 @@
         "save": "Save",
         "create": "Create",
         "delete": "Delete",
-        "optional": "Optional"
+        "optional": "Optional",
+        "edit": "Edit"
     },
     "nav": {
         "home": "Home",
@@ -129,8 +130,6 @@
             "new_shift": "New Shift",
             "edit_shift": "Edit Shift",
             "start_time": "Start Time",
-            "duration": "Duration",
-            "duration_unit": "Minutes",
             "required_participants": "Required Participants",
             "comment_de": "Comment (German)",
             "comment_en": "Comment (English)",
@@ -151,7 +150,10 @@
             "relative_day": "Day (relative to start)",
             "delete_shift": "Delete Shift",
             "confirm_delete_shift": "Are you sure you want to delete the shift at ",
-            "error_deleting_shift": "Error deleting shift"
+            "error_deleting_shift": "Error deleting shift",
+            "sort_types": "Sort Shift Types",
+            "error_updating_type_order": "Error updating type order",
+            "login": "Login"
         }
     }
 } 

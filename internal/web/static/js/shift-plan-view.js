@@ -6,6 +6,7 @@ import { DeleteShiftModal } from './delete-shift-modal.js';
 import { JoinModal } from './join-modal.js';
 import { RemoveModal } from './remove-modal.js';
 import { AdminModal } from './admin-modal.js';
+import { SortTypesModal } from './sort-types-modal.js';
 import { FilterManager } from './filter-manager.js';
 
 document.addEventListener('alpine:init', () => {
@@ -39,6 +40,7 @@ document.addEventListener('alpine:init', () => {
         joinModal: null,
         removeModal: null,
         adminModal: null,
+        sortTypesModal: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -121,6 +123,11 @@ document.addEventListener('alpine:init', () => {
             this.joinModal = new JoinModal(token, this.handleShiftUpdate.bind(this));
             this.removeModal = new RemoveModal(token, this.handleShiftUpdate.bind(this));
             this.adminModal = new AdminModal(token, this.handleAdminSuccess.bind(this));
+            this.sortTypesModal = new SortTypesModal(
+                token,
+                this.adminToken,
+                this.handleSortTypesSuccess.bind(this)
+            );
 
             // Load initial data
             this.loadPlan(token);
@@ -441,6 +448,21 @@ document.addEventListener('alpine:init', () => {
 
                 // Sort shifts by start time
                 type.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+            });
+        },
+
+        // Open sort types modal
+        openSortTypesModal() {
+            this.sortTypesModal.openWith(this.shiftTypes);
+        },
+
+        // Handle successful type sorting
+        handleSortTypesSuccess(sortedTypes) {
+            // Update the order in the UI
+            this.shiftTypes.sort((a, b) => {
+                const aIndex = sortedTypes.findIndex(t => t.id === a.id);
+                const bIndex = sortedTypes.findIndex(t => t.id === b.id);
+                return aIndex - bIndex;
             });
         }
     }));

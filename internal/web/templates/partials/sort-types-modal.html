@@ -1,0 +1,51 @@
+{{ define "sort-types-modal" }}
+<dialog id="sort_types_modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4" x-text="$t('shift_plans.view.sort_types')"></h3>
+        
+        <!-- Error Message Box -->
+        <div x-show="sortTypesModal.errors.general" class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="sortTypesModal.errors.general"></span>
+        </div>
+
+        <!-- Sortable List -->
+        <div class="space-y-2" 
+             id="sortable-types"
+             x-init="sortTypesModal.initSortable($el)">
+            <template x-for="(type, index) in sortTypesModal.types" :key="type.id">
+                <div class="flex items-center gap-2 p-2 bg-base-200 rounded-lg cursor-move" :data-id="type.id">
+                    <!-- Drag Handle -->
+                    <div class="handle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                        </svg>
+                    </div>
+                    
+                    <!-- Type Title -->
+                    <span x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en"></span>
+                </div>
+            </template>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+            <button type="button" 
+                    @click="sortTypesModal.close()" 
+                    class="btn btn-sm" 
+                    x-text="$t('common.cancel')">
+            </button>
+            <button type="button"
+                    @click="sortTypesModal.submit()"
+                    class="btn btn-sm btn-primary" 
+                    x-text="$t('common.save')">
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button @click="sortTypesModal.close()">close</button>
+    </form>
+</dialog>
+{{ end }} 
