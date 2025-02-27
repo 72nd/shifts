@@ -14,6 +14,7 @@ export class ShiftModal extends Modal {
     reset() {
         this.currentShift = null;
         this.currentShiftType = null;
+        this.isDuplicating = false;
         this.type_id = '';
         this.start_time = '';
         this.duration = 60;
@@ -24,13 +25,14 @@ export class ShiftModal extends Modal {
         this.relative_day = 1;
     }
 
-    openWith(shift = null, type = null) {
+    openWith(shift = null, type = null, isDuplicating = false) {
         this.reset();
-        this.currentShift = shift;
+        this.currentShift = isDuplicating ? null : shift;
         this.currentShiftType = type;
+        this.isDuplicating = isDuplicating;
 
         if (shift) {
-            // Edit mode
+            // Edit or duplicate mode
             const startTime = new Date(shift.start_time);
             startTime.setMinutes(startTime.getMinutes() - startTime.getTimezoneOffset());
             
@@ -41,6 +43,13 @@ export class ShiftModal extends Modal {
             this.comment_de = shift.comment_de || '';
             this.comment_en = shift.comment_en || '';
             this.relative_day = this.getRelativeDayFromDate(startTime);
+
+            if (isDuplicating) {
+                // For duplication, increment the start time by the duration
+                startTime.setMinutes(startTime.getMinutes() + shift.duration);
+                this.start_time = startTime.toISOString().slice(0, 16);
+                this.relative_day = this.getRelativeDayFromDate(startTime);
+            }
         } else {
             // Create mode
             const startDate = new Date(this.planStartDate);

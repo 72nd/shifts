@@ -155,7 +155,8 @@
             "error_updating_type_order": "Error updating type order",
             "login": "Login",
             "admin_actions": "Admin",
-            "admin_security": "Security"
+            "admin_security": "Security",
+            "duplicate_shift": "Duplicate Shift"
         }
     }
 } 

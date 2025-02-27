@@ -155,7 +155,8 @@
             "error_updating_type_order": "Fehler beim Aktualisieren der Reihenfolge",
             "login": "Anmelden",
             "admin_actions": "Verwaltung",
-            "admin_security": "Sicherheit"
+            "admin_security": "Sicherheit",
+            "duplicate_shift": "Schicht duplizieren"
         }
     }
 } 

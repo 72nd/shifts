@@ -372,8 +372,8 @@ document.addEventListener('alpine:init', () => {
         },
 
         // Shift Modal functions
-        openShiftModal(shift = null, type = null) {
-            this.shiftModal.openWith(shift, type);
+        openShiftModal(shift = null, type = null, isDuplicating = false) {
+            this.shiftModal.openWith(shift, type, isDuplicating);
         },
 
         // Delete Type Modal functions
