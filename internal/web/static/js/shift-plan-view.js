@@ -457,13 +457,29 @@ document.addEventListener('alpine:init', () => {
         },
 
         // Handle successful type sorting
-        handleSortTypesSuccess(sortedTypes) {
-            // Update the order in the UI
-            this.shiftTypes.sort((a, b) => {
-                const aIndex = sortedTypes.findIndex(t => t.id === a.id);
-                const bIndex = sortedTypes.findIndex(t => t.id === b.id);
-                return aIndex - bIndex;
-            });
+        handleSortTypesSuccess() {
+            // Reload types from server to get updated sort_order
+            const headers = {};
+            if (this.isAdmin && this.adminToken) {
+                headers['X-Admin-Token'] = this.adminToken;
+            }
+
+            fetch(`/api/plans/${this.plan.token}/types`, { headers })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load shift types');
+                    return response.json();
+                })
+                .then(types => {
+                    // Update types with their shifts
+                    this.shiftTypes = types.map(type => ({
+                        ...type,
+                        shifts: type.shifts || [],
+                        shiftsByDate: this.groupShiftsByDate(type.shifts || [])
+                    }));
+                })
+                .catch(error => {
+                    console.error('Error reloading types:', error);
+                });
         }
     }));
 }); 

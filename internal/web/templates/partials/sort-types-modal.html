@@ -13,12 +13,14 @@
 
         <!-- Sortable List -->
         <div class="space-y-2" 
-             id="sortable-types"
-             x-init="sortTypesModal.initSortable($el)">
-            <template x-for="(type, index) in sortTypesModal.types" :key="type.id">
-                <div class="flex items-center gap-2 p-2 bg-base-200 rounded-lg cursor-move" :data-id="type.id">
+             x-sort="sortTypesModal.handleSort.bind($data)"
+             x-sort.ghost
+             x-sort:config="{ animation: 150 }">
+            <template x-for="(type, index) in sortTypesModal.localTypes" :key="type.id + '-' + index">
+                <div x-sort:item="type.id"
+                     class="flex items-center gap-2 p-2 bg-base-200 rounded-lg [body:not(.sorting)_&]:hover:bg-base-300">
                     <!-- Drag Handle -->
-                    <div class="handle">
+                    <div x-sort:handle class="flex-none cursor-move">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
                         </svg>
@@ -48,4 +50,10 @@
         <button @click="sortTypesModal.close()">close</button>
     </form>
 </dialog>
+
+<style>
+.sortable-ghost {
+    @apply opacity-50;
+}
+</style>
 {{ end }} 

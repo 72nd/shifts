@@ -5,11 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schipla</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    
     <!-- DaisyUI -->
     <link href="/static/vendor/daisyui.min.css" rel="stylesheet">
     
     <!-- Tailwind (must be after DaisyUI) -->
     <script src="/static/vendor/tailwind.min.js"></script>
+    
+    <!-- Alpine Plugins -->
+    <script defer src="/static/vendor/alpine-sort.min.js"></script>
+    <script defer src="/static/vendor/alpine-i18n.min.js"></script>
     
     <!-- Theme initialization (must be before Alpine) -->
     <script>
@@ -33,10 +40,6 @@
             }
         });
     </script>
-    
-    <!-- Alpine.js and plugins -->
-    <script defer src="/static/vendor/alpine-i18n.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <!-- Initialize translations -->
     <script>

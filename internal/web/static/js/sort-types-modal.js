@@ -6,51 +6,50 @@ export class SortTypesModal extends Modal {
         this.planToken = planToken;
         this.adminToken = adminToken;
         this.onSuccess = onSuccess;
-        this.sortable = null;
         this.reset();
     }
 
     reset() {
-        this.types = [];
         this.errors = {};
+        this.localTypes = []; // Local copy for managing changes within the modal
+        this.originalTypes = []; // Backup of original order
     }
 
     openWith(types) {
         this.reset();
-        // Create a copy of the types array with only necessary properties
-        // Sort by the existing sort_order to maintain the current order
-        this.types = [...types]
-            .sort((a, b) => a.sort_order - b.sort_order)
-            .map(type => ({
-                id: type.id,
-                title_de: type.title_de,
-                title_en: type.title_en
-            }));
+        // Make copies to manage local state
+        this.localTypes = [...types];
+        this.originalTypes = [...types];
         this.open();
     }
 
-    initSortable(el) {
-        this.sortable = new Sortable(el, {
-            animation: 150,
-            handle: '.handle',
-            onEnd: (evt) => {
-                // Convert HTMLCollection to Array and get all items in their new order
-                const items = Array.from(evt.to.children);
-                const newTypes = [];
-                
-                // Rebuild the types array in the new order
-                for (let item of items) {
-                    const typeId = parseInt(item.dataset.id);
-                    const type = this.types.find(t => t.id === typeId);
-                    if (type) {
-                        newTypes.push(type);
-                    }
-                }
-                
-                // Update the types array with the new order
-                this.types = newTypes;
-            }
-        });
+    handleSort(item, position) {
+        let types = this.sortTypesModal.localTypes;
+
+        // Get the type ID from the moved item
+        const typeId = parseInt(item);
+        if (!typeId) {
+            console.warn('Invalid type ID:', item);
+            return;
+        }
+
+        // Find the type object that was moved
+        const type = types.find(t => t.id === typeId);
+        if (!type) {
+            console.warn('Type not found:', typeId);
+            return;
+        }
+
+        // Create a new array with the updated order
+        const newTypes = [...types];
+        // First remove the item from its current position
+        const currentIndex = newTypes.findIndex(t => t.id === typeId);
+        const [removed] = newTypes.splice(currentIndex, 1);
+        // Then insert it at the new position
+        newTypes.splice(position, 0, removed);
+
+        // Update our local types array with the new order
+        this.sortTypesModal.localTypes = newTypes;
     }
 
     async submit() {
@@ -62,7 +61,7 @@ export class SortTypesModal extends Modal {
                     'X-Admin-Token': this.adminToken
                 },
                 body: JSON.stringify({
-                    type_ids: this.types.map(t => t.id)
+                    type_ids: this.localTypes.map(t => t.id)
                 })
             });
 
@@ -70,11 +69,10 @@ export class SortTypesModal extends Modal {
                 throw new Error('Failed to update type order');
             }
 
+            // Close modal and notify parent to update with new order
             this.close();
-            
-            // Notify parent component
             if (this.onSuccess) {
-                this.onSuccess(this.types);
+                this.onSuccess(this.localTypes);
             }
             
             return true;
@@ -83,5 +81,11 @@ export class SortTypesModal extends Modal {
             this.errors.general = AlpineI18n.t('shift_plans.view.error_updating_type_order');
             return false;
         }
+    }
+
+    close() {
+        // Restore original order if not saved
+        this.localTypes = [...this.originalTypes];
+        super.close();
     }
 } 
