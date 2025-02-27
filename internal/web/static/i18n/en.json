@@ -153,7 +153,9 @@
             "error_deleting_shift": "Error deleting shift",
             "sort_types": "Sort Shift Types",
             "error_updating_type_order": "Error updating type order",
-            "login": "Login"
+            "login": "Login",
+            "admin_actions": "Admin",
+            "admin_security": "Security"
         }
     }
 } 
