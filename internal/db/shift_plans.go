@@ -376,3 +376,72 @@ func (db *DB) ValidateShiftPlanPassword(planID int64, hashedPassword string) (bo
 
 	return storedHash == hashedPassword, nil
 }
+
+// UpdateShiftPlan updates an existing shift plan with new data
+func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, error) {
+	var result *ShiftPlan
+
+	// Validate required fields
+	if plan.TitleEN == "" {
+		return nil, fmt.Errorf("title_en is required")
+	}
+	if plan.DescriptionEN == "" {
+		return nil, fmt.Errorf("description_en is required")
+	}
+
+	// For single language plans, use English fields only
+	if !plan.IsMultilingual {
+		plan.TitleDE = nil
+		plan.DescriptionDE = nil
+	}
+
+	err := db.transaction(func(tx *sql.Tx) error {
+		query := `
+            UPDATE shift_plans SET
+                start_date = ?,
+                end_date = ?,
+                is_multilingual = ?,
+                title_de = ?,
+                title_en = ?,
+                description_de = ?,
+                description_en = ?
+            WHERE token = ?
+        `
+		res, err := tx.Exec(query,
+			plan.StartDate.Format(time.RFC3339),
+			plan.EndDate.Format(time.RFC3339),
+			plan.IsMultilingual,
+			plan.TitleDE,
+			plan.TitleEN,
+			plan.DescriptionDE,
+			plan.DescriptionEN,
+			token,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update shift plan: %w", err)
+		}
+
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+		if rowsAffected == 0 {
+			return fmt.Errorf("shift plan not found")
+		}
+
+		// Get the updated plan
+		result, err = db.GetShiftPlanByToken(token)
+		if err != nil {
+			return fmt.Errorf("failed to load updated shift plan: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		db.logError("UpdateShiftPlan", err, plan)
+		return nil, err
+	}
+
+	return result, nil
+}

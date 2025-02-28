@@ -7,6 +7,7 @@ import { JoinModal } from './join-modal.js';
 import { RemoveModal } from './remove-modal.js';
 import { AdminModal } from './admin-modal.js';
 import { SortTypesModal } from './sort-types-modal.js';
+import { SettingsModal } from './settings-modal.js';
 import { FilterManager } from './filter-manager.js';
 
 document.addEventListener('alpine:init', () => {
@@ -41,6 +42,7 @@ document.addEventListener('alpine:init', () => {
         removeModal: null,
         adminModal: null,
         sortTypesModal: null,
+        settingsModal: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -127,6 +129,11 @@ document.addEventListener('alpine:init', () => {
                 token,
                 this.adminToken,
                 this.handleSortTypesSuccess.bind(this)
+            );
+            this.settingsModal = new SettingsModal(
+                token,
+                this.adminToken,
+                this.handleSettingsSuccess.bind(this)
             );
 
             // Load initial data
@@ -480,6 +487,33 @@ document.addEventListener('alpine:init', () => {
                 .catch(error => {
                     console.error('Error reloading types:', error);
                 });
+        },
+
+        openSettingsModal() {
+            this.settingsModal.openWith(this.plan);
+        },
+
+        handleSettingsSuccess(updatedPlan) {
+            // Update the plan data
+            this.plan = {
+                ...this.plan,
+                ...updatedPlan
+            };
+
+            // Update modals that depend on plan settings
+            this.shiftModal = new ShiftModal(
+                this.plan.start_date,
+                this.shiftTypes,
+                this.plan.token,
+                this.adminToken,
+                this.handleShiftsUpdate.bind(this)
+            );
+            this.shiftTypeModal = new ShiftTypeModal(
+                this.plan.is_multilingual,
+                this.plan.token,
+                this.adminToken,
+                this.handleShiftTypeSuccess.bind(this)
+            );
         }
     }));
 }); 

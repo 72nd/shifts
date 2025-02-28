@@ -1,0 +1,30 @@
+{{ define "shift-remove-modal" }}
+<dialog id="remove_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.remove_participant')"></h3>
+        
+        <!-- Error Message Box -->
+        <div x-show="removeModal.errors.general" class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="removeModal.errors.general"></span>
+        </div>
+
+        <form method="dialog" @submit.prevent="removeModal.submit()">
+            <p class="py-4">
+                <span x-text="$t('shift_plans.view.confirm_remove_participant_1')"></span>
+                <span class="font-medium" x-text="removeModal.currentParticipant?.name"></span>
+                <span x-text="$t('shift_plans.view.confirm_remove_participant_2')"></span>
+            </p>
+            <div class="modal-action">
+                <button type="button" @click="removeModal.close()" class="btn" x-text="$t('common.cancel')"></button>
+                <button type="submit" class="btn btn-error" x-text="$t('common.remove')"></button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button @click="removeModal.close()">close</button>
+    </form>
+</dialog>
+{{ end }}

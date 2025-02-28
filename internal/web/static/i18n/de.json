@@ -156,7 +156,9 @@
             "login": "Anmelden",
             "admin_actions": "Verwaltung",
             "admin_security": "Sicherheit",
-            "duplicate_shift": "Schicht duplizieren"
+            "duplicate_shift": "Schicht duplizieren",
+            "settings": "Einstellungen",
+            "error_updating_settings": "Fehler beim Aktualisieren der Einstellungen"
         }
     }
 } 

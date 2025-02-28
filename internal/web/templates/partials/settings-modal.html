@@ -1,0 +1,136 @@
+{{ define "settings-modal" }}
+<dialog id="settings_modal" class="modal">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-2" x-text="$t('shift_plans.view.settings')"></h3>
+        
+        <!-- Error Message Box -->
+        <div x-show="settingsModal.errors.general" class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span x-text="settingsModal.errors.general"></span>
+        </div>
+        
+        <form @submit.prevent="settingsModal.submit()" class="space-y-3">
+            <!-- Language Selection -->
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-4 py-0">
+                    <input type="checkbox" x-model="settingsModal.is_multilingual" class="checkbox checkbox-sm" />
+                    <span class="label-text" x-text="$t('shift_plans.new.multilingual')"></span>
+                </label>
+            </div>
+
+            <!-- Title Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-if="settingsModal.is_multilingual">
+                    <div class="form-control w-full">
+                        <label class="label py-0">
+                            <span class="label-text font-medium" x-text="$t('shift_plans.new.title_de')"></span>
+                        </label>
+                        <input type="text" 
+                               x-model="settingsModal.title_de" 
+                               class="input input-bordered input-sm w-full"
+                               :class="{ 'input-error': settingsModal.errors.title_de }" 
+                               required />
+                        <label class="label py-0" x-show="settingsModal.errors.title_de">
+                            <span class="label-text-alt text-error" x-text="settingsModal.errors.title_de"></span>
+                        </label>
+                    </div>
+                </template>
+                
+                <div class="form-control w-full" :class="{ 'md:col-span-2': !settingsModal.is_multilingual }">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="settingsModal.is_multilingual ? $t('shift_plans.new.title_en') : $t('shift_plans.new.title_field')"></span>
+                    </label>
+                    <input type="text" 
+                           x-model="settingsModal.title_en" 
+                           class="input input-bordered input-sm w-full"
+                           :class="{ 'input-error': settingsModal.errors.title_en }" 
+                           required />
+                    <label class="label py-0" x-show="settingsModal.errors.title_en">
+                        <span class="label-text-alt text-error" x-text="settingsModal.errors.title_en"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Description Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-if="settingsModal.is_multilingual">
+                    <div class="form-control w-full">
+                        <label class="label py-0">
+                            <span class="label-text font-medium" x-text="$t('shift_plans.new.description_de')"></span>
+                        </label>
+                        <textarea x-model="settingsModal.description_de" 
+                                  class="textarea textarea-bordered textarea-sm w-full h-24"
+                                  :class="{ 'textarea-error': settingsModal.errors.description_de }" 
+                                  required></textarea>
+                        <label class="label py-0" x-show="settingsModal.errors.description_de">
+                            <span class="label-text-alt text-error" x-text="settingsModal.errors.description_de"></span>
+                        </label>
+                    </div>
+                </template>
+                
+                <div class="form-control w-full" :class="{ 'md:col-span-2': !settingsModal.is_multilingual }">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="settingsModal.is_multilingual ? $t('shift_plans.new.description_en') : $t('shift_plans.new.description')"></span>
+                    </label>
+                    <textarea x-model="settingsModal.description_en" 
+                              class="textarea textarea-bordered textarea-sm w-full h-24"
+                              :class="{ 'textarea-error': settingsModal.errors.description_en }" 
+                              required></textarea>
+                    <label class="label py-0" x-show="settingsModal.errors.description_en">
+                        <span class="label-text-alt text-error" x-text="settingsModal.errors.description_en"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Date Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control w-full">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="$t('shift_plans.new.start_date')"></span>
+                    </label>
+                    <input type="date" 
+                           x-model="settingsModal.start_date" 
+                           class="input input-bordered input-sm w-full"
+                           :class="{ 'input-error': settingsModal.errors.start_date }" 
+                           required />
+                    <label class="label py-0" x-show="settingsModal.errors.start_date">
+                        <span class="label-text-alt text-error" x-text="settingsModal.errors.start_date"></span>
+                    </label>
+                </div>
+                
+                <div class="form-control w-full">
+                    <label class="label py-0">
+                        <span class="label-text font-medium" x-text="$t('shift_plans.new.end_date')"></span>
+                    </label>
+                    <input type="date" 
+                           x-model="settingsModal.end_date" 
+                           class="input input-bordered input-sm w-full"
+                           :class="{ 'input-error': settingsModal.errors.end_date }" 
+                           required />
+                    <label class="label py-0" x-show="settingsModal.errors.end_date">
+                        <span class="label-text-alt text-error" x-text="settingsModal.errors.end_date"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+                <button type="button" 
+                        @click="settingsModal.close()" 
+                        class="btn btn-sm" 
+                        x-text="$t('common.cancel')">
+                </button>
+                <button type="submit" 
+                        class="btn btn-sm btn-primary" 
+                        x-text="$t('common.save')">
+                </button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{{ end }} 

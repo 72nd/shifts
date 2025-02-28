@@ -64,6 +64,7 @@ func (s *Server) setupRoutes() {
 	// Plan routes
 	api.HandleFunc("/plans", s.handleCreateShiftPlan).Methods("POST")
 	api.HandleFunc("/plans/{token}", s.handleGetShiftPlan).Methods("GET")
+	api.HandleFunc("/plans/{token}", s.middleware.adminMiddleware(s.handleUpdateShiftPlan)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
 
 	// Type routes

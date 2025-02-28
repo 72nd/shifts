@@ -156,7 +156,9 @@
             "login": "Login",
             "admin_actions": "Admin",
             "admin_security": "Security",
-            "duplicate_shift": "Duplicate Shift"
+            "duplicate_shift": "Duplicate Shift",
+            "settings": "Settings",
+            "error_updating_settings": "Error updating settings"
         }
     }
 } 

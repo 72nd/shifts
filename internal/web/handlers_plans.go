@@ -132,3 +132,58 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	// Get plan to verify ownership
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Verify admin token
+	adminToken := r.Header.Get("X-Admin-Token")
+	if adminToken == "" {
+		http.Error(w, "Admin token required", http.StatusUnauthorized)
+		return
+	}
+
+	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
+	if err != nil {
+		s.logger.Error("failed to validate admin token", "error", err)
+		http.Error(w, "Failed to validate admin token", http.StatusInternalServerError)
+		return
+	}
+	if !isValid {
+		http.Error(w, "Invalid admin token", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse request body
+	var updateData db.NewShiftPlan
+	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
+		s.logger.Error("failed to decode request body", "error", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update plan
+	updatedPlan, err := s.db.UpdateShiftPlan(token, updateData)
+	if err != nil {
+		s.logger.Error("failed to update plan", "error", err)
+		http.Error(w, "Failed to update plan", http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated plan data
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedPlan)
+}
