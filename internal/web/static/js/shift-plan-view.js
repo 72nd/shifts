@@ -347,6 +347,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         logoutAdmin() {
+            // Ask for confirmation before logging out
+            const confirmMessage = this.$locale() === 'de' 
+                ? 'Möchten Sie sich wirklich als Administrator abmelden?' 
+                : 'Do you really want to log out as administrator?';
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
             this.isAdmin = false;
             this.adminToken = '';
 
@@ -494,11 +503,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         handleSettingsSuccess(updatedPlan) {
-            // Update the plan data
-            this.plan = {
-                ...this.plan,
-                ...updatedPlan
-            };
+            // Update the plan data in a way that triggers Alpine.js reactivity
+            Object.keys(updatedPlan).forEach(key => {
+                this.plan[key] = updatedPlan[key];
+            });
 
             // Update modals that depend on plan settings
             this.shiftModal = new ShiftModal(
@@ -514,6 +522,9 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken,
                 this.handleShiftTypeSuccess.bind(this)
             );
+
+            // Reload the plan data to ensure everything is up to date
+            this.loadPlan(this.plan.token);
         }
     }));
 }); 
