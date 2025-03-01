@@ -99,6 +99,13 @@ export class ShiftTypeModal extends Modal {
             });
 
             if (!response.ok) {
+                // Read and log the error response
+                const errorText = await response.text();
+                console.error('Server error response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: errorText
+                });
                 throw new Error(this.currentType ? 'Failed to update shift type' : 'Failed to create shift type');
             }
 

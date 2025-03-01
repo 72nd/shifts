@@ -84,7 +84,7 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
-	typeID, err := strconv.ParseInt(vars["id"], 10, 64)
+	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
 		return
@@ -103,17 +103,32 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse request body
-	var shiftType db.ShiftType
-	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
+	// Parse request body into a temporary struct that matches the frontend field names
+	var requestData struct {
+		TitleDE       string `json:"title_de"`
+		TitleEN       string `json:"title_en"`
+		DescriptionDE string `json:"description_de"`
+		DescriptionEN string `json:"description_en"`
+		LocationDE    string `json:"location_de"`
+		LocationEN    string `json:"location_en"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
 		s.logger.Error("failed to decode request body", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Ensure the ID matches
-	shiftType.ID = typeID
-	shiftType.PlanID = plan.ID
+	// Convert to ShiftType
+	shiftType := db.ShiftType{
+		ID:            typeID,
+		PlanID:        plan.ID,
+		TitleDE:       requestData.TitleDE,
+		TitleEN:       requestData.TitleEN,
+		DescriptionDE: requestData.DescriptionDE,
+		DescriptionEN: requestData.DescriptionEN,
+		LocationDE:    requestData.LocationDE,
+		LocationEN:    requestData.LocationEN,
+	}
 
 	// Update shift type
 	if err := s.db.UpdateShiftType(typeID, shiftType); err != nil {
