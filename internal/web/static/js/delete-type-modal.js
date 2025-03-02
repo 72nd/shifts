@@ -10,6 +10,7 @@ export class DeleteTypeModal extends Modal {
     }
 
     reset() {
+        super.clearError();
         this.currentType = null;
     }
 
@@ -20,18 +21,19 @@ export class DeleteTypeModal extends Modal {
     }
 
     async submit() {
-        try {
-            const response = await fetch(`/api/plans/${this.planToken}/types/${this.currentType.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-Admin-Token': this.adminToken
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete shift type');
+        const url = `/api/plans/${this.planToken}/types/${this.currentType.id}`;
+        const options = {
+            method: 'DELETE',
+            headers: {
+                'X-Admin-Token': this.adminToken
             }
-
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_deleting_shift_type');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
             this.close();
             
             // Notify parent component about the deletion
@@ -40,10 +42,8 @@ export class DeleteTypeModal extends Modal {
             }
             
             return true;
-        } catch (error) {
-            console.error('Error deleting shift type:', error);
-            this.errors.general = AlpineI18n.t('shift_plans.view.error_deleting_shift_type');
-            return false;
         }
+        
+        return false;
     }
 } 
