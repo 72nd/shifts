@@ -175,6 +175,7 @@ document.addEventListener('alpine:init', () => {
                 const headers = {};
                 if (this.isAdmin && this.adminToken) {
                     headers['X-Admin-Token'] = this.adminToken;
+                    console.log('Loading plan with admin token:', this.adminToken ? '[REDACTED]' : 'empty');
                 }
 
                 const planResponse = await fetch(`/api/plans/${token}`, { headers });
@@ -213,13 +214,48 @@ document.addEventListener('alpine:init', () => {
                     shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
 
-                // Update modals with new data
-                this.shiftModal = new ShiftModal(this.plan.start_date, this.shiftTypes, this.plan.token, this.adminToken, this.handleShiftsUpdate.bind(this));
-                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, this.plan.token, this.adminToken, this.handleShiftTypeSuccess.bind(this));
-                this.deleteTypeModal = new DeleteTypeModal(this.plan.token, this.adminToken, this.handleDeleteTypeSuccess.bind(this));
-                this.deleteShiftModal = new DeleteShiftModal(this.plan.token, this.adminToken, this.handleDeleteShiftSuccess.bind(this));
-                this.joinModal = new JoinModal(this.plan.token, this.handleShiftUpdate.bind(this));
-                this.removeModal = new RemoveModal(this.plan.token, this.handleShiftUpdate.bind(this));
+                // Update modals with new data and ensure admin token is passed
+                this.shiftModal = new ShiftModal(
+                    this.plan.start_date, 
+                    this.shiftTypes, 
+                    this.plan.token, 
+                    this.adminToken, 
+                    this.handleShiftsUpdate.bind(this)
+                );
+                this.shiftTypeModal = new ShiftTypeModal(
+                    this.plan.is_multilingual, 
+                    this.plan.token, 
+                    this.adminToken, 
+                    this.handleShiftTypeSuccess.bind(this)
+                );
+                this.deleteTypeModal = new DeleteTypeModal(
+                    this.plan.token, 
+                    this.adminToken, 
+                    this.handleDeleteTypeSuccess.bind(this)
+                );
+                this.deleteShiftModal = new DeleteShiftModal(
+                    this.plan.token, 
+                    this.adminToken, 
+                    this.handleDeleteShiftSuccess.bind(this)
+                );
+                this.joinModal = new JoinModal(
+                    this.plan.token, 
+                    this.handleShiftUpdate.bind(this)
+                );
+                this.removeModal = new RemoveModal(
+                    this.plan.token, 
+                    this.handleShiftUpdate.bind(this)
+                );
+                this.sortTypesModal = new SortTypesModal(
+                    this.plan.token,
+                    this.adminToken,
+                    this.handleSortTypesSuccess.bind(this)
+                );
+                this.settingsModal = new SettingsModal(
+                    this.plan.token,
+                    this.adminToken,
+                    this.handleSettingsSuccess.bind(this)
+                );
 
             } catch (error) {
                 console.error('Error loading plan:', error);
@@ -341,6 +377,44 @@ document.addEventListener('alpine:init', () => {
 
             // Save admin token in localStorage
             localStorage.setItem(`admin_token_${this.plan.token}`, token);
+
+            // Debug-Ausgabe für Fehlersuche
+            console.log('Admin login successful, token set:', token ? '[REDACTED]' : 'empty');
+
+            // Update all modals with the new admin token
+            this.shiftModal = new ShiftModal(
+                this.plan.start_date,
+                this.shiftTypes,
+                this.plan.token,
+                this.adminToken,
+                this.handleShiftsUpdate.bind(this)
+            );
+            this.shiftTypeModal = new ShiftTypeModal(
+                this.plan.is_multilingual,
+                this.plan.token,
+                this.adminToken,
+                this.handleShiftTypeSuccess.bind(this)
+            );
+            this.deleteTypeModal = new DeleteTypeModal(
+                this.plan.token,
+                this.adminToken,
+                this.handleDeleteTypeSuccess.bind(this)
+            );
+            this.deleteShiftModal = new DeleteShiftModal(
+                this.plan.token,
+                this.adminToken,
+                this.handleDeleteShiftSuccess.bind(this)
+            );
+            this.sortTypesModal = new SortTypesModal(
+                this.plan.token,
+                this.adminToken,
+                this.handleSortTypesSuccess.bind(this)
+            );
+            this.settingsModal = new SettingsModal(
+                this.plan.token,
+                this.adminToken,
+                this.handleSettingsSuccess.bind(this)
+            );
 
             // Reload data to get admin-only fields
             this.loadPlan(this.plan.token);

@@ -18,8 +18,8 @@ export class AdminModal extends Modal {
         this.errors = {};
         let isValid = true;
 
-        if (!this.password?.trim()) {
-            this.errors.password = AlpineI18n.t('shift_plans.view.error_password_required');
+        if (!this.password) {
+            this.errors.password = AlpineI18n.t('shift_plans.view.admin_password_required');
             isValid = false;
         }
 
@@ -27,78 +27,35 @@ export class AdminModal extends Modal {
     }
 
     async submit() {
-        if (!this.validate()) {
-            // Bei einfachen Validierungsfehlern zeigen wir nur die Feldfehlermeldung an
-            // und aktivieren nicht das Error-Display
-            return false;
-        }
+        if (!this.validate()) return false;
 
-        try {
-            const url = `/api/plans/${this.planToken}/verify-admin`;
-            const options = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: this.password.trim() })
-            };
+        const url = `/api/plans/${this.planToken}/admin`;
+        const options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                password: this.password
+            })
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.admin_login_error');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null && result.token) {
+            // Debug-Ausgabe für Fehlersuche
+            console.log('Admin login successful, received token:', result.token ? '[REDACTED]' : 'empty');
             
-            const errorMessage = AlpineI18n.t('shift_plans.view.error_invalid_password');
-            
-            // Special handling for 401 errors
-            const response = await fetch(url, options);
-            
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Bei ungültigem Passwort zeigen wir die Fehlermeldung direkt beim Feld an
-                    this.errors.password = AlpineI18n.t('shift_plans.view.error_invalid_password');
-                    return false;
-                }
-                
-                // Für andere Fehler verwenden wir den generischen Error-Handler
-                await this.handleResponseError(response, errorMessage);
-                return false;
+            // Close modal and notify parent about success
+            this.close();
+            if (this.onSuccess) {
+                this.onSuccess(result.token);
             }
-            
-            // First try to get the response as text
-            const responseText = await response.text();
-            
-            // If the response is empty, we might still be successful but without data
-            if (!responseText) {
-                this.close();
-                // Use the password as token if no token is provided
-                if (this.onSuccess) {
-                    this.onSuccess(this.password.trim());
-                }
-                return true;
-            }
-
-            // Try to parse as JSON if we have content
-            try {
-                const data = JSON.parse(responseText);
-                this.close();
-                if (this.onSuccess) {
-                    // Use the token from response if available, otherwise use password
-                    this.onSuccess(data.token || this.password.trim());
-                }
-                return true;
-            } catch (e) {
-                // If parsing fails but response was ok, we still consider it a success
-                this.close();
-                if (this.onSuccess) {
-                    this.onSuccess(this.password.trim());
-                }
-                return true;
-            }
-        } catch (error) {
-            // Handle network errors
-            console.error('Network error during admin login:', error);
-            this.setServerError(
-                AlpineI18n.t('common.error_network'),
-                {
-                    message: error.message || 'Network error',
-                    type: 'network_error'
-                }
-            );
-            return false;
+            return true;
         }
+        
+        return false;
     }
 } 

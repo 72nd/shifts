@@ -90,7 +90,7 @@ export class SettingsModal extends Modal {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Admin-Token': this.adminToken
+                'X-Admin-Token': this.adminToken || '' // Stelle sicher, dass adminToken nicht undefined ist
             },
             body: JSON.stringify({
                 is_multilingual: this.is_multilingual,
@@ -102,6 +102,14 @@ export class SettingsModal extends Modal {
                 end_date: new Date(this.end_date).toISOString()
             })
         };
+        
+        // Debug-Ausgabe für Fehlersuche
+        console.log('Sending settings update with options:', {
+            url,
+            method: options.method,
+            headers: { ...options.headers, 'X-Admin-Token': this.adminToken ? '[REDACTED]' : 'empty' },
+            body: JSON.parse(options.body)
+        });
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_settings');
         
