@@ -44,19 +44,9 @@ export class JoinModal extends Modal {
     }
 
     async submit() {
+        // Bei Validierungsfehlern zeigen wir nur die Feldfehlermeldungen an
+        // und aktivieren nicht das Error-Display
         if (!this.validate()) {
-            // Wenn Validierungsfehler auftreten, zeigen wir sie auch im Error-Display an
-            if (this.errors.name) {
-                this.setServerError(
-                    this.errors.name,
-                    {
-                        message: this.errors.name,
-                        type: 'validation_error',
-                        field: 'name',
-                        value: this.name
-                    }
-                );
-            }
             return false;
         }
 

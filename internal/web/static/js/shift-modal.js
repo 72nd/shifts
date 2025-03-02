@@ -104,10 +104,7 @@ export class ShiftModal extends Modal {
         const type = this.shiftTypes.find(t => t.id === parseInt(typeId));
         
         if (!type) {
-            this.setServerError(
-                AlpineI18n.t('shift_plans.view.error_invalid_shift_type'),
-                { message: 'Invalid shift type selected' }
-            );
+            this.errors.type_id = AlpineI18n.t('shift_plans.view.error_invalid_shift_type');
             return false;
         }
 

@@ -89,6 +89,8 @@ export class SettingsModal extends Modal {
     }
 
     async submit() {
+        // Bei Validierungsfehlern zeigen wir nur die Feldfehlermeldungen an
+        // und aktivieren nicht das Error-Display
         if (!this.validate()) return false;
 
         const url = `/api/plans/${this.planToken}`;

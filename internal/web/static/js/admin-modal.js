@@ -28,17 +28,8 @@ export class AdminModal extends Modal {
 
     async submit() {
         if (!this.validate()) {
-            // If validation fails, show the error in the error display
-            if (this.errors.password) {
-                this.setServerError(
-                    this.errors.password,
-                    {
-                        message: this.errors.password,
-                        type: 'validation_error',
-                        field: 'password'
-                    }
-                );
-            }
+            // Bei einfachen Validierungsfehlern zeigen wir nur die Feldfehlermeldung an
+            // und aktivieren nicht das Error-Display
             return false;
         }
 
@@ -57,18 +48,12 @@ export class AdminModal extends Modal {
             
             if (!response.ok) {
                 if (response.status === 401) {
-                    this.setServerError(
-                        AlpineI18n.t('shift_plans.view.error_invalid_password'),
-                        {
-                            message: AlpineI18n.t('shift_plans.view.error_invalid_password'),
-                            type: 'auth_error',
-                            status: response.status
-                        }
-                    );
+                    // Bei ungültigem Passwort zeigen wir die Fehlermeldung direkt beim Feld an
+                    this.errors.password = AlpineI18n.t('shift_plans.view.error_invalid_password');
                     return false;
                 }
                 
-                // For other errors, use the generic error handler
+                // Für andere Fehler verwenden wir den generischen Error-Handler
                 await this.handleResponseError(response, errorMessage);
                 return false;
             }
