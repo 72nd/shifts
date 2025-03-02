@@ -12,6 +12,8 @@ export class ShiftModal extends Modal {
     }
 
     reset() {
+        super.clearError();
+        this.errors = {}; // Field-level validation errors
         this.currentShift = null;
         this.currentShiftType = null;
         this.isDuplicating = false;
@@ -95,41 +97,38 @@ export class ShiftModal extends Modal {
     }
 
     async submit() {
-        if (!this.validate()) return;
+        if (!this.validate()) return false;
 
-        try {
-            // Find the current shift type based on type_id
-            const typeId = this.currentShift ? this.currentShiftType.id : this.type_id;
-            const type = this.shiftTypes.find(t => t.id === parseInt(typeId));
-            
-            if (!type) {
-                this.errors.general = AlpineI18n.t('shift_plans.view.error_invalid_shift_type');
-                return;
-            }
-
-            if (this.currentShift) {
-                await this.updateShift(type);
-            } else {
-                await this.createShifts(type);
-            }
-
-            // Signal successful completion
-            this.close();
-            return true;
-        } catch (error) {
-            console.error('Error saving shift:', error);
-            this.errors.general = AlpineI18n.t(
-                this.currentShift 
-                    ? 'shift_plans.view.error_updating_shift'
-                    : 'shift_plans.view.error_creating_shift'
+        // Find the current shift type based on type_id
+        const typeId = this.currentShift ? this.currentShiftType.id : this.type_id;
+        const type = this.shiftTypes.find(t => t.id === parseInt(typeId));
+        
+        if (!type) {
+            this.setServerError(
+                AlpineI18n.t('shift_plans.view.error_invalid_shift_type'),
+                { message: 'Invalid shift type selected' }
             );
             return false;
         }
+
+        let success = false;
+        if (this.currentShift) {
+            success = await this.updateShift(type);
+        } else {
+            success = await this.createShifts(type);
+        }
+
+        if (success) {
+            this.close();
+            return true;
+        }
+        
+        return false;
     }
 
     async updateShift(type) {
         const url = `/api/plans/${this.planToken}/shifts/${this.currentShift.id}`;
-        const response = await fetch(url, {
+        const options = {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -143,25 +142,33 @@ export class ShiftModal extends Modal {
                 comment_en: this.comment_en,
                 type_id: type.id
             })
-        });
-
-        if (!response.ok) throw new Error('Failed to update shift');
-
-        // Create updated shift object
-        const updatedShift = {
-            ...this.currentShift,
-            start_time: new Date(this.start_time).toISOString(),
-            duration: parseInt(this.duration),
-            required: parseInt(this.required),
-            comment_de: this.comment_de,
-            comment_en: this.comment_en,
-            type_id: type.id
         };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_shift');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
+            // Create updated shift object
+            const updatedShift = {
+                ...this.currentShift,
+                start_time: new Date(this.start_time).toISOString(),
+                duration: parseInt(this.duration),
+                required: parseInt(this.required),
+                comment_de: this.comment_de,
+                comment_en: this.comment_en,
+                type_id: type.id
+            };
 
-        // Notify about successful update
-        if (this.onSuccess) {
-            this.onSuccess([updatedShift]);
+            // Notify about successful update
+            if (this.onSuccess) {
+                this.onSuccess([updatedShift]);
+            }
+            
+            return true;
         }
+        
+        return false;
     }
 
     async createShifts(type) {
@@ -170,36 +177,58 @@ export class ShiftModal extends Modal {
         const duration = parseInt(this.duration);
         const createdShifts = [];
 
-        // Create all shifts in sequence
-        for (let i = 0; i < numShifts; i++) {
-            const shiftStartTime = new Date(baseStartTime);
-            shiftStartTime.setMinutes(shiftStartTime.getMinutes() + (i * duration));
+        try {
+            // Create all shifts in sequence
+            for (let i = 0; i < numShifts; i++) {
+                const shiftStartTime = new Date(baseStartTime);
+                shiftStartTime.setMinutes(shiftStartTime.getMinutes() + (i * duration));
 
-            const response = await fetch(`/api/plans/${this.planToken}/shifts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Admin-Token': this.adminToken
-                },
-                body: JSON.stringify({
-                    type_id: type.id,
-                    start_time: shiftStartTime.toISOString(),
-                    duration: duration,
-                    required: parseInt(this.required),
-                    comment_de: this.comment_de,
-                    comment_en: this.comment_en
-                })
-            });
+                const url = `/api/plans/${this.planToken}/shifts`;
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': this.adminToken
+                    },
+                    body: JSON.stringify({
+                        type_id: type.id,
+                        start_time: shiftStartTime.toISOString(),
+                        duration: duration,
+                        required: parseInt(this.required),
+                        comment_de: this.comment_de,
+                        comment_en: this.comment_en
+                    })
+                };
+                
+                const errorMessage = AlpineI18n.t('shift_plans.view.error_creating_shift');
+                
+                const result = await this.sendRequest(url, options, errorMessage);
+                
+                if (result === null) {
+                    // If any shift creation fails, return false
+                    return false;
+                }
+                
+                createdShifts.push(result);
+            }
 
-            if (!response.ok) throw new Error('Failed to create shift');
+            // Notify about successful creation
+            if (this.onSuccess) {
+                this.onSuccess(createdShifts);
+            }
             
-            const shift = await response.json();
-            createdShifts.push(shift);
-        }
-
-        // Notify about successful creation
-        if (this.onSuccess) {
-            this.onSuccess(createdShifts);
+            return true;
+        } catch (error) {
+            this.setServerError(
+                AlpineI18n.t('shift_plans.view.error_creating_shift'),
+                { 
+                    message: error.message,
+                    stack: error.stack,
+                    type: 'batch_creation_error',
+                    createdShifts: createdShifts.length
+                }
+            );
+            return false;
         }
     }
 

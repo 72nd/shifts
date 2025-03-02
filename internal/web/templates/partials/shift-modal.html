@@ -3,13 +3,8 @@
     <div class="modal-box max-w-2xl">
         <h3 class="font-bold text-lg mb-2" x-text="shiftModal.isDuplicating ? $t('shift_plans.view.duplicate_shift') : (shiftModal.currentShift ? $t('shift_plans.view.edit_shift') : $t('shift_plans.view.new_shift'))"></h3>
         
-        <!-- Error Message Box (for general errors) -->
-        <div x-show="shiftModal.errors.general" class="alert alert-error mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span x-text="shiftModal.errors.general"></span>
-        </div>
+        <!-- Error Display -->
+        {{ template "error-display" "shiftModal" }}
         
         <form @submit.prevent="shiftModal.submit()" class="space-y-3">
             <!-- Shift Type Selector (only shown when creating a new shift) -->
