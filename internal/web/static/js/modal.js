@@ -33,6 +33,8 @@ export class Modal {
     }
 
     async showTechnicalError(error, response = null) {
+        console.log('showTechnicalError called with:', { error, response });
+        
         let errorDetails = {
             message: error.message,
             timestamp: new Date().toISOString(),
@@ -43,6 +45,7 @@ export class Modal {
         if (response) {
             try {
                 const errorText = await response.text();
+                console.log('Response text:', errorText);
                 errorDetails = {
                     ...errorDetails,
                     status: response.status,
@@ -55,17 +58,37 @@ export class Modal {
         }
 
         this.technicalError = errorDetails;
-        this.userErrorMessage = this.getUserFriendlyError(error);
+        console.log('Error details:', errorDetails);
+        
+        const userError = this.getUserFriendlyError(errorDetails);
+        console.log('User friendly error:', userError);
+        this.userErrorMessage = userError;
         
         // Log the error for debugging
         console.error('Technical error occurred:', errorDetails);
     }
 
     getUserFriendlyError(error) {
-        // Try to get a translated error message based on the error code/message
-        const errorKey = error.code || 'unknown';
-        return AlpineI18n.t(`errors.${this.id}.${errorKey}`) || 
-               AlpineI18n.t('errors.common.unknown');
+        // For HTTP errors (like our test error)
+        if (error.status) {
+            return AlpineI18n.t('errors.http_error', {
+                status: error.status,
+                message: error.message || error.statusText
+            });
+        }
+
+        // For network errors
+        if (error instanceof TypeError && error.message.includes('network')) {
+            return AlpineI18n.t('errors.network_error', { message: error.message });
+        }
+
+        // For validation errors
+        if (error.validation) {
+            return AlpineI18n.t('errors.validation_error', { message: error.message });
+        }
+
+        // For unknown errors
+        return AlpineI18n.t('errors.unknown_error', { message: error.message });
     }
 
     getModalState() {
@@ -97,7 +120,7 @@ export class Modal {
             }, 2000);
         } catch (e) {
             console.error('Failed to copy error details:', e);
-            this.errors.copy = AlpineI18n.t('errors.common.copy_failed');
+            this.errors.copy = window.$t('errors.common.copy_failed');
         }
     }
 

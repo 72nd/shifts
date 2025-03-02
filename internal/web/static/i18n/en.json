@@ -160,5 +160,16 @@
             "settings": "Settings",
             "error_updating_settings": "Error updating settings"
         }
+    },
+    "errors": {
+        "technical_details": "Technical Details",
+        "copy_details": "Copy Details",
+        "http_error": "HTTP Error {status}: {message}",
+        "network_error": "Network Error: {message}",
+        "validation_error": "Validation Error: {message}",
+        "unknown_error": "Unknown Error: {message}",
+        "admin_hint": "Please send these technical details to the administrator.",
+        "show_details": "Show Technical Details",
+        "hide_details": "Hide Technical Details"
     }
-} 
+}

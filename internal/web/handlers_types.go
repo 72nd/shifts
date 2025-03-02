@@ -90,6 +90,12 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Test case: Return error for ID 42
+	if typeID == 42 {
+		http.Error(w, "Test error: This is a simulated backend error for testing purposes", http.StatusInternalServerError)
+		return
+	}
+
 	// Get plan first to verify it exists
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
