@@ -11,7 +11,6 @@ export class ShiftTypeModal extends Modal {
     }
 
     reset() {
-        super.reset();
         this.currentType = null;
         this.title_de = '';
         this.title_en = '';
@@ -75,24 +74,6 @@ export class ShiftTypeModal extends Modal {
         return isValid;
     }
 
-    getModalState() {
-        return {
-            isMultilingual: this.isMultilingual,
-            currentType: this.currentType ? {
-                id: this.currentType.id,
-                title_en: this.currentType.title_en
-            } : null,
-            formData: {
-                title_de: this.title_de,
-                title_en: this.title_en,
-                description_de: this.description_de,
-                description_en: this.description_en,
-                location_de: this.location_de,
-                location_en: this.location_en
-            }
-        };
-    }
-
     async submit() {
         if (!this.validate()) return false;
 
@@ -118,11 +99,14 @@ export class ShiftTypeModal extends Modal {
             });
 
             if (!response.ok) {
-                await this.showTechnicalError(
-                    new Error(this.currentType ? 'update_failed' : 'create_failed'),
-                    response
-                );
-                return false;
+                // Read and log the error response
+                const errorText = await response.text();
+                console.error('Server error response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    body: errorText
+                });
+                throw new Error(this.currentType ? 'Failed to update shift type' : 'Failed to create shift type');
             }
 
             // For updates, we use the current data as the server doesn't return it
@@ -145,7 +129,12 @@ export class ShiftTypeModal extends Modal {
             
             return true;
         } catch (error) {
-            await this.showTechnicalError(error);
+            console.error('Error saving shift type:', error);
+            this.errors.title_en = AlpineI18n.t(
+                this.currentType
+                    ? 'shift_plans.view.error_updating_shift_type'
+                    : 'shift_plans.view.error_creating_shift_type'
+            );
             return false;
         }
     }

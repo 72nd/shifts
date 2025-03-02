@@ -160,16 +160,5 @@
             "settings": "Einstellungen",
             "error_updating_settings": "Fehler beim Aktualisieren der Einstellungen"
         }
-    },
-    "errors": {
-        "technical_details": "Technische Details",
-        "copy_details": "Details kopieren",
-        "http_error": "HTTP Fehler {status}: {message}",
-        "network_error": "Netzwerkfehler: {message}",
-        "validation_error": "Validierungsfehler: {message}",
-        "unknown_error": "Unbekannter Fehler: {message}",
-        "admin_hint": "Bitte senden Sie diese technischen Details an den Administrator.",
-        "show_details": "Technische Details anzeigen",
-        "hide_details": "Technische Details ausblenden"
     }
 } 
