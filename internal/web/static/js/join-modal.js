@@ -9,6 +9,8 @@ export class JoinModal extends Modal {
     }
 
     reset() {
+        super.clearError();
+        this.errors = {}; // Field-level validation errors
         this.currentShift = null;
         this.name = localStorage.getItem('last_participant_name') || '';
     }
@@ -42,28 +44,40 @@ export class JoinModal extends Modal {
     }
 
     async submit() {
-        if (!this.validate()) return false;
-
-        try {
-            const response = await fetch(`/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: this.name.trim() })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to join shift');
+        if (!this.validate()) {
+            // Wenn Validierungsfehler auftreten, zeigen wir sie auch im Error-Display an
+            if (this.errors.name) {
+                this.setServerError(
+                    this.errors.name,
+                    {
+                        message: this.errors.name,
+                        type: 'validation_error',
+                        field: 'name',
+                        value: this.name
+                    }
+                );
             }
+            return false;
+        }
 
-            // Get the updated participant data
-            const participant = await response.json();
-
+        const url = `/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants`;
+        const options = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: this.name.trim() })
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_joining');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
             // Save name to localStorage after successful join
             localStorage.setItem('last_participant_name', this.name.trim());
 
             // Update the current shift's participants
             this.currentShift.participants = this.currentShift.participants || [];
-            this.currentShift.participants.push(participant);
+            this.currentShift.participants.push(result);
 
             this.close();
             
@@ -73,10 +87,8 @@ export class JoinModal extends Modal {
             }
             
             return true;
-        } catch (error) {
-            console.error('Error joining shift:', error);
-            this.errors.name = AlpineI18n.t('shift_plans.view.error_joining');
-            return false;
         }
+        
+        return false;
     }
 } 

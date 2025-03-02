@@ -10,6 +10,7 @@ export class DeleteShiftModal extends Modal {
     }
 
     reset() {
+        super.clearError();
         this.currentShift = null;
         this.currentType = null;
     }
@@ -22,18 +23,19 @@ export class DeleteShiftModal extends Modal {
     }
 
     async submit() {
-        try {
-            const response = await fetch(`/api/plans/${this.planToken}/shifts/${this.currentShift.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-Admin-Token': this.adminToken
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete shift');
+        const url = `/api/plans/${this.planToken}/shifts/${this.currentShift.id}`;
+        const options = {
+            method: 'DELETE',
+            headers: {
+                'X-Admin-Token': this.adminToken
             }
-
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_deleting_shift');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
             this.close();
             
             // Notify parent component about the deletion
@@ -42,10 +44,8 @@ export class DeleteShiftModal extends Modal {
             }
             
             return true;
-        } catch (error) {
-            console.error('Error deleting shift:', error);
-            this.errors.general = AlpineI18n.t('shift_plans.view.error_deleting_shift');
-            return false;
         }
+        
+        return false;
     }
 } 
