@@ -10,7 +10,7 @@ export class SortTypesModal extends Modal {
     }
 
     reset() {
-        this.errors = {};
+        super.clearError();
         this.localTypes = []; // Local copy for managing changes within the modal
         this.originalTypes = []; // Backup of original order
     }
@@ -53,34 +53,32 @@ export class SortTypesModal extends Modal {
     }
 
     async submit() {
-        try {
-            const response = await fetch(`/api/plans/${this.planToken}/types/order`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Admin-Token': this.adminToken
-                },
-                body: JSON.stringify({
-                    type_ids: this.localTypes.map(t => t.id)
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update type order');
-            }
-
+        const url = `/api/plans/${this.planToken}/types/order`;
+        const options = {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': this.adminToken
+            },
+            body: JSON.stringify({
+                type_ids: this.localTypes.map(t => t.id)
+            })
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_type_order');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
             // Close modal and notify parent to update with new order
             this.close();
             if (this.onSuccess) {
                 this.onSuccess(this.localTypes);
             }
-            
             return true;
-        } catch (error) {
-            console.error('Error updating type order:', error);
-            this.errors.general = AlpineI18n.t('shift_plans.view.error_updating_type_order');
-            return false;
         }
+        
+        return false;
     }
 
     close() {
