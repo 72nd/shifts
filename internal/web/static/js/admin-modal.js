@@ -9,7 +9,9 @@ export class AdminModal extends Modal {
     }
 
     reset() {
+        super.clearError();
         this.password = '';
+        this.errors = {}; // Field-level validation errors
     }
 
     validate() {
@@ -25,23 +27,52 @@ export class AdminModal extends Modal {
     }
 
     async submit() {
-        if (!this.validate()) return false;
+        if (!this.validate()) {
+            // If validation fails, show the error in the error display
+            if (this.errors.password) {
+                this.setServerError(
+                    this.errors.password,
+                    {
+                        message: this.errors.password,
+                        type: 'validation_error',
+                        field: 'password'
+                    }
+                );
+            }
+            return false;
+        }
 
         try {
-            const response = await fetch(`/api/plans/${this.planToken}/verify-admin`, {
+            const url = `/api/plans/${this.planToken}/verify-admin`;
+            const options = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password: this.password.trim() })
-            });
-
+            };
+            
+            const errorMessage = AlpineI18n.t('shift_plans.view.error_invalid_password');
+            
+            // Special handling for 401 errors
+            const response = await fetch(url, options);
+            
             if (!response.ok) {
                 if (response.status === 401) {
-                    this.errors.password = AlpineI18n.t('shift_plans.view.error_invalid_password');
+                    this.setServerError(
+                        AlpineI18n.t('shift_plans.view.error_invalid_password'),
+                        {
+                            message: AlpineI18n.t('shift_plans.view.error_invalid_password'),
+                            type: 'auth_error',
+                            status: response.status
+                        }
+                    );
                     return false;
                 }
-                throw new Error('Failed to verify admin password');
+                
+                // For other errors, use the generic error handler
+                await this.handleResponseError(response, errorMessage);
+                return false;
             }
-
+            
             // First try to get the response as text
             const responseText = await response.text();
             
@@ -73,8 +104,15 @@ export class AdminModal extends Modal {
                 return true;
             }
         } catch (error) {
-            console.error('Error verifying admin password:', error);
-            this.errors.general = error.message;
+            // Handle network errors
+            console.error('Network error during admin login:', error);
+            this.setServerError(
+                AlpineI18n.t('common.error_network'),
+                {
+                    message: error.message || 'Network error',
+                    type: 'network_error'
+                }
+            );
             return false;
         }
     }

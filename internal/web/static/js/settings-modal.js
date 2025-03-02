@@ -10,6 +10,7 @@ export class SettingsModal extends Modal {
     }
 
     reset() {
+        super.clearError();
         this.is_multilingual = false;
         this.title_de = '';
         this.title_en = '';
@@ -17,7 +18,7 @@ export class SettingsModal extends Modal {
         this.description_en = '';
         this.start_date = '';
         this.end_date = '';
-        this.errors = {};
+        this.errors = {}; // Field-level validation errors
     }
 
     openWith(plan) {
@@ -88,43 +89,39 @@ export class SettingsModal extends Modal {
     }
 
     async submit() {
-        if (!this.validate()) return;
+        if (!this.validate()) return false;
 
-        try {
-            const response = await fetch(`/api/plans/${this.planToken}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Admin-Token': this.adminToken
-                },
-                body: JSON.stringify({
-                    is_multilingual: this.is_multilingual,
-                    title_de: this.is_multilingual ? this.title_de : null,
-                    title_en: this.title_en,
-                    description_de: this.is_multilingual ? this.description_de : null,
-                    description_en: this.description_en,
-                    start_date: new Date(this.start_date).toISOString(),
-                    end_date: new Date(this.end_date).toISOString()
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update plan settings');
-            }
-
-            const updatedPlan = await response.json();
-
+        const url = `/api/plans/${this.planToken}`;
+        const options = {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': this.adminToken
+            },
+            body: JSON.stringify({
+                is_multilingual: this.is_multilingual,
+                title_de: this.is_multilingual ? this.title_de : null,
+                title_en: this.title_en,
+                description_de: this.is_multilingual ? this.description_de : null,
+                description_en: this.description_en,
+                start_date: new Date(this.start_date).toISOString(),
+                end_date: new Date(this.end_date).toISOString()
+            })
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_settings');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
             // Close modal and notify parent about success
             this.close();
             if (this.onSuccess) {
-                this.onSuccess(updatedPlan);
+                this.onSuccess(result);
             }
-
             return true;
-        } catch (error) {
-            console.error('Error updating plan settings:', error);
-            this.errors.general = AlpineI18n.t('shift_plans.view.error_updating_settings');
-            return false;
         }
+        
+        return false;
     }
 } 
