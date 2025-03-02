@@ -9,6 +9,7 @@ export class RemoveModal extends Modal {
     }
 
     reset() {
+        super.clearError();
         this.currentShift = null;
         this.currentParticipant = null;
     }
@@ -22,16 +23,16 @@ export class RemoveModal extends Modal {
     }
 
     async submit() {
-        try {
-            const response = await fetch(
-                `/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`,
-                { method: 'DELETE' }
-            );
-
-            if (!response.ok) {
-                throw new Error('Failed to remove participant');
-            }
-
+        const url = `/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants/${this.currentParticipant.id}`;
+        const options = {
+            method: 'DELETE'
+        };
+        
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_removing');
+        
+        const result = await this.sendRequest(url, options, errorMessage);
+        
+        if (result !== null) {
             // Update the current shift's participants
             this.currentShift.participants = this.currentShift.participants.filter(
                 p => p.id !== this.currentParticipant.id
@@ -45,10 +46,8 @@ export class RemoveModal extends Modal {
             }
             
             return true;
-        } catch (error) {
-            console.error('Error removing participant:', error);
-            this.errors.general = AlpineI18n.t('shift_plans.view.error_removing');
-            return false;
         }
+        
+        return false;
     }
 } 
