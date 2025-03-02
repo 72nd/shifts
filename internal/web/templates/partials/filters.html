@@ -1,7 +1,7 @@
 {{ define "filters" }}
 <div class="bg-base-200 rounded-box p-2 md:p-4 mb-3 md:mb-4" x-data="{ isFilterExpanded: false }">
     <!-- Header with active filter count and toggle button -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between cursor-pointer" @click.stop="isFilterExpanded = !isFilterExpanded">
         <div class="flex items-center gap-2">
             <h2 class="text-lg font-semibold" x-text="$t('shift_plans.view.filter.title')"></h2>
             
@@ -14,7 +14,7 @@
         <div class="flex items-center gap-2">
             <!-- Clear Filters Button -->
             <button class="btn btn-outline btn-secondary btn-xs md:btn-sm gap-1.5" 
-                    @click="filterManager.clearFilters()"
+                    @click.stop="filterManager.clearFilters()"
                     x-show="filterManager.hasActiveFilters()">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -23,7 +23,7 @@
             </button>
             
             <!-- Toggle Button -->
-            <button @click="isFilterExpanded = !isFilterExpanded" class="btn btn-ghost btn-sm p-0 h-auto">
+            <button @click.stop="isFilterExpanded = !isFilterExpanded" class="btn btn-ghost btn-sm p-0 h-auto">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" 
                      :class="{ 'rotate-180': isFilterExpanded }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
