@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,26 +14,32 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 
-	// Get plan first to verify it exists and get its ID
+	s.logRequest(r, "get_shift_types_request", "token", token)
+
+	// Get plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
+		s.logError(r, "get_shift_plan", err, http.StatusInternalServerError, "token", token)
 		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
 		return
 	}
 
 	if plan == nil {
+		s.logError(r, "plan_not_found", fmt.Errorf("plan not found"), http.StatusNotFound, "token", token)
 		http.NotFound(w, r)
 		return
 	}
 
-	// Get shift types with their shifts
+	// Get types
 	types, err := s.db.GetShiftTypesByPlan(plan.ID)
 	if err != nil {
-		s.logger.Error("failed to get shift types", "error", err)
+		s.logError(r, "get_shift_types", err, http.StatusInternalServerError, "plan_id", plan.ID)
 		http.Error(w, "Failed to get shift types", http.StatusInternalServerError)
 		return
 	}
+
+	// Log success
+	s.logSuccess(r, "get_shift_types", http.StatusOK, "plan_id", plan.ID, "count", len(types))
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(types)
@@ -43,15 +50,18 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 
-	// Get plan first to verify it exists and get its ID
+	s.logRequest(r, "create_shift_type_request", "token", token)
+
+	// Get plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
+		s.logError(r, "get_shift_plan", err, http.StatusInternalServerError, "token", token)
 		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
 		return
 	}
 
 	if plan == nil {
+		s.logError(r, "plan_not_found", fmt.Errorf("plan not found"), http.StatusNotFound, "token", token)
 		http.NotFound(w, r)
 		return
 	}
@@ -59,7 +69,7 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 	// Parse request body
 	var shiftType db.NewShiftType
 	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
+		s.logError(r, "decode_request_body", err, http.StatusBadRequest)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -70,13 +80,18 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 	// Create shift type
 	createdType, err := s.db.CreateShiftType(shiftType)
 	if err != nil {
-		s.logger.Error("failed to create shift type", "error", err)
+		s.logError(r, "create_shift_type", err, http.StatusInternalServerError,
+			"plan_id", plan.ID, "title_en", shiftType.TitleEN)
 		http.Error(w, "Failed to create shift type", http.StatusInternalServerError)
 		return
 	}
 
-	// Return created shift type
+	// Log success
+	s.logSuccess(r, "create_shift_type", http.StatusCreated,
+		"plan_id", plan.ID, "type_id", createdType.ID, "title_en", createdType.TitleEN)
+
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(createdType)
 }
 
@@ -86,58 +101,71 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 	token := vars["token"]
 	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
+		s.logError(r, "parse_type_id", err, http.StatusBadRequest, "type_id", vars["typeId"])
+		http.Error(w, "Invalid type ID", http.StatusBadRequest)
 		return
 	}
 
-	// Get plan first to verify it exists
+	s.logRequest(r, "update_shift_type_request", "token", token, "type_id", typeID)
+
+	// Get plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
+		s.logError(r, "get_shift_plan", err, http.StatusInternalServerError, "token", token)
 		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
 		return
 	}
 
 	if plan == nil {
+		s.logError(r, "plan_not_found", fmt.Errorf("plan not found"), http.StatusNotFound, "token", token)
 		http.NotFound(w, r)
 		return
 	}
 
-	// Parse request body into a temporary struct that matches the frontend field names
-	var requestData struct {
-		TitleDE       string `json:"title_de"`
-		TitleEN       string `json:"title_en"`
-		DescriptionDE string `json:"description_de"`
-		DescriptionEN string `json:"description_en"`
-		LocationDE    string `json:"location_de"`
-		LocationEN    string `json:"location_en"`
+	// Verify type belongs to plan
+	types, err := s.db.GetShiftTypesByPlan(plan.ID)
+	if err != nil {
+		s.logError(r, "get_shift_types", err, http.StatusInternalServerError, "plan_id", plan.ID)
+		http.Error(w, "Failed to verify type ownership", http.StatusInternalServerError)
+		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
+
+	typeBelongsToPlan := false
+	for _, t := range types {
+		if t.ID == typeID {
+			typeBelongsToPlan = true
+			break
+		}
+	}
+
+	if !typeBelongsToPlan {
+		s.logError(r, "type_not_found", fmt.Errorf("type does not belong to plan"), http.StatusNotFound,
+			"type_id", typeID, "plan_id", plan.ID)
+		http.Error(w, "Type not found", http.StatusNotFound)
+		return
+	}
+
+	// Parse request body
+	var shiftType db.ShiftType
+	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
+		s.logError(r, "decode_request_body", err, http.StatusBadRequest)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Convert to ShiftType
-	shiftType := db.ShiftType{
-		ID:            typeID,
-		PlanID:        plan.ID,
-		TitleDE:       requestData.TitleDE,
-		TitleEN:       requestData.TitleEN,
-		DescriptionDE: requestData.DescriptionDE,
-		DescriptionEN: requestData.DescriptionEN,
-		LocationDE:    requestData.LocationDE,
-		LocationEN:    requestData.LocationEN,
-	}
-
 	// Update shift type
 	if err := s.db.UpdateShiftType(typeID, shiftType); err != nil {
-		s.logger.Error("failed to update shift type", "error", err)
+		s.logError(r, "update_shift_type", err, http.StatusInternalServerError,
+			"type_id", typeID, "title_en", shiftType.TitleEN)
 		http.Error(w, "Failed to update shift type", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// Log success
+	s.logSuccess(r, "update_shift_type", http.StatusNoContent,
+		"type_id", typeID, "plan_id", plan.ID, "title_en", shiftType.TitleEN)
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleDeleteShiftType handles deleting an existing shift type
@@ -146,29 +174,59 @@ func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 	token := vars["token"]
 	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
+		s.logError(r, "parse_type_id", err, http.StatusBadRequest, "type_id", vars["typeId"])
+		http.Error(w, "Invalid type ID", http.StatusBadRequest)
 		return
 	}
 
-	// Get plan first to verify it exists
+	s.logRequest(r, "delete_shift_type_request", "token", token, "type_id", typeID)
+
+	// Get plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
+		s.logError(r, "get_shift_plan", err, http.StatusInternalServerError, "token", token)
 		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
 		return
 	}
 
 	if plan == nil {
+		s.logError(r, "plan_not_found", fmt.Errorf("plan not found"), http.StatusNotFound, "token", token)
 		http.NotFound(w, r)
 		return
 	}
 
-	// Delete the shift type
-	if err := s.db.DeleteShiftType(plan.ID, typeID); err != nil {
-		s.logger.Error("failed to delete shift type", "error", err)
-		http.Error(w, "failed to delete shift type", http.StatusInternalServerError)
+	// Verify type belongs to plan
+	types, err := s.db.GetShiftTypesByPlan(plan.ID)
+	if err != nil {
+		s.logError(r, "get_shift_types", err, http.StatusInternalServerError, "plan_id", plan.ID)
+		http.Error(w, "Failed to verify type ownership", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	typeBelongsToPlan := false
+	for _, t := range types {
+		if t.ID == typeID {
+			typeBelongsToPlan = true
+			break
+		}
+	}
+
+	if !typeBelongsToPlan {
+		s.logError(r, "type_not_found", fmt.Errorf("type does not belong to plan"), http.StatusNotFound,
+			"type_id", typeID, "plan_id", plan.ID)
+		http.Error(w, "Type not found", http.StatusNotFound)
+		return
+	}
+
+	// Delete shift type
+	if err := s.db.DeleteShiftType(plan.ID, typeID); err != nil {
+		s.logError(r, "delete_shift_type", err, http.StatusInternalServerError, "type_id", typeID)
+		http.Error(w, "Failed to delete shift type", http.StatusInternalServerError)
+		return
+	}
+
+	// Log success
+	s.logSuccess(r, "delete_shift_type", http.StatusNoContent, "type_id", typeID, "plan_id", plan.ID)
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -40,6 +40,14 @@ func main() {
 		}
 	}
 
+	// Override log level if debug mode is enabled
+	if cfg.Debug {
+		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+		logger.Info("debug mode enabled, setting log level to debug")
+	}
+
 	// Ensure data directory exists
 	if err := os.MkdirAll(filepath.Dir(cfg.DBPath), 0755); err != nil {
 		logger.Error("failed to create data directory", "error", err)

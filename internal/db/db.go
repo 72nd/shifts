@@ -1,11 +1,13 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -100,11 +102,31 @@ func (db *DB) transaction(fn func(*sql.Tx) error) error {
 	return nil
 }
 
-// logError logs an error with context
+// logError logs database errors with context
 func (db *DB) logError(operation string, err error, args ...any) {
-	db.logger.Error("database error",
+	// Bestimme den Log-Level basierend auf dem Fehlertyp
+	level := slog.LevelError
+
+	// Für bestimmte Fehlertypen können wir einen anderen Level verwenden
+	if err == sql.ErrNoRows {
+		// "No rows" ist oft ein erwarteter Zustand, daher nur Info
+		level = slog.LevelInfo
+	}
+
+	// Erstelle ein strukturiertes Log-Attribut für die Argumente
+	var argsAttr slog.Attr
+	if len(args) > 0 {
+		argsAttr = slog.Any("args", args)
+	} else {
+		argsAttr = slog.Any("args", nil)
+	}
+
+	// Erstelle ein strukturiertes Log mit Kontext
+	db.logger.Log(context.Background(), level,
+		"database operation",
 		"operation", operation,
-		"error", err,
-		"args", args,
+		"error", err.Error(),
+		argsAttr,
+		"timestamp", slog.TimeValue(time.Now()),
 	)
 }

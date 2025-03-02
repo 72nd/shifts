@@ -18,6 +18,8 @@ type Config struct {
 
 	// Logging configuration
 	LogLevel string `json:"log_level"`
+	// Debug mode enables verbose logging
+	Debug bool `json:"debug"`
 }
 
 // DefaultConfig returns a configuration with default values
@@ -27,6 +29,7 @@ func DefaultConfig() Config {
 		Port:     8080,
 		DBPath:   "data/schipla.db",
 		LogLevel: "info",
+		Debug:    false,
 	}
 }
 
