@@ -155,8 +155,16 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get the shift type ID
+	typeID, err := s.db.GetShiftTypeID(id)
+	if err != nil {
+		s.logger.Error("failed to get shift type ID", "error", err)
+		http.Error(w, "Failed to delete shift", http.StatusInternalServerError)
+		return
+	}
+
 	// Delete the shift
-	if err := s.db.DeleteShift(id, plan.ID); err != nil {
+	if err := s.db.DeleteShift(id, typeID); err != nil {
 		s.logger.Error("failed to delete shift", "error", err)
 		http.Error(w, "Failed to delete shift", http.StatusInternalServerError)
 		return

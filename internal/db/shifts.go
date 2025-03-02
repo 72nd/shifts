@@ -293,3 +293,20 @@ func (db *DB) VerifyShiftBelongsToPlan(shiftID, planID int64) (bool, error) {
 	}
 	return exists, nil
 }
+
+// GetShiftTypeID retrieves the type_id for a given shift
+func (db *DB) GetShiftTypeID(shiftID int64) (int64, error) {
+	var typeID int64
+	query := `SELECT type_id FROM shifts WHERE id = ?`
+
+	err := db.QueryRow(query, shiftID).Scan(&typeID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("shift not found")
+		}
+		db.logError("GetShiftTypeID", err, shiftID)
+		return 0, fmt.Errorf("failed to get shift type ID: %w", err)
+	}
+
+	return typeID, nil
+}
