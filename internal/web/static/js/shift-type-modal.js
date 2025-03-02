@@ -18,6 +18,7 @@ export class ShiftTypeModal extends Modal {
         this.description_en = '';
         this.location_de = '';
         this.location_en = '';
+        this.clearError();
     }
 
     openWith(type = null) {
@@ -82,7 +83,7 @@ export class ShiftTypeModal extends Modal {
                 ? `/api/plans/${this.planToken}/types/${this.currentType.id}`
                 : `/api/plans/${this.planToken}/types`;
 
-            const response = await fetch(url, {
+            const options = {
                 method: this.currentType ? 'PUT' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -96,17 +97,16 @@ export class ShiftTypeModal extends Modal {
                     location_de: this.location_de,
                     location_en: this.location_en
                 })
-            });
+            };
 
-            if (!response.ok) {
-                // Read and log the error response
-                const errorText = await response.text();
-                console.error('Server error response:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    body: errorText
-                });
-                throw new Error(this.currentType ? 'Failed to update shift type' : 'Failed to create shift type');
+            const errorMessage = this.currentType
+                ? AlpineI18n.t('shift_plans.view.error_updating_shift_type')
+                : AlpineI18n.t('shift_plans.view.error_creating_shift_type');
+
+            const result = await this.sendRequest(url, options, errorMessage);
+            
+            if (!result) {
+                return false;
             }
 
             // For updates, we use the current data as the server doesn't return it
@@ -118,7 +118,7 @@ export class ShiftTypeModal extends Modal {
                 description_en: this.description_en,
                 location_de: this.location_de,
                 location_en: this.location_en
-            } : await response.json();
+            } : result;
 
             this.close();
             
@@ -129,11 +129,15 @@ export class ShiftTypeModal extends Modal {
             
             return true;
         } catch (error) {
-            console.error('Error saving shift type:', error);
-            this.errors.title_en = AlpineI18n.t(
-                this.currentType
+            // This should only happen for network errors, as API errors are handled by sendRequest
+            this.setServerError(
+                AlpineI18n.t(this.currentType
                     ? 'shift_plans.view.error_updating_shift_type'
-                    : 'shift_plans.view.error_creating_shift_type'
+                    : 'shift_plans.view.error_creating_shift_type'),
+                {
+                    message: error.message,
+                    stack: error.stack
+                }
             );
             return false;
         }

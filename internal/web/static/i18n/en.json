@@ -8,7 +8,11 @@
         "create": "Create",
         "delete": "Delete",
         "optional": "Optional",
-        "edit": "Edit"
+        "edit": "Edit",
+        "error_report_instruction": "If this error persists, please send the technical details to the administrator.",
+        "technical_details": "Technical Details",
+        "copy_details": "Copy Details",
+        "copied_to_clipboard": "Copied to clipboard!"
     },
     "nav": {
         "home": "Home",

@@ -144,7 +144,7 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
-	typeID, err := strconv.ParseInt(vars["id"], 10, 64)
+	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
 		return

@@ -1,0 +1,48 @@
+{{ define "error-display" }}
+<!-- Error display component -->
+<!-- Usage example (without template tags): template "error-display" "prefixName" -->
+<div x-show="{{ . }}.hasError" class="mb-4">
+    <!-- User-friendly error message -->
+    <div role="alert" class="alert alert-error mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+            <h3 class="font-bold" x-text="{{ . }}.errorTitle"></h3>
+            <div class="text-xs" x-text="$t('common.error_report_instruction')"></div>
+        </div>
+    </div>
+    
+    <!-- Technical details -->
+    <div role="alert" class="alert alert-warning flex flex-col items-start">
+        <!-- Header row with toggle and copy buttons -->
+        <div class="flex w-full items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div class="flex-1 ml-2">
+                <button @click="{{ . }}.showTechnicalDetails = !{{ . }}.showTechnicalDetails" class="font-bold flex items-center">
+                    <span x-text="$t('common.technical_details')"></span>
+                    <svg x-show="!{{ . }}.showTechnicalDetails" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <svg x-show="{{ . }}.showTechnicalDetails" class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                </button>
+            </div>
+            <button @click="{{ . }}.copyErrorDetails()" class="btn btn-sm btn-warning error-copy-button">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                </svg>
+                <span x-text="$t('common.copy_details')"></span>
+            </button>
+        </div>
+        
+        <!-- JSON details (inside the alert but below the header) -->
+        <div x-show="{{ . }}.showTechnicalDetails" class="mt-3 w-full bg-base-200 p-3 rounded">
+            <pre x-ref="jsonDisplay" class="text-xs font-mono overflow-auto whitespace-pre max-h-96 w-full" style="tab-size: 2;" x-text="JSON.stringify({{ . }}.errorDetails, null, 2)"></pre>
+        </div>
+    </div>
+</div>
+{{ end }} 
