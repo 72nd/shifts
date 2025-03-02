@@ -88,16 +88,18 @@
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text" x-text="$t('shift_plans.new.description_de')">Description (German)</span>
+                        <span class="label-text-alt opacity-60" x-text="$t('common.optional')">Optional</span>
                     </label>
-                    <textarea x-model="descriptionDE" class="textarea textarea-bordered h-24" required></textarea>
+                    <textarea x-model="descriptionDE" class="textarea textarea-bordered h-24"></textarea>
                 </div>
             </template>
             
             <div class="form-control">
                 <label class="label">
                     <span class="label-text" x-text="isMultilingual ? $t('shift_plans.new.description_en') : $t('shift_plans.new.description')">Description</span>
+                    <span class="label-text-alt opacity-60" x-text="$t('common.optional')">Optional</span>
                 </label>
-                <textarea x-model="descriptionEN" class="textarea textarea-bordered h-24" required></textarea>
+                <textarea x-model="descriptionEN" class="textarea textarea-bordered h-24"></textarea>
             </div>
         </div>
 

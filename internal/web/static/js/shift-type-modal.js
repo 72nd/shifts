@@ -48,14 +48,7 @@ export class ShiftTypeModal extends Modal {
                 this.errors.title_de = AlpineI18n.t('shift_plans.view.error_title_required');
                 isValid = false;
             }
-            if (!this.description_de?.trim()) {
-                this.errors.description_de = AlpineI18n.t('shift_plans.view.error_description_required');
-                isValid = false;
-            }
-            if (!this.location_de?.trim()) {
-                this.errors.location_de = AlpineI18n.t('shift_plans.view.error_location_required');
-                isValid = false;
-            }
+            // Beschreibung und Ort sind jetzt optional
         }
 
         // Always validate English (as it's the default language)
@@ -63,14 +56,7 @@ export class ShiftTypeModal extends Modal {
             this.errors.title_en = AlpineI18n.t('shift_plans.view.error_title_required');
             isValid = false;
         }
-        if (!this.description_en?.trim()) {
-            this.errors.description_en = AlpineI18n.t('shift_plans.view.error_description_required');
-            isValid = false;
-        }
-        if (!this.location_en?.trim()) {
-            this.errors.location_en = AlpineI18n.t('shift_plans.view.error_location_required');
-            isValid = false;
-        }
+        // Beschreibung und Ort sind jetzt optional
 
         return isValid;
     }

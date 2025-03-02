@@ -55,15 +55,7 @@ export class SettingsModal extends Modal {
             isValid = false;
         }
 
-        if (!this.description_en) {
-            this.errors.description_en = AlpineI18n.t('shift_plans.new.error_description_required');
-            isValid = false;
-        }
-
-        if (this.is_multilingual && !this.description_de) {
-            this.errors.description_de = AlpineI18n.t('shift_plans.new.error_description_required');
-            isValid = false;
-        }
+        // Beschreibungen sind jetzt optional
 
         if (!this.start_date) {
             this.errors.start_date = AlpineI18n.t('shift_plans.new.error_start_date_required');

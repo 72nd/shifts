@@ -49,7 +49,7 @@ var shiftPlanSchema = `
         title_de TEXT,
         title_en TEXT NOT NULL,
         description_de TEXT,
-        description_en TEXT NOT NULL
+        description_en TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_shift_plans_token ON shift_plans(token);
 `
@@ -110,9 +110,10 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 	if plan.TitleEN == "" {
 		return nil, fmt.Errorf("title_en is required")
 	}
-	if plan.DescriptionEN == "" {
-		return nil, fmt.Errorf("description_en is required")
-	}
+	// Beschreibung ist jetzt optional
+	// if plan.DescriptionEN == "" {
+	// 	return nil, fmt.Errorf("description_en is required")
+	// }
 
 	// Generate token and password
 	token := generateToken()
@@ -385,9 +386,10 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 	if plan.TitleEN == "" {
 		return nil, fmt.Errorf("title_en is required")
 	}
-	if plan.DescriptionEN == "" {
-		return nil, fmt.Errorf("description_en is required")
-	}
+	// Beschreibung ist jetzt optional
+	// if plan.DescriptionEN == "" {
+	// 	return nil, fmt.Errorf("description_en is required")
+	// }
 
 	// For single language plans, use English fields only
 	if !plan.IsMultilingual {

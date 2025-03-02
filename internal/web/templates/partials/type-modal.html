@@ -44,11 +44,11 @@
                     <div class="form-control w-full">
                         <label class="label py-0">
                             <span class="label-text font-medium" x-text="$t('shift_plans.view.description_de')"></span>
+                            <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                         </label>
                         <textarea x-model="shiftTypeModal.description_de" 
                                   class="textarea textarea-bordered textarea-sm w-full h-16"
-                                  :class="{ 'textarea-error': shiftTypeModal.errors.description_de }"
-                                  required></textarea>
+                                  :class="{ 'textarea-error': shiftTypeModal.errors.description_de }"></textarea>
                         <label class="label py-0" x-show="shiftTypeModal.errors.description_de">
                             <span class="label-text-alt text-error" x-text="shiftTypeModal.errors.description_de"></span>
                         </label>
@@ -58,11 +58,11 @@
                 <div class="form-control w-full" :class="{ 'md:col-span-2': !plan.is_multilingual }">
                     <label class="label py-0">
                         <span class="label-text font-medium" x-text="plan.is_multilingual ? $t('shift_plans.view.description_en') : $t('shift_plans.view.description')"></span>
+                        <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                     </label>
                     <textarea x-model="shiftTypeModal.description_en" 
                               class="textarea textarea-bordered textarea-sm w-full h-16"
-                              :class="{ 'textarea-error': shiftTypeModal.errors.description_en }"
-                              required></textarea>
+                              :class="{ 'textarea-error': shiftTypeModal.errors.description_en }"></textarea>
                     <label class="label py-0" x-show="shiftTypeModal.errors.description_en">
                         <span class="label-text-alt text-error" x-text="shiftTypeModal.errors.description_en"></span>
                     </label>
@@ -75,11 +75,11 @@
                     <div class="form-control w-full">
                         <label class="label py-0">
                             <span class="label-text font-medium" x-text="$t('shift_plans.view.location_de')"></span>
+                            <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                         </label>
                         <input type="text" x-model="shiftTypeModal.location_de" 
                                class="input input-bordered input-sm w-full"
-                               :class="{ 'input-error': shiftTypeModal.errors.location_de }"
-                               required />
+                               :class="{ 'input-error': shiftTypeModal.errors.location_de }" />
                         <label class="label py-0" x-show="shiftTypeModal.errors.location_de">
                             <span class="label-text-alt text-error" x-text="shiftTypeModal.errors.location_de"></span>
                         </label>
@@ -89,11 +89,11 @@
                 <div class="form-control w-full" :class="{ 'md:col-span-2': !plan.is_multilingual }">
                     <label class="label py-0">
                         <span class="label-text font-medium" x-text="plan.is_multilingual ? $t('shift_plans.view.location_en') : $t('shift_plans.view.location')"></span>
+                        <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                     </label>
                     <input type="text" x-model="shiftTypeModal.location_en" 
                            class="input input-bordered input-sm w-full"
-                           :class="{ 'input-error': shiftTypeModal.errors.location_en }"
-                           required />
+                           :class="{ 'input-error': shiftTypeModal.errors.location_en }" />
                     <label class="label py-0" x-show="shiftTypeModal.errors.location_en">
                         <span class="label-text-alt text-error" x-text="shiftTypeModal.errors.location_en"></span>
                     </label>

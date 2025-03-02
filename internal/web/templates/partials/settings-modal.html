@@ -54,11 +54,11 @@
                     <div class="form-control w-full">
                         <label class="label py-0">
                             <span class="label-text font-medium" x-text="$t('shift_plans.new.description_de')"></span>
+                            <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                         </label>
                         <textarea x-model="settingsModal.description_de" 
                                   class="textarea textarea-bordered textarea-sm w-full h-24"
-                                  :class="{ 'textarea-error': settingsModal.errors.description_de }" 
-                                  required></textarea>
+                                  :class="{ 'textarea-error': settingsModal.errors.description_de }"></textarea>
                         <label class="label py-0" x-show="settingsModal.errors.description_de">
                             <span class="label-text-alt text-error" x-text="settingsModal.errors.description_de"></span>
                         </label>
@@ -68,11 +68,11 @@
                 <div class="form-control w-full" :class="{ 'md:col-span-2': !settingsModal.is_multilingual }">
                     <label class="label py-0">
                         <span class="label-text font-medium" x-text="settingsModal.is_multilingual ? $t('shift_plans.new.description_en') : $t('shift_plans.new.description')"></span>
+                        <span class="label-text-alt opacity-60" x-text="$t('common.optional')"></span>
                     </label>
                     <textarea x-model="settingsModal.description_en" 
                               class="textarea textarea-bordered textarea-sm w-full h-24"
-                              :class="{ 'textarea-error': settingsModal.errors.description_en }" 
-                              required></textarea>
+                              :class="{ 'textarea-error': settingsModal.errors.description_en }"></textarea>
                     <label class="label py-0" x-show="settingsModal.errors.description_en">
                         <span class="label-text-alt text-error" x-text="settingsModal.errors.description_en"></span>
                     </label>
