@@ -12,7 +12,10 @@
         "error_report_instruction": "Wenn dieser Fehler weiterhin auftritt, sende bitte die technischen Details an den Administrator.",
         "technical_details": "Technische Details",
         "copy_details": "Details kopieren",
-        "copied_to_clipboard": "In die Zwischenablage kopiert!"
+        "copied_to_clipboard": "In die Zwischenablage kopiert!",
+        "show_more": "Mehr anzeigen",
+        "show_less": "Weniger anzeigen",
+        "open_shifts": "Offene Schichten"
     },
     "nav": {
         "home": "Start",

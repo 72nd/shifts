@@ -1,5 +1,5 @@
 {{ define "filters" }}
-<div class="bg-base-200 rounded-box p-2 md:p-4 mb-3 md:mb-4" x-data="{ isFilterExpanded: false }">
+<div class="bg-base-200 rounded-box p-2 md:p-4 mb-3 md:mb-4" x-data="{ isFilterExpanded: window.innerWidth >= 768 }" x-init="window.addEventListener('resize', () => { if (!isFilterExpanded && window.innerWidth >= 768) isFilterExpanded = true; })">
     <!-- Header with active filter count and toggle button -->
     <div class="flex items-center justify-between cursor-pointer" @click.stop="isFilterExpanded = !isFilterExpanded">
         <div class="flex items-center gap-2">
