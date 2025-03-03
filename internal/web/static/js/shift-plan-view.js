@@ -365,6 +365,15 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        formatTimeOnly(time) {
+            return new Date(time).toLocaleTimeString(this.$locale(), { hour: '2-digit', minute: '2-digit' });
+        },
+
+        addMinutes(time, minutes) {
+            const date = new Date(time);
+            return new Date(date.getTime() + minutes * 60000).toISOString();
+        },
+
         // Admin functions
         openAdminModal() {
             this.adminModal.open();
