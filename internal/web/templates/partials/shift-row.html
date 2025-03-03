@@ -36,13 +36,12 @@
         </td>
         <td class="align-middle text-center px-1 md:px-2 py-1 md:py-2">
             <div class="radial-progress text-[10px] border-4" 
-                    :class="{
-                        'bg-error text-white border-error': !shift.participants || shift.participants.length === 0,
-                        'bg-success text-white border-success': shift.participants?.length === shift.required,
-                        'bg-warning text-white border-warning': shift.participants?.length < (shift.required * 0.5),
-                        'bg-primary text-primary-content border-primary': shift.participants && shift.participants.length < shift.required
-                    }"
-                    x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '1.8rem', '--thickness': '2.4px' }">
+                    :class="[
+                        getProgressStyles(shift).background,
+                        getProgressStyles(shift).text,
+                        `border-${getProgressStyles(shift).background.split('-')[1]}`
+                    ]"
+                    x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '1.8rem'}">
                 <span x-text="(shift.participants?.length || 0) + '/' + shift.required"></span>
             </div>
         </td>

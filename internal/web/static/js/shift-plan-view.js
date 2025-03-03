@@ -374,6 +374,41 @@ document.addEventListener('alpine:init', () => {
             return new Date(date.getTime() + minutes * 60000).toISOString();
         },
 
+        // Helper for radial progress styling
+        getProgressStyles(shift) {
+            if (!shift.participants) {
+                return {
+                    background: 'bg-error',
+                    text: 'text-error-content'
+                };
+            }
+            
+            const ratio = shift.participants.length / shift.required;
+            
+            if (shift.participants.length === 0) {
+                return {
+                    background: 'bg-error',
+                    text: 'text-error-content'
+                };
+            }
+            if (shift.participants.length === shift.required) {
+                return {
+                    background: 'bg-success',
+                    text: 'text-success-content'
+                };
+            }
+            if (ratio < 0.5) {
+                return {
+                    background: 'bg-warning',
+                    text: 'text-warning-content'
+                };
+            }
+            return {
+                background: 'bg-primary',
+                text: 'text-primary-content'
+            };
+        },
+
         // Admin functions
         openAdminModal() {
             this.adminModal.open();
