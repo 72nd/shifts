@@ -19,12 +19,11 @@
     <div x-show="!isLoading && !error && plan && stats" class="space-y-8">
         <!-- Title -->
         <div class="text-center">
-            <h1 class="text-4xl font-bold mb-2" x-text="plan?.title_en || ''"></h1>
-            <p class="text-xl" x-text="plan?.description_en || ''"></p>
+            <h1 class="text-4xl font-bold mb-2"><span x-text="plan?.title_en || ''"></span> – <span x-text="$t('stats.title')"></span></h1>
         </div>
 
         <!-- Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Total Shifts Card -->
             <div class="stats shadow">
                 <div class="stat">
@@ -59,12 +58,23 @@
                 </div>
             </div>
 
-            <!-- Total Hours Card -->
+            <!-- Total Required Hours Card -->
             <div class="stats shadow">
                 <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.working_hours')"></div>
+                    <div class="stat-title" x-text="$t('stats.total_hours')"></div>
                     <div class="stat-value">
-                        <span x-text="formatHours(stats?.overview?.filled_hours || 0)"></span>/<span x-text="formatHours(stats?.overview?.total_hours || 0)"></span>
+                        <span x-text="formatHours(stats?.overview?.total_hours || 0)"></span>h
+                    </div>
+                    <div class="stat-desc" x-text="$t('stats.total_hours_desc')"></div>
+                </div>
+            </div>
+
+            <!-- Booked Hours Card -->
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title" x-text="$t('stats.booked_hours')"></div>
+                    <div class="stat-value">
+                        <span x-text="formatHours(stats?.overview?.filled_hours || 0)"></span>h
                     </div>
                     <div class="stat-desc">
                         <div class="w-full bg-base-content/10 rounded-full h-2">
@@ -81,11 +91,34 @@
                 </div>
             </div>
 
+            <!-- Completed Hours Card -->
+            <div class="stats shadow">
+                <div class="stat">
+                    <div class="stat-title" x-text="$t('stats.completed_hours')"></div>
+                    <div class="stat-value">
+                        <span x-text="formatHours(stats?.overview?.past_hours || 0)"></span>h
+                    </div>
+                    <div class="stat-desc">
+                        <div class="w-full bg-base-content/10 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all duration-300"
+                                :class="{
+                                    'bg-success': ((stats?.overview?.past_hours || 0) / (stats?.overview?.filled_hours || 1) * 100) === 100,
+                                    'bg-info': ((stats?.overview?.past_hours || 0) / (stats?.overview?.filled_hours || 1) * 100) < 100
+                                }"
+                                :style="{ width: (((stats?.overview?.past_hours || 0) / (stats?.overview?.filled_hours || 1)) * 100) + '%' }">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Average Hours Per Person Card -->
             <div class="stats shadow">
                 <div class="stat">
                     <div class="stat-title" x-text="$t('stats.avg_hours_per_person')"></div>
-                    <div class="stat-value" x-text="formatHours(stats?.overview?.avg_hours_per_helper || 0)"></div>
+                    <div class="stat-value">
+                        <span x-text="formatHours(stats?.overview?.avg_hours_per_helper || 0)"></span>h
+                    </div>
                     <div class="stat-desc">
                         <span x-text="stats?.overview?.unique_helpers || 0"></span>
                         <span x-text="$t('stats.people')"></span>
@@ -114,9 +147,9 @@
                                 <tr>
                                     <td x-text="helper.name"></td>
                                     <td x-text="helper.total_shifts || 0"></td>
-                                    <td x-text="formatHours(helper.total_hours || 0)"></td>
-                                    <td x-text="formatHours(helper.past_hours || 0)"></td>
-                                    <td x-text="formatHours(helper.future_hours || 0)"></td>
+                                    <td x-text="formatHours(helper.total_hours || 0) + 'h'"></td>
+                                    <td x-text="formatHours(helper.past_hours || 0) + 'h'"></td>
+                                    <td x-text="formatHours(helper.future_hours || 0) + 'h'"></td>
                                 </tr>
                             </template>
                             <template x-if="!stats?.helper_stats?.length">
@@ -158,7 +191,7 @@
                             </div>
                             <div class="stat">
                                 <div class="stat-title" x-text="$t('stats.working_hours')"></div>
-                                <div class="stat-value" x-text="formatHours(getSelectedHelperDetails()?.total_hours || 0)"></div>
+                                <div class="stat-value" x-text="formatHours(getSelectedHelperDetails()?.total_hours || 0) + 'h'"></div>
                             </div>
                         </div>
 
@@ -224,7 +257,7 @@
                                         <span x-text="type.total_filled"></span>/<span x-text="type.total_required"></span>
                                     </td>
                                     <td>
-                                        <span x-text="formatHours(type.filled_hours)"></span>/<span x-text="formatHours(type.total_hours)"></span>
+                                        <span x-text="formatHours(type.filled_hours) + 'h'"></span>/<span x-text="formatHours(type.total_hours) + 'h'"></span>
                                     </td>
                                     <td x-text="type.open_positions"></td>
                                     <td>
@@ -273,7 +306,7 @@
                                         <span x-text="day.total_filled"></span>/<span x-text="day.total_required"></span>
                                     </td>
                                     <td>
-                                        <span x-text="formatHours(day.filled_hours)"></span>/<span x-text="formatHours(day.total_hours)"></span>
+                                        <span x-text="formatHours(day.filled_hours) + 'h'"></span>/<span x-text="formatHours(day.total_hours) + 'h'"></span>
                                     </td>
                                     <td x-text="day.open_positions"></td>
                                     <td>
