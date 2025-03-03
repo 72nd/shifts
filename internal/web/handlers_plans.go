@@ -98,6 +98,56 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 	s.templates.render(w, "view.html", plan)
 }
 
+func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	// Check if plan exists
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get plan", "error", err)
+		http.Error(w, "Plan not found", http.StatusNotFound)
+		return
+	}
+	if plan == nil {
+		http.Error(w, "Plan not found", http.StatusNotFound)
+		return
+	}
+
+	s.templates.render(w, "stats.html", map[string]interface{}{
+		"plan": plan,
+	})
+}
+
+func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	// Get plan first to verify it exists and get its ID
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
+		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		return
+	}
+
+	if plan == nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Get statistics
+	stats, err := s.db.GetShiftPlanStats(plan.ID)
+	if err != nil {
+		s.logger.Error("failed to get shift plan statistics", "error", err)
+		http.Error(w, "Failed to get statistics", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
+}
+
 func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]

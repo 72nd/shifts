@@ -17,6 +17,43 @@
         "show_less": "Weniger anzeigen",
         "open_shifts": "Offene Schichten"
     },
+    "stats": {
+        "title": "Statistiken",
+        "total_shifts": "Schichten insgesamt",
+        "open_shifts": "offene Schichten",
+        "helper_positions": "Helferpositionen",
+        "working_hours": "Arbeitsstunden",
+        "avg_hours_per_person": "Durchschnittliche Stunden pro Person",
+        "people": "Personen",
+        "helper_details": "Helferdetails",
+        "select_helper": "Helfer auswählen",
+        "select_helper_placeholder": "Bitte wählen Sie einen Helfer",
+        "date": "Datum",
+        "type": "Typ",
+        "duration": "Dauer",
+        "status": "Status",
+        "status_past": "Vergangen",
+        "status_current": "Aktuell",
+        "status_future": "Zukünftig",
+        "type_statistics": "Statistiken nach Typ",
+        "daily_statistics": "Statistiken nach Tag",
+        "filled_percentage": "Besetzung",
+        "open_positions": "Offene Positionen",
+        "helper_rankings": "Helfenden-Rangliste",
+        "hours": "Stunden",
+        "unique_helpers": "Einzigartige Helfende",
+        "name": "Name",
+        "shifts": "Schichten",
+        "by_type": "Nach Schichttyp",
+        "filled": "Besetzt",
+        "by_day": "Nach Tag",
+        "past_hours": "Geleistete Stunden",
+        "future_hours": "Noch zu leistende Stunden",
+        "no_shifts": "Keine Schichten",
+        "past_shifts": "Vergangene Schichten",
+        "current_shifts": "Aktuelle Schichten",
+        "future_shifts": "Zukünftige Schichten"
+    },
     "nav": {
         "home": "Start",
         "theme": {
@@ -181,7 +218,8 @@
             "admin_security": "Sicherheit",
             "duplicate_shift": "Schicht duplizieren",
             "settings": "Einstellungen",
-            "error_updating_settings": "Fehler beim Aktualisieren der Einstellungen"
+            "error_updating_settings": "Fehler beim Aktualisieren der Einstellungen",
+            "statistics": "Statistiken"
         }
     }
 } 

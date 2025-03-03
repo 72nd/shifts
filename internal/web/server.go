@@ -57,6 +57,7 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/plans/new", s.handleNewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/plans/success", s.handleShiftPlanSuccess).Methods("GET")
 	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
+	s.router.HandleFunc("/plans/{token}/stats", s.handleShiftPlanStats).Methods("GET")
 
 	// API routes
 	api := s.router.PathPrefix("/api").Subrouter()
@@ -66,6 +67,7 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}", s.handleGetShiftPlan).Methods("GET")
 	api.HandleFunc("/plans/{token}", s.middleware.adminMiddleware(s.handleUpdateShiftPlan)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
+	api.HandleFunc("/plans/{token}/stats", s.handleGetShiftPlanStats).Methods("GET")
 
 	// Type routes
 	api.HandleFunc("/plans/{token}/types", s.handleGetShiftTypes).Methods("GET")

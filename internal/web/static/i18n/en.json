@@ -17,6 +17,41 @@
         "show_less": "Show less",
         "open_shifts": "Open shifts"
     },
+    "stats": {
+        "title": "Statistics",
+        "total_shifts": "Total Shifts",
+        "open_shifts": "open shifts",
+        "helper_positions": "Helper Positions",
+        "working_hours": "Working Hours",
+        "avg_hours_per_person": "Average Hours per Person",
+        "people": "people",
+        "helper_details": "Helper Details",
+        "select_helper": "Select Helper",
+        "select_helper_placeholder": "Please select a helper",
+        "date": "Date",
+        "type": "Type",
+        "duration": "Duration",
+        "status": "Status",
+        "status_past": "Past",
+        "status_current": "Current",
+        "status_future": "Future",
+        "type_statistics": "Statistics by Type",
+        "daily_statistics": "Statistics by Day",
+        "filled_percentage": "Filled",
+        "open_positions": "Open Positions",
+        "helper_rankings": "Helper Rankings",
+        "name": "Name",
+        "shifts": "Shifts",
+        "by_type": "By Shift Type",
+        "filled": "Filled",
+        "by_day": "By Day",
+        "past_hours": "Hours Completed",
+        "future_hours": "Hours Remaining",
+        "no_shifts": "No shifts",
+        "past_shifts": "Past Shifts",
+        "current_shifts": "Current Shifts",
+        "future_shifts": "Future Shifts"
+    },
     "nav": {
         "home": "Home",
         "theme": {
@@ -181,7 +216,8 @@
             "admin_security": "Security",
             "duplicate_shift": "Duplicate Shift",
             "settings": "Settings",
-            "error_updating_settings": "Error updating settings"
+            "error_updating_settings": "Error updating settings",
+            "statistics": "Statistics"
         }
     }
 } 
