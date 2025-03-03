@@ -109,7 +109,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                         </svg>
                     </button>
-                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52" x-show="open" @click.away="open = false">
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50" x-show="open" @click.away="open = false">
                         <li>
                             <a @click="$locale('de'); open = false">
                                 <span class="font-medium" x-text="$locale === 'de' ? '✓' : ''"></span>

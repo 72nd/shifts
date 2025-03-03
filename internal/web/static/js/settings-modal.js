@@ -18,6 +18,7 @@ export class SettingsModal extends Modal {
         this.description_en = '';
         this.start_date = '';
         this.end_date = '';
+        this.day_boundary_time = '00:00'; // Default to midnight
         this.errors = {}; // Field-level validation errors
     }
 
@@ -30,6 +31,7 @@ export class SettingsModal extends Modal {
         this.title_en = plan.title_en || '';
         this.description_de = plan.description_de || '';
         this.description_en = plan.description_en || '';
+        this.day_boundary_time = plan.day_boundary_time || '00:00';
         
         // Format dates to YYYY-MM-DD for input fields
         const startDate = new Date(plan.start_date);
@@ -77,6 +79,12 @@ export class SettingsModal extends Modal {
             }
         }
 
+        // Validate time format
+        if (!this.day_boundary_time || !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(this.day_boundary_time)) {
+            this.errors.day_boundary_time = AlpineI18n.t('shift_plans.settings.error_invalid_time');
+            isValid = false;
+        }
+
         return isValid;
     }
 
@@ -99,7 +107,8 @@ export class SettingsModal extends Modal {
                 description_de: this.is_multilingual ? this.description_de : null,
                 description_en: this.description_en,
                 start_date: new Date(this.start_date).toISOString(),
-                end_date: new Date(this.end_date).toISOString()
+                end_date: new Date(this.end_date).toISOString(),
+                day_boundary_time: this.day_boundary_time
             })
         };
         

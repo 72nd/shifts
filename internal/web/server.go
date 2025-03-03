@@ -140,7 +140,11 @@ func (s *Server) handleVerifyAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// Return the password as token
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": data.Password,
+	})
 }
 
 // hashPassword creates a simple hash of the password

@@ -14,7 +14,7 @@
                     x-text="formatTime(shift.start_time, shift.duration)"></div>
                 <!-- Comment preview -->
                 <div x-show="!isExpanded && (plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en)"
-                     class="text-xs text-base-content/70 mt-0.5 max-w-[175px] truncate"
+                     class="text-xs text-base-content/70 mt-0.5 max-w-[150px] truncate"
                      x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en">
                 </div>
             </div>

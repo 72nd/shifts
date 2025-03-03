@@ -147,10 +147,37 @@ document.addEventListener('alpine:init', () => {
             // Sortiere Schichten nach Startzeit
             shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
 
-            // Gruppiere nach Datum
+            // Gruppiere nach Datum unter Berücksichtigung der Tagesgrenze
             shifts.forEach(shift => {
-                const date = new Date(shift.start_time);
-                const dateKey = date.toISOString().split('T')[0];
+                const shiftDate = new Date(shift.start_time);
+                const [boundaryHours, boundaryMinutes] = (this.plan?.day_boundary_time || '00:00').split(':').map(Number);
+                
+                const shiftHours = shiftDate.getHours();
+                const shiftMinutes = shiftDate.getMinutes();
+                const shiftTotalMinutes = shiftHours * 60 + shiftMinutes;
+                const boundaryTotalMinutes = boundaryHours * 60 + boundaryMinutes;
+
+                let dateKey;
+                if (shiftTotalMinutes < boundaryTotalMinutes) {
+                    // Wenn die Schicht zwischen 00:00 und der Tagesgrenze liegt
+                    const year = shiftDate.getFullYear();
+                    const month = String(shiftDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(shiftDate.getDate()).padStart(2, '0');
+                    
+                    // Berechne den vorherigen Tag
+                    const prevDate = new Date(shiftDate);
+                    prevDate.setDate(prevDate.getDate() - 1);
+                    const prevYear = prevDate.getFullYear();
+                    const prevMonth = String(prevDate.getMonth() + 1).padStart(2, '0');
+                    const prevDay = String(prevDate.getDate()).padStart(2, '0');
+                    dateKey = `${prevYear}-${prevMonth}-${prevDay}`;
+                } else {
+                    // Wenn die Schicht nach der Tagesgrenze liegt
+                    const year = shiftDate.getFullYear();
+                    const month = String(shiftDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(shiftDate.getDate()).padStart(2, '0');
+                    dateKey = `${year}-${month}-${day}`;
+                }
 
                 if (!groups[dateKey]) {
                     groups[dateKey] = [];
@@ -158,93 +185,97 @@ document.addEventListener('alpine:init', () => {
                 groups[dateKey].push(shift);
             });
 
-            // Konvertiere in Array von Gruppen
-            return Object.entries(groups).map(([date, shifts]) => ({
-                date,
-                shifts
-            }));
+            // Konvertiere in Array von Gruppen und sortiere nach Datum
+            return Object.entries(groups)
+                .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                .map(([date, shifts]) => ({
+                    date,
+                    shifts
+                }));
         },
 
         // Daten laden
         async loadPlan(token) {
             this.isLoading = true;
-            this.error = null;
 
             try {
-                // Plan laden
+                // Load plan data
                 const headers = {};
                 if (this.isAdmin && this.adminToken) {
                     headers['X-Admin-Token'] = this.adminToken;
-                    console.log('Loading plan with admin token:', this.adminToken ? '[REDACTED]' : 'empty');
                 }
 
-                const planResponse = await fetch(`/api/plans/${token}`, { headers });
-                if (!planResponse.ok) {
-                    throw new Error('Failed to load plan');
-                }
-                const planData = await planResponse.json();
+                const response = await fetch(`/api/plans/${token}`, { headers });
+                if (!response.ok) throw new Error('Failed to load plan');
+                const plan = await response.json();
 
-                console.log('Loaded plan data:', planData); // Debug log
+                // Debug output to verify the loaded data
+                console.log('Loaded plan:', {
+                    ...plan,
+                    day_boundary_time: plan.day_boundary_time
+                });
 
-                // Stelle sicher, dass alle Properties existieren
+                // Update plan data
                 this.plan = {
-                    is_multilingual: Boolean(planData.is_multilingual), // Explicitly convert to boolean
-                    title_en: planData.title_en || '',
-                    title_de: planData.title_de || '',
-                    description_en: planData.description_en || '',
-                    description_de: planData.description_de || '',
-                    start_date: planData.start_date || '',
-                    end_date: planData.end_date || '',
-                    token: planData.token || token
+                    ...plan,
+                    day_boundary_time: plan.day_boundary_time || '00:00' // Ensure default value if not set
                 };
 
-                console.log('Processed plan data:', this.plan); // Debug log
-
-                // Schichttypen laden
+                // Load shift types
                 const typesResponse = await fetch(`/api/plans/${token}/types`, { headers });
-                if (!typesResponse.ok) {
-                    throw new Error('Failed to load shift types');
-                }
+                if (!typesResponse.ok) throw new Error('Failed to load shift types');
                 const types = await typesResponse.json();
 
-                // Ensure each type has a shifts array and group shifts by date
+                // Update shift types with their shifts
                 this.shiftTypes = types.map(type => ({
                     ...type,
-                    shifts: type.shifts || [], // Ensure shifts is at least an empty array
-                    shiftsByDate: this.groupShiftsByDate(type.shifts || [])
+                    shifts: type.shifts || []
                 }));
 
-                // Update modals with new data and ensure admin token is passed
+                // Initialize filter manager
+                this.filterManager = new FilterManager(
+                    this.shiftTypes,
+                    this.selectedTypes,
+                    this.selectedDay,
+                    this.selectedStatus,
+                    this.searchQuery
+                );
+
+                // Initialize modals
                 this.shiftModal = new ShiftModal(
-                    this.plan.start_date, 
-                    this.shiftTypes, 
-                    this.plan.token, 
-                    this.adminToken, 
+                    this.plan.start_date,
+                    this.shiftTypes,
+                    this.plan.token,
+                    this.adminToken,
                     this.handleShiftsUpdate.bind(this)
                 );
                 this.shiftTypeModal = new ShiftTypeModal(
-                    this.plan.is_multilingual, 
-                    this.plan.token, 
-                    this.adminToken, 
+                    this.plan.is_multilingual,
+                    this.plan.token,
+                    this.adminToken,
                     this.handleShiftTypeSuccess.bind(this)
                 );
                 this.deleteTypeModal = new DeleteTypeModal(
-                    this.plan.token, 
-                    this.adminToken, 
+                    this.plan.token,
+                    this.adminToken,
                     this.handleDeleteTypeSuccess.bind(this)
                 );
                 this.deleteShiftModal = new DeleteShiftModal(
-                    this.plan.token, 
-                    this.adminToken, 
+                    this.plan.token,
+                    this.adminToken,
                     this.handleDeleteShiftSuccess.bind(this)
                 );
                 this.joinModal = new JoinModal(
-                    this.plan.token, 
+                    this.plan.token,
                     this.handleShiftUpdate.bind(this)
                 );
                 this.removeModal = new RemoveModal(
-                    this.plan.token, 
+                    this.plan.token,
                     this.handleShiftUpdate.bind(this)
+                );
+                this.adminModal = new AdminModal(
+                    this.plan.token,
+                    this.handleAdminSuccess.bind(this)
                 );
                 this.sortTypesModal = new SortTypesModal(
                     this.plan.token,
@@ -261,7 +292,7 @@ document.addEventListener('alpine:init', () => {
                 console.error('Error loading plan:', error);
                 this.error = error.message;
 
-                // Zurücksetzen auf sicheren Zustand
+                // Reset to safe state
                 this.plan = {
                     is_multilingual: false,
                     title_en: '',
@@ -270,7 +301,8 @@ document.addEventListener('alpine:init', () => {
                     description_de: '',
                     start_date: '',
                     end_date: '',
-                    token: ''
+                    token: '',
+                    day_boundary_time: '00:00'
                 };
                 this.shiftTypes = [];
             } finally {
@@ -326,7 +358,7 @@ document.addEventListener('alpine:init', () => {
 
                 // Format start time in 24h format
                 const startTime = startDate.toLocaleTimeString(
-                    this.$locale() === 'de' ? 'de-DE' : 'en-US',
+                    this.$locale() === 'de' ? 'de-DE' : 'en-GB',
                     {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -338,7 +370,7 @@ document.addEventListener('alpine:init', () => {
                 const endDate = new Date(startDate.getTime());
                 endDate.setMinutes(endDate.getMinutes() + duration);
                 const endTime = endDate.toLocaleTimeString(
-                    this.$locale() === 'de' ? 'de-DE' : 'en-US',
+                    this.$locale() === 'de' ? 'de-DE' : 'en-GB',
                     {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -366,7 +398,14 @@ document.addEventListener('alpine:init', () => {
         },
 
         formatTimeOnly(time) {
-            return new Date(time).toLocaleTimeString(this.$locale(), { hour: '2-digit', minute: '2-digit' });
+            return new Date(time).toLocaleTimeString(
+                this.$locale() === 'de' ? 'de-DE' : 'en-GB',
+                { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                }
+            );
         },
 
         addMinutes(time, minutes) {
@@ -660,6 +699,12 @@ document.addEventListener('alpine:init', () => {
             // Update the plan data in a way that triggers Alpine.js reactivity
             Object.keys(updatedPlan).forEach(key => {
                 this.plan[key] = updatedPlan[key];
+            });
+
+            // Debug output to verify the update
+            console.log('Updated plan:', {
+                ...this.plan,
+                day_boundary_time: this.plan.day_boundary_time
             });
 
             // Update modals that depend on plan settings

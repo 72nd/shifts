@@ -84,6 +84,11 @@
         "join_existing_desc": "Du benötigst die URL des Plans zum Beitreten. Bitte kontaktiere die Administrator:in des Plans, um den Link zu erhalten."
     },
     "shift_plans": {
+        "settings": {
+            "day_boundary_time": "Tagesgrenze",
+            "day_boundary_time_help": "Schichten nach dieser Uhrzeit werden dem Vortag zugeordnet (Standard: Mitternacht)",
+            "error_invalid_time": "Bitte gib eine gültige Uhrzeit ein"
+        },
         "new": {
             "title": "Neuer Schichtplan",
             "hero_title": "Erstelle einen neuen Schichtplan",

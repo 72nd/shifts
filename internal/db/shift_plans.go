@@ -12,29 +12,31 @@ import (
 
 // ShiftPlan represents a complete shift planning schedule
 type ShiftPlan struct {
-	ID             int64     `json:"id"`
-	Token          string    `json:"token"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	CreatedAt      time.Time `json:"created_at"`
-	IsMultilingual bool      `json:"is_multilingual"`
-	TitleDE        *string   `json:"title_de"`
-	TitleEN        string    `json:"title_en"`
-	DescriptionDE  *string   `json:"description_de"`
-	DescriptionEN  string    `json:"description_en"`
-	AdminPassword  string    `json:"-"` // Never sent to client
+	ID              int64     `json:"id"`
+	Token           string    `json:"token"`
+	StartDate       time.Time `json:"start_date"`
+	EndDate         time.Time `json:"end_date"`
+	CreatedAt       time.Time `json:"created_at"`
+	IsMultilingual  bool      `json:"is_multilingual"`
+	TitleDE         *string   `json:"title_de"`
+	TitleEN         string    `json:"title_en"`
+	DescriptionDE   *string   `json:"description_de"`
+	DescriptionEN   string    `json:"description_en"`
+	AdminPassword   string    `json:"-"` // Never sent to client
+	DayBoundaryTime string    `json:"day_boundary_time"`
 }
 
 // NewShiftPlan contains the data needed to create a new shift plan
 type NewShiftPlan struct {
-	TitleDE        *string   `json:"title_de"`
-	TitleEN        string    `json:"title_en"`
-	DescriptionDE  *string   `json:"description_de"`
-	DescriptionEN  string    `json:"description_en"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	IsMultilingual bool      `json:"is_multilingual"`
-	Password       string    `json:"password"`
+	TitleDE         *string   `json:"title_de"`
+	TitleEN         string    `json:"title_en"`
+	DescriptionDE   *string   `json:"description_de"`
+	DescriptionEN   string    `json:"description_en"`
+	StartDate       time.Time `json:"start_date"`
+	EndDate         time.Time `json:"end_date"`
+	IsMultilingual  bool      `json:"is_multilingual"`
+	Password        string    `json:"password"`
+	DayBoundaryTime string    `json:"day_boundary_time"`
 }
 
 var shiftPlanSchema = `
@@ -49,7 +51,8 @@ var shiftPlanSchema = `
         title_de TEXT,
         title_en TEXT NOT NULL,
         description_de TEXT,
-        description_en TEXT
+        description_en TEXT,
+        day_boundary_time TEXT NOT NULL DEFAULT '00:00'
     );
     CREATE INDEX IF NOT EXISTS idx_shift_plans_token ON shift_plans(token);
 `
@@ -130,8 +133,9 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 		query := `
             INSERT INTO shift_plans (
                 token, admin_password, start_date, end_date, created_at,
-                is_multilingual, title_de, title_en, description_de, description_en
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                is_multilingual, title_de, title_en, description_de, description_en,
+                day_boundary_time
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
 		res, err := tx.Exec(query,
 			token,
@@ -144,6 +148,7 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 			plan.TitleEN,
 			plan.DescriptionDE,
 			plan.DescriptionEN,
+			plan.DayBoundaryTime,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert shift plan: %w", err)
@@ -291,7 +296,8 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
-               is_multilingual, title_de, title_en, description_de, description_en
+               is_multilingual, title_de, title_en, description_de, description_en,
+               day_boundary_time
         FROM shift_plans
         WHERE token = ?
     `
@@ -307,6 +313,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		&plan.TitleEN,
 		&plan.DescriptionDE,
 		&plan.DescriptionEN,
+		&plan.DayBoundaryTime,
 	)
 
 	if err != nil {
@@ -332,7 +339,8 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
-               is_multilingual, title_de, title_en, description_de, description_en
+               is_multilingual, title_de, title_en, description_de, description_en,
+               day_boundary_time
         FROM shift_plans
         WHERE id = ?
     `
@@ -348,6 +356,7 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 		&plan.TitleEN,
 		&plan.DescriptionDE,
 		&plan.DescriptionEN,
+		&plan.DayBoundaryTime,
 	)
 	if err != nil {
 		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
@@ -406,7 +415,8 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
                 title_de = ?,
                 title_en = ?,
                 description_de = ?,
-                description_en = ?
+                description_en = ?,
+                day_boundary_time = ?
             WHERE token = ?
         `
 		res, err := tx.Exec(query,
@@ -417,6 +427,7 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 			plan.TitleEN,
 			plan.DescriptionDE,
 			plan.DescriptionEN,
+			plan.DayBoundaryTime,
 			token,
 		)
 		if err != nil {

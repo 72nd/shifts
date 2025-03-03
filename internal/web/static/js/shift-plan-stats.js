@@ -255,7 +255,7 @@ document.addEventListener('alpine:init', () => {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
-            }) + "h";
+            });
         },
         
         formatHours(hours) {

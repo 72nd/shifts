@@ -84,6 +84,11 @@
         "join_existing_desc": "You'll need the plan's URL to join. Please contact your plan administrator to get the link."
     },
     "shift_plans": {
+        "settings": {
+            "day_boundary_time": "Day Boundary Time",
+            "day_boundary_time_help": "Shifts after this time will be grouped with the previous day (default: midnight)",
+            "error_invalid_time": "Please enter a valid time"
+        },
         "new": {
             "title": "New Shift Plan",
             "hero_title": "Create a New Shift Plan",

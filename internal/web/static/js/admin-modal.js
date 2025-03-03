@@ -29,7 +29,7 @@ export class AdminModal extends Modal {
     async submit() {
         if (!this.validate()) return false;
 
-        const url = `/api/plans/${this.planToken}/admin`;
+        const url = `/api/plans/${this.planToken}/verify-admin`;
         const options = {
             method: 'POST',
             headers: {
