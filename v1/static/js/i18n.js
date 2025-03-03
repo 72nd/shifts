@@ -89,6 +89,9 @@ const translations = {
         'error_joining_shift': 'Fehler beim Eintragen in die Schicht',
         'error_leaving_shift': 'Fehler beim Austragen aus der Schicht',
         'wrong_password': 'Falsches Passwort',
+        'error_name_too_long': 'Der Name darf maximal 20 Zeichen lang sein',
+        'error_title_de_too_long': 'Der deutsche Titel darf maximal 150 Zeichen lang sein',
+        'error_title_en_too_long': 'Der englische Titel darf maximal 150 Zeichen lang sein',
 
         // Participant Search
         'participant_search': 'Helfer:innensuche',
@@ -210,6 +213,9 @@ const translations = {
         'error_joining_shift': 'Error joining shift',
         'error_leaving_shift': 'Error leaving shift',
         'wrong_password': 'Wrong password',
+        'error_name_too_long': 'Name cannot exceed 20 characters',
+        'error_title_de_too_long': 'German title cannot exceed 150 characters',
+        'error_title_en_too_long': 'English title cannot exceed 150 characters',
 
         // Participant Search
         'participant_search': 'Helper Search',

@@ -50,10 +50,16 @@ export class SettingsModal extends Modal {
         if (!this.title_en) {
             this.errors.title_en = AlpineI18n.t('shift_plans.new.error_title_required');
             isValid = false;
+        } else if (this.title_en.trim().length > 150) {
+            this.errors.title_en = AlpineI18n.t('shift_plans.new.error_title_too_long', { max: 150 });
+            isValid = false;
         }
 
         if (this.is_multilingual && !this.title_de) {
             this.errors.title_de = AlpineI18n.t('shift_plans.new.error_title_required');
+            isValid = false;
+        } else if (this.is_multilingual && this.title_de.trim().length > 150) {
+            this.errors.title_de = AlpineI18n.t('shift_plans.new.error_title_too_long', { max: 150 });
             isValid = false;
         }
 

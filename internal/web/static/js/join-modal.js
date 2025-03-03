@@ -28,6 +28,9 @@ export class JoinModal extends Modal {
         if (!this.name?.trim()) {
             this.errors.name = AlpineI18n.t('shift_plans.view.error_name_required');
             isValid = false;
+        } else if (this.name.trim().length > 20) {
+            this.errors.name = AlpineI18n.t('shift_plans.view.error_name_too_long', { max: 20 });
+            isValid = false;
         }
 
         // Check if name already exists in this shift

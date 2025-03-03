@@ -80,6 +80,12 @@ export function joinShift() {
     const name = formData.get('name');
     const password = formData.get('password');
 
+    // Validiere den Namen (max. 20 Zeichen)
+    if (name.trim().length > 20) {
+        showError('error_name_too_long');
+        return;
+    }
+
     fetchWithAuth(`/shifttypes/${formData.get('typeId')}/shifts/${formData.get('shiftId')}/join`, {
         method: 'POST',
         headers: {

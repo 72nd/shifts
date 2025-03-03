@@ -509,10 +509,24 @@ export function createShiftType() {
     const form = document.getElementById('newShiftTypeForm');
     const formData = new FormData(form);
     
+    // Validiere die Titel (max. 150 Zeichen)
+    const titleDE = formData.get('titleDE');
+    const titleEN = formData.get('titleEN');
+    
+    if (titleDE && titleDE.trim().length > 150) {
+        showError('error_title_de_too_long');
+        return;
+    }
+    
+    if (titleEN && titleEN.trim().length > 150) {
+        showError('error_title_en_too_long');
+        return;
+    }
+    
     const shiftType = {
         id: uuidv4(),
-        titleDE: formData.get('titleDE'),
-        titleEN: formData.get('titleEN'),
+        titleDE: titleDE,
+        titleEN: titleEN,
         descriptionDE: formData.get('descriptionDE'),
         descriptionEN: formData.get('descriptionEN'),
         location: formData.get('location'),
