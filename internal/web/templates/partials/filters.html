@@ -1,5 +1,5 @@
 {{ define "filters" }}
-<div class="bg-base-200 rounded-box p-2.5 md:p-4 mb-3 md:mb-4" x-data="{ isFilterExpanded: window.innerWidth >= 768 }" x-init="window.addEventListener('resize', () => { if (!isFilterExpanded && window.innerWidth >= 768) isFilterExpanded = true; })">
+<div class="card-body p-2.5 md:p-4" x-data="{ isFilterExpanded: window.innerWidth >= 768 }" x-init="window.addEventListener('resize', () => { if (!isFilterExpanded && window.innerWidth >= 768) isFilterExpanded = true; })">
     <!-- Header with active filter count and toggle button -->
     <div class="flex items-center justify-between cursor-pointer" @click.stop="isFilterExpanded = !isFilterExpanded">
         <div class="flex items-center gap-2">
@@ -33,7 +33,7 @@
     </div>
     
     <!-- Filter Content (collapsible) -->
-    <div x-show="isFilterExpanded" x-collapse>
+    <div x-show="isFilterExpanded">
         <div class="mt-3 md:mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
             <!-- Shift Types Filter -->
             <div class="form-control w-full">

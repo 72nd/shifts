@@ -1,6 +1,7 @@
 {{ define "shift-type-card" }}
-<div class="bg-base-200 rounded-box p-2.5 md:p-4 mb-3 md:mb-4" x-data="{ isTypeExpanded: true, isDescriptionExpanded: false, openShiftsCount: 0, isDescriptionLong: false }" 
-     x-init="
+<div class="card card-bordered border-base-content/10 shadow">
+    <div class="card-body p-2.5 md:p-4" x-data="{ isTypeExpanded: true, isDescriptionExpanded: false, openShiftsCount: 0, isDescriptionLong: false }" 
+         x-init="
         openShiftsCount = type.shifts ? type.shifts.reduce((count, shift) => count + Math.max(0, shift.required - (shift.participants?.length || 0)), 0) : 0;
         $nextTick(() => {
             // Check if description is actually longer than 3 lines
@@ -106,7 +107,7 @@
     </div>
 
     <!-- Content (only visible when expanded) -->
-    <div x-show="isTypeExpanded" x-collapse>
+    <div x-show="isTypeExpanded">
         <!-- Description with toggle -->
         <div class="cursor-pointer" @click.stop>
             <div class="relative">
@@ -165,5 +166,6 @@
             </template>
         </template>
     </div>
+</div>
 </div>
 {{ end }} 

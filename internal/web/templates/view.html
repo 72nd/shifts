@@ -23,53 +23,63 @@
 
     <!-- Content (only shown when data is loaded) -->
     <template x-if="isReady">
-        <div>
+        <div class="space-y-4">
             <!-- Plan Header -->
-            <div class="bg-base-200 rounded-box p-2.5 md:p-4 mb-3 md:mb-4" x-data="{ isDescriptionExpanded: false }">
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-2xl font-bold flex-1"
-                            x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.title_de : plan.title_en) : plan.title_en">
-                        </h1>
-                        
-                        <!-- Admin Login Button (Desktop Only) -->
-                        <div x-show="!isAdmin" class="hidden md:block">
-                            <button @click="openAdminModal()" class="btn btn-outline btn-primary btn-xs md:btn-sm gap-1.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
-                                <span x-text="$t('shift_plans.view.admin_login')"></span>
-                            </button>
-                        </div>
-                        
-                        <!-- Toggle Button for Description -->
-                        <button @click.stop="isDescriptionExpanded = !isDescriptionExpanded" 
+            <div class="card card-bordered border-base-content/10 shadow" x-data="{ isDescriptionExpanded: false }">
+                <div class="card-body p-2.5 md:p-4">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-2xl font-bold flex-1"
+                                x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.title_de : plan.title_en) : plan.title_en">
+                            </h1>
+
+                            <!-- Admin Login Button (Desktop Only) -->
+                            <div x-show="!isAdmin" class="hidden md:block">
+                                <button @click="openAdminModal()"
+                                    class="btn btn-outline btn-primary btn-xs md:btn-sm gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    <span x-text="$t('shift_plans.view.admin_login')"></span>
+                                </button>
+                            </div>
+
+                            <!-- Toggle Button for Description -->
+                            <button @click.stop="isDescriptionExpanded = !isDescriptionExpanded"
                                 class="btn btn-ghost btn-xs p-0 h-auto"
                                 x-show="plan.description_en?.length > 100 || plan.description_de?.length > 100">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" 
-                                 :class="{ 'rotate-180': isDescriptionExpanded }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-5 w-5 transition-transform duration-200"
+                                    :class="{ 'rotate-180': isDescriptionExpanded }" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Collapsible Description -->
+                        <div>
+                            <!-- Description with line clamp when collapsed -->
+                            <p class="text-base-content/70 text-sm transition-all duration-200 cursor-pointer"
+                                @click.stop="isDescriptionExpanded = !isDescriptionExpanded"
+                                :class="{ 'line-clamp-2': !isDescriptionExpanded }"
+                                x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.description_de : plan.description_en) : plan.description_en">
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-sm text-base-content/80">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                        </button>
-                    </div>
-                    
-                    <!-- Collapsible Description -->
-                    <div>
-                        <!-- Description with line clamp when collapsed -->
-                        <p class="text-base-content/70 text-sm transition-all duration-200 cursor-pointer"
-                           @click.stop="isDescriptionExpanded = !isDescriptionExpanded"
-                           :class="{ 'line-clamp-2': !isDescriptionExpanded }"
-                           x-text="plan.is_multilingual ? ($locale() === 'de' ? plan.description_de : plan.description_en) : plan.description_en">
-                        </p>
-                    </div>
-                    
-                    <div class="flex items-center gap-2 text-sm text-base-content/80">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span x-text="formatDate(plan.start_date)"></span>
-                        <span>-</span>
-                        <span x-text="formatDate(plan.end_date)"></span>
+                            <span x-text="formatDate(plan.start_date)"></span>
+                            <span>-</span>
+                            <span x-text="formatDate(plan.end_date)"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -79,39 +89,52 @@
                 <!-- Desktop Buttons (hidden on mobile) -->
                 <div class="hidden md:flex justify-end flex-wrap gap-2">
                     <button @click="openShiftModal(null)" class="btn btn-sm btn-outline btn-success gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         <span x-text="$t('shift_plans.view.add_shift')"></span>
                     </button>
                     <button @click="openShiftTypeModal()" class="btn btn-sm btn-outline btn-success gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
                         <span x-text="$t('shift_plans.view.add_shift_type')"></span>
                     </button>
                     <button @click="openSortTypesModal()" class="btn btn-sm btn-outline gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m4 0v12m0 0l4-4m-4 4l-4-4" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16V4m0 0L3 8m4-4l4 4m4 0v12m0 0l4-4m-4 4l-4-4" />
                         </svg>
                         <span x-text="$t('shift_plans.view.sort_types')"></span>
                     </button>
                     <button @click="openSettingsModal()" class="btn btn-sm btn-outline gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <span x-text="$t('shift_plans.view.settings')"></span>
                     </button>
                     <a :href="'/plans/' + plan.token + '/stats'" target="_blank" class="btn btn-sm btn-outline gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         <span x-text="$t('shift_plans.view.statistics')"></span>
                     </a>
                     <button @click="logoutAdmin()" class="btn btn-sm btn-outline btn-error gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                         <span x-text="$t('shift_plans.view.admin_logout')"></span>
                     </button>
@@ -120,46 +143,59 @@
                 <!-- Mobile Dropdown (hidden on desktop) -->
                 <div class="md:hidden">
                     <div class="dropdown dropdown-end w-full">
-                        <label tabindex="0" class="btn btn-outline gap-2 w-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <label tabindex="0" class="btn btn-primary btn-sm gap-2 w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                             <span x-text="$t('shift_plans.view.admin_actions')"></span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" />
                             </svg>
                         </label>
                         <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64">
                             <li class="menu-title" x-text="$t('shift_plans.view.admin_actions')"></li>
                             <li>
                                 <a @click="openShiftModal(null)" class="text-success">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
                                     <span x-text="$t('shift_plans.view.add_shift')"></span>
                                 </a>
                             </li>
                             <li>
                                 <a @click="openShiftTypeModal()" class="text-success">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
                                     <span x-text="$t('shift_plans.view.add_shift_type')"></span>
                                 </a>
                             </li>
                             <li>
                                 <a @click="openSortTypesModal()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m4 0v12m0 0l4-4m-4 4l-4-4" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 16V4m0 0L3 8m4-4l4 4m4 0v12m0 0l4-4m-4 4l-4-4" />
                                     </svg>
                                     <span x-text="$t('shift_plans.view.sort_types')"></span>
                                 </a>
                             </li>
                             <li>
                                 <a @click="openSettingsModal()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                     <span x-text="$t('shift_plans.view.settings')"></span>
                                 </a>
@@ -169,8 +205,10 @@
                             </li>
                             <li>
                                 <a @click="logoutAdmin()" class="text-error">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                     </svg>
                                     <span x-text="$t('shift_plans.view.admin_logout')"></span>
                                 </a>
@@ -181,18 +219,22 @@
             </div>
 
             <!-- Include filters partial -->
-            {{ template "filters" . }}
+            <div class="card card-bordered border-base-content/10 shadow">
+                {{ template "filters" . }}
+            </div>
 
             <!-- Shift Types -->
             <template x-for="type in filteredShiftTypes" :key="type.id">
                 {{ template "shift-type-card" . }}
             </template>
-            
+
             <!-- Admin Login Button (Mobile Only) -->
             <div x-show="!isAdmin" class="md:hidden mt-6 mb-4">
                 <button @click="openAdminModal()" class="btn btn-outline btn-primary w-full gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span x-text="$t('shift_plans.view.admin_login')"></span>
                 </button>
@@ -217,4 +259,4 @@
 
 {{ define "scripts" }}
 <script type="module" src="/static/js/shift-plan-view.js"></script>
-{{ end }} 
+{{ end }}
