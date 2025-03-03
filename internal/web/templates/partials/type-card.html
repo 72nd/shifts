@@ -22,15 +22,15 @@
                 
                 <!-- Open Shifts Progress Bar (replacing badge) -->
                 <div class="ml-2" x-show="type.shifts && type.shifts.length > 0">
-                    <div class="radial-progress text-[10px]" 
-                         x-bind:style="{ '--value': Math.round(((type.shifts.reduce((total, shift) => total + (shift.participants?.length || 0), 0)) / (type.shifts.reduce((total, shift) => total + shift.required, 0)) * 100) || 0), '--size': '1.8rem', '--thickness': '2.4px' }"
-                         :class="{
-                             'text-error': openShiftsCount === type.shifts.reduce((total, shift) => total + shift.required, 0),
-                             'text-success': openShiftsCount === 0,
-                             'text-warning': openShiftsCount > type.shifts.reduce((total, shift) => total + shift.required, 0) * 0.5,
-                             'text-primary': openShiftsCount > 0
-                         }">
-                        <span x-text="(type.shifts.reduce((total, shift) => total + (shift.participants?.length || 0), 0)) + '/' + (type.shifts.reduce((total, shift) => total + shift.required, 0))"></span>
+                    <div class="radial-progress text-[10px] border-4" 
+                            :class="{
+                                'bg-error text-white border-error': openShiftsCount > 0,
+                                'bg-success text-white border-success': openShiftsCount === 0,
+                                'bg-warning text-white border-warning': openShiftsCount > 0,
+                                'bg-primary text-primary-content border-primary': openShiftsCount > 0
+                            }"
+                            x-bind:style="{ '--value': Math.round((type.shifts.reduce((total, shift) => total + (shift.participants?.length || 0), 0)) / (type.shifts.reduce((total, shift) => total + shift.required, 0)) * 100), '--size': '1.8rem', '--thickness': '2.4px' }">
+                        <span x-text="openShiftsCount + '/' + type.shifts.reduce((total, shift) => total + shift.required, 0)"></span>
                     </div>
                 </div>
             </div>
@@ -148,7 +148,7 @@
                 <table class="table table-xs w-full">
                     <thead>
                         <tr>
-                            <th class="w-16 md:w-48 bg-base-200/50 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
+                            <th class="w-16 md:w-32 bg-base-200/50 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
                             <th class="w-16 hidden md:table-cell bg-base-200/50" x-text="$t('shift_plans.view.duration')"></th>
                             <th class="w-12 md:w-14 bg-base-200/50 text-center px-1 md:px-2">Status</th>
                             <th class="bg-base-200/50 px-2 md:px-4" x-text="$t('shift_plans.view.participants')"></th>
@@ -156,7 +156,7 @@
                         </tr>
                     </thead>
                     <!-- Each shift gets its own tbody -->
-                    <template x-for="shift in dateGroup.shifts" :key="shift.id">
+                    <template x-for="(shift, index) in dateGroup.shifts" :key="shift.id">
                         {{ template "shift-row" }}
                     </template>
                 </table>
