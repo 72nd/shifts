@@ -8,7 +8,8 @@
             if (descEl) {
                 const lineHeight = parseInt(window.getComputedStyle(descEl).lineHeight);
                 const height = descEl.scrollHeight;
-                isDescriptionLong = height > lineHeight * 3;
+                const maxHeight = lineHeight * 3; // 3 lines max when collapsed
+                isDescriptionLong = height > maxHeight;
             }
         });
      ">
