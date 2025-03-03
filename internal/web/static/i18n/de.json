@@ -27,12 +27,28 @@
     },
     "home": {
         "title": "Schichtplanung leicht gemacht",
-        "subtitle": "Erstelle und verwalte Schichtpläne mühelos. Perfekt für Veranstaltungen, Freiwilligenarbeit und Teamorganisation.",
+        "subtitle": "Erstellen und verwalten Sie Schichtpläne mühelos. Perfekt für Events, ehrenamtliche Arbeit und Teamorganisation.",
         "create_plan": "Neuen Plan erstellen",
-        "join_plan": "Bestehendem Plan beitreten",
-        "plan_token": "Plan-Token",
-        "enter_token": "Token eingeben",
-        "join": "Beitreten"
+        "features": "Funktionen",
+        "feature_1_title": "Einfache Planung",
+        "feature_1_desc": "Erstellen und verwalten Sie Schichten mit einer intuitiven Benutzeroberfläche. Perfekt für jede Art von Event oder Team.",
+        "feature_2_title": "Teamverwaltung",
+        "feature_2_desc": "Verfolgen Sie Teilnehmer, verwalten Sie Rollen und stellen Sie sicher, dass alle Schichten besetzt sind.",
+        "feature_3_title": "Echtzeit-Updates",
+        "feature_3_desc": "Bleiben Sie über Änderungen und Aktualisierungen der Schichten informiert.",
+        "how_it_works": "So funktioniert's",
+        "step_1_title": "Plan erstellen",
+        "step_1_desc": "Beginnen Sie mit der Erstellung eines neuen Schichtplans und passen Sie ihn an Ihre Bedürfnisse an.",
+        "step_2_title": "Schichten hinzufügen",
+        "step_2_desc": "Definieren Sie Ihre Schichten, einschließlich Zeitfenster und erforderlicher Teilnehmer.",
+        "step_3_title": "Teilen & Einladen",
+        "step_3_desc": "Teilen Sie die Plan-URL mit Ihrem Team und lassen Sie sie an Schichten teilnehmen.",
+        "step_4_title": "Verwalten & Überwachen",
+        "step_4_desc": "Verfolgen Sie die Teilnahme und nehmen Sie bei Bedarf Anpassungen vor.",
+        "ready_to_start": "Bereit zum Start?",
+        "cta_desc": "Erstellen Sie in wenigen Minuten Ihren ersten Schichtplan und beginnen Sie mit der effizienten Organisation Ihres Teams.",
+        "join_existing": "Bestehendem Plan beitreten?",
+        "join_existing_desc": "Sie benötigen die URL des Plans zum Beitreten. Bitte kontaktieren Sie den Planadministrator, um den Link zu erhalten."
     },
     "shift_plans": {
         "new": {
