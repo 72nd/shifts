@@ -129,7 +129,7 @@
                 "n_types_selected": "{count} Schichttypen ausgewählt",
                 "all_types": "Alle Schichttypen"
             },
-            "add_shift_type": "Neuen Schichttyp hinzufügen",
+            "add_shift_type": "Neuer Schichttyp",
             "edit_shift_type": "Schichttyp bearbeiten",
             "title_de": "Titel (Deutsch)",
             "title_en": "Titel (Englisch)",
@@ -164,7 +164,7 @@
             "error_comment_required": "Bitte gib einen Kommentar ein",
             "error_creating_shift": "Fehler beim Erstellen der Schicht",
             "error_updating_shift": "Fehler beim Aktualisieren der Schicht",
-            "add_shift": "Neue Schicht hinzufügen",
+            "add_shift": "Neue Schicht",
             "error_shift_type_required": "Bitte wähle einen Schichttyp aus",
             "error_invalid_shift_type": "Ungültiger Schichttyp ausgewählt",
             "select_shift_type": "Schichttyp auswählen...",

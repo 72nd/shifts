@@ -409,6 +409,42 @@ document.addEventListener('alpine:init', () => {
             };
         },
 
+        // Helper for shift type progress calculation and styling
+        getShiftTypeProgress(type) {
+            if (!type.shifts || type.shifts.length === 0) {
+                return {
+                    openShifts: 0,
+                    totalRequired: 0,
+                    totalFilled: 0,
+                    percentage: 0,
+                    background: 'bg-base-content/10'
+                };
+            }
+
+            const totalRequired = type.shifts.reduce((total, shift) => total + shift.required, 0);
+            const totalFilled = type.shifts.reduce((total, shift) => total + (shift.participants?.length || 0), 0);
+            const openShifts = type.shifts.reduce((count, shift) => 
+                count + Math.max(0, shift.required - (shift.participants?.length || 0)), 0);
+            const percentage = Math.round((totalFilled / totalRequired) * 100);
+
+            let background;
+            if (openShifts === 0) {
+                background = 'bg-success/40';
+            } else if (percentage < 50) {
+                background = 'bg-error/40';
+            } else {
+                background = 'bg-warning/40';
+            }
+
+            return {
+                openShifts,
+                totalRequired,
+                totalFilled,
+                percentage,
+                background
+            };
+        },
+
         // Admin functions
         openAdminModal() {
             this.adminModal.open();

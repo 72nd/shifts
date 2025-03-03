@@ -14,24 +14,24 @@
         });
      ">
     <!-- Type Header -->
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-start justify-between mb-2">
         <div class="flex-1">
-            <div class="flex items-center cursor-pointer" @click.stop="isTypeExpanded = !isTypeExpanded">
+            <div class="flex flex-col cursor-pointer" @click.stop="isTypeExpanded = !isTypeExpanded">
                 <h2 class="text-xl font-bold"
                     x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
                 </h2>
                 
-                <!-- Open Shifts Progress Bar (replacing badge) -->
-                <div class="ml-2" x-show="type.shifts && type.shifts.length > 0">
-                    <div class="radial-progress text-[10px] border-4" 
-                            :class="{
-                                'bg-error text-white border-error': openShiftsCount > 0,
-                                'bg-success text-white border-success': openShiftsCount === 0,
-                                'bg-warning text-white border-warning': openShiftsCount > 0,
-                                'bg-primary text-primary-content border-primary': openShiftsCount > 0
-                            }"
-                            x-bind:style="{ '--value': Math.round((type.shifts.reduce((total, shift) => total + (shift.participants?.length || 0), 0)) / (type.shifts.reduce((total, shift) => total + shift.required, 0)) * 100), '--size': '1.8rem', '--thickness': '2.4px' }">
-                        <span x-text="openShiftsCount + '/' + type.shifts.reduce((total, shift) => total + shift.required, 0)"></span>
+                <!-- Progress Bar -->
+                <div class="mt-1.5" x-show="type.shifts && type.shifts.length > 0">
+                    <div class="relative w-48">
+                        <!-- Progress Background -->
+                        <div class="h-1.5 w-full rounded-full bg-base-content/10">
+                            <!-- Progress Bar -->
+                            <div class="absolute top-0 left-0 h-1.5 rounded-full transition-all duration-300"
+                                :class="getShiftTypeProgress(type).background"
+                                :style="{ width: getShiftTypeProgress(type).percentage + '%' }">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                 <table class="table table-xs w-full">
                     <thead>
                         <tr>
-                            <th class="w-16 md:w-32 bg-base-200/50 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
+                            <th class="w-16 md:w-48 bg-base-200/50 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
                             <th class="w-16 hidden md:table-cell bg-base-200/50" x-text="$t('shift_plans.view.duration')"></th>
                             <th class="w-12 md:w-14 bg-base-200/50 text-center px-1 md:px-2">Status</th>
                             <th class="bg-base-200/50 px-2 md:px-4" x-text="$t('shift_plans.view.participants')"></th>
