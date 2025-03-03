@@ -102,7 +102,7 @@
                     </button>
                 </div>
                 <!-- Desktop Toggle Button or Placeholder -->
-                <div class="w-3 h-3 md:w-4 md:h-4">
+                <div class="flex items-center h-[26px] md:h-[32px] w-3 md:w-4">
                     <button @click.stop="isExpanded = !isExpanded"
                         x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
                         class="btn btn-ghost btn-xs p-0 h-auto"
@@ -173,7 +173,7 @@
                 <div class="w-3 h-3">
                     <button @click.stop="isExpanded = !isExpanded"
                         x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
-                        class="btn btn-ghost btn-xs p-0 h-auto"
+                        class="btn btn-ghost btn-square btn-xs p-0 h-auto"
                         :aria-expanded="isExpanded"
                         :aria-label="$t(isExpanded ? 'shift_plans.view.collapse_details' : 'shift_plans.view.expand_details')">
                         <svg xmlns="http://www.w3.org/2000/svg"
