@@ -49,7 +49,18 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	participant, err := s.db.AddParticipant(shiftID, data.Name)
+	// Validiere und sanitisiere den Namen
+	name := SanitizeText(data.Name)
+	if name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+	if len(name) > 20 {
+		http.Error(w, "Name cannot exceed 20 characters", http.StatusBadRequest)
+		return
+	}
+
+	participant, err := s.db.AddParticipant(shiftID, name)
 	if err != nil {
 		s.logger.Error("failed to add participant", "error", err)
 		http.Error(w, "Failed to add participant", http.StatusInternalServerError)

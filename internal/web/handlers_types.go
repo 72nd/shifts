@@ -64,6 +64,45 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validiere und sanitisiere die Titel
+	shiftType.TitleEN = SanitizeText(shiftType.TitleEN)
+	if shiftType.TitleEN == "" {
+		http.Error(w, "English title is required", http.StatusBadRequest)
+		return
+	}
+	if len(shiftType.TitleEN) > 150 {
+		http.Error(w, "English title cannot exceed 150 characters", http.StatusBadRequest)
+		return
+	}
+
+	if plan.IsMultilingual {
+		shiftType.TitleDE = SanitizeText(shiftType.TitleDE)
+		if shiftType.TitleDE == "" {
+			http.Error(w, "German title is required for multilingual plans", http.StatusBadRequest)
+			return
+		}
+		if len(shiftType.TitleDE) > 150 {
+			http.Error(w, "German title cannot exceed 150 characters", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Sanitisiere die Beschreibungen (optional)
+	if shiftType.DescriptionEN != "" {
+		shiftType.DescriptionEN = SanitizeText(shiftType.DescriptionEN)
+	}
+	if shiftType.DescriptionDE != "" {
+		shiftType.DescriptionDE = SanitizeText(shiftType.DescriptionDE)
+	}
+
+	// Sanitisiere die Orte (optional)
+	if shiftType.LocationEN != "" {
+		shiftType.LocationEN = SanitizeText(shiftType.LocationEN)
+	}
+	if shiftType.LocationDE != "" {
+		shiftType.LocationDE = SanitizeText(shiftType.LocationDE)
+	}
+
 	// Set plan ID
 	shiftType.PlanID = plan.ID
 
@@ -116,6 +155,45 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		s.logger.Error("failed to decode request body", "error", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
+	}
+
+	// Validiere und sanitisiere die Titel
+	requestData.TitleEN = SanitizeText(requestData.TitleEN)
+	if requestData.TitleEN == "" {
+		http.Error(w, "English title is required", http.StatusBadRequest)
+		return
+	}
+	if len(requestData.TitleEN) > 150 {
+		http.Error(w, "English title cannot exceed 150 characters", http.StatusBadRequest)
+		return
+	}
+
+	if plan.IsMultilingual {
+		requestData.TitleDE = SanitizeText(requestData.TitleDE)
+		if requestData.TitleDE == "" {
+			http.Error(w, "German title is required for multilingual plans", http.StatusBadRequest)
+			return
+		}
+		if len(requestData.TitleDE) > 150 {
+			http.Error(w, "German title cannot exceed 150 characters", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Sanitisiere die Beschreibungen (optional)
+	if requestData.DescriptionEN != "" {
+		requestData.DescriptionEN = SanitizeText(requestData.DescriptionEN)
+	}
+	if requestData.DescriptionDE != "" {
+		requestData.DescriptionDE = SanitizeText(requestData.DescriptionDE)
+	}
+
+	// Sanitisiere die Orte (optional)
+	if requestData.LocationEN != "" {
+		requestData.LocationEN = SanitizeText(requestData.LocationEN)
+	}
+	if requestData.LocationDE != "" {
+		requestData.LocationDE = SanitizeText(requestData.LocationDE)
 	}
 
 	// Convert to ShiftType
