@@ -167,6 +167,11 @@ export class Modal {
                 if (errorJson.error && errorJson.error.message) {
                     errorDetails.message = errorJson.error.message;
                 }
+                
+                // Use the server-provided error title if available
+                if (errorJson.error && errorJson.error.title) {
+                    errorDetails.title = errorJson.error.title;
+                }
             } else {
                 // For non-JSON responses, get the text
                 errorDetails.body = await response.text();
@@ -177,7 +182,9 @@ export class Modal {
         }
 
         // Set the error in the modal
-        this.setServerError(defaultErrorMessage, errorDetails);
+        // Verwende den Titel aus den errorDetails, falls vorhanden, sonst den defaultErrorMessage
+        const errorTitle = errorDetails.title || defaultErrorMessage;
+        this.setServerError(errorTitle, errorDetails);
     }
 
     /**
