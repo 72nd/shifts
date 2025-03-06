@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -63,6 +64,19 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	participant, err := s.db.AddParticipant(shiftID, name)
 	if err != nil {
 		s.logger.Error("failed to add participant", "error", err)
+
+		// Spezifische Fehlerbehandlung für volle Schichten
+		if strings.Contains(err.Error(), "shift is already full") {
+			http.Error(w, "Shift is already full", http.StatusConflict)
+			return
+		}
+
+		// Spezifische Fehlerbehandlung für doppelte Namen
+		if strings.Contains(err.Error(), "participant already exists") {
+			http.Error(w, "Name already taken", http.StatusConflict)
+			return
+		}
+
 		http.Error(w, "Failed to add participant", http.StatusInternalServerError)
 		return
 	}

@@ -62,26 +62,48 @@ export class JoinModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_joining');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        // Verwende die sendRequest-Methode aus der Modal-Klasse, aber ohne automatische Fehlerbehandlung
+        const { data, status, response } = await this.sendRequest(url, options, errorMessage, false);
         
-        if (result !== null) {
-            // Save name to localStorage after successful join
-            localStorage.setItem('last_participant_name', this.name.trim());
-
-            // Update the current shift's participants
-            this.currentShift.participants = this.currentShift.participants || [];
-            this.currentShift.participants.push(result);
-
-            this.close();
-            
-            // Notify parent component with updated shift data
-            if (this.onSuccess) {
-                this.onSuccess(this.currentShift);
+        // Fehlerbehandlung
+        if (data === null) {
+            // Spezielle Behandlung für 409 Conflict (Schicht voll)
+            if (status === 409) {
+                this.setUserFriendlyError(
+                    AlpineI18n.t('shift_plans.view.error_shift_full_title'),
+                    AlpineI18n.t('shift_plans.view.error_shift_full_message')
+                );
+                return false;
             }
             
-            return true;
+            // Für alle anderen Fehler verwenden wir die Standard-Fehlerbehandlung
+            if (response) {
+                const requestInfo = {
+                    url,
+                    method: options.method,
+                    headers: options.headers,
+                    body: { name: this.name.trim() },
+                    timestamp: new Date().toISOString()
+                };
+                await this.handleResponseError(response, errorMessage, requestInfo);
+            }
+            return false;
         }
         
-        return false;
+        // Save name to localStorage after successful join
+        localStorage.setItem('last_participant_name', this.name.trim());
+
+        // Update the current shift's participants
+        this.currentShift.participants = this.currentShift.participants || [];
+        this.currentShift.participants.push(data);
+
+        this.close();
+        
+        // Notify parent component with updated shift data
+        if (this.onSuccess) {
+            this.onSuccess(this.currentShift);
+        }
+        
+        return true;
     }
 } 

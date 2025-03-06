@@ -136,6 +136,8 @@
             "error_name_required": "Bitte gib einen Namen ein",
             "error_name_exists": "Dieser Name ist bereits vergeben",
             "error_name_too_long": "Der Name darf maximal {max} Zeichen lang sein",
+            "error_shift_full_title": "Schicht ist bereits voll",
+            "error_shift_full_message": "Leider wurde die Schicht in der Zwischenzeit von jemand anderem belegt. Bitte wähle eine andere Schicht aus.",
             "error_title_too_long": "Der Titel darf maximal {max} Zeichen lang sein",
             "remove_participant": "Helfende:r entfernen",
             "confirm_remove_participant_1": "Möchtest du ",

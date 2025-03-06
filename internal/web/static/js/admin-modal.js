@@ -19,7 +19,7 @@ export class AdminModal extends Modal {
         let isValid = true;
 
         if (!this.password) {
-            this.errors.password = AlpineI18n.t('shift_plans.view.admin_password_required');
+            this.errors.password = AlpineI18n.t('shift_plans.view.error_password_required');
             isValid = false;
         }
 
@@ -40,18 +40,18 @@ export class AdminModal extends Modal {
             })
         };
         
-        const errorMessage = AlpineI18n.t('shift_plans.view.admin_login_error');
+        const errorMessage = AlpineI18n.t('shift_plans.view.error_invalid_password');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        const { data } = await this.sendRequest(url, options, errorMessage);
         
-        if (result !== null && result.token) {
+        if (data !== null && data.token) {
             // Debug-Ausgabe für Fehlersuche
-            console.log('Admin login successful, received token:', result.token ? '[REDACTED]' : 'empty');
+            console.log('Admin login successful, received token:', data.token ? '[REDACTED]' : 'empty');
             
             // Close modal and notify parent about success
             this.close();
             if (this.onSuccess) {
-                this.onSuccess(result.token);
+                this.onSuccess(data.token);
             }
             return true;
         }

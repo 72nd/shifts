@@ -136,6 +136,8 @@
             "error_name_required": "Please enter a name",
             "error_name_exists": "This name is already taken",
             "error_name_too_long": "Name cannot exceed {max} characters",
+            "error_shift_full_title": "Shift is already full",
+            "error_shift_full_message": "Unfortunately, the shift has been filled by someone else in the meantime. Please choose another shift.",
             "error_title_required": "Please enter a title",
             "error_title_too_long": "Title cannot exceed {max} characters",
             "remove_participant": "Remove participant",
