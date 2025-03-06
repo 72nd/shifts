@@ -128,13 +128,14 @@ export class SettingsModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_settings');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        // Verwende die aktualisierte sendRequest-Methode
+        const { data } = await this.sendRequest(url, options, errorMessage);
         
-        if (result !== null) {
+        if (data !== null) {
             // Close modal and notify parent about success
             this.close();
             if (this.onSuccess) {
-                this.onSuccess(result);
+                this.onSuccess(data);
             }
             return true;
         }

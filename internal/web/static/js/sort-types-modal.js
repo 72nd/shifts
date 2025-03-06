@@ -67,9 +67,9 @@ export class SortTypesModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_type_order');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        const { data } = await this.sendRequest(url, options, errorMessage);
         
-        if (result !== null) {
+        if (data !== null) {
             // Close modal and notify parent to update with new order
             this.close();
             if (this.onSuccess) {

@@ -33,9 +33,9 @@ export class DeleteShiftModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_deleting_shift');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        const { data } = await this.sendRequest(url, options, errorMessage);
         
-        if (result !== null) {
+        if (data !== null) {
             this.close();
             
             // Notify parent component about the deletion

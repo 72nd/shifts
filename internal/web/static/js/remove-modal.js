@@ -30,9 +30,9 @@ export class RemoveModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_removing');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        const { data } = await this.sendRequest(url, options, errorMessage);
         
-        if (result !== null) {
+        if (data !== null) {
             // Update the current shift's participants
             this.currentShift.participants = this.currentShift.participants.filter(
                 p => p.id !== this.currentParticipant.id

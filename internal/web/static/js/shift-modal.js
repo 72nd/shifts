@@ -143,9 +143,9 @@ export class ShiftModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_updating_shift');
         
-        const result = await this.sendRequest(url, options, errorMessage);
+        const { data } = await this.sendRequest(url, options, errorMessage);
         
-        if (result !== null) {
+        if (data !== null) {
             // Create updated shift object
             const updatedShift = {
                 ...this.currentShift,
@@ -199,14 +199,14 @@ export class ShiftModal extends Modal {
                 
                 const errorMessage = AlpineI18n.t('shift_plans.view.error_creating_shift');
                 
-                const result = await this.sendRequest(url, options, errorMessage);
+                const { data } = await this.sendRequest(url, options, errorMessage);
                 
-                if (result === null) {
+                if (data === null) {
                     // If any shift creation fails, return false
                     return false;
                 }
                 
-                createdShifts.push(result);
+                createdShifts.push(data);
             }
 
             // Notify about successful creation

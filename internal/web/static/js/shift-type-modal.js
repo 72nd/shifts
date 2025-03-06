@@ -95,9 +95,9 @@ export class ShiftTypeModal extends Modal {
                 ? AlpineI18n.t('shift_plans.view.error_updating_shift_type')
                 : AlpineI18n.t('shift_plans.view.error_creating_shift_type');
 
-            const result = await this.sendRequest(url, options, errorMessage);
+            const { data } = await this.sendRequest(url, options, errorMessage);
             
-            if (!result) {
+            if (!data) {
                 return false;
             }
 
@@ -110,7 +110,7 @@ export class ShiftTypeModal extends Modal {
                 description_en: this.description_en,
                 location_de: this.location_de,
                 location_en: this.location_en
-            } : result;
+            } : data;
 
             this.close();
             
