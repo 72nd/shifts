@@ -14,31 +14,54 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	token := vars["token"]
 	shiftID, err := strconv.ParseInt(vars["shiftId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Verify the shift belongs to the plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to verify shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Verify the shift belongs to this plan
 	belongs, err := s.db.VerifyShiftBelongsToPlan(shiftID, plan.ID)
 	if err != nil {
-		s.logger.Error("failed to verify shift ownership", "error", err)
-		http.Error(w, "Failed to verify shift ownership", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift ownership",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if !belongs {
-		http.Error(w, "Shift not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -46,38 +69,66 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Validiere und sanitisiere den Namen
 	name := SanitizeText(data.Name)
 	if name == "" {
-		http.Error(w, "Name is required", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrMissingField,
+			"Name is required",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 	if len(name) > 20 {
-		http.Error(w, "Name cannot exceed 20 characters", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Name cannot exceed 20 characters",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 
 	participant, err := s.db.AddParticipant(shiftID, name)
 	if err != nil {
-		s.logger.Error("failed to add participant", "error", err)
-
 		// Spezifische Fehlerbehandlung für volle Schichten
 		if strings.Contains(err.Error(), "shift is already full") {
-			http.Error(w, "Shift is already full", http.StatusConflict)
+			s.RespondWithError(w, NewAppError(
+				ErrShiftFull,
+				"Shift is already full",
+				http.StatusConflict,
+				err,
+			))
 			return
 		}
 
 		// Spezifische Fehlerbehandlung für doppelte Namen
 		if strings.Contains(err.Error(), "participant already exists") {
-			http.Error(w, "Name already taken", http.StatusConflict)
+			s.RespondWithError(w, NewAppError(
+				ErrDuplicateName,
+				"Name already taken",
+				http.StatusConflict,
+				err,
+			))
 			return
 		}
 
-		http.Error(w, "Failed to add participant", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrInternalError,
+			"Failed to add participant",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -90,45 +141,77 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 	token := vars["token"]
 	shiftID, err := strconv.ParseInt(vars["shiftId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Verify the shift belongs to the plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to verify shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Verify the shift belongs to this plan
 	belongs, err := s.db.VerifyShiftBelongsToPlan(shiftID, plan.ID)
 	if err != nil {
-		s.logger.Error("failed to verify shift ownership", "error", err)
-		http.Error(w, "Failed to verify shift ownership", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift ownership",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if !belongs {
-		http.Error(w, "Shift not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Get the participant from the database first to get their name
 	participants, err := s.db.GetParticipantsByShift(shiftID)
 	if err != nil {
-		s.logger.Error("failed to get participants", "error", err)
-		http.Error(w, "Failed to get participants", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get participants",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	participantID, err := strconv.ParseInt(vars["participantId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid participant ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid participant ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
@@ -142,15 +225,24 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 	}
 
 	if participantName == "" {
-		http.Error(w, "Participant not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Participant not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Remove the participant using their name
 	err = s.db.RemoveParticipant(shiftID, participantName)
 	if err != nil {
-		s.logger.Error("failed to remove participant", "error", err)
-		http.Error(w, "Failed to remove participant", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrInternalError,
+			"Failed to remove participant",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 

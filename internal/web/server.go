@@ -113,21 +113,35 @@ func (s *Server) handleVerifyAdmin(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Password string `json:"password"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
-	// Get plan to verify admin password
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -136,7 +150,12 @@ func (s *Server) handleVerifyAdmin(w http.ResponseWriter, r *http.Request) {
 
 	// Verify password
 	if hashedPassword != plan.AdminPassword {
-		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidPassword,
+			"Invalid password",
+			http.StatusUnauthorized,
+			nil,
+		))
 		return
 	}
 
@@ -151,4 +170,9 @@ func (s *Server) handleVerifyAdmin(w http.ResponseWriter, r *http.Request) {
 func hashPassword(password string) string {
 	hash := sha256.Sum256([]byte(password))
 	return hex.EncodeToString(hash[:])
+}
+
+// RespondWithError sendet eine Fehlerantwort an den Client und loggt den Fehler
+func (s *Server) RespondWithError(w http.ResponseWriter, err *AppError) {
+	RespondWithError(w, s.logger, err)
 }
