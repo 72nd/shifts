@@ -42,8 +42,10 @@ export class AdminModal extends Modal {
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_invalid_password');
         
-        const { data } = await this.sendRequest(url, options, errorMessage);
+        // Verwende die sendRequest-Methode ohne automatische Fehlerbehandlung
+        const { data, status, response } = await this.sendRequest(url, options, errorMessage, false);
         
+        // Erfolgreicher Login
         if (data !== null && data.token) {
             // Debug-Ausgabe für Fehlersuche
             console.log('Admin login successful, received token:', data.token ? '[REDACTED]' : 'empty');
@@ -54,6 +56,28 @@ export class AdminModal extends Modal {
                 this.onSuccess(data.token);
             }
             return true;
+        }
+        
+        // Fehlerbehandlung
+        if (status === 401) {
+            // Falsches Passwort - benutzerfreundliche Fehlermeldung
+            this.setUserFriendlyError(
+                AlpineI18n.t('shift_plans.view.error_invalid_password_title'),
+                AlpineI18n.t('shift_plans.view.error_invalid_password_message')
+            );
+            return false;
+        }
+        
+        // Für alle anderen Fehler verwenden wir die Standard-Fehlerbehandlung
+        if (response) {
+            const requestInfo = {
+                url,
+                method: options.method,
+                headers: options.headers,
+                body: { password: '[REDACTED]' }, // Passwort nicht im Log anzeigen
+                timestamp: new Date().toISOString()
+            };
+            await this.handleResponseError(response, errorMessage, requestInfo);
         }
         
         return false;

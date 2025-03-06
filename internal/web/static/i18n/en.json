@@ -154,6 +154,8 @@
             "admin_password_placeholder": "Enter password",
             "error_password_required": "Please enter a password",
             "error_invalid_password": "Invalid password",
+            "error_invalid_password_title": "Invalid Password",
+            "error_invalid_password_message": "The password you entered is incorrect. Please try again or contact the shift plan administrator.",
             "filter": {
                 "title": "Filters",
                 "active": "Active",

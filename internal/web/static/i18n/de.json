@@ -153,6 +153,8 @@
             "admin_password_placeholder": "Passwort eingeben",
             "error_password_required": "Bitte gib ein Passwort ein",
             "error_invalid_password": "Ungültiges Passwort",
+            "error_invalid_password_title": "Ungültiges Passwort",
+            "error_invalid_password_message": "Das eingegebene Passwort ist nicht korrekt. Bitte versuche es erneut oder kontaktiere den Administrator des Schichtplans.",
             "filter": {
                 "title": "Filter",
                 "active": "Aktiv",
