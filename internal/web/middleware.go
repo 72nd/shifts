@@ -3,6 +3,7 @@ package web
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/72nd/schipla/internal/db"
@@ -30,11 +31,16 @@ func (m *middlewareManager) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		m.logger.Info("request completed",
+		args := []any{
 			"method", r.Method,
 			"path", r.URL.Path,
-			"duration", time.Since(start),
-		)
+			"duration", time.Since(start).String(),
+		}
+		if strings.HasPrefix(r.URL.Path, "/static/") {
+			m.logger.Debug("request completed", args...)
+		} else {
+			m.logger.Info("request completed", args...)
+		}
 	})
 }
 

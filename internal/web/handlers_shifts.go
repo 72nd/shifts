@@ -15,24 +15,36 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 
 	var shift db.NewShift
 	if err := json.NewDecoder(r.Body).Decode(&shift); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Get plan ID from token
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	// Get the shift type to verify it belongs to this plan
 	types, err := s.db.GetShiftTypesByPlan(plan.ID)
 	if err != nil {
-		s.logger.Error("failed to get shift types", "error", err)
-		http.Error(w, "Failed to verify shift type", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift type",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -46,15 +58,24 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !typeExists {
-		http.Error(w, "Shift type not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift type not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Create the shift
 	createdShift, err := s.db.CreateShift(shift)
 	if err != nil {
-		s.logger.Error("failed to create shift", "error", err)
-		http.Error(w, "Failed to create shift", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to create shift",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -70,40 +91,67 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 	// Parse shift ID
 	id, err := strconv.ParseInt(shiftId, 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Get plan ID from token
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	// Verify shift belongs to plan
 	belongs, err := s.db.VerifyShiftBelongsToPlan(id, plan.ID)
 	if err != nil {
-		s.logger.Error("failed to verify shift ownership", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift ownership",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if !belongs {
-		http.Error(w, "Shift not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	var shift db.Shift
 	if err := json.NewDecoder(r.Body).Decode(&shift); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Update the shift
 	if err := s.db.UpdateShift(id, shift); err != nil {
-		s.logger.Error("failed to update shift", "error", err)
-		http.Error(w, "Failed to update shift", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to update shift",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -118,15 +166,24 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 	// Parse shift ID
 	id, err := strconv.ParseInt(shiftId, 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Get plan ID from token
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -134,31 +191,53 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 	adminToken := r.Header.Get("X-Admin-Token")
 	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
 	if err != nil {
-		s.logger.Error("failed to verify admin token", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify admin token",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if !isValid {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		s.RespondWithError(w, NewAppError(
+			ErrUnauthorized,
+			"Unauthorized",
+			http.StatusUnauthorized,
+			nil,
+		))
 		return
 	}
 
 	// Verify shift belongs to plan
 	belongs, err := s.db.VerifyShiftBelongsToPlan(id, plan.ID)
 	if err != nil {
-		s.logger.Error("failed to verify shift ownership", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift ownership",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if !belongs {
-		http.Error(w, "Shift not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Delete the shift
 	if err := s.db.DeleteShift(id, plan.ID); err != nil {
-		s.logger.Error("failed to delete shift", "error", err)
-		http.Error(w, "Failed to delete shift", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to delete shift",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 

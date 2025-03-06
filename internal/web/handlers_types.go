@@ -16,21 +16,34 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 	// Get plan first to verify it exists and get its ID
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Get shift types with their shifts
 	types, err := s.db.GetShiftTypesByPlan(plan.ID)
 	if err != nil {
-		s.logger.Error("failed to get shift types", "error", err)
-		http.Error(w, "Failed to get shift types", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift types",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -46,43 +59,76 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 	// Get plan first to verify it exists and get its ID
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Parse request body
 	var shiftType db.NewShiftType
 	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Validiere und sanitisiere die Titel
 	shiftType.TitleEN = SanitizeText(shiftType.TitleEN)
 	if shiftType.TitleEN == "" {
-		http.Error(w, "English title is required", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrMissingField,
+			"English title is required",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 	if len(shiftType.TitleEN) > 150 {
-		http.Error(w, "English title cannot exceed 150 characters", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"English title cannot exceed 150 characters",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 
 	if plan.IsMultilingual {
 		shiftType.TitleDE = SanitizeText(shiftType.TitleDE)
 		if shiftType.TitleDE == "" {
-			http.Error(w, "German title is required for multilingual plans", http.StatusBadRequest)
+			s.RespondWithError(w, NewAppError(
+				ErrMissingField,
+				"German title is required for multilingual plans",
+				http.StatusBadRequest,
+				nil,
+			))
 			return
 		}
 		if len(shiftType.TitleDE) > 150 {
-			http.Error(w, "German title cannot exceed 150 characters", http.StatusBadRequest)
+			s.RespondWithError(w, NewAppError(
+				ErrInvalidInput,
+				"German title cannot exceed 150 characters",
+				http.StatusBadRequest,
+				nil,
+			))
 			return
 		}
 	}
@@ -109,8 +155,12 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 	// Create shift type
 	createdType, err := s.db.CreateShiftType(shiftType)
 	if err != nil {
-		s.logger.Error("failed to create shift type", "error", err)
-		http.Error(w, "Failed to create shift type", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to create shift type",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -125,20 +175,34 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 	token := vars["token"]
 	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift type ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Get plan first to verify it exists
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -152,30 +216,54 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		LocationEN    string `json:"location_en"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Validiere und sanitisiere die Titel
 	requestData.TitleEN = SanitizeText(requestData.TitleEN)
 	if requestData.TitleEN == "" {
-		http.Error(w, "English title is required", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrMissingField,
+			"English title is required",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 	if len(requestData.TitleEN) > 150 {
-		http.Error(w, "English title cannot exceed 150 characters", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"English title cannot exceed 150 characters",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 
 	if plan.IsMultilingual {
 		requestData.TitleDE = SanitizeText(requestData.TitleDE)
 		if requestData.TitleDE == "" {
-			http.Error(w, "German title is required for multilingual plans", http.StatusBadRequest)
+			s.RespondWithError(w, NewAppError(
+				ErrMissingField,
+				"German title is required for multilingual plans",
+				http.StatusBadRequest,
+				nil,
+			))
 			return
 		}
 		if len(requestData.TitleDE) > 150 {
-			http.Error(w, "German title cannot exceed 150 characters", http.StatusBadRequest)
+			s.RespondWithError(w, NewAppError(
+				ErrInvalidInput,
+				"German title cannot exceed 150 characters",
+				http.StatusBadRequest,
+				nil,
+			))
 			return
 		}
 	}
@@ -210,8 +298,12 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 
 	// Update shift type
 	if err := s.db.UpdateShiftType(typeID, shiftType); err != nil {
-		s.logger.Error("failed to update shift type", "error", err)
-		http.Error(w, "Failed to update shift type", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to update shift type",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -224,27 +316,45 @@ func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 	token := vars["token"]
 	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
 	if err != nil {
-		http.Error(w, "Invalid shift type ID", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift type ID",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Get plan first to verify it exists
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Delete the shift type
 	if err := s.db.DeleteShiftType(plan.ID, typeID); err != nil {
-		s.logger.Error("failed to delete shift type", "error", err)
-		http.Error(w, "failed to delete shift type", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to delete shift type",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 

@@ -66,14 +66,24 @@ func (tm *templateManager) render(w http.ResponseWriter, name string, data inter
 	ts, ok := tm.templates[name]
 	if !ok {
 		tm.logger.Error("template not found", "name", name)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		RespondWithErrorAndLogger(w, tm.logger, NewAppError(
+			ErrInternalError,
+			"Internal Server Error",
+			http.StatusInternalServerError,
+			fmt.Errorf("template %s not found", name),
+		))
 		return
 	}
 
 	// Execute template
 	if err := ts.Execute(w, data); err != nil {
 		tm.logger.Error("failed to execute template", "error", err, "name", name)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		RespondWithErrorAndLogger(w, tm.logger, NewAppError(
+			ErrInternalError,
+			"Internal Server Error",
+			http.StatusInternalServerError,
+			err,
+		))
 	}
 }
 

@@ -37,30 +37,54 @@ func (s *Server) handleShiftPlanSuccess(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	var plan db.NewShiftPlan
 	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Validiere und sanitisiere die Titel
 	plan.TitleEN = SanitizeText(plan.TitleEN)
 	if plan.TitleEN == "" {
-		http.Error(w, "English title is required", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrMissingField,
+			"English title is required",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 	if len(plan.TitleEN) > 150 {
-		http.Error(w, "English title cannot exceed 150 characters", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"English title cannot exceed 150 characters",
+			http.StatusBadRequest,
+			nil,
+		))
 		return
 	}
 
 	if plan.IsMultilingual && plan.TitleDE != nil {
 		*plan.TitleDE = SanitizeText(*plan.TitleDE)
 		if *plan.TitleDE == "" {
-			http.Error(w, "German title is required for multilingual plans", http.StatusBadRequest)
+			s.RespondWithError(w, NewAppError(
+				ErrMissingField,
+				"German title is required for multilingual plans",
+				http.StatusBadRequest,
+				nil,
+			))
 			return
 		}
 		if len(*plan.TitleDE) > 150 {
-			http.Error(w, "German title cannot exceed 150 characters", http.StatusBadRequest)
+			s.RespondWithError(w, NewAppError(
+				ErrInvalidInput,
+				"German title cannot exceed 150 characters",
+				http.StatusBadRequest,
+				nil,
+			))
 			return
 		}
 	}
@@ -76,8 +100,12 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	// Create plan
 	createdPlan, err := s.db.CreateShiftPlan(plan)
 	if err != nil {
-		s.logger.Error("failed to create plan", "error", err)
-		http.Error(w, "Failed to create plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to create plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -96,13 +124,22 @@ func (s *Server) handleGetShiftPlan(w http.ResponseWriter, r *http.Request) {
 
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -116,13 +153,22 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -136,12 +182,21 @@ func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
 	// Check if plan exists
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get plan", "error", err)
-		http.Error(w, "Plan not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if plan == nil {
-		http.Error(w, "Plan not found", http.StatusNotFound)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -157,21 +212,34 @@ func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request)
 	// Get plan first to verify it exists and get its ID
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Get statistics
 	stats, err := s.db.GetShiftPlanStats(plan.ID)
 	if err != nil {
-		s.logger.Error("failed to get shift plan statistics", "error", err)
-		http.Error(w, "Failed to get statistics", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get statistics",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -186,12 +254,21 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 	// Get plan to verify ownership
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
@@ -200,14 +277,23 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 		TypeIDs []int64 `json:"type_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Update type order
 	if err := s.db.UpdateShiftTypeOrder(plan.ID, data.TypeIDs); err != nil {
-		s.logger.Error("failed to update shift type order", "error", err)
-		http.Error(w, "Failed to update shift type order", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to update shift type order",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
@@ -221,46 +307,77 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	// Get plan to verify ownership
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		http.Error(w, "Failed to get shift plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if plan == nil {
-		http.NotFound(w, r)
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift plan not found",
+			http.StatusNotFound,
+			nil,
+		))
 		return
 	}
 
 	// Verify admin token
 	adminToken := r.Header.Get("X-Admin-Token")
 	if adminToken == "" {
-		http.Error(w, "Admin token required", http.StatusUnauthorized)
+		s.RespondWithError(w, NewAppError(
+			ErrUnauthorized,
+			"Admin token required",
+			http.StatusUnauthorized,
+			nil,
+		))
 		return
 	}
 
 	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
 	if err != nil {
-		s.logger.Error("failed to validate admin token", "error", err)
-		http.Error(w, "Failed to validate admin token", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to validate admin token",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 	if !isValid {
-		http.Error(w, "Invalid admin token", http.StatusUnauthorized)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidPassword,
+			"Invalid admin token",
+			http.StatusUnauthorized,
+			nil,
+		))
 		return
 	}
 
 	// Parse request body
 	var updateData db.NewShiftPlan
 	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
-		s.logger.Error("failed to decode request body", "error", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid request body",
+			http.StatusBadRequest,
+			err,
+		))
 		return
 	}
 
 	// Update plan
 	updatedPlan, err := s.db.UpdateShiftPlan(token, updateData)
 	if err != nil {
-		s.logger.Error("failed to update plan", "error", err)
-		http.Error(w, "Failed to update plan", http.StatusInternalServerError)
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to update plan",
+			http.StatusInternalServerError,
+			err,
+		))
 		return
 	}
 
