@@ -226,7 +226,16 @@
             "duplicate_shift": "Schicht duplizieren",
             "settings": "Einstellungen",
             "error_updating_settings": "Fehler beim Aktualisieren der Einstellungen",
-            "statistics": "Statistiken"
+            "statistics": "Statistiken",
+            "export": "Exportieren",
+            "export_modal": {
+                "title": "Schichtplan exportieren",
+                "format": "Format",
+                "format_json": "JSON",
+                "download": "Herunterladen",
+                "generating": "Wird generiert...",
+                "error": "Fehler beim Exportieren des Schichtplans"
+            }
         }
     }
 } 

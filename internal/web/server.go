@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/72nd/schipla/internal/db"
+	"github.com/72nd/schipla/internal/export"
 	"github.com/gorilla/mux"
 )
 
@@ -19,21 +20,23 @@ var content embed.FS
 
 // Server represents the HTTP server
 type Server struct {
-	db         *db.DB
-	logger     *slog.Logger
-	templates  *templateManager
-	middleware *middlewareManager
-	router     *mux.Router
+	db            *db.DB
+	logger        *slog.Logger
+	templates     *templateManager
+	middleware    *middlewareManager
+	router        *mux.Router
+	exportService *export.Service
 }
 
-// New creates a new HTTP server
-func New(db *db.DB, logger *slog.Logger) (*Server, error) {
+// NewServer creates a new server instance
+func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 	s := &Server{
-		db:         db,
-		logger:     logger,
-		templates:  newTemplateManager(logger),
-		middleware: newMiddlewareManager(logger, db, hashPassword),
-		router:     mux.NewRouter(),
+		db:            db,
+		logger:        logger,
+		templates:     newTemplateManager(logger),
+		middleware:    newMiddlewareManager(logger, db, hashPassword),
+		router:        mux.NewRouter(),
+		exportService: export.NewService(db),
 	}
 
 	// Parse templates
@@ -68,6 +71,7 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}", s.middleware.adminMiddleware(s.handleUpdateShiftPlan)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
 	api.HandleFunc("/plans/{token}/stats", s.handleGetShiftPlanStats).Methods("GET")
+	api.HandleFunc("/plans/{token}/export", s.middleware.adminMiddleware(s.handleExportPlan)).Methods("GET")
 
 	// Type routes
 	api.HandleFunc("/plans/{token}/types", s.handleGetShiftTypes).Methods("GET")

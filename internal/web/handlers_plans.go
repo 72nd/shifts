@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/72nd/schipla/internal/db"
+	"github.com/72nd/schipla/internal/export"
 	"github.com/gorilla/mux"
 )
 
@@ -384,4 +385,87 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	// Return updated plan data
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(updatedPlan)
+}
+
+// handleExportPlan handles the export of a shift plan
+func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
+	// Get plan token from URL
+	vars := mux.Vars(r)
+	token := vars["token"]
+	if token == "" {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Missing plan token",
+			http.StatusBadRequest,
+			nil,
+		))
+		return
+	}
+
+	// Get admin token from header
+	adminToken := r.Header.Get("X-Admin-Token")
+	if adminToken == "" {
+		s.RespondWithError(w, NewAppError(
+			ErrUnauthorized,
+			"Admin token required",
+			http.StatusUnauthorized,
+			nil,
+		))
+		return
+	}
+
+	// Get export format from query params (default to JSON)
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "json"
+	}
+
+	// Currently only JSON format is supported
+	if format != "json" {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Unsupported export format",
+			http.StatusBadRequest,
+			nil,
+		))
+		return
+	}
+
+	// Export plan using the export service
+	exportData, err := s.exportService.ExportPlan(token, hashPassword(adminToken))
+	if err != nil {
+		var appErr *AppError
+		switch e := err.(type) {
+		case *export.Error:
+			switch e.Type {
+			case export.ErrInvalidToken:
+				appErr = NewAppError(ErrResourceNotFound, e.Message, http.StatusNotFound, e)
+			case export.ErrUnauthorized:
+				appErr = NewAppError(ErrUnauthorized, e.Message, http.StatusUnauthorized, e)
+			case export.ErrLoadingPlan, export.ErrLoadingShiftTypes, export.ErrLoadingShifts, export.ErrLoadingParticipants:
+				appErr = NewAppError(ErrDatabaseError, e.Message, http.StatusInternalServerError, e)
+			default:
+				appErr = NewAppError(ErrInternalError, "Export failed", http.StatusInternalServerError, e)
+			}
+		default:
+			appErr = NewAppError(ErrInternalError, "Export failed", http.StatusInternalServerError, err)
+		}
+		s.RespondWithError(w, appErr)
+		return
+	}
+
+	// Set headers for file download
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", exportData.GenerateFilename()))
+
+	// Encode and send the response
+	if err := json.NewEncoder(w).Encode(exportData); err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrInternalError,
+			"Failed to encode export data",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
 }

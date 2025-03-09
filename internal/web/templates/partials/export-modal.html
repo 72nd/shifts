@@ -1,0 +1,41 @@
+{{ define "export-modal" }}
+<dialog id="export_modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4" x-text="$t('shift_plans.view.export_modal.title')"></h3>
+        
+        <!-- Error Display -->
+        {{ template "error-display" "exportModal" }}
+        
+        <!-- Format Selection -->
+        <div class="form-control w-full">
+            <label class="label">
+                <span class="label-text" x-text="$t('shift_plans.view.export_modal.format')"></span>
+            </label>
+            <select class="select select-bordered w-full" x-model="exportFormat">
+                <option value="json" x-text="$t('shift_plans.view.export_modal.format_json')"></option>
+            </select>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="isExporting" class="mt-4">
+            <div class="flex items-center gap-3">
+                <span class="loading loading-spinner"></span>
+                <span x-text="$t('shift_plans.view.export_modal.generating')"></span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="modal-action">
+            <button class="btn" @click="closeExportModal()" x-text="$t('common.cancel')"></button>
+            <button class="btn btn-primary" 
+                    @click="downloadExport()" 
+                    :disabled="isExporting"
+                    x-text="$t('shift_plans.view.export_modal.download')">
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{{ end }} 

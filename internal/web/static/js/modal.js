@@ -225,37 +225,37 @@ export class Modal {
                 
                 // If the response is successful but empty (204 No Content)
                 if (response.status === 204) {
-                    return { data: {}, status: 204 };
+                    return { data: {}, status: 204, response };
                 }
                 
                 // Try to parse the response as JSON
                 try {
                     const data = await response.json();
-                    return { data, status: response.status };
+                    return { data, status: response.status, response };
                 } catch (e) {
                     // If the response is not JSON, return an empty object
-                    return { data: {}, status: response.status };
+                    return { data: {}, status: response.status, response };
                 }
             }
             
             // Automatische Fehlerbehandlung (bisheriges Verhalten)
             if (!response.ok) {
                 await this.handleResponseError(response, errorMessage, requestInfo);
-                return { data: null, status: response.status };
+                return { data: null, status: response.status, response };
             }
 
             // If the response is successful but empty (204 No Content)
             if (response.status === 204) {
-                return { data: {}, status: 204 };
+                return { data: {}, status: 204, response };
             }
 
             // Try to parse the response as JSON
             try {
                 const data = await response.json();
-                return { data, status: response.status };
+                return { data, status: response.status, response };
             } catch (e) {
                 // If the response is not JSON, return an empty object
-                return { data: {}, status: response.status };
+                return { data: {}, status: response.status, response };
             }
         } catch (error) {
             // Network error or other exception
@@ -265,7 +265,7 @@ export class Modal {
                 request: requestInfo,
                 type: 'network_error'
             });
-            return { data: null, status: null };
+            return { data: null, status: null, response: null };
         }
     }
 }

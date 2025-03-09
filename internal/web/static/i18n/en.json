@@ -226,7 +226,16 @@
             "duplicate_shift": "Duplicate Shift",
             "settings": "Settings",
             "error_updating_settings": "Error updating settings",
-            "statistics": "Statistics"
+            "statistics": "Statistics",
+            "export": "Export",
+            "export_modal": {
+                "title": "Export Shift Plan",
+                "format": "Format",
+                "format_json": "JSON",
+                "download": "Download",
+                "generating": "Generating...",
+                "error": "Error exporting shift plan"
+            }
         }
     }
 } 

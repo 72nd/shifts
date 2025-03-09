@@ -9,6 +9,7 @@ import { AdminModal } from './admin-modal.js';
 import { SortTypesModal } from './sort-types-modal.js';
 import { SettingsModal } from './settings-modal.js';
 import { FilterManager } from './filter-manager.js';
+import { ExportModal } from './export-modal.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -43,6 +44,10 @@ document.addEventListener('alpine:init', () => {
         adminModal: null,
         sortTypesModal: null,
         settingsModal: null,
+        exportModal: null,
+        exportFormat: 'json',
+        isExporting: false,
+        exportError: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -135,6 +140,7 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken,
                 this.handleSettingsSuccess.bind(this)
             );
+            this.exportModal = new ExportModal(token, this.adminToken);
 
             // Load initial data
             this.loadPlan(token);
@@ -534,6 +540,10 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken,
                 this.handleSettingsSuccess.bind(this)
             );
+            this.exportModal = new ExportModal(
+                this.plan.token,
+                this.adminToken
+            );
 
             // Reload data to get admin-only fields
             this.loadPlan(this.plan.token);
@@ -724,6 +734,18 @@ document.addEventListener('alpine:init', () => {
 
             // Reload the plan data to ensure everything is up to date
             this.loadPlan(this.plan.token);
+        },
+
+        openExportModal() {
+            this.exportModal.open();
+        },
+
+        closeExportModal() {
+            this.exportModal.close();
+        },
+
+        async downloadExport() {
+            await this.exportModal.downloadExport();
         }
     }));
 }); 

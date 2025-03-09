@@ -54,10 +54,10 @@ func main() {
 	}
 	defer database.Close()
 
-	// Initialize HTTP server
-	server, err := web.New(database, logger)
+	// Create server
+	server, err := web.NewServer(database, logger)
 	if err != nil {
-		logger.Error("failed to initialize server", "error", err)
+		logger.Error("failed to create server", "error", err)
 		os.Exit(1)
 	}
 

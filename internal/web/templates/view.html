@@ -130,6 +130,14 @@
                         </svg>
                         <span x-text="$t('shift_plans.view.statistics')"></span>
                     </a>
+                    <button @click="openExportModal()" class="btn btn-sm btn-outline gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span x-text="$t('shift_plans.view.export')"></span>
+                    </button>
                     <button @click="logoutAdmin()" class="btn btn-sm btn-outline btn-error gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -200,6 +208,16 @@
                                     <span x-text="$t('shift_plans.view.settings')"></span>
                                 </a>
                             </li>
+                            <li>
+                                <a @click="openExportModal()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    <span x-text="$t('shift_plans.view.export')"></span>
+                                </a>
+                            </li>
                             <li class="menu-title mt-4 text-error">
                                 <span x-text="$t('shift_plans.view.admin_security')"></span>
                             </li>
@@ -254,6 +272,7 @@
     {{ template "shift-type-delete-modal" . }}
     {{ template "shift-type-modal" . }}
     {{ template "sort-types-modal" . }}
+    {{ template "export-modal" . }}
 </div>
 {{ end }}
 
