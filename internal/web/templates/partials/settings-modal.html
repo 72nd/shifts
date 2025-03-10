@@ -128,16 +128,54 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
-                <button type="button" 
-                        @click="settingsModal.close()" 
-                        class="btn btn-sm" 
-                        x-text="$t('common.cancel')">
-                </button>
-                <button type="submit" 
-                        class="btn btn-sm btn-primary" 
-                        x-text="$t('common.save')">
-                </button>
+            <div class="flex flex-col gap-4 mt-6 pt-4 border-t border-base-content/20">
+                <div class="flex justify-between gap-2">
+                    <button type="button"
+                            @click="settingsModal.showDeleteConfirm = true"
+                            class="btn btn-sm btn-error"
+                            x-show="!settingsModal.showDeleteConfirm"
+                            x-text="$t('shift_plans.settings.delete_plan')">
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" 
+                                @click="settingsModal.close()" 
+                                class="btn btn-sm" 
+                                x-text="$t('common.cancel')">
+                        </button>
+                        <button type="submit" 
+                                class="btn btn-sm btn-primary" 
+                                x-text="$t('common.save')">
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Delete Confirmation -->
+                <div x-show="settingsModal.showDeleteConfirm" class="space-y-4">
+                    <p class="text-sm text-error font-medium" x-text="$t('shift_plans.settings.delete_warning')"></p>
+                    <div class="form-control w-full">
+                        <input type="password" 
+                               x-model="settingsModal.deletePassword"
+                               :placeholder="$t('shift_plans.view.admin_password')"
+                               :class="{ 'input-error': settingsModal.deleteError }"
+                               class="input input-bordered input-sm w-full" />
+                        <label class="label py-0" x-show="settingsModal.deleteError">
+                            <span class="label-text-alt text-error" x-text="settingsModal.deleteError"></span>
+                        </label>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button"
+                                @click="settingsModal.cancelDelete()"
+                                class="btn btn-sm flex-1"
+                                x-text="$t('common.cancel')">
+                        </button>
+                        <button type="button"
+                                @click="settingsModal.confirmDelete()"
+                                :disabled="!settingsModal.deletePassword"
+                                class="btn btn-sm btn-error flex-1"
+                                x-text="$t('common.delete')">
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
     </div>

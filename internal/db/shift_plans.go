@@ -6,8 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
+
+	"github.com/72nd/shifts/internal/util"
 )
 
 // ShiftPlan represents a complete shift planning schedule
@@ -69,36 +70,6 @@ func generateToken() string {
 	return string(b)
 }
 
-// generatePassword generates a random password that is easy to remember
-func generatePassword() string {
-	// Define word lists for generating memorable passwords
-	adjectives := []string{
-		"happy", "brave", "calm", "wise", "kind", "bold", "proud", "quick",
-		"smart", "bright", "strong", "warm", "cool", "sweet", "fresh", "wild",
-		"soft", "fair", "pure", "free", "safe", "rich", "deep", "light",
-		"sharp", "clear", "clean", "broad", "fine", "firm", "grand", "plain",
-		"prime", "quiet", "small", "solid", "whole", "young", "good", "great",
-	}
-	nouns := []string{
-		"apple", "bird", "cloud", "dream", "earth", "fire", "grass", "heart",
-		"king", "lake", "moon", "night", "ocean", "pearl", "queen", "river",
-		"star", "tree", "wave", "wind", "world", "bear", "book", "door",
-		"fish", "game", "home", "lion", "rock", "ship", "snow", "song",
-		"sun", "time", "wolf", "wood", "rose", "rain", "gold", "hill",
-	}
-
-	// Generate password components
-	adj := adjectives[rand.Intn(len(adjectives))]
-	noun := nouns[rand.Intn(len(nouns))]
-
-	// Combine components into a memorable password (e.g., "BraveWolf7")
-	return fmt.Sprintf("%s%s%02d",
-		strings.Title(adj),
-		strings.Title(noun),
-		rand.Intn(100),
-	)
-}
-
 // hashPassword creates a simple hash of the password
 func hashPassword(password string) string {
 	hash := sha256.Sum256([]byte(password))
@@ -120,7 +91,10 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 
 	// Generate token and password
 	token := generateToken()
-	password := generatePassword()
+	password, err := util.PwdGenerator.Generate()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate password: %w", err)
+	}
 	hashedPassword := hashPassword(password)
 
 	// For single language plans, use English fields only
@@ -129,7 +103,7 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 		plan.DescriptionDE = nil
 	}
 
-	err := db.transaction(func(tx *sql.Tx) error {
+	err = db.transaction(func(tx *sql.Tx) error {
 		query := `
             INSERT INTO shift_plans (
                 token, admin_password, start_date, end_date, created_at,
@@ -457,4 +431,53 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 	}
 
 	return result, nil
+}
+
+// DeleteShiftPlan deletes a shift plan and all its related data (shifts, types, participants)
+func (db *DB) DeleteShiftPlan(token string, hashedPassword string) error {
+	return db.transaction(func(tx *sql.Tx) error {
+		// First verify the plan exists and password matches
+		var planID int64
+		var storedHash string
+		err := tx.QueryRow("SELECT id, admin_password FROM shift_plans WHERE token = ?", token).Scan(&planID, &storedHash)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return fmt.Errorf("shift plan not found")
+			}
+			return fmt.Errorf("failed to get shift plan: %w", err)
+		}
+
+		// Verify password
+		if hashedPassword != storedHash {
+			return fmt.Errorf("invalid password")
+		}
+
+		// Delete all participants first (no foreign key constraints)
+		if _, err := tx.Exec(`DELETE FROM participants WHERE shift_id IN (
+			SELECT s.id FROM shifts s
+			JOIN shift_types st ON s.type_id = st.id
+			WHERE st.plan_id = ?
+		)`, planID); err != nil {
+			return fmt.Errorf("failed to delete participants: %w", err)
+		}
+
+		// Delete all shifts
+		if _, err := tx.Exec(`DELETE FROM shifts WHERE type_id IN (
+			SELECT id FROM shift_types WHERE plan_id = ?
+		)`, planID); err != nil {
+			return fmt.Errorf("failed to delete shifts: %w", err)
+		}
+
+		// Delete all shift types
+		if _, err := tx.Exec("DELETE FROM shift_types WHERE plan_id = ?", planID); err != nil {
+			return fmt.Errorf("failed to delete shift types: %w", err)
+		}
+
+		// Finally delete the plan itself
+		if _, err := tx.Exec("DELETE FROM shift_plans WHERE id = ?", planID); err != nil {
+			return fmt.Errorf("failed to delete shift plan: %w", err)
+		}
+
+		return nil
+	})
 }

@@ -23,15 +23,19 @@ type Generator struct {
 	Nouns      []string
 }
 
+var PwdGenerator = Generator{}
+
 func (g *Generator) Generate() (string, error) {
 	if err := g.ensureLoaded(); err != nil {
 		return "", err
 	}
-	adj := g.Adjectives[rand.Intn(len(g.Adjectives))]
+	adj1 := g.Adjectives[rand.Intn(len(g.Adjectives))]
+	adj2 := g.Adjectives[rand.Intn(len(g.Adjectives))]
 	noun := g.Nouns[rand.Intn(len(g.Nouns))]
 	rsl := fmt.Sprintf(
-		"%s%s%02d",
-		cases.Title(language.English, cases.NoLower).String(adj),
+		"%s%s%s%02d",
+		cases.Title(language.English, cases.NoLower).String(adj1),
+		cases.Title(language.English, cases.NoLower).String(adj2),
 		cases.Title(language.English, cases.NoLower).String(noun),
 		rand.Intn(100),
 	)

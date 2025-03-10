@@ -1,0 +1,20 @@
+{{ template "base.html" . }}
+
+{{ define "meta" }}
+<title>Page Not Found - Shifts</title>
+{{ end }}
+
+{{ define "content" }}
+<div class="hero min-h-[50vh]">
+    <div class="hero-content text-center">
+        <div class="max-w-md">
+            <h1 class="text-4xl font-bold mb-8" x-text="$t('error.not_found.title')"></h1>
+            <p class="mb-8">
+                <span x-text="$t('error.not_found.message')"></span>
+                <span class="block mt-4 text-error">{{ .error }}.</span>
+            </p>
+            <a href="/" class="btn btn-primary" x-text="$t('error.not_found.back_home')"></a>
+        </div>
+    </div>
+</div>
+{{ end }} 

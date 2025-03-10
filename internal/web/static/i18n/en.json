@@ -88,7 +88,13 @@
         "settings": {
             "day_boundary_time": "Day Boundary Time",
             "day_boundary_time_help": "Shifts after this time will be grouped with the previous day (default: midnight)",
-            "error_invalid_time": "Please enter a valid time"
+            "error_invalid_time": "Please enter a valid time",
+            "delete_plan": "Delete Shift Plan",
+            "delete_warning": "WARNING: This action cannot be undone. All shifts and participant data will be permanently deleted.",
+            "delete_confirm": "Are you sure you want to delete this shift plan? This action cannot be undone!",
+            "delete_password_confirm": "Please enter the admin password to confirm:",
+            "delete_wrong_password": "The entered password is incorrect",
+            "delete_error": "Error deleting shift plan"
         },
         "new": {
             "title": "New Shift Plan",
@@ -237,6 +243,18 @@
                 "generating": "Generating...",
                 "error": "Error exporting shift plan"
             }
+        },
+        "deleted": {
+            "title": "Shift Plan Deleted",
+            "message": "The shift plan has been successfully deleted.",
+            "back_home": "Back to Home"
+        }
+    },
+    "error": {
+        "not_found": {
+            "title": "Page Not Found",
+            "message": "The requested page could not be found.",
+            "back_home": "Back to Home"
         }
     }
 } 

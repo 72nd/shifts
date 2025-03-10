@@ -154,6 +154,7 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
+		s.logger.Error("failed to get shift plan", "error", err)
 		s.RespondWithError(w, NewAppError(
 			ErrDatabaseError,
 			"Failed to get shift plan",
@@ -164,12 +165,10 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+		data := map[string]interface{}{
+			"error": fmt.Sprintf("Shift plan with ID '%s' does not exist", token),
+		}
+		s.templates.render(w, "404.html", data)
 		return
 	}
 
@@ -468,4 +467,58 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+}
+
+// handleDeleteShiftPlan handles the deletion of a shift plan
+func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+
+	// Get admin token from header
+	adminToken := r.Header.Get("X-Admin-Token")
+	if adminToken == "" {
+		s.RespondWithError(w, NewAppError(
+			ErrUnauthorized,
+			"Admin token required",
+			http.StatusUnauthorized,
+			nil,
+		))
+		return
+	}
+
+	// Hash the admin token for verification
+	hashedPassword := hashPassword(adminToken)
+
+	// Delete the plan
+	if err := s.db.DeleteShiftPlan(token, hashedPassword); err != nil {
+		var status int
+		var errType string
+		var message string
+
+		switch err.Error() {
+		case "shift plan not found":
+			status = http.StatusNotFound
+			errType = ErrResourceNotFound
+			message = "Shift plan not found"
+		case "invalid password":
+			status = http.StatusUnauthorized
+			errType = ErrInvalidPassword
+			message = "Invalid password"
+		default:
+			status = http.StatusInternalServerError
+			errType = ErrDatabaseError
+			message = "Failed to delete shift plan"
+		}
+
+		s.RespondWithError(w, NewAppError(
+			errType,
+			message,
+			status,
+			err,
+		))
+		return
+	}
+
+	// Return success with no content
+	w.WriteHeader(http.StatusNoContent)
 }

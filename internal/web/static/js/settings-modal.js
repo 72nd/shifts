@@ -20,6 +20,9 @@ export class SettingsModal extends Modal {
         this.end_date = '';
         this.day_boundary_time = '00:00'; // Default to midnight
         this.errors = {}; // Field-level validation errors
+        this.showDeleteConfirm = false;
+        this.deletePassword = '';
+        this.deleteError = '';
     }
 
     openWith(plan) {
@@ -141,5 +144,46 @@ export class SettingsModal extends Modal {
         }
         
         return false;
+    }
+
+    cancelDelete() {
+        this.showDeleteConfirm = false;
+        this.deletePassword = '';
+        this.deleteError = '';
+    }
+
+    async confirmDelete() {
+        this.deleteError = '';
+
+        // Verify the password matches the admin token
+        if (this.deletePassword !== this.adminToken) {
+            this.deleteError = AlpineI18n.t('shift_plans.settings.delete_wrong_password');
+            return;
+        }
+
+        const url = `/api/plans/${this.planToken}`;
+        const options = {
+            method: 'DELETE',
+            headers: {
+                'X-Admin-Token': this.adminToken
+            }
+        };
+
+        const errorMessage = AlpineI18n.t('shift_plans.settings.delete_error');
+        console.log('Sending delete request...', { url, options: { ...options, headers: { 'X-Admin-Token': '[REDACTED]' } } });
+        
+        const response = await this.sendRequest(url, options, errorMessage);
+        console.log('Delete response:', response);
+
+        // Check for successful deletion (HTTP 204 No Content)
+        if (response.status === 204) {
+            console.log('Delete successful, redirecting to confirmation page...');
+            // Close modal and redirect to deletion confirmation page
+            this.close();
+            // Ensure the redirection happens after a small delay to allow the modal to close
+            setTimeout(() => {
+                window.location.href = '/plan-deleted';
+            }, 100);
+        }
     }
 } 

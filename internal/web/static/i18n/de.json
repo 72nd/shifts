@@ -88,7 +88,13 @@
         "settings": {
             "day_boundary_time": "Tagesgrenze",
             "day_boundary_time_help": "Schichten nach dieser Uhrzeit werden dem Vortag zugeordnet (Standard: Mitternacht)",
-            "error_invalid_time": "Bitte gib eine gültige Uhrzeit ein"
+            "error_invalid_time": "Bitte gib eine gültige Uhrzeit ein",
+            "delete_plan": "Schichtplan löschen",
+            "delete_warning": "ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden. Alle Schichten und Teilnehmerdaten werden unwiderruflich gelöscht.",
+            "delete_confirm": "Möchtest du diesen Schichtplan wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden!",
+            "delete_password_confirm": "Bitte gib zur Bestätigung das Admin-Passwort ein:",
+            "delete_wrong_password": "Das eingegebene Passwort ist nicht korrekt",
+            "delete_error": "Fehler beim Löschen des Schichtplans"
         },
         "new": {
             "title": "Neuer Schichtplan",
@@ -237,6 +243,18 @@
                 "generating": "Wird generiert...",
                 "error": "Fehler beim Exportieren des Schichtplans"
             }
+        },
+        "deleted": {
+            "title": "Schichtplan gelöscht",
+            "message": "Der Schichtplan wurde erfolgreich gelöscht.",
+            "back_home": "Zur Startseite"
+        }
+    },
+    "error": {
+        "not_found": {
+            "title": "Seite nicht gefunden",
+            "message": "Die angeforderte Seite konnte nicht gefunden werden.",
+            "back_home": "Zur Startseite"
         }
     }
 } 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/72nd/shifts/internal/db"
@@ -62,6 +63,7 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/plans/{token}/stats", s.handleShiftPlanStats).Methods("GET")
 	s.router.HandleFunc("/help", s.handleHelp).Methods("GET")
+	s.router.HandleFunc("/plan-deleted", s.handlePlanDeleted()).Methods("GET")
 
 	// API routes
 	api := s.router.PathPrefix("/api").Subrouter()
@@ -70,6 +72,7 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans", s.handleCreateShiftPlan).Methods("POST")
 	api.HandleFunc("/plans/{token}", s.handleGetShiftPlan).Methods("GET")
 	api.HandleFunc("/plans/{token}", s.middleware.adminMiddleware(s.handleUpdateShiftPlan)).Methods("PUT")
+	api.HandleFunc("/plans/{token}", s.middleware.adminMiddleware(s.handleDeleteShiftPlan)).Methods("DELETE")
 	api.HandleFunc("/plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
 	api.HandleFunc("/plans/{token}/stats", s.handleGetShiftPlanStats).Methods("GET")
 	api.HandleFunc("/plans/{token}/export", s.middleware.adminMiddleware(s.handleExportPlan)).Methods("GET")
@@ -92,6 +95,9 @@ func (s *Server) setupRoutes() {
 
 	// Add middleware
 	s.router.Use(s.middleware.loggingMiddleware)
+
+	// 404 Handler for HTML routes (must be added last)
+	s.router.NotFoundHandler = s.handle404()
 }
 
 // Start starts the HTTP server
@@ -184,4 +190,31 @@ func (s *Server) RespondWithError(w http.ResponseWriter, err *AppError) {
 
 func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
 	s.templates.render(w, "help.html", nil)
+}
+
+func (s *Server) handlePlanDeleted() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.templates.render(w, "plan-deleted.html", nil)
+	}
+}
+
+func (s *Server) handle404() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Only handle non-API routes
+		if !strings.HasPrefix(r.URL.Path, "/api/") {
+			data := map[string]interface{}{
+				"error": fmt.Sprintf("Die URL '%s' wurde nicht gefunden.", r.URL.Path),
+			}
+			s.templates.render(w, "404.html", data)
+			return
+		}
+
+		// For API routes, return JSON error
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Resource not found",
+			http.StatusNotFound,
+			nil,
+		))
+	})
 }
