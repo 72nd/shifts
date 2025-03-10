@@ -1,45 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-title" content="Shifts" />
-    
+
     <!-- Default OpenGraph Meta Tags -->
     <meta property="og:site_name" content="Shifts">
     <meta property="og:type" content="website">
     <meta property="og:image" content="/static/img/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    
+
     <!-- Template block for page-specific meta tags -->
     {{ block "meta" . }}
     <title>Shifts - Shift Planning Made Easy</title>
     <meta property="og:title" content="Shifts - Shift Planning Made Easy">
-    <meta property="og:description" content="Create and manage shift plans collaboratively. Perfect for events, volunteer work, and team organization.">
-    <meta name="description" content="Create and manage shift plans collaboratively. Perfect for events, volunteer work, and team organization.">
+    <meta property="og:description"
+        content="Create and manage shift plans collaboratively. Perfect for events, volunteer work, and team organization.">
+    <meta name="description"
+        content="Create and manage shift plans collaboratively. Perfect for events, volunteer work, and team organization.">
     {{ end }}
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/static/img/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg" />
     <link rel="shortcut icon" href="/static/img/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png" />
     <link rel="manifest" href="/static/site.webmanifest" />
-    
+
     <!-- DaisyUI -->
     <link href="/static/vendor/daisyui.min.css" rel="stylesheet">
 
-    
+
     <!-- Tailwind (must be after DaisyUI) -->
     <script src="/static/vendor/tailwind.min.js"></script>
 
     <link href="/static/vendor/style.css" rel="stylesheet">
-    
+
     <!-- Alpine Plugins -->
     <script defer src="/static/vendor/alpine-sort.min.js"></script>
     <script defer src="/static/vendor/alpine-i18n.min.js"></script>
-    
+
     <!-- Theme initialization (must be before Alpine) -->
     <script>
         // Check for saved theme preference or default to 'light'
@@ -52,7 +55,7 @@
             if (themeController) {
                 // Set initial state
                 themeController.checked = theme === 'dark';
-                
+
                 // Add change listener
                 themeController.addEventListener('change', (e) => {
                     const newTheme = e.target.checked ? 'dark' : 'light';
@@ -62,14 +65,14 @@
             }
         });
     </script>
-    
+
     <!-- Initialize translations -->
     <script>
         // Wait for Alpine and i18n plugin to load
         document.addEventListener('alpine:init', () => {
             // Default locale
             const locale = localStorage.getItem('locale') || 'de';
-            
+
             // Load translations
             Promise.all([
                 fetch('/static/i18n/de.json').then(r => r.json()),
@@ -80,10 +83,10 @@
                     de,
                     en
                 });
-                
+
                 // Set fallback locale
                 window.AlpineI18n.fallbackLocale = 'en';
-                
+
                 // Listen to locale changes to persist in localStorage
                 document.addEventListener('alpine-i18n:locale-change', () => {
                     localStorage.setItem('locale', window.AlpineI18n.locale);
@@ -91,7 +94,7 @@
             });
         });
     </script>
-    
+
     <!-- Tailwind configuration -->
     <script>
         tailwind.config = {
@@ -113,45 +116,32 @@
         }
     </style>
 </head>
+
 <body class="min-h-screen bg-base-100" x-data>
     <!-- Navigation -->
     <nav class="navbar bg-base-300">
         <div class="container">
             <div class="flex-1">
                 <a href="/" class="flex items-center text-xl font-semibold text-base-content">
-                    <svg class="h-6 w-6 mr-2" fill="currentColor" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                        <g transform="matrix(1.34184,0,0,1.43579,-283.039,-297.086)">
-                            <path d="M813.009,296L834.408,296C895.445,296 945,342.312 945,399.355L945,798.645C945,855.688 895.445,902 834.408,902L350.592,902C289.555,902 240,855.688 240,798.645L240,399.355C240,342.312 289.555,296 350.592,296L371.991,296" style="fill:none;stroke:currentColor;stroke-width:29.28px;"/>
-                        </g>
-                        <g transform="matrix(0.143555,0,0,0.336333,181.66,-73.5546)">
-                            <path d="M945,446.455L945,751.545C945,834.583 787.05,902 592.5,902C397.95,902 240,834.583 240,751.545L240,446.455C240,363.417 397.95,296 592.5,296C787.05,296 945,363.417 945,446.455Z" style="fill:none;stroke:currentColor;stroke-width:157.37px;"/>
-                        </g>
-                        <g transform="matrix(0.143555,0,0,0.336333,672.228,-73.5546)">
-                            <path d="M945,446.455L945,751.545C945,834.583 787.05,902 592.5,902C397.95,902 240,834.583 240,751.545L240,446.455C240,363.417 397.95,296 592.5,296C787.05,296 945,363.417 945,446.455Z" style="fill:none;stroke:currentColor;stroke-width:157.37px;"/>
-                        </g>
-                        <g transform="matrix(1.40564,0,0,1.40564,-257.588,-240.369)">
-                            <path d="M211.502,390.073L883.784,390.073" style="fill:none;stroke:currentColor;stroke-width:28.95px;"/>
-                        </g>
-                        <g transform="matrix(1.34184,0,0,1.43579,-283.039,-297.086)">
-                            <path d="M447.415,296L737.585,296" style="fill:none;stroke:currentColor;stroke-width:29.28px;"/>
-                        </g>
-                        <g transform="matrix(1.95287,0,0,1.95287,-839.187,-508.993)">
-                            <path d="M813,474L692,607L640.998,545.625" style="fill:none;stroke:currentColor;stroke-width:20.84px;"/>
-                        </g>
-                        <g transform="matrix(1.39491,0,0,1.95287,-403.418,-745.291)">
-                            <path d="M543,716L571,716" style="fill:none;stroke:currentColor;stroke-width:20.55px;"/>
-                        </g>
-                        <g transform="matrix(1.39491,0,0,1.95287,-126.11,-745.291)">
-                            <path d="M543,716L571,716" style="fill:none;stroke:currentColor;stroke-width:20.55px;"/>
-                        </g>
-                        <g transform="matrix(0,1.39491,-1.95287,0,1910.46,-262.652)">
-                            <path d="M543,716L571,716" style="fill:none;stroke:currentColor;stroke-width:20.55px;"/>
-                        </g>
-                        <g transform="matrix(0,1.39491,-1.95287,0,1910.46,14.6559)">
-                            <path d="M543,716L571,716" style="fill:none;stroke:currentColor;stroke-width:20.55px;"/>
-                        </g>
-                        <g transform="matrix(1.95287,0,0,1.95287,-839.187,-508.993)">
-                            <path d="M723.317,478.123C713.103,475.386 702.574,474 692,474C625.218,474 571,528.218 571,595C571,661.782 625.218,716 692,716C758.782,716 813,661.782 813,595C813,584.426 811.614,573.897 808.877,563.683C811.614,573.897 813,584.426 813,595C813,661.782 758.782,716 692,716C625.218,716 571,661.782 571,595C571,528.218 625.218,474 692,474C702.574,474 713.103,475.386 723.317,478.123Z" style="fill:none;stroke:currentColor;stroke-width:20.84px;"/>
+                    <svg class="h-7 w-7 mr-2" fill="currentColor" viewBox="0 0 1024 1024"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M813.009 310.274v-28.548h21.399c69.402 0 125.632 52.769 125.632 117.629v22.028h-30.08v-22.028c0-49.226-42.879-89.081-95.552-89.081h-21.399Z"
+                            style="fill:currentColor" transform="matrix(1.36688 0 0 1.44023 -297.877 -301.083)" />
+                        <path
+                            d="M960.04 421.383v377.262c0 64.86-56.23 117.629-125.632 117.629H350.592c-69.402 0-125.632-52.769-125.632-117.629V421.383c0-7.883 6.734-14.274 15.04-14.274h705c8.306 0 15.04 6.391 15.04 14.274Zm-173.058 35.541L593.416 658.851l-73.311-83.729c-7.142-8.158-19.919-9.277-28.515-2.498-8.595 6.779-9.774 18.905-2.632 27.062l88.193 100.726c3.746 4.278 9.261 6.806 15.12 6.93 5.859.125 11.487-2.166 15.431-6.28l209.236-218.274c7.52-7.845 6.915-20.009-1.352-27.147-8.266-7.138-21.083-6.563-28.604 1.283ZM577.877 768.153v32.823c0 7.66 6.552 13.879 14.623 13.879 8.072 0 14.624-6.219 14.624-13.879v-32.823c0-7.66-6.552-13.879-14.624-13.879-8.071 0-14.623 6.219-14.623 13.879ZM452.56 682.102h34.585c8.071 0 14.624-6.219 14.624-13.88 0-7.66-6.553-13.879-14.624-13.879H452.56c-8.071 0-14.624 6.219-14.624 13.879 0 7.661 6.553 13.88 14.624 13.88Zm125.317-146.693v32.823c0 7.66 6.552 13.879 14.623 13.879 8.072 0 14.624-6.219 14.624-13.879v-32.823c0-7.661-6.552-13.88-14.624-13.88-8.071 0-14.623 6.219-14.623 13.88Zm196.983 86.162a170.795 170.795 0 0 1 6.402 46.438c0 98.993-84.682 179.362-188.987 179.362-104.304 0-188.986-80.369-188.986-179.362s84.682-179.363 188.986-179.363c19.005 0 37.358 2.664 54.666 7.627 10.698 3.067 22.007-2.686 25.239-12.839 3.232-10.153-2.83-20.886-13.528-23.954-21.016-6.025-43.301-9.269-66.377-9.269-126.655 0-229.483 97.592-229.483 217.798S465.62 885.806 592.275 885.806c126.656 0 229.484-97.591 229.484-217.797 0-19.493-2.707-38.391-7.779-56.375-2.889-10.246-14-16.338-24.795-13.595-10.796 2.742-17.214 13.287-14.325 23.532Zm-77.067 60.531h34.584c8.072 0 14.624-6.219 14.624-13.88 0-7.66-6.552-13.879-14.624-13.879h-34.584c-8.071 0-14.624 6.219-14.624 13.879 0 7.661 6.553 13.88 14.624 13.88Z"
+                            style="fill:currentColor" transform="matrix(1.36688 0 0 1.44023 -297.877 -301.083)" />
+                        <path
+                            d="M255.04 421.383h-30.08v-22.028c0-64.86 56.23-117.629 125.632-117.629h21.399v28.548h-21.399c-52.673 0-95.552 39.855-95.552 89.081v22.028Z"
+                            style="fill:currentColor" transform="matrix(1.36688 0 0 1.44023 -297.877 -301.083)" />
+                        <path
+                            d="M1086.74 446.455v305.09c0 116.427-221.464 210.951-494.24 210.951S98.264 867.972 98.264 751.545v-305.09c0-116.427 221.46-210.951 494.236-210.951 272.776 0 494.24 94.524 494.24 210.951Zm-283.476 0c0-49.649-94.44-89.959-210.764-89.959-116.324 0-210.764 40.31-210.764 89.959v305.09c0 49.649 94.44 89.959 210.764 89.959 116.324 0 210.764-40.31 210.764-89.959v-305.09Z"
+                            style="fill:currentColor" transform="matrix(.144 0 0 .33737 180.64 -76.862)" />
+                        <path
+                            d="M1086.74 446.455v305.09c0 116.427-221.464 210.951-494.24 210.951S98.264 867.972 98.264 751.545v-305.09c0-116.427 221.46-210.951 494.236-210.951 272.776 0 494.24 94.524 494.24 210.951Zm-283.476 0c0-49.649-94.44-89.959-210.764-89.959-116.324 0-210.764 40.31-210.764 89.959v305.09c0 49.649 94.44 89.959 210.764 89.959 116.324 0 210.764-40.31 210.764-89.959v-305.09Z"
+                            style="fill:currentColor" transform="matrix(.144 0 0 .33737 672.723 -76.862)" />
+                        <path style="fill:currentColor" d="M447.415 281.829h290.171v28.342H447.415z"
+                            transform="matrix(1.34598 0 0 1.44023 -285.493 -301.083)" />
                     </svg>
                     Shifts
                 </a>
@@ -159,18 +149,23 @@
             <div class="flex items-center gap-2">
                 <!-- Help button -->
                 <a href="/help" class="btn btn-ghost btn-circle text-base-content" title="Help">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </a>
                 <!-- Language selector -->
                 <div class="dropdown dropdown-end" x-data="{ open: false }">
                     <button tabindex="0" class="btn btn-ghost btn-circle text-base-content" @click="open = !open">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                         </svg>
                     </button>
-                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50" x-show="open" @click.away="open = false">
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50"
+                        x-show="open" @click.away="open = false">
                         <li>
                             <a @click="$locale('de'); open = false">
                                 <span class="font-medium" x-text="$locale === 'de' ? '✓' : ''"></span>
@@ -185,16 +180,21 @@
                         </li>
                     </ul>
                 </div>
-                
+
                 <!-- Theme toggle -->
-                <button class="btn btn-ghost btn-circle text-base-content" @click="$el.querySelector('.theme-controller').click()">
+                <button class="btn btn-ghost btn-circle text-base-content"
+                    @click="$el.querySelector('.theme-controller').click()">
                     <label class="swap swap-rotate">
                         <input type="checkbox" class="theme-controller" value="dark" />
-                        <svg class="swap-on h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+                        <svg class="swap-on h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
                         </svg>
-                        <svg class="swap-off h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/>
+                        <svg class="swap-off h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
                         </svg>
                     </label>
                 </button>
@@ -211,7 +211,8 @@
     <footer class="footer footer-center p-4 bg-base-100 border-t">
         <div>
             <p>
-                <span x-text="$t('common.made_with')">Shifts – Collaborative Shift Plans</span> — <a class="link link-primary" href="/plans/new" x-text="$t('common.footer_new_plan')">New Shift Plan</a>
+                <span x-text="$t('common.made_with')">Shifts – Collaborative Shift Plans</span> — <a
+                    class="link link-primary" href="/plans/new" x-text="$t('common.footer_new_plan')">New Shift Plan</a>
             </p>
         </div>
     </footer>
@@ -222,4 +223,5 @@
     <!-- Alpine.js must be loaded last -->
     <script defer src="/static/vendor/alpine.min.js"></script>
 </body>
+
 </html>
