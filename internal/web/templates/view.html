@@ -1,5 +1,12 @@
 {{ template "base.html" . }}
 
+{{ define "meta" }}
+<title>{{ .TitleEN }} - Shifts</title>
+<meta property="og:title" content="{{ .TitleEN }} - Schipla">
+<meta property="og:description" content="{{ if .DescriptionEN }}{{ .DescriptionEN }}{{ else }}Shift plan for {{ .TitleEN }}. Manage and join shifts easily.{{ end }}">
+<meta name="description" content="{{ if .DescriptionEN }}{{ .DescriptionEN }}{{ else }}Shift plan for {{ .TitleEN }}. Manage and join shifts easily.{{ end }}">
+{{ end }}
+
 {{ define "content" }}
 <div x-data="shiftPlanView" x-init="init()" class="container mx-auto px-0 md:px-2">
     <!-- Loading State -->

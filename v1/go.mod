@@ -1,4 +1,4 @@
-module schipla
+module shifts
 
 go 1.21
 

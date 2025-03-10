@@ -12,7 +12,7 @@ type Config struct {
 	InfoTextEN    string
 	DayZero       string // Format: "2024-03-20"
 	DebugMode     bool   // Enables debug features
-	Version       string // Schipla version
+	Version       string // Shifts version
 }
 
 func LoadConfig() Config {

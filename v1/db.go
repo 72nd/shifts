@@ -13,7 +13,7 @@ var db *sql.DB
 
 func initDB() {
 	var err error
-	db, err = sql.Open("sqlite3", "./schipla.db")
+	db, err = sql.Open("sqlite3", "./shifts.db")
 	if err != nil {
 		log.Fatal(err)
 	}

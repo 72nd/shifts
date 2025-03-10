@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/72nd/schipla/internal/db"
-	"github.com/72nd/schipla/internal/export"
+	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/export"
 	"github.com/gorilla/mux"
 )
 
@@ -61,6 +61,7 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/plans/success", s.handleShiftPlanSuccess).Methods("GET")
 	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/plans/{token}/stats", s.handleShiftPlanStats).Methods("GET")
+	s.router.HandleFunc("/help", s.handleHelp).Methods("GET")
 
 	// API routes
 	api := s.router.PathPrefix("/api").Subrouter()
@@ -179,4 +180,8 @@ func hashPassword(password string) string {
 // RespondWithError sendet eine Fehlerantwort an den Client und loggt den Fehler
 func (s *Server) RespondWithError(w http.ResponseWriter, err *AppError) {
 	RespondWithError(w, s.logger, err)
+}
+
+func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
+	s.templates.render(w, "help.html", nil)
 }

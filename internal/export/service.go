@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/72nd/schipla/internal/db"
+	"github.com/72nd/shifts/internal/db"
 )
 
 // Service handles the export functionality for shift plans

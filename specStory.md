@@ -28,7 +28,7 @@ _****_
 | 📄 `templates` |
 | 📄 `static` |
 | 📄 `types.go` |
-| 📄 `schipla.db` |
+| 📄 `shifts.db` |
 | 📄 `main.go` |
 | 📄 `info_en.md` |
 | 📄 `info_de.md` |
@@ -130,7 +130,7 @@ Basierend auf meiner Analyse kann ich folgende Projektstruktur und Technologien 
    - `db.go`: Datenbankoperationen
    - `types.go`: Typdefinitionen
    - `config.go`: Konfigurationsmanagement
-   - `schipla.db`: SQLite-Datenbank
+   - `shifts.db`: SQLite-Datenbank
 
 2. **Frontend-Struktur:**
    - `templates/`: Enthält HTML-Templates
@@ -303,10 +303,10 @@ Das ist ein sehr guter Vorschlag! Die Verwendung von Alpine.js Components würde
 
 ### 1. Projektstruktur für das Refactoring
 
-Ich schlage vor, dass wir einen neuen Unterordner `schipla-refactored` erstellen, der folgende Struktur haben könnte:
+Ich schlage vor, dass wir einen neuen Unterordner `shifts-refactored` erstellen, der folgende Struktur haben könnte:
 
 ```
-schipla-refactored/
+shifts-refactored/
 ├── static/
 │   ├── js/
 │   │   ├── components/           # Alpine.js Komponenten
@@ -453,7 +453,7 @@ Ja, Sie haben absolut Recht! Ich habe mir das README von alpinejs-component noch
 Das Schöne an alpinejs-component ist ja gerade die Einfachheit. Statt für jede Komponente eine eigene JS-Datei zu erstellen, können wir die HTML-Templates direkt verwenden. Hier ist ein vereinfachter Ansatz:
 
 ```
-schipla-refactored/
+shifts-refactored/
 ├── static/
 │   ├── js/
 │   │   ├── main.js          # Hauptlogik und Alpine.js Initialisierung
@@ -553,7 +553,7 @@ Hier ist mein Vorschlag für die Umstrukturierung:
 _****_
 
 ```bash
-mkdir -p schipla-v2
+mkdir -p shifts-v2
 ```
 
 ```
@@ -565,18 +565,18 @@ Warning: PowerShell detected that you might be using a screen reader and has dis
 abled PSReadLine for comp
 atibility purposes. If you want to re-enable it, run 'Import-Module PSReadLine'.
                          
-PS C:\Users\Hostettler\repos\schipla-main> mkdir -p schipla-v2
+PS C:\Users\Hostettler\repos\shifts-main> mkdir -p shifts-v2
 
 
-    Directory: C:\Users\Hostettler\repos\schipla-main
+    Directory: C:\Users\Hostettler\repos\shifts-main
 
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-d-----        18.02.2025     12:47                schipla-v2
+d-----        18.02.2025     12:47                shifts-v2
 
 
-PS C:\Users\Hostettler\repos\schipla-main>
+PS C:\Users\Hostettler\repos\shifts-main>
 
 
 
@@ -605,18 +605,18 @@ Jetzt können wir die Grundstruktur für die neue Version anlegen:
 _****_
 
 ```bash
-cd schipla-v2 && mkdir -p cmd/schipla internal/auth internal/config internal/db internal/handlers static/js static/css templates
+cd shifts-v2 && mkdir -p cmd/shifts internal/auth internal/config internal/db internal/handlers static/js static/css templates
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main> cd schipla-v2 && mkdir -p cmd/schipla internal/auth internal/c
+PS C:\Users\Hostettler\repos\shifts-main> cd shifts-v2 && mkdir -p cmd/shifts internal/auth internal/c
 At line:1 char:15
-+ cd schipla-v2 && mkdir -p cmd/schipla internal/auth internal/config i ...
++ cd shifts-v2 && mkdir -p cmd/shifts internal/auth internal/config i ...
 +               ~~
 The token '&&' is not a valid statement separator in this version.
     + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
     + FullyQualifiedErrorId : InvalidEndOfLine
-PS C:\Users\Hostettler\repos\schipla-main>
+PS C:\Users\Hostettler\repos\shifts-main>
 ```
 
 ---
@@ -632,22 +632,22 @@ Entschuldigung, lassen Sie uns die Befehle für Windows anpassen:
 _****_
 
 ```bash
-cd schipla-v2; mkdir cmd\schipla, internal\auth, internal\config, internal\db, internal\handlers, static\js, static\css, templates
+cd shifts-v2; mkdir cmd\shifts, internal\auth, internal\config, internal\db, internal\handlers, static\js, static\css, templates
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main> cd schipla-v2; mkdir cmd\schipla, internal\auth, internal\conf
+PS C:\Users\Hostettler\repos\shifts-main> cd shifts-v2; mkdir cmd\shifts, internal\auth, internal\conf
 
 
-    Directory: C:\Users\Hostettler\repos\schipla-main\schipla-v2\cmd
+    Directory: C:\Users\Hostettler\repos\shifts-main\shifts-v2\cmd
 
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-d-----        18.02.2025     12:47                schipla
+d-----        18.02.2025     12:47                shifts
 
 
-    Directory: C:\Users\Hostettler\repos\schipla-main\schipla-v2\internal
+    Directory: C:\Users\Hostettler\repos\shifts-main\shifts-v2\internal
 
 
 Mode                 LastWriteTime         Length Name
@@ -658,7 +658,7 @@ d-----        18.02.2025     12:47                db
 d-----        18.02.2025     12:47                handlers
 
 
-    Directory: C:\Users\Hostettler\repos\schipla-main\schipla-v2\static
+    Directory: C:\Users\Hostettler\repos\shifts-main\shifts-v2\static
 
 
 Mode                 LastWriteTime         Length Name
@@ -667,14 +667,14 @@ d-----        18.02.2025     12:47                js
 d-----        18.02.2025     12:47                css
 
 
-    Directory: C:\Users\Hostettler\repos\schipla-main\schipla-v2
+    Directory: C:\Users\Hostettler\repos\shifts-main\shifts-v2
 
 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
 d-----        18.02.2025     12:47                templates
 
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 ```
 
 ---
@@ -686,12 +686,12 @@ _****_
 Perfekt! Hier ist die neue Projektstruktur mit Erklärungen:
 
 ```
-schipla-main/                 # Ursprüngliches Projekt (als Referenz)
+shifts-main/                 # Ursprüngliches Projekt (als Referenz)
     ├── ...                   # Bestehender Code
 
-schipla-v2/                   # Neue Version
+shifts-v2/                   # Neue Version
     ├── cmd/
-    │   └── schipla/         # Hauptanwendung (main.go)
+    │   └── shifts/         # Hauptanwendung (main.go)
     ├── internal/            
     │   ├── auth/            # Authentifizierung
     │   ├── config/          # Konfiguration
@@ -930,7 +930,7 @@ _****_
 
 ```diff
 - 
-+ -- Schema for the Schipla v2 database
++ -- Schema for the Shifts v2 database
 + 
 + -- Shift plans table
 + CREATE TABLE IF NOT EXISTS shift_plans (
@@ -3298,7 +3298,7 @@ _****_
 
 
 
-Jetzt erstelle ich die main.go in cmd/schipla:
+Jetzt erstelle ich die main.go in cmd/shifts:
 
 ---
 
@@ -3315,8 +3315,8 @@ _****_
 + 	"os"
 + 	"path/filepath"
 + 
-+ 	"github.com/hostettler/schipla-v2/internal/config"
-+ 	"github.com/hostettler/schipla-v2/internal/db"
++ 	"github.com/hostettler/shifts-v2/internal/config"
++ 	"github.com/hostettler/shifts-v2/internal/db"
 + )
 + 
 + func main() {
@@ -3429,19 +3429,19 @@ Ah ja, natürlich! Lassen Sie uns das Go-Modul mit dem korrekten GitHub-Namen in
 _****_
 
 ```bash
-cd schipla-v2 && go mod init github.com/72nd/schipla-v2
+cd shifts-v2 && go mod init github.com/72nd/shifts-v2
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2> cd schipla-v2 && go mod init github.com/72nd/schipl
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2> cd shifts-v2 && go mod init github.com/72nd/schipl
 a-v2
 At line:1 char:15
-+ cd schipla-v2 && go mod init github.com/72nd/schipla-v2
++ cd shifts-v2 && go mod init github.com/72nd/shifts-v2
 +               ~~
 The token '&&' is not a valid statement separator in this version.
     + FullyQualifiedErrorId : InvalidEndOfLine
 
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 ```
 
 ---
@@ -3457,20 +3457,20 @@ Entschuldigung, ich vergaß, dass wir in PowerShell sind. Lassen Sie uns die Bef
 _****_
 
 ```bash
-cd schipla-v2
+cd shifts-v2
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2> cd schipla-v2
-cd : Cannot find path 'C:\Users\Hostettler\repos\schipla-main\schipla-v2\schipla-v2' because it does 
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2> cd shifts-v2
+cd : Cannot find path 'C:\Users\Hostettler\repos\shifts-main\shifts-v2\shifts-v2' because it does 
 not exist.
 At line:1 char:1
-+ cd schipla-v2
++ cd shifts-v2
 + ~~~~~~~~~~~~~
-    + CategoryInfo          : ObjectNotFound: (C:\Users\Hostet...a-v2\schipla-v2:String) [Set-Location]  
+    + CategoryInfo          : ObjectNotFound: (C:\Users\Hostet...a-v2\shifts-v2:String) [Set-Location]  
    , ItemNotFoundException
 
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 ```
 
 ---
@@ -3486,11 +3486,11 @@ Ah, ich sehe, wir sind bereits im richtigen Verzeichnis. Lassen Sie uns direkt d
 _****_
 
 ```bash
-go mod init github.com/72nd/schipla-v2
+go mod init github.com/72nd/shifts-v2
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 
 ```
 
@@ -3511,7 +3511,7 @@ go get github.com/mattn/go-sqlite3
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 
 ```
 
@@ -3532,10 +3532,10 @@ _****_
 ```diff
   	"path/filepath"
   
-- 	"github.com/hostettler/schipla-v2/internal/config"
-- 	"github.com/hostettler/schipla-v2/internal/db"
-+ 	"github.com/72nd/schipla-v2/internal/config"
-+ 	"github.com/72nd/schipla-v2/internal/db"
+- 	"github.com/hostettler/shifts-v2/internal/config"
+- 	"github.com/hostettler/shifts-v2/internal/db"
++ 	"github.com/72nd/shifts-v2/internal/config"
++ 	"github.com/72nd/shifts-v2/internal/db"
   )
   
 ```
@@ -3559,7 +3559,7 @@ go mod tidy
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2> 
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2> 
 
 ```
 
@@ -3571,7 +3571,7 @@ _****_
 
 Perfekt! Ich habe folgende Änderungen vorgenommen:
 
-1. Initialisiert ein neues Go-Modul mit `github.com/72nd/schipla-v2`
+1. Initialisiert ein neues Go-Modul mit `github.com/72nd/shifts-v2`
 2. Die SQLite-Abhängigkeit (`github.com/mattn/go-sqlite3`) hinzugefügt
 3. Die Import-Pfade in `main.go` aktualisiert, um den korrekten GitHub-Benutzernamen zu verwenden
 4. Die Modul-Abhängigkeiten mit `go mod tidy` bereinigt
@@ -3617,7 +3617,7 @@ _****_
 + <head>
 +     <meta charset="UTF-8">
 +     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-+     <title>{{ block "title" . }}Schipla{{ end }}</title>
++     <title>{{ block "title" . }}Shifts{{ end }}</title>
 +     
 +     <!-- Tailwind and DaisyUI via CDN for development -->
 +     <script src="https://cdn.tailwindcss.com"></script>
@@ -3653,7 +3653,7 @@ _****_
 +     <nav class="navbar bg-base-200">
 +         <div class="container">
 +             <div class="flex-1">
-+                 <a href="/" class="text-xl font-semibold">Schipla</a>
++                 <a href="/" class="text-xl font-semibold">Shifts</a>
 +             </div>
 +             <div class="flex-none">
 +                 <label class="swap swap-rotate">
@@ -3698,7 +3698,7 @@ _****_
 
 ```diff
 - 
-+ {{ define "title" }}Schipla - Shift Planning Made Easy{{ end }}
++ {{ define "title" }}Shifts - Shift Planning Made Easy{{ end }}
 + 
 + {{ define "content" }}
 + <div x-data="indexPage">
@@ -3868,7 +3868,7 @@ _****_
 + 	"log/slog"
 + 	"net/http"
 + 
-+ 	"github.com/72nd/schipla-v2/internal/db"
++ 	"github.com/72nd/shifts-v2/internal/db"
 + )
 + 
 + //go:embed templates/* static/*
@@ -3945,9 +3945,9 @@ _****_
 - 	"fmt"
   	"log/slog"
   	"os"
-  	"github.com/72nd/schipla-v2/internal/config"
-  	"github.com/72nd/schipla-v2/internal/db"
-+ 	"github.com/72nd/schipla-v2/internal/web"
+  	"github.com/72nd/shifts-v2/internal/config"
+  	"github.com/72nd/shifts-v2/internal/db"
++ 	"github.com/72nd/shifts-v2/internal/web"
   )
   
   	defer database.Close()
@@ -4042,7 +4042,7 @@ go get github.com/gorilla/mux
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2> 
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2> 
 
 ```
 
@@ -4065,7 +4065,7 @@ _****_
   	"net/http"
 + 	"time"
   
-  	"github.com/72nd/schipla-v2/internal/db"
+  	"github.com/72nd/shifts-v2/internal/db"
 + 	"github.com/gorilla/mux"
   )
   
@@ -4256,7 +4256,7 @@ Lassen Sie uns die Verzeichnisstruktur korrigieren:
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/web • **3** results</summary>
+            <summary>Listed directory shifts-v2/internal/web • **3** results</summary>
         
 | Name |
 |-------|
@@ -4271,7 +4271,7 @@ _****_
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/web/static • **1** results</summary>
+            <summary>Listed directory shifts-v2/internal/web/static • **1** results</summary>
         
 | Name |
 |-------|
@@ -4284,7 +4284,7 @@ _****_
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/web/static/js • **2** results</summary>
+            <summary>Listed directory shifts-v2/internal/web/static/js • **2** results</summary>
         
 | Name |
 |-------|
@@ -4348,22 +4348,22 @@ Lassen Sie uns auch überprüfen, ob die Dateien tatsächlich im eingebetteten D
 _****_
 
 ```bash
-ls schipla-v2/internal/web/static/js/
+ls shifts-v2/internal/web/static/js/
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2> ls schipla-v2/internal/web/static/js/
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2> ls shifts-v2/internal/web/static/js/
 ls : Cannot find path 
-'C:\Users\Hostettler\repos\schipla-main\schipla-v2\schipla-v2\internal\web\static\js\' because it does 
+'C:\Users\Hostettler\repos\shifts-main\shifts-v2\shifts-v2\internal\web\static\js\' because it does 
 not exist.
 At line:1 char:1
-+ ls schipla-v2/internal/web/static/js/
++ ls shifts-v2/internal/web/static/js/
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     + CategoryInfo          : ObjectNotFound: (C:\Users\Hostet...\web\static\js\:String) [Get-ChildItem  
    ], ItemNotFoundException
     + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetChildItemCommand
 
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 ```
 
 ---
@@ -4385,9 +4385,9 @@ mkdir -p internal/web/static/js
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2> mkdir -p internal/web/static/js
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2> mkdir -p internal/web/static/js
 mkdir : An item with the specified name 
-C:\Users\Hostettler\repos\schipla-main\schipla-v2\internal\web\static\js already exists.
+C:\Users\Hostettler\repos\shifts-main\shifts-v2\internal\web\static\js already exists.
 At line:1 char:1
 + mkdir -p internal/web/static/js
 + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4395,7 +4395,7 @@ At line:1 char:1
    Exception
     + FullyQualifiedErrorId : DirectoryExist,Microsoft.PowerShell.Commands.NewItemCommand
  
-PS C:\Users\Hostettler\repos\schipla-main\schipla-v2>
+PS C:\Users\Hostettler\repos\shifts-main\shifts-v2>
 ```
 
 ---
@@ -4474,7 +4474,7 @@ Starten Sie bitte den Server neu. In den Logs sollten wir dann sehen können, we
 Führen Sie bitte aus:
 
 ```bash
-go run ./cmd/schipla
+go run ./cmd/shifts
 ```
 
 Dann können wir anhand der Logs sehen, ob die Dateien korrekt eingebettet sind. Wenn nicht, müssen wir möglicherweise:
@@ -4504,7 +4504,7 @@ Ah ja, der Fehler tritt auf, weil wir `require()` im Browser-Kontext verwenden, 
 _****_
 
 ```diff
-      <title>{{ block "title" . }}Schipla{{ end }}</title>
+      <title>{{ block "title" . }}Shifts{{ end }}</title>
       
 -     <!-- Tailwind and DaisyUI via CDN for development -->
 -     <script src="https://cdn.tailwindcss.com"></script>
@@ -4649,7 +4649,7 @@ _****_
       <nav class="navbar bg-base-200">
           <div class="container">
               <div class="flex-1">
--                 <a href="/" class="text-xl font-semibold">Schipla</a>
+-                 <a href="/" class="text-xl font-semibold">Shifts</a>
 +                 <a href="/" class="text-xl font-semibold" x-text="$t('nav.home')">Home</a>
               </div>
 -             <div class="flex-none">
@@ -4706,8 +4706,8 @@ Jetzt aktualisieren wir die `index.html` um die Übersetzungen zu verwenden:
 _****_
 
 ```diff
-- {{ define "title" }}Schipla - Shift Planning Made Easy{{ end }}
-+ {{ define "title" }}Schipla - {{ block "page_title" . }}{{ end }}{{ end }}
+- {{ define "title" }}Shifts - Shift Planning Made Easy{{ end }}
++ {{ define "title" }}Shifts - {{ block "page_title" . }}{{ end }}{{ end }}
 + 
 + {{ define "page_title" }}
 + <span x-text="$t('home.title')">Shift Planning Made Easy</span>
@@ -5246,7 +5246,7 @@ Lassen Sie uns die DB-Änderungen implementieren. Zuerst schaue ich mir die aktu
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/db • **6** results</summary>
+            <summary>Listed directory shifts-v2/internal/db • **6** results</summary>
         
 | Name |
 |-------|
@@ -5549,7 +5549,7 @@ _****_
 +         "language": "Sprache"
 +     },
 +     "common": {
-+         "made_with": "Erstellt mit ❤️ von Schipla",
++         "made_with": "Erstellt mit ❤️ von Shifts",
 +         "language": "Sprache"
 +     },
 +     "shift_plans": {
@@ -5587,7 +5587,7 @@ _****_
 +         "language": "Language"
 +     },
 +     "common": {
-+         "made_with": "Made with ❤️ by Schipla",
++         "made_with": "Made with ❤️ by Shifts",
 +         "language": "Language"
 +     },
 +     "shift_plans": {
@@ -5683,7 +5683,7 @@ _****_
 + 
 + 	"crypto/sha256"
   
-  	"github.com/72nd/schipla-v2/internal/db"
+  	"github.com/72nd/shifts-v2/internal/db"
   
   func (s *Server) handleCreatePlan(w http.ResponseWriter, r *http.Request) {
 - 	// TODO: Implement plan creation
@@ -5855,7 +5855,7 @@ _****_
       "common": {
           "language": "Deutsch",
 -         "made_with": "Erstellt mit ❤️ in Go"
-+         "made_with": "Erstellt mit ❤️ von Schipla"
++         "made_with": "Erstellt mit ❤️ von Shifts"
       },
       "nav": {
 -         "home": "Startseite",
@@ -5912,7 +5912,7 @@ _****_
       "common": {
           "language": "English",
 -         "made_with": "Made with ❤️ using Go"
-+         "made_with": "Made with ❤️ by Schipla"
++         "made_with": "Made with ❤️ by Shifts"
       },
       "nav": {
               "light": "Light",
@@ -6810,7 +6810,7 @@ Ich werde systematisch den Request-Flow und die Template-Verarbeitung überprüf
 
 _****_
 
-Read file: schipla-v2/internal/web/server.go
+Read file: shifts-v2/internal/web/server.go
 
 ---
 
@@ -6855,7 +6855,7 @@ Der Fehler liegt wahrscheinlich in der Verzeichnisstruktur. Lass uns überprüfe
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/web • **3** results</summary>
+            <summary>Listed directory shifts-v2/internal/web • **3** results</summary>
         
 | Name |
 |-------|
@@ -6870,7 +6870,7 @@ _****_
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/web/templates • **4** results</summary>
+            <summary>Listed directory shifts-v2/internal/web/templates • **4** results</summary>
         
 | Name |
 |-------|
@@ -6907,7 +6907,7 @@ Hmm, interessant. Der Pfad scheint eigentlich korrekt zu sein. Lass uns die `bas
 
 _****_
 
-Read file: schipla-v2/internal/web/templates/base.html
+Read file: shifts-v2/internal/web/templates/base.html
 
 ---
 
@@ -7087,7 +7087,7 @@ Hier ist der Umbau:
 _****_
 
 ```bash
-mkdir -p schipla-v2/internal/web/templates/layouts
+mkdir -p shifts-v2/internal/web/templates/layouts
 ```
 
 ```
@@ -7096,7 +7096,7 @@ mkdir -p schipla-v2/internal/web/templates/layouts
     Directory: 
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
-PS C:\Users\Hostettler\repos\schipla-main>
+PS C:\Users\Hostettler\repos\shifts-main>
 ```
 
 ---
@@ -7112,11 +7112,11 @@ _****_
 _****_
 
 ```bash
-mv schipla-v2/internal/web/templates/base.html schipla-v2/internal/web/templates/layouts/
+mv shifts-v2/internal/web/templates/base.html shifts-v2/internal/web/templates/layouts/
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main> 
+PS C:\Users\Hostettler\repos\shifts-main> 
 
 ```
 
@@ -8069,7 +8069,7 @@ _****_
 - 
 - 	"crypto/sha256"
   
-  	"github.com/72nd/schipla-v2/internal/db"
+  	"github.com/72nd/shifts-v2/internal/db"
   		return
   	}
 - 
@@ -9297,12 +9297,12 @@ _****_
         
 | Name |
 |-------|
-| 📄 `schipla-v2` |
+| 📄 `shifts-v2` |
 | 📄 `internal` |
 | 📄 `static` |
 | 📄 `templates` |
 | 📄 `types.go` |
-| 📄 `schipla.db` |
+| 📄 `shifts.db` |
 | 📄 `main.go` |
 | 📄 `info_en.md` |
 | 📄 `info_de.md` |
@@ -9368,7 +9368,7 @@ Read file: internal/web/server.go
 
 _****_
 
-Read file: schipla-v2/internal/web/server.go
+Read file: shifts-v2/internal/web/server.go
 
 ---
 
@@ -9400,7 +9400,7 @@ Lassen Sie uns zuerst prüfen, ob die JavaScript-Datei existiert:
 _****_
 
 <details>
-            <summary>Listed directory schipla-v2/internal/web/static/js • **3** results</summary>
+            <summary>Listed directory shifts-v2/internal/web/static/js • **3** results</summary>
         
 | Name |
 |-------|
@@ -9422,7 +9422,7 @@ Jetzt lassen Sie uns den Inhalt der JavaScript-Datei anschauen:
 
 _****_
 
-Read file: schipla-v2/internal/web/static/js/shift-plan-view.js
+Read file: shifts-v2/internal/web/static/js/shift-plan-view.js
 
 ---
 
@@ -9812,7 +9812,7 @@ Ah, ich verstehe. Lassen Sie uns überprüfen, wie die Schichten in den Schichtt
 
 _****_
 
-Read file: schipla-v2/internal/db/shift_types.go
+Read file: shifts-v2/internal/db/shift_types.go
 
 ---
 
@@ -9968,7 +9968,7 @@ Ich sehe, dass der Apply-Model Schwierigkeiten hat, die Änderungen zu erkennen.
 
 _****_
 
-Read file: schipla-v2/internal/db/shifts.go
+Read file: shifts-v2/internal/db/shifts.go
 
 ---
 
@@ -9984,7 +9984,7 @@ Lassen Sie uns überprüfen, ob die Schichten jetzt korrekt geladen werden. Dazu
 
 _****_
 
-Read file: schipla-v2/internal/web/server.go
+Read file: shifts-v2/internal/web/server.go
 
 ---
 
@@ -9999,21 +9999,21 @@ Die API-Endpunkte sehen korrekt aus. Der `/api/shift-plans/{token}/types` Endpun
 _****_
 
 ```bash
-sqlite3 schipla-v2/data/schipla.db "SELECT * FROM shifts;" | cat
+sqlite3 shifts-v2/data/shifts.db "SELECT * FROM shifts;" | cat
 ```
 
 ```
-PS C:\Users\Hostettler\repos\schipla-main> sqlite3 schipla-v2/data/schipla.db "SELECT * FROM shifts;" | c
+PS C:\Users\Hostettler\repos\shifts-main> sqlite3 shifts-v2/data/shifts.db "SELECT * FROM shifts;" | c
 at
 sqlite3 : The term 'sqlite3' is not recognized as the name of a cmdlet, function, script file, or 
 operable program. Check the spelling of the name, or if a path was included, verify that the path is 
 correct and try again.
 At line:1 char:1
-+ sqlite3 schipla-v2/data/schipla.db "SELECT * FROM shifts;" | cat
++ sqlite3 shifts-v2/data/shifts.db "SELECT * FROM shifts;" | cat
 + ~~~~~~~
     + FullyQualifiedErrorId : CommandNotFoundException
 
-PS C:\Users\Hostettler\repos\schipla-main>
+PS C:\Users\Hostettler\repos\shifts-main>
 ```
 
 ---
@@ -10030,7 +10030,7 @@ Lassen Sie uns die JavaScript-Datei überprüfen, die die Schichten anzeigt:
 
 _****_
 
-Read file: schipla-v2/internal/web/static/js/shift-plan-view.js
+Read file: shifts-v2/internal/web/static/js/shift-plan-view.js
 
 ---
 
@@ -10046,7 +10046,7 @@ Die JavaScript-Datei sieht korrekt aus. Sie lädt die Schichttypen und ihre Schi
 
 _****_
 
-Read file: schipla-v2/internal/web/templates/view.html
+Read file: shifts-v2/internal/web/templates/view.html
 
 ---
 
@@ -10062,7 +10062,7 @@ Das Template sieht auch korrekt aus. Es verwendet `x-for="shift in type.shifts"`
 
 _****_
 
-Read file: schipla-v2/internal/db/shift_plans.go
+Read file: shifts-v2/internal/db/shift_plans.go
 
 ---
 
@@ -10080,7 +10080,7 @@ Lassen Sie uns überprüfen, ob die Beispielschichten korrekt erstellt werden. D
 
 _****_
 
-Read file: schipla-v2/internal/db/shift_plans.go
+Read file: shifts-v2/internal/db/shift_plans.go
 
 ---
 
@@ -10096,7 +10096,7 @@ Die `createExampleShifts` Funktion sieht korrekt aus. Sie erstellt einen Schicht
 
 _****_
 
-Read file: schipla-v2/internal/db/shifts.go
+Read file: shifts-v2/internal/db/shifts.go
 
 ---
 
@@ -10289,30 +10289,30 @@ _****_
         
 | File | Lines |
 |------|-------|
-| `schipla-v2/internal/web/templates/view.html` | L58-73 |
+| `shifts-v2/internal/web/templates/view.html` | L58-73 |
 | `internal/web/templates/view.html` | L58-73 |
-| `schipla-v2/internal/web/templates/view.html` | L73-92 |
+| `shifts-v2/internal/web/templates/view.html` | L73-92 |
 | `internal/web/templates/view.html` | L73-92 |
 | `internal/web/templates/view.html` | L92-113 |
-| `schipla-v2/internal/web/templates/view.html` | L92-113 |
-| `schipla-v2/internal/web/templates/view.html` | L43-58 |
+| `shifts-v2/internal/web/templates/view.html` | L92-113 |
+| `shifts-v2/internal/web/templates/view.html` | L43-58 |
 | `internal/web/templates/view.html` | L43-58 |
-| `schipla-v2/internal/web/templates/view.html` | L1-21 |
+| `shifts-v2/internal/web/templates/view.html` | L1-21 |
 | `internal/web/templates/view.html` | L1-21 |
 | `templates/index.html` | L226-260 |
 | `templates/index.html` | L226-260 |
-| `schipla-v2/templates/shift_plans/new.html` | L84-120 |
+| `shifts-v2/templates/shift_plans/new.html` | L84-120 |
 | `templates/index.html` | L164-179 |
 | `templates/index.html` | L164-179 |
-| `schipla-v2/templates/shift_plans/new.html` | L86-122 |
-| `schipla-v2/internal/web/templates/new.html` | L86-126 |
+| `shifts-v2/templates/shift_plans/new.html` | L86-122 |
+| `shifts-v2/internal/web/templates/new.html` | L86-126 |
 | `templates/index.html` | L205-226 |
 | `templates/index.html` | L205-226 |
 | `templates/index.html` | L1-33 |
 | `templates/index.html` | L1-33 |
-| `schipla-v2/internal/web/templates/success.html` | L52-77 |
-| `schipla-v2/internal/web/templates/new.html` | L1-51 |
-| `schipla-v2/templates/shift_plans/new.html` | L1-51 |
+| `shifts-v2/internal/web/templates/success.html` | L52-77 |
+| `shifts-v2/internal/web/templates/new.html` | L1-51 |
+| `shifts-v2/templates/shift_plans/new.html` | L1-51 |
 
 </details>
 
@@ -10342,7 +10342,7 @@ Entschuldigung, ich sehe, dass ich die alten Templates nicht direkt finden kann.
 
 _****_
 
-Read file: schipla-v2/internal/web/static/js/shift-plan-view.js
+Read file: shifts-v2/internal/web/static/js/shift-plan-view.js
 
 ---
 
@@ -10488,29 +10488,29 @@ _****_
 | File | Lines |
 |------|-------|
 | `internal/web/templates/view.html` | L58-73 |
-| `schipla-v2/internal/web/templates/view.html` | L58-75 |
-| `schipla-v2/internal/web/templates/view.html` | L43-58 |
-| `schipla-v2/internal/web/templates/view.html` | L75-93 |
-| `schipla-v2/internal/web/templates/view.html` | L93-116 |
+| `shifts-v2/internal/web/templates/view.html` | L58-75 |
+| `shifts-v2/internal/web/templates/view.html` | L43-58 |
+| `shifts-v2/internal/web/templates/view.html` | L75-93 |
+| `shifts-v2/internal/web/templates/view.html` | L93-116 |
 | `internal/web/templates/view.html` | L92-113 |
 | `internal/web/templates/view.html` | L73-92 |
 | `internal/web/templates/view.html` | L43-58 |
-| `schipla-v2/templates/shift_plans/new.html` | L84-120 |
-| `schipla-v2/templates/shift_plans/new.html` | L86-122 |
-| `schipla-v2/templates/shift_plans/new.html` | L56-86 |
-| `schipla-v2/internal/web/templates/new.html` | L86-126 |
-| `schipla-v2/internal/web/templates/new.html` | L51-86 |
-| `schipla-v2/templates/shift_plans/new.html` | L51-84 |
-| `schipla-v2/internal/web/templates/new.html` | L1-51 |
-| `schipla-v2/templates/shift_plans/new.html` | L1-51 |
+| `shifts-v2/templates/shift_plans/new.html` | L84-120 |
+| `shifts-v2/templates/shift_plans/new.html` | L86-122 |
+| `shifts-v2/templates/shift_plans/new.html` | L56-86 |
+| `shifts-v2/internal/web/templates/new.html` | L86-126 |
+| `shifts-v2/internal/web/templates/new.html` | L51-86 |
+| `shifts-v2/templates/shift_plans/new.html` | L51-84 |
+| `shifts-v2/internal/web/templates/new.html` | L1-51 |
+| `shifts-v2/templates/shift_plans/new.html` | L1-51 |
 | `templates/base.html` | L27-69 |
-| `schipla-v2/internal/web/templates/view.html` | L1-21 |
+| `shifts-v2/internal/web/templates/view.html` | L1-21 |
 | `templates/index.html` | L226-260 |
 | `templates/index.html` | L226-260 |
 | `templates/index.html` | L1-33 |
 | `templates/index.html` | L1-33 |
-| `schipla-v2/templates/shift_plans/new.html` | L1-56 |
-| `schipla-v2/internal/web/templates/success.html` | L27-52 |
+| `shifts-v2/templates/shift_plans/new.html` | L1-56 |
+| `shifts-v2/internal/web/templates/success.html` | L27-52 |
 
 </details>
 
@@ -11531,7 +11531,7 @@ I'll help you add the required dependency. First, let me check the current state
 
 _****_
 
-Read file: schipla-v2/go.mod
+Read file: shifts-v2/go.mod
 
 ---
 

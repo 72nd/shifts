@@ -1,5 +1,12 @@
 {{ template "base.html" . }}
 
+{{ define "meta" }}
+<title>Schipla - Shift Planning Made Easy</title>
+<meta property="og:title" content="Schipla - Shift Planning Made Easy">
+<meta property="og:description" content="Create and manage shift plans effortlessly. Perfect for events, volunteer work, and team organization. Start organizing your team today!">
+<meta name="description" content="Create and manage shift plans effortlessly. Perfect for events, volunteer work, and team organization. Start organizing your team today!">
+{{ end }}
+
 {{ define "content" }}
 <div x-data="indexPage" class="min-h-screen">
     <!-- Hero Section -->

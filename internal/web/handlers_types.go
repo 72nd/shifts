@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/72nd/schipla/internal/db"
+	"github.com/72nd/shifts/internal/db"
 	"github.com/gorilla/mux"
 )
 

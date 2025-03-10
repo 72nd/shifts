@@ -1,8 +1,8 @@
-# Schipla - Collaborative Shift Planning
+# Shifts - Collaborative Shift Planning
 
-Schipla is a modern, web-based application for collaborative shift planning and management. It provides an intuitive interface for creating, organizing, and signing up for shifts, making it ideal for volunteer organizations, event planning, and team coordination.
+Shifts is a modern, web-based application for collaborative shift planning and management. It provides an intuitive interface for creating, organizing, and signing up for shifts, making it ideal for volunteer organizations, event planning, and team coordination.
 
-![Schipla Logo](internal/web/static/favicon.svg)
+![Shifts Logo](internal/web/static/favicon.svg)
 
 ## 🌟 Features
 
@@ -43,8 +43,8 @@ Schipla is a modern, web-based application for collaborative shift planning and 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/schipla.git
-   cd schipla
+   git clone https://github.com/yourusername/shifts.git
+   cd shifts
    ```
 
 2. Install dependencies:
@@ -63,12 +63,12 @@ Schipla is a modern, web-based application for collaborative shift planning and 
 
 1. Build the Docker image:
    ```bash
-   docker build -t schipla .
+   docker build -t shifts .
    ```
 
 2. Run the container:
    ```bash
-   docker run -p 8080:8080 -v $(pwd)/data:/app/data schipla
+   docker run -p 8080:8080 -v $(pwd)/data:/app/data shifts
    ```
 
 3. Access the application at `http://localhost:8080` (or your configured port)

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/72nd/schipla/internal/db"
-	"github.com/72nd/schipla/internal/export"
+	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/export"
 	"github.com/gorilla/mux"
 )
 

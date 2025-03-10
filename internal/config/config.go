@@ -25,7 +25,7 @@ func DefaultConfig() Config {
 	return Config{
 		Host:     "localhost",
 		Port:     8080,
-		DBPath:   "data/schipla.db",
+		DBPath:   "data/shifts.db",
 		LogLevel: "info",
 	}
 }

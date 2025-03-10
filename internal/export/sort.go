@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/72nd/schipla/internal/db"
+	"github.com/72nd/shifts/internal/db"
 )
 
 // ShiftTime represents a parsed time with hours and minutes
