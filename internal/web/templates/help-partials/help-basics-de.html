@@ -1,0 +1,104 @@
+{{ define "help-basics-de" }}
+<div class="space-y-8">
+    <section>
+        <div class="card bg-base-200">
+            <div class="card-body">
+                <p>Die Hilfe wurde weitgehend automatisiert durch ein LLM erstellt und ist noch nicht komplett gegengelesen.</p>
+            </div>
+        </div>
+    </section>
+    <section>
+        <h1 class="text-3xl font-bold mb-6">Was ist Shifts?</h1>
+        <p class="mb-4">
+            Shifts ist ein kollaboratives Schichtplanungstool, das Teams dabei hilft, ihre Arbeitszeiten effizient zu organisieren. 
+            Egal ob für Festivals, Veranstaltungen oder regelmäßige Teamarbeit - Shifts macht die Planung einfach und übersichtlich.
+        </p>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Grundlegende Konzepte</h2>
+        
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Schichtplan</h3>
+                    <p>Ein vollständiger Zeitplan für eine Veranstaltung oder einen Zeitraum. Jeder Schichtplan hat einen Titel, einen Zeitraum und verschiedene Schichttypen. Alle können Schichten von anderen bearbeiten.</p>
+                </div>
+            </div>
+
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Schichttyp</h3>
+                    <p>Eine Kategorie von Schichten mit ähnlichen Aufgaben. Zum Beispiel «Küchendienst» oder «Kasse». Jeder Schichttyp kann mehrere konkrete Schichten haben.</p>
+                </div>
+            </div>
+
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Schicht</h3>
+                    <p>Ein konkreter Zeitslot, für den sich Helfende anmelden können. Jede Schicht hat eine Start- und Endzeit sowie eine maximale Helfendenzahl.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Erste Schritte</h2>
+        <div class="steps steps-vertical">
+            <div class="step step-primary">
+                <div class="step-content">
+                    <h3 class="text-xl font-bold">Schichtplan finden oder erstellen</h3>
+                    <p>Nutze einen bestehenden Link oder erstelle einen neuen Schichtplan über die Startseite.</p>
+                </div>
+            </div>
+            <div class="step step-primary">
+                <div class="step-content">
+                    <h3 class="text-xl font-bold">Plan erkunden</h3>
+                    <p>Verschaffe dir einen Überblick über die verfügbaren Schichttypen und Zeitslots.</p>
+                </div>
+            </div>
+            <div class="step step-primary">
+                <div class="step-content">
+                    <h3 class="text-xl font-bold">Teilnehmen oder verwalten</h3>
+                    <p>Melde dich für Schichten an oder verwalte als Admin den gesamten Plan.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Häufig gestellte Fragen</h2>
+        <div class="space-y-4">
+            <div class="collapse collapse-plus bg-base-200">
+                <input type="radio" name="faq-accordion" /> 
+                <div class="collapse-title text-xl font-medium">
+                    Brauche ich ein Konto?
+                </div>
+                <div class="collapse-content">
+                    <p>Nein, Shifts funktioniert ohne Registrierung. Für die Teilnahme an Schichten benötigst du lediglich deinen Namen und optional ein schichtplan-spezifisches Passwort.</p>
+                </div>
+            </div>
+
+            <div class="collapse collapse-plus bg-base-200">
+                <input type="radio" name="faq-accordion" />
+                <div class="collapse-title text-xl font-medium">
+                    Wie kann ich einen Plan administrieren?
+                </div>
+                <div class="collapse-content">
+                    <p>Bei der Erstellung eines Schichtplans wird ein Admin-Passwort festgelegt. Mit diesem kannst du jederzeit die Verwaltungsfunktionen aufrufen.</p>
+                </div>
+            </div>
+
+            <div class="collapse collapse-plus bg-base-200">
+                <input type="radio" name="faq-accordion" />
+                <div class="collapse-title text-xl font-medium">
+                    Kann ich Änderungen nachverfolgen?
+                </div>
+                <div class="collapse-content">
+                    <p>Nein, als Admin kannst du keine Änderungen am Schichtplan einsehen.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{{ end }} 

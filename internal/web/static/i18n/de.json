@@ -1,7 +1,8 @@
 {
     "common": {
         "language": "Deutsch",
-        "made_with": "Mit ❤️ von Shifts",
+        "made_with": "Shifts – Kollaborative Schichtpläne",
+        "footer_new_plan": "Neuer Schichtplan erstellen",
         "cancel": "Abbrechen",
         "remove": "Entfernen",
         "save": "Speichern",

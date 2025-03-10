@@ -1,0 +1,48 @@
+{{ template "base.html" . }}
+
+{{ define "meta" }}
+<title>{{ if eq .Lang "de" }}Hilfe - Schipla{{ else }}Help - Schipla{{ end }}</title>
+<meta property="og:title" content="{{ if eq .Lang "de" }}Hilfe - Schipla{{ else }}Help - Schipla{{ end }}">
+<meta property="og:description" content="{{ if eq .Lang "de" }}Lernen Sie, wie Sie Schipla effektiv nutzen können. Vollständige Anleitung für Benutzer und Administratoren.{{ else }}Learn how to use Schipla effectively. Complete guide for users and administrators.{{ end }}">
+<meta name="description" content="{{ if eq .Lang "de" }}Lernen Sie, wie Sie Schipla effektiv nutzen können. Vollständige Anleitung für Benutzer und Administratoren.{{ else }}Learn how to use Schipla effectively. Complete guide for users and administrators.{{ end }}">
+{{ end }}
+
+{{ define "content" }}
+<div class="prose max-w-none" x-data="{ activeTab: 'basics' }">
+    <!-- Navigation Tabs -->
+    <div class="tabs tabs-boxed justify-center mb-8">
+        <a class="tab" :class="{ 'tab-active': activeTab === 'basics' }" @click="activeTab = 'basics'" x-text="$locale() === 'de' ? 'Grundlagen' : 'Basics'">Basics</a>
+        <a class="tab" :class="{ 'tab-active': activeTab === 'participants' }" @click="activeTab = 'participants'" x-text="$locale() === 'de' ? 'Für Teilnehmer' : 'For Participants'">For Participants</a>
+        <a class="tab" :class="{ 'tab-active': activeTab === 'admins' }" @click="activeTab = 'admins'" x-text="$locale() === 'de' ? 'Für Administratoren' : 'For Admins'">For Admins</a>
+    </div>
+
+    <!-- Content Sections -->
+    <div class="container mx-auto px-4">
+        <!-- German Content -->
+        <div x-show="$locale() === 'de'">
+            <template x-if="activeTab === 'basics'">
+                {{ template "help-basics-de" . }}
+            </template>
+            <template x-if="activeTab === 'participants'">
+                {{ template "help-participants-de" . }}
+            </template>
+            <template x-if="activeTab === 'admins'">
+                {{ template "help-admins-de" . }}
+            </template>
+        </div>
+
+        <!-- English Content -->
+        <div x-show="$locale() === 'en'">
+            <template x-if="activeTab === 'basics'">
+                {{ template "help-basics-en" . }}
+            </template>
+            <template x-if="activeTab === 'participants'">
+                {{ template "help-participants-en" . }}
+            </template>
+            <template x-if="activeTab === 'admins'">
+                {{ template "help-admins-en" . }}
+            </template>
+        </div>
+    </div>
+</div>
+{{ end }} 

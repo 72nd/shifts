@@ -1,7 +1,8 @@
 {
     "common": {
         "language": "English",
-        "made_with": "Made with ❤️ by Shifts",
+        "made_with": "Shifts – Collaborative Shift Plans",
+        "footer_new_plan": "Create a new shift plan",
         "cancel": "Cancel",
         "remove": "Remove",
         "save": "Save",

@@ -1,0 +1,136 @@
+{{ define "help-admins-de" }}
+<div class="space-y-8">
+    <section>
+        <h1 class="text-3xl font-bold mb-6">Leitfaden für Admins</h1>
+        <p class="mb-4">
+            Als Admin hast du volle Kontrolle über deinen Schichtplan. 
+            Du kannst Schichttypen und Schichten erstellen, bearbeiten und löschen, sowie Helfende verwalten.
+        </p>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Schichtplan erstellen</h2>
+        <div class="card bg-base-200">
+            <div class="card-body">
+                <ol class="list-decimal list-inside space-y-4">
+                    <li>
+                        <span class="font-bold">Plan anlegen</span>
+                        <p class="ml-6">Klicke auf der Startseite auf «Neuen Plan erstellen».</p>
+                    </li>
+                    <li>
+                        <span class="font-bold">Grundinformationen</span>
+                        <p class="ml-6">
+                            Lege fest:
+                            <ul class="list-disc list-inside ml-6">
+                                <li>Titel (in einer oder beiden Sprachen)</li>
+                                <li>Beschreibung (optional, für zusätzliche Infos und Anweisungen)</li>
+                                <li>Zeitraum des Plans</li>
+                                <li>Admin-Passwort</li>
+                            </ul>
+                        </p>
+                    </li>
+                    <li>
+                        <span class="font-bold">Sicherheit</span>
+                        <p class="ml-6">Optional kannst du ein Passwort für Helfende festlegen.</p>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Schichttypen verwalten</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Schichttyp erstellen</h3>
+                    <ol class="list-decimal list-inside">
+                        <li>Klicken Sie auf "Schichttyp hinzufügen"</li>
+                        <li>Gib Titel und Beschreibung ein (für zusätzliche Infos und Anweisungen).</li>
+                        <li>Legen Sie die maximale Teilnehmerzahl fest</li>
+                        <li>Wählen Sie eine Farbe (optional)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Schichttypen anpassen</h3>
+                    <ul class="list-disc list-inside">
+                        <li>Bearbeiten über das Stift-Symbol</li>
+                        <li>Reihenfolge per Drag & Drop ändern</li>
+                        <li>Löschen über das Mülleimer-Symbol</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Schichten verwalten</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Schichten erstellen</h3>
+                    <ol class="list-decimal list-inside">
+                        <li>Wählen Sie den Schichttyp</li>
+                        <li>Klicken Sie auf "Schicht hinzufügen"</li>
+                        <li>Legen Sie Start- und Endzeit fest</li>
+                        <li>Optional: Passen Sie die Teilnehmerzahl an</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title">Helfende verwalten</h3>
+                    <ul class="list-disc list-inside">
+                        <li>Helfende manuell hinzufügen</li>
+                        <li>Helfende entfernen</li>
+                        <li>Änderungshistorie einsehen (nicht mehr verfügbar)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Erweiterte Funktionen</h2>
+        <div class="space-y-4">
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="font-bold">Export</h3>
+                    <p>Exportiere den Schichtplan als JSON-Datei für die Archivierung oder Weiterverarbeitung.</p>
+                </div>
+            </div>
+
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="font-bold">Tagesgrenzen</h3>
+                    <p>Lege fest, wann ein neuer Tag beginnt (z.B. 6 Uhr morgens statt Mitternacht).</p>
+                </div>
+            </div>
+
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="font-bold">Statistiken</h3>
+                    <p>Sieh dir Statistiken zur Auslastung und Verteilung der Schichten an.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Sicherheitstipps</h2>
+        <div class="card bg-base-200">
+            <div class="card-body">
+                <h3 class="font-bold">Wichtige Hinweise</h3>
+                <ul class="list-disc list-inside mt-2">
+                    <li>Bewahre das Admin-Passwort sicher auf</li>
+                    <li>Teile den Plan-Link nur mit berechtigten Personen</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+{{ end }} 
