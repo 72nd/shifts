@@ -24,13 +24,11 @@
                     </h2>
 
                     <!-- Progress Bar -->
-                    <div class="mt-1.5" x-show="type.shifts && type.shifts.length > 0">
-                        <div class="relative w-48">
-                            <progress class="progress w-full h-1.5 transition-all duration-300"
-                                :class="getShiftTypeProgress(type).background"
-                                :value="getShiftTypeProgress(type).percentage" max="100">
-                            </progress>
-                        </div>
+                    <div class="w-48" x-show="type.shifts && type.shifts.length > 0">
+                        <progress class="progress w-full h-1.5 transition-all duration-300"
+                            :class="getShiftTypeProgress(type).background"
+                            :value="getShiftTypeProgress(type).percentage" max="100">
+                        </progress>
                     </div>
                 </div>
             </div>
