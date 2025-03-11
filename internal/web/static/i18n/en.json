@@ -205,6 +205,8 @@
             "edit_shift": "Edit Shift",
             "start_time": "Start Time",
             "required_participants": "Required Participants",
+            "unlimited_participants": "Unlimited Participants",
+            "unlimited_participants_help": "Enable this option if there should be no limit on the number of participants",
             "comment_de": "Comment (German)",
             "comment_en": "Comment (English)",
             "cancel": "Cancel",

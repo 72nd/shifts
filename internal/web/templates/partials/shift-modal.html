@@ -73,14 +73,28 @@
                 <label class="label py-0">
                     <span class="label-text font-medium" x-text="$t('shift_plans.view.required_participants')"></span>
                 </label>
-                <input type="number" 
-                       x-model="shiftModal.required"
-                       min="1"
-                       class="input input-bordered input-sm w-full"
-                       :class="{ 'input-error': shiftModal.errors.required }" />
-                <label class="label py-0" x-show="shiftModal.errors.required">
-                    <span class="label-text-alt text-error" x-text="shiftModal.errors.required"></span>
-                </label>
+                <div class="flex flex-col gap-2">
+                    <input type="number" 
+                           x-model="shiftModal.required"
+                           min="1"
+                           class="input input-bordered input-sm w-full"
+                           :class="{ 'input-error': shiftModal.errors.required }"
+                           :disabled="shiftModal.isUnlimited"
+                           :placeholder="shiftModal.isUnlimited ? '∞' : ''" />
+                    <label class="label py-0" x-show="shiftModal.errors.required">
+                        <span class="label-text-alt text-error" x-text="shiftModal.errors.required"></span>
+                    </label>
+                    <!-- Unlimited Helper -->
+                    <div class="flex items-center gap-2 text-sm opacity-70">
+                        <label class="cursor-pointer flex items-center gap-2">
+                            <input type="checkbox" 
+                                   x-model="shiftModal.isUnlimited" 
+                                   @change="shiftModal.toggleUnlimited()"
+                                   class="checkbox checkbox-xs" />
+                            <span x-text="$t('shift_plans.view.unlimited_participants')"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <!-- Comments Section -->

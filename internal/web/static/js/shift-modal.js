@@ -25,6 +25,7 @@ export class ShiftModal extends Modal {
         this.comment_en = '';
         this.consecutive_shifts = 1;
         this.relative_day = 1;
+        this.isUnlimited = false;
     }
 
     openWith(shift = null, type = null, isDuplicating = false) {
@@ -42,6 +43,7 @@ export class ShiftModal extends Modal {
             this.start_time = startTime.toISOString().slice(0, 16);
             this.duration = shift.duration;
             this.required = shift.required;
+            this.isUnlimited = shift.required === -1;
             this.comment_de = shift.comment_de || '';
             this.comment_en = shift.comment_en || '';
             this.relative_day = this.getRelativeDayFromDate(startTime);
@@ -81,10 +83,13 @@ export class ShiftModal extends Modal {
             isValid = false;
         }
 
-        const required = parseInt(this.required);
-        if (isNaN(required) || required < 1) {
-            this.errors.required = AlpineI18n.t('shift_plans.view.error_required_participants_required');
-            isValid = false;
+        // Only validate required participants if not unlimited
+        if (!this.isUnlimited) {
+            const required = parseInt(this.required);
+            if (isNaN(required) || required < 1) {
+                this.errors.required = AlpineI18n.t('shift_plans.view.error_required_participants_required');
+                isValid = false;
+            }
         }
 
         // Validate shift type selection when creating a new shift
@@ -134,7 +139,7 @@ export class ShiftModal extends Modal {
             body: JSON.stringify({
                 start_time: new Date(this.start_time).toISOString(),
                 duration: parseInt(this.duration),
-                required: parseInt(this.required),
+                required: this.isUnlimited ? -1 : parseInt(this.required),
                 comment_de: this.comment_de,
                 comment_en: this.comment_en,
                 type_id: type.id
@@ -151,7 +156,7 @@ export class ShiftModal extends Modal {
                 ...this.currentShift,
                 start_time: new Date(this.start_time).toISOString(),
                 duration: parseInt(this.duration),
-                required: parseInt(this.required),
+                required: this.isUnlimited ? -1 : parseInt(this.required),
                 comment_de: this.comment_de,
                 comment_en: this.comment_en,
                 type_id: type.id
@@ -191,7 +196,7 @@ export class ShiftModal extends Modal {
                         type_id: type.id,
                         start_time: shiftStartTime.toISOString(),
                         duration: duration,
-                        required: parseInt(this.required),
+                        required: this.isUnlimited ? -1 : parseInt(this.required),
                         comment_de: this.comment_de,
                         comment_en: this.comment_en
                     })
@@ -245,5 +250,13 @@ export class ShiftModal extends Modal {
         planStart.setHours(hours, minutes, 0, 0);
         
         this.start_time = planStart.toISOString().slice(0, 16);
+    }
+
+    toggleUnlimited() {
+        if (this.isUnlimited) {
+            this.required = -1;
+        } else {
+            this.required = 1;
+        }
     }
 } 

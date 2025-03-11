@@ -1,7 +1,8 @@
 {{ define "shift-type-card" }}
 <div class="card card-bordered border-base-content/10 shadow">
-    <div class="card-body p-2.5 md:p-4" x-data="{ isTypeExpanded: true, isDescriptionExpanded: false, openShiftsCount: 0, isDescriptionLong: false }" 
-         x-init="
+    <div class="card-body p-2.5 md:p-4"
+        x-data="{ isTypeExpanded: true, isDescriptionExpanded: false, openShiftsCount: 0, isDescriptionLong: false }"
+        x-init="
         openShiftsCount = type.shifts ? type.shifts.reduce((count, shift) => count + Math.max(0, shift.required - (shift.participants?.length || 0)), 0) : 0;
         $nextTick(() => {
             // Check if description is actually longer than 3 lines
@@ -14,158 +15,170 @@
             }
         });
      ">
-    <!-- Type Header -->
-    <div class="flex items-start justify-between mb-2">
-        <div class="flex-1">
-            <div class="flex flex-col cursor-pointer" @click.stop="isTypeExpanded = !isTypeExpanded">
-                <h2 class="text-xl font-bold"
-                    x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
-                </h2>
-                
-                <!-- Progress Bar -->
-                <div class="mt-1.5" x-show="type.shifts && type.shifts.length > 0">
-                    <div class="relative w-48">
-                        <!-- Progress Background -->
-                        <div class="h-1.5 w-full rounded-full bg-base-content/10">
-                            <!-- Progress Bar -->
-                            <div class="absolute top-0 left-0 h-1.5 rounded-full transition-all duration-300"
+        <!-- Type Header -->
+        <div class="flex items-start justify-between mb-2">
+            <div class="flex-1">
+                <div class="flex flex-col cursor-pointer" @click.stop="isTypeExpanded = !isTypeExpanded">
+                    <h2 class="text-xl font-bold"
+                        x-text="plan.is_multilingual ? ($locale() === 'de' ? type.title_de : type.title_en) : type.title_en">
+                    </h2>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-1.5" x-show="type.shifts && type.shifts.length > 0">
+                        <div class="relative w-48">
+                            <progress class="progress w-full h-1.5 transition-all duration-300"
                                 :class="getShiftTypeProgress(type).background"
-                                :style="{ width: getShiftTypeProgress(type).percentage + '%' }">
-                            </div>
+                                :value="getShiftTypeProgress(type).percentage" max="100">
+                            </progress>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Admin buttons and toggle always at the top -->
-        <div class="flex items-center">
-            <div x-show="isAdmin" class="hidden md:flex btn-group mr-2">
-                <button @click.stop="openShiftModal(null, type); $event.stopPropagation();"
-                        class="btn btn-square btn-outline btn-xs md:btn-sm btn-success mr-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                </button>
-                <button @click.stop="openShiftTypeModal(type); $event.stopPropagation();"
-                        class="btn btn-square btn-outline btn-xs md:btn-sm mr-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                </button>
-                <button @click.stop="openDeleteShiftTypeModal(type); $event.stopPropagation();"
-                        class="btn btn-square btn-outline btn-xs md:btn-sm text-error">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Admin buttons (mobile dropdown) - positioned to the left of the toggle -->
-            <div x-show="isAdmin" class="md:hidden dropdown dropdown-end mr-2">
-                <label tabindex="0" class="btn btn-sm btn-outline btn-square">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
-                </label>
-                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li>
-                        <a @click.stop="openShiftModal(null, type); $event.stopPropagation();" class="text-success">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            <span x-text="$t('shift_plans.view.add_shift')"></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a @click.stop="openShiftTypeModal(type); $event.stopPropagation();">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                            <span x-text="$t('shift_plans.view.edit_shift_type')"></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a @click.stop="openDeleteShiftTypeModal(type); $event.stopPropagation();" class="text-error">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span x-text="$t('shift_plans.view.delete_shift_type')"></span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            
-            <!-- Toggle Button for Type Card (always at the right edge) -->
-            <button @click.stop="isTypeExpanded = !isTypeExpanded" class="btn btn-ghost btn-xs p-0 h-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" 
-                     :class="{ 'rotate-180': isTypeExpanded }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </button>
-        </div>
-    </div>
 
-    <!-- Content (only visible when expanded) -->
-    <div x-show="isTypeExpanded">
-        <!-- Description with toggle -->
-        <div class="cursor-pointer" @click.stop>
-            <div class="relative">
-                <p x-ref="description" class="text-base-content/70 text-sm transition-all duration-200"
-                   :class="{ 'line-clamp-3': !isDescriptionExpanded && isDescriptionLong }"
-                   x-text="plan.is_multilingual ? ($locale() === 'de' ? type.description_de : type.description_en) : type.description_en">
-                </p>
-                
-                <!-- Toggle Button for Description (only shown if description is actually long) -->
-                <button 
-                    @click.stop="isDescriptionExpanded = !isDescriptionExpanded; $event.stopPropagation();"
-                    class="text-xs font-medium text-primary hover:text-primary-focus transition-colors mt-1 inline-flex items-center gap-1"
-                    x-show="isDescriptionLong">
-                    <span x-text="isDescriptionExpanded ? $t('common.show_less') : $t('common.show_more')">Mehr anzeigen</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform duration-200" 
-                         :class="{ 'rotate-180': isDescriptionExpanded }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <!-- Admin buttons and toggle always at the top -->
+            <div class="flex items-center">
+                <div x-show="isAdmin" class="hidden md:flex btn-group mr-2">
+                    <button @click.stop="openShiftModal(null, type); $event.stopPropagation();"
+                        class="btn btn-square btn-outline btn-xs md:btn-sm btn-success mr-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </button>
+                    <button @click.stop="openShiftTypeModal(type); $event.stopPropagation();"
+                        class="btn btn-square btn-outline btn-xs md:btn-sm mr-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </button>
+                    <button @click.stop="openDeleteShiftTypeModal(type); $event.stopPropagation();"
+                        class="btn btn-square btn-outline btn-xs md:btn-sm text-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Admin buttons (mobile dropdown) - positioned to the left of the toggle -->
+                <div x-show="isAdmin" class="md:hidden dropdown dropdown-end mr-2">
+                    <label tabindex="0" class="btn btn-sm btn-outline btn-square">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                    </label>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                        <li>
+                            <a @click.stop="openShiftModal(null, type); $event.stopPropagation();" class="text-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span x-text="$t('shift_plans.view.add_shift')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click.stop="openShiftTypeModal(type); $event.stopPropagation();">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                <span x-text="$t('shift_plans.view.edit_shift_type')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click.stop="openDeleteShiftTypeModal(type); $event.stopPropagation();"
+                                class="text-error">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <span x-text="$t('shift_plans.view.delete_shift_type')"></span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Toggle Button for Type Card (always at the right edge) -->
+                <button @click.stop="isTypeExpanded = !isTypeExpanded" class="btn btn-ghost btn-xs p-0 h-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200"
+                        :class="{ 'rotate-180': isTypeExpanded }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </button>
             </div>
         </div>
-        
-        <!-- Location - only shown if defined -->
-        <template x-if="(plan.is_multilingual ? (type.location_de || type.location_en) : type.location_en)">
-            <p class="text-xs mt-1">
-                <span class="font-semibold" x-text="$t('shift_plans.view.location')"></span>:
-                <span
-                    x-text="plan.is_multilingual ? ($locale() === 'de' ? type.location_de : type.location_en) : type.location_en"></span>
-            </p>
-        </template>
 
-        <!-- Shifts grouped by date -->
-        <template x-if="type.shifts && type.shifts.length > 0">
-            <template x-for="dateGroup in groupShiftsByDate(type.shifts)" :key="dateGroup.date">
-            <div class="mb-4 mt-3">
-                <div class="flex items-center gap-2 mb-1 md:mb-2">
-                    <h3 class="text-base font-medium" x-text="formatDate(dateGroup.date)"></h3>
-                    <div class="flex-1 border-t-2 border-base-content/30"></div>
+        <!-- Content (only visible when expanded) -->
+        <div x-show="isTypeExpanded">
+            <!-- Description with toggle -->
+            <div class="cursor-pointer" @click.stop>
+                <div class="relative">
+                    <p x-ref="description" class="text-base-content/70 text-sm transition-all duration-200"
+                        :class="{ 'line-clamp-3': !isDescriptionExpanded && isDescriptionLong }"
+                        x-text="plan.is_multilingual ? ($locale() === 'de' ? type.description_de : type.description_en) : type.description_en">
+                    </p>
+
+                    <!-- Toggle Button for Description (only shown if description is actually long) -->
+                    <button @click.stop="isDescriptionExpanded = !isDescriptionExpanded; $event.stopPropagation();"
+                        class="text-xs font-medium text-primary hover:text-primary-focus transition-colors mt-1 inline-flex items-center gap-1"
+                        x-show="isDescriptionLong">
+                        <span x-text="isDescriptionExpanded ? $t('common.show_less') : $t('common.show_more')">Mehr
+                            anzeigen</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 transition-transform duration-200"
+                            :class="{ 'rotate-180': isDescriptionExpanded }" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
                 </div>
-                <table class="table table-xs w-full">
-                    <thead>
-                        <tr>
-                            <th class="w-16 md:w-48 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
-                            <th class="w-16 hidden md:table-cell" x-text="$t('shift_plans.view.duration')"></th>
-                            <th class="w-12 md:w-14 text-center px-1 md:px-2">Status</th>
-                            <th class="px-2 md:px-4" x-text="$t('shift_plans.view.participants')"></th>
-                            <th class="w-10 md:w-12 px-1 md:px-2"></th>
-                        </tr>
-                    </thead>
-                    <!-- Each shift gets its own tbody -->
-                    <template x-for="(shift, index) in dateGroup.shifts" :key="shift.id">
-                        {{ template "shift-row" }}
-                    </template>
-                </table>
             </div>
+
+            <!-- Location - only shown if defined -->
+            <template x-if="(plan.is_multilingual ? (type.location_de || type.location_en) : type.location_en)">
+                <p class="text-xs mt-1">
+                    <span class="font-semibold" x-text="$t('shift_plans.view.location')"></span>:
+                    <span
+                        x-text="plan.is_multilingual ? ($locale() === 'de' ? type.location_de : type.location_en) : type.location_en"></span>
+                </p>
             </template>
-        </template>
+
+            <!-- Shifts grouped by date -->
+            <template x-if="type.shifts && type.shifts.length > 0">
+                <template x-for="dateGroup in groupShiftsByDate(type.shifts)" :key="dateGroup.date">
+                    <div class="mb-4 mt-3">
+                        <div class="flex items-center gap-2 mb-1 md:mb-2">
+                            <h3 class="text-base font-medium" x-text="formatDate(dateGroup.date)"></h3>
+                            <div class="flex-1 border-t-2 border-base-content/30"></div>
+                        </div>
+                        <table class="table table-xs w-full">
+                            <thead>
+                                <tr>
+                                    <th class="w-16 md:w-48 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
+                                    <th class="w-16 hidden md:table-cell" x-text="$t('shift_plans.view.duration')"></th>
+                                    <th class="w-12 md:w-14 text-center px-1 md:px-2">Status</th>
+                                    <th class="px-2 md:px-4" x-text="$t('shift_plans.view.participants')"></th>
+                                    <th class="w-10 md:w-12 px-1 md:px-2"></th>
+                                </tr>
+                            </thead>
+                            <!-- Each shift gets its own tbody -->
+                            <template x-for="(shift, index) in dateGroup.shifts" :key="shift.id">
+                                {{ template "shift-row" }}
+                            </template>
+                        </table>
+                    </div>
+                </template>
+            </template>
+        </div>
     </div>
 </div>
-</div>
-{{ end }} 
+{{ end }}

@@ -205,6 +205,8 @@
             "edit_shift": "Schicht bearbeiten",
             "start_time": "Startzeit",
             "required_participants": "Benötigte Helfende",
+            "unlimited_participants": "Unbegrenzte Helfende",
+            "unlimited_participants_help": "Aktivieren diese Option, wenn es keine Begrenzung der Helfenden geben soll",
             "comment_de": "Kommentar (Deutsch)",
             "comment_en": "Kommentar (Englisch)",
             "cancel": "Abbrechen",

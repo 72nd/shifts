@@ -44,6 +44,11 @@ var shiftSchema = `
 
 // CreateShift creates a new shift
 func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
+	// Validate required field
+	if shift.Required != -1 && shift.Required < 1 {
+		return nil, fmt.Errorf("required participants must be either -1 for unlimited or a positive number")
+	}
+
 	var result Shift
 
 	err := db.transaction(func(tx *sql.Tx) error {
@@ -186,6 +191,11 @@ func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 
 // UpdateShift updates an existing shift
 func (db *DB) UpdateShift(id int64, shift Shift) error {
+	// Validate required field
+	if shift.Required != -1 && shift.Required < 1 {
+		return fmt.Errorf("required participants must be either -1 for unlimited or a positive number")
+	}
+
 	query := `
         UPDATE shifts SET
             start_time = ?,

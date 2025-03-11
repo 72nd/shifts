@@ -35,14 +35,19 @@
             x-text="formatDuration(shift.duration)">
         </td>
         <td class="align-middle text-center px-1 md:px-2 py-1 md:py-2">
-            <div class="radial-progress text-[10px] border-4" 
-                    :class="[
-                        getProgressStyles(shift).background,
-                        getProgressStyles(shift).text,
-                        `border-${getProgressStyles(shift).background.split('-')[1]}`
-                    ]"
-                    x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '1.8rem'}">
+            <div x-show="shift.required !== -1" 
+                 class="radial-progress text-[10px] border-4" 
+                 :class="[
+                    getProgressStyles(shift).background,
+                    getProgressStyles(shift).text,
+                    `border-${getProgressStyles(shift).background.split('-')[1]}`
+                 ]"
+                 x-bind:style="{ '--value': Math.round((shift.participants?.length || 0) / shift.required * 100), '--size': '1.8rem'}">
                 <span x-text="(shift.participants?.length || 0) + '/' + shift.required"></span>
+            </div>
+            <div x-show="shift.required === -1"
+                 class="flex items-center justify-center w-[2.3rem] h-[2.3rem] rounded-full bg-accent/70">
+                <span class="text-[10px] font-medium" x-text="(shift.participants?.length || 0) + '/∞'"></span>
             </div>
         </td>
         <td class="py-1 md:py-2 px-2 md:px-4 align-middle">
@@ -82,9 +87,9 @@
                         </svg>
                     </button>
                     <button @click.stop="openJoinModal(shift)"
-                        :disabled="shift.participants?.length >= shift.required"
-                        class="btn btn-square btn-outline btn-success btn-xs md:btn-sm"
-                        :class="{ 'btn-disabled': shift.participants?.length >= shift.required }"
+                        :disabled="shift.required !== -1 && shift.participants?.length >= shift.required"
+                        class="btn btn-square btn-outline btn-success btn-xs  md:btn-sm"
+                        :class="{ 'btn-disabled': shift.required !== -1 && shift.participants?.length >= shift.required }"
                         :aria-label="$t('shift_plans.view.join')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -123,9 +128,9 @@
                 <div class="join items-center gap-1">
                     <!-- Join Button (always visible) -->
                     <button @click.stop="openJoinModal(shift)"
-                        :disabled="shift.participants?.length >= shift.required"
+                        :disabled="shift.required !== -1 && shift.participants?.length >= shift.required"
                         class="btn btn-square btn-outline btn-success btn-xs"
-                        :class="{ 'btn-disabled': shift.participants?.length >= shift.required }"
+                        :class="{ 'btn-disabled': shift.required !== -1 && shift.participants?.length >= shift.required }"
                         :aria-label="$t('shift_plans.view.join')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

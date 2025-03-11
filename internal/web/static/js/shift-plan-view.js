@@ -428,6 +428,14 @@ document.addEventListener('alpine:init', () => {
                 };
             }
             
+            // For unlimited shifts, always return primary style
+            if (shift.required === -1) {
+                return {
+                    background: 'bg-primary',
+                    text: 'text-primary-content'
+                };
+            }
+            
             const ratio = shift.participants.length / shift.required;
             
             if (shift.participants.length === 0) {
@@ -462,23 +470,45 @@ document.addEventListener('alpine:init', () => {
                     totalRequired: 0,
                     totalFilled: 0,
                     percentage: 0,
+                    hasUnlimitedShifts: false,
                     background: 'bg-base-content/10'
                 };
             }
 
-            const totalRequired = type.shifts.reduce((total, shift) => total + shift.required, 0);
-            const totalFilled = type.shifts.reduce((total, shift) => total + (shift.participants?.length || 0), 0);
-            const openShifts = type.shifts.reduce((count, shift) => 
-                count + Math.max(0, shift.required - (shift.participants?.length || 0)), 0);
-            const percentage = Math.round((totalFilled / totalRequired) * 100);
+            let totalRequired = 0;
+            let totalFilled = 0;
+            let openShifts = 0;
+            let hasUnlimitedShifts = false;
+            let limitedShiftsCount = 0;
 
+            type.shifts.forEach(shift => {
+                const participantCount = shift.participants?.length || 0;
+                
+                if (shift.required === -1) {
+                    hasUnlimitedShifts = true;
+                    totalFilled += participantCount;
+                } else {
+                    limitedShiftsCount++;
+                    totalRequired += shift.required;
+                    totalFilled += participantCount;
+                    openShifts += Math.max(0, shift.required - participantCount);
+                }
+            });
+
+            // Calculate percentage based only on limited shifts
+            let percentage = limitedShiftsCount > 0 ? Math.round((totalFilled / totalRequired) * 100) : 100;
+            
+            // Color based on limited shifts only
             let background;
-            if (openShifts === 0) {
-                background = 'bg-success/40';
+            if (limitedShiftsCount === 0) {
+                // If there are only unlimited shifts, show as success
+                background = 'progress-accent/70';
+            } else if (openShifts === 0) {
+                background = 'progress-success';
             } else if (percentage < 50) {
-                background = 'bg-error/40';
+                background = 'progress-error';
             } else {
-                background = 'bg-warning/40';
+                background = 'progress-warning';
             }
 
             return {
@@ -486,7 +516,8 @@ document.addEventListener('alpine:init', () => {
                 totalRequired,
                 totalFilled,
                 percentage,
-                background
+                background,
+                hasUnlimitedShifts
             };
         },
 
