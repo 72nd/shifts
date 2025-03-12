@@ -46,7 +46,7 @@
                 <span x-text="(shift.participants?.length || 0) + '/' + shift.required"></span>
             </div>
             <div x-show="shift.required === -1"
-                 class="flex items-center justify-center w-[2.3rem] h-[2.3rem] rounded-full bg-accent/70">
+                 class="flex items-center justify-center w-[2.3rem] h-[2.3rem] rounded-full bg-accent/70 text-accent-content">
                 <span class="text-[10px] font-medium" x-text="(shift.participants?.length || 0) + '/∞'"></span>
             </div>
         </td>
