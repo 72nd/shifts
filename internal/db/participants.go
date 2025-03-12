@@ -55,7 +55,7 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 		if err != nil {
 			return fmt.Errorf("failed to check shift capacity: %w", err)
 		}
-		if current >= required {
+		if required != -1 && current >= required {
 			return fmt.Errorf("shift is already full")
 		}
 

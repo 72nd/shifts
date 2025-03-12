@@ -1,3 +1,27 @@
  .textarea {
     line-height: 1.2rem;
  }
+
+ .md-content ul, ol {
+   all: revert;
+   margin-top: 0.3rem;
+   margin-bottom: 0.3rem;
+ }
+
+ .md-content p {
+   margin-bottom: 0.3rem;
+ }
+
+ .md-content a {
+   text-decoration: underline;
+ }
+
+ .md-content table {
+   border-collapse: collapse;
+   border-top: 1px solid;
+   border-bottom: 1px solid;
+ }
+ 
+ .md-content table tr {
+   border-bottom: 1px solid;
+ }

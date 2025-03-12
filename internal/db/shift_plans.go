@@ -5,26 +5,33 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"math/rand"
 	"time"
 
 	"github.com/72nd/shifts/internal/util"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 // ShiftPlan represents a complete shift planning schedule
 type ShiftPlan struct {
-	ID              int64     `json:"id"`
-	Token           string    `json:"token"`
-	StartDate       time.Time `json:"start_date"`
-	EndDate         time.Time `json:"end_date"`
-	CreatedAt       time.Time `json:"created_at"`
-	IsMultilingual  bool      `json:"is_multilingual"`
-	TitleDE         *string   `json:"title_de"`
-	TitleEN         string    `json:"title_en"`
-	DescriptionDE   *string   `json:"description_de"`
-	DescriptionEN   string    `json:"description_en"`
-	AdminPassword   string    `json:"-"` // Never sent to client
-	DayBoundaryTime string    `json:"day_boundary_time"`
+	ID                int64     `json:"id"`
+	Token             string    `json:"token"`
+	StartDate         time.Time `json:"start_date"`
+	EndDate           time.Time `json:"end_date"`
+	CreatedAt         time.Time `json:"created_at"`
+	IsMultilingual    bool      `json:"is_multilingual"`
+	TitleDE           *string   `json:"title_de"`
+	TitleEN           string    `json:"title_en"`
+	DescriptionDE     *string   `json:"description_de"`
+	DescriptionEN     string    `json:"description_en"`
+	DescriptionDEHTML *string   `json:"description_de_html,omitempty"`
+	DescriptionENHTML *string   `json:"description_en_html,omitempty"`
+	AdminPassword     string    `json:"-"` // Never sent to client
+	DayBoundaryTime   string    `json:"day_boundary_time"`
 }
 
 // NewShiftPlan contains the data needed to create a new shift plan
@@ -263,6 +270,33 @@ func (db *DB) createExampleShifts(tx *sql.Tx, plan *ShiftPlan) error {
 	return nil
 }
 
+// renderMarkdown converts markdown text to HTML
+func renderMarkdown(text string) string {
+	// Create markdown parser with common extensions
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+	p := parser.NewWithExtensions(extensions)
+
+	// Create HTML renderer with safe options
+	opts := html.RendererOptions{
+		Flags: html.CommonFlags | html.HrefTargetBlank,
+		// Add rel="nofollow" to links
+		RenderNodeHook: func(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
+			if link, ok := node.(*ast.Link); ok && entering {
+				io.WriteString(w, "<a href=\"")
+				html.EscapeHTML(w, link.Destination)
+				io.WriteString(w, "\" rel=\"nofollow\" target=\"_blank\">")
+				return ast.GoToNext, true
+			}
+			return ast.GoToNext, false
+		},
+	}
+	renderer := html.NewRenderer(opts)
+
+	// Parse and render
+	md := p.Parse([]byte(text))
+	return string(markdown.Render(md, renderer))
+}
+
 // GetShiftPlanByToken retrieves a shift plan by its token
 func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 	var plan ShiftPlan
@@ -302,6 +336,16 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 	plan.StartDate, _ = time.Parse(time.RFC3339, startDate)
 	plan.EndDate, _ = time.Parse(time.RFC3339, endDate)
 	plan.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+
+	// Render markdown to HTML
+	if plan.DescriptionEN != "" {
+		html := renderMarkdown(plan.DescriptionEN)
+		plan.DescriptionENHTML = &html
+	}
+	if plan.DescriptionDE != nil && *plan.DescriptionDE != "" {
+		html := renderMarkdown(*plan.DescriptionDE)
+		plan.DescriptionDEHTML = &html
+	}
 
 	return &plan, nil
 }
