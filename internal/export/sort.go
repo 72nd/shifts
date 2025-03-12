@@ -15,8 +15,17 @@ type ShiftTime struct {
 	Total   int // Total minutes since midnight
 }
 
-// ParseTime parses a time string in format "HH:MM"
+// ParseTime parses a time string in format "HH:MM". If the timeStr is empty,
+// it returns a ShiftTime with 0 hours and 0 minutes.
 func ParseTime(timeStr string) (ShiftTime, error) {
+	if timeStr == "" {
+		return ShiftTime{
+			Hours:   0,
+			Minutes: 0,
+			Total:   0,
+		}, nil
+	}
+
 	var hours, minutes int
 	if _, err := fmt.Sscanf(timeStr, "%d:%d", &hours, &minutes); err != nil {
 		return ShiftTime{}, fmt.Errorf("invalid time format (expected HH:MM): %w", err)
