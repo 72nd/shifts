@@ -20,8 +20,9 @@ func NewService(db *db.DB) *Service {
 
 // ShiftsByDay represents shifts grouped by their logical day
 type ShiftsByDay struct {
-	Date   time.Time  `json:"date"`
-	Shifts []db.Shift `json:"shifts"`
+	Date     time.Time  `json:"date"`
+	DayCount int        `json:"day_count"`
+	Shifts   []db.Shift `json:"shifts"`
 }
 
 // ShiftTypeWithDays represents a shift type with its shifts grouped by days
@@ -66,7 +67,7 @@ func NewExportData(plan *db.ShiftPlan, types []*db.ShiftType) (*ExportData, erro
 }
 
 // groupShiftsByDay groups shifts by their logical day
-func groupShiftsByDay(shifts []db.Shift, boundaryTime string) ([]ShiftsByDay, error) {
+func groupShiftsByDay(shifts []db.Shift, boundaryTime string, startDate time.Time) ([]ShiftsByDay, error) {
 	if len(shifts) == 0 {
 		return []ShiftsByDay{}, nil
 	}
@@ -102,8 +103,9 @@ func groupShiftsByDay(shifts []db.Shift, boundaryTime string) ([]ShiftsByDay, er
 		})
 
 		result[i] = ShiftsByDay{
-			Date:   day,
-			Shifts: dayShifts,
+			Date:     day,
+			DayCount: int(day.Sub(startDate).Hours()/24) + 1,
+			Shifts:   dayShifts,
 		}
 	}
 
@@ -118,7 +120,7 @@ func (e *ExportData) SortShifts() error {
 		}
 
 		// Group shifts by day
-		shiftDays, err := groupShiftsByDay(t.Shifts, e.Plan.DayBoundaryTime)
+		shiftDays, err := groupShiftsByDay(t.Shifts, e.Plan.DayBoundaryTime, e.Plan.StartDate)
 		if err != nil {
 			return fmt.Errorf("failed to group shifts for type %d: %w", t.ID, err)
 		}
