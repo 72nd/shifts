@@ -15,7 +15,6 @@
  .md-content a {
    text-decoration: underline;
  }
-
  .md-content table {
    border-collapse: collapse;
    border-top: 1px solid;
@@ -24,4 +23,9 @@
  
  .md-content table tr {
    border-bottom: 1px solid;
+ }
+ 
+ .md-content table td {
+   padding-left: 0.5rem;
+   padding-right: 0.5rem;
  }
