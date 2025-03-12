@@ -41,7 +41,7 @@ type ExportData struct {
 func NewExportData(plan *db.ShiftPlan, types []*db.ShiftType) (*ExportData, error) {
 	// Validate boundary time
 	if _, err := ParseTime(plan.DayBoundaryTime); err != nil {
-		return nil, fmt.Errorf("invalid day boundary time in plan: %w", err)
+		return nil, NewError(ErrInvalidInput, fmt.Sprintf("invalid day boundary time in plan: %v", err), err)
 	}
 
 	// Sort shift types by sort_order

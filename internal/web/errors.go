@@ -1,8 +1,10 @@
 package web
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 // AppError repräsentiert einen anwendungsspezifischen Fehler
@@ -44,8 +46,11 @@ func RespondWithError(w http.ResponseWriter, logger *slog.Logger, err *AppError)
 
 	logger.Error("application error", attrs...)
 
+	msg := fmt.Sprintf("%s: %s", err.Code, err.Message)
+	msg = strings.TrimSpace(msg)
+
 	// Sende Fehlerantwort an den Client
-	http.Error(w, err.Message, err.StatusCode)
+	http.Error(w, msg, err.StatusCode)
 }
 
 // RespondWithErrorAndLogger sendet eine Fehlerantwort an den Client und loggt den Fehler mit einem Logger-Interface

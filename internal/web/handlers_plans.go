@@ -436,16 +436,7 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 		var appErr *AppError
 		switch e := err.(type) {
 		case *export.Error:
-			switch e.Type {
-			case export.ErrInvalidToken:
-				appErr = NewAppError(ErrResourceNotFound, e.Message, http.StatusNotFound, e)
-			case export.ErrUnauthorized:
-				appErr = NewAppError(ErrUnauthorized, e.Message, http.StatusUnauthorized, e)
-			case export.ErrLoadingPlan, export.ErrLoadingShiftTypes, export.ErrLoadingShifts, export.ErrLoadingParticipants:
-				appErr = NewAppError(ErrDatabaseError, e.Message, http.StatusInternalServerError, e)
-			default:
-				appErr = NewAppError(ErrInternalError, "Export failed", http.StatusInternalServerError, e)
-			}
+			appErr = NewAppError(string(e.Type), e.Message, e.StatusCode(), e)
 		default:
 			appErr = NewAppError(ErrInternalError, "Export failed", http.StatusInternalServerError, err)
 		}
