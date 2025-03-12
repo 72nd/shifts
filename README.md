@@ -35,15 +35,13 @@ Shifts is a modern, web-based application for collaborative shift planning and m
 
 - Go 1.16 or higher
 - Modern web browser (Chrome, Firefox, Safari, Edge)
-- No database required - data is stored in JSON files
+- Sqlite3
 
 ## 🚀 Installation
 
-### Option 1: Run from Source
-
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/shifts.git
+   git clone https://github.com/72nd/shifts.git
    cd shifts
    ```
 
@@ -59,39 +57,37 @@ Shifts is a modern, web-based application for collaborative shift planning and m
 
 4. Access the application at `http://localhost:8080` (or your configured port)
 
-### Option 2: Using Docker
-
-1. Build the Docker image:
-   ```bash
-   docker build -t shifts .
-   ```
-
-2. Run the container:
-   ```bash
-   docker run -p 8080:8080 -v $(pwd)/data:/app/data shifts
-   ```
-
-3. Access the application at `http://localhost:8080` (or your configured port)
 
 ## 🔧 Configuration
 
-### Environment Variables
+The application uses a TOML configuration file for its settings. By default, it looks for a `config.toml` file in the current working directory. You can specify a different configuration file location using the `--config` flag.
 
-- `PORT`: Server port (default: 8080)
-- `ADMIN_PASSWORD`: Admin password for accessing protected features (default: "admin123")
-- `SITE_TITLE`: Default title for the application (default: "25s3")
-- `DAY_ZERO`: Reference date for day calculations in format "YYYY-MM-DD" (default: empty)
-- `DEBUG_MODE`: Enable debug features when set to "true" (default: false)
+### Configuration File
 
-### Custom Content
+Copy the template configuration file to create your own:
+```bash
+cp config.template.toml config.toml
+```
 
-You can customize the informational text displayed in the application by creating these files:
-- `info_de.md`: Information text in German (Markdown format)
-- `info_en.md`: Information text in English (Markdown format)
+Available configuration options:
 
-### Custom Styling
+- `host`: Server host address (default: "localhost")
+- `port`: Server port (default: 8080)
+- `db_path`: Path to the SQLite database file (default: "data/shifts.db")
+- `log_level`: Logging level (default: "info")
 
-The application uses DaisyUI and Tailwind CSS for styling. You can customize the appearance by modifying the theme configuration in `internal/web/templates/layouts/base.html`.
+Example configuration:
+```toml
+# Server configuration
+host = "localhost"
+port = 8080
+
+# Database configuration
+db_path = "data/shifts.db"
+
+# Logging configuration
+log_level = "info"
+```
 
 ## 📱 Usage Guide
 

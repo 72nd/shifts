@@ -1,0 +1,9 @@
+# Server configuration
+host = "localhost"
+port = 8080
+
+# Database configuration
+db_path = "data/shifts.db"
+
+# Logging configuration
+log_level = "info" 

@@ -1,23 +1,23 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"github.com/BurntSushi/toml"
 )
 
 // Config holds all configuration values for the application
 type Config struct {
 	// Server configuration
-	Host string `json:"host"`
-	Port int    `json:"port"`
+	Host string `toml:"host"`
+	Port int    `toml:"port"`
 
 	// Database configuration
-	DBPath string `json:"db_path"`
+	DBPath string `toml:"db_path"`
 
 	// Logging configuration
-	LogLevel string `json:"log_level"`
+	LogLevel string `toml:"log_level"`
 }
 
 // DefaultConfig returns a configuration with default values
@@ -30,49 +30,30 @@ func DefaultConfig() Config {
 	}
 }
 
-// LoadConfig loads the configuration from a JSON file
+// LoadConfig loads the configuration from a TOML file
 func LoadConfig(path string) (Config, error) {
-	config := DefaultConfig()
+	var config Config
 
-	// If no config file is specified, return defaults
+	// If no config file is specified, try to find it in the current directory
 	if path == "" {
-		return config, nil
-	}
-
-	// Ensure the config directory exists
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return config, fmt.Errorf("failed to create config directory: %w", err)
+		path = "config.toml"
 	}
 
 	// Try to read the config file
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// If the file doesn't exist, create it with default values
-			if err := SaveConfig(path, config); err != nil {
-				return config, fmt.Errorf("failed to create default config: %w", err)
-			}
-			return config, nil
-		}
+	if _, err := toml.DecodeFile(path, &config); err != nil {
 		return config, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	// Parse the config file
-	if err := json.Unmarshal(data, &config); err != nil {
-		return config, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
 	return config, nil
 }
 
-// SaveConfig saves the configuration to a JSON file
+// SaveConfig saves the configuration to a TOML file
 func SaveConfig(path string, config Config) error {
-	data, err := json.MarshalIndent(config, "", "    ")
-	if err != nil {
+	if err := toml.NewEncoder(os.Stdout).Encode(config); err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := toml.NewEncoder(os.Stdout).Encode(config); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
