@@ -140,7 +140,7 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken,
                 this.handleSettingsSuccess.bind(this)
             );
-            this.exportModal = new ExportModal(token, this.adminToken);
+            this.exportModal = new ExportModal(token, this.adminToken, this.filterManager);
 
             // Load initial data
             this.loadPlan(token);

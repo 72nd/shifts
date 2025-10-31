@@ -2,7 +2,6 @@ package export
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/72nd/shifts/internal/db"
@@ -66,48 +65,4 @@ func getShiftDay(shift db.Shift, boundaryTime string) (time.Time, error) {
 	}
 
 	return shiftDay, nil
-}
-
-// sortShiftsByDay sorts shifts first by their logical day (considering boundary time)
-// and then by their start time within each day
-func sortShiftsByDay(shifts []db.Shift, boundaryTime string) ([]db.Shift, error) {
-	// Validate boundary time format
-	if _, err := ParseTime(boundaryTime); err != nil {
-		return nil, fmt.Errorf("invalid boundary time format: %w", err)
-	}
-
-	sort.Slice(shifts, func(i, j int) bool {
-		dayI, errI := getShiftDay(shifts[i], boundaryTime)
-		dayJ, errJ := getShiftDay(shifts[j], boundaryTime)
-
-		// If we encounter any errors, maintain original order
-		if errI != nil || errJ != nil {
-			return i < j
-		}
-
-		// First compare days
-		if !dayI.Equal(dayJ) {
-			return dayI.Before(dayJ)
-		}
-
-		// If same day, compare start times
-		return shifts[i].StartTime.Before(shifts[j].StartTime)
-	})
-
-	return shifts, nil
-}
-
-// SortShiftsInType sorts all shifts within a shift type according to the plan's day boundary time
-func SortShiftsInType(shiftType *db.ShiftType, boundaryTime string) error {
-	if shiftType.Shifts == nil {
-		return nil
-	}
-
-	sorted, err := sortShiftsByDay(shiftType.Shifts, boundaryTime)
-	if err != nil {
-		return fmt.Errorf("failed to sort shifts: %w", err)
-	}
-
-	shiftType.Shifts = sorted
-	return nil
 }

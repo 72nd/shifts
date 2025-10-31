@@ -16,6 +16,17 @@
             </select>
         </div>
 
+        <!-- Filter Checkbox -->
+        <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+                <input type="checkbox" class="checkbox" x-model="useFilters">
+                <span class="label-text" x-text="$t('shift_plans.view.export_modal.only_filtered')"></span>
+            </label>
+            <label class="label" x-show="useFilters && activeFilterCount() > 0">
+                <span class="label-text-alt text-info" x-text="$t('shift_plans.view.export_modal.filter_info', { count: activeFilterCount() })"></span>
+            </label>
+        </div>
+
         <!-- Loading State -->
         <div x-show="isExporting" class="mt-4">
             <div class="flex items-center gap-3">

@@ -31,13 +31,19 @@ type Server struct {
 
 // NewServer creates a new server instance
 func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
+	// Create export service
+	exportService := export.NewService(db)
+	
+	// Register exporters
+	exportService.RegisterExporter(export.NewJSONExporter())
+
 	s := &Server{
 		db:            db,
 		logger:        logger,
 		templates:     newTemplateManager(logger),
 		middleware:    newMiddlewareManager(logger, db, hashPassword),
 		router:        mux.NewRouter(),
-		exportService: export.NewService(db),
+		exportService: exportService,
 	}
 
 	// Parse templates

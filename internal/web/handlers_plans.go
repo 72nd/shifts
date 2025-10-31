@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
@@ -419,19 +421,11 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 		format = "json"
 	}
 
-	// Currently only JSON format is supported
-	if format != "json" {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Unsupported export format",
-			http.StatusBadRequest,
-			nil,
-		))
-		return
-	}
+	// Parse filter parameters from query string
+	filter := s.parseExportFilters(r)
 
-	// Export plan using the export service
-	exportData, err := s.exportService.ExportPlan(token, hashPassword(adminToken))
+	// Export plan using the export service with the new Export method
+	data, contentType, filename, err := s.exportService.Export(token, hashPassword(adminToken), format, filter)
 	if err != nil {
 		var appErr *AppError
 		switch e := err.(type) {
@@ -445,19 +439,50 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set headers for file download
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", exportData.GenerateFilename()))
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 
-	// Encode and send the response
-	if err := json.NewEncoder(w).Encode(exportData); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInternalError,
-			"Failed to encode export data",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
+	// Write the data
+	if _, err := w.Write(data); err != nil {
+		s.logger.Error("failed to write export data", "error", err)
 	}
+}
+
+// parseExportFilters parses export filter parameters from the request
+func (s *Server) parseExportFilters(r *http.Request) *export.ExportFilter {
+	query := r.URL.Query()
+
+	filter := &export.ExportFilter{
+		Day:         query.Get("day"),
+		Status:      query.Get("status"),
+		SearchQuery: query.Get("search"),
+		TypeIDs:     []int64{},
+	}
+
+	// Parse type IDs (comma-separated list)
+	if typeIDsStr := query.Get("type_ids"); typeIDsStr != "" {
+		typeIDsParts := splitAndTrim(typeIDsStr, ",")
+		for _, idStr := range typeIDsParts {
+			if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+				filter.TypeIDs = append(filter.TypeIDs, id)
+			}
+		}
+	}
+
+	return filter
+}
+
+// splitAndTrim splits a string by separator and trims whitespace
+func splitAndTrim(s, sep string) []string {
+	parts := strings.Split(s, sep)
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
 
 // handleDeleteShiftPlan handles the deletion of a shift plan

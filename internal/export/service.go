@@ -10,12 +10,30 @@ import (
 
 // Service handles the export functionality for shift plans
 type Service struct {
-	db *db.DB
+	db        *db.DB
+	exporters map[string]Exporter
 }
 
 // NewService creates a new export service
 func NewService(db *db.DB) *Service {
-	return &Service{db: db}
+	return &Service{
+		db:        db,
+		exporters: make(map[string]Exporter),
+	}
+}
+
+// RegisterExporter registers an exporter for a specific format
+func (s *Service) RegisterExporter(exporter Exporter) {
+	s.exporters[exporter.Format()] = exporter
+}
+
+// GetExporter returns the exporter for the specified format
+func (s *Service) GetExporter(format string) (Exporter, error) {
+	exporter, ok := s.exporters[format]
+	if !ok {
+		return nil, NewError(ErrInvalidInput, fmt.Sprintf("unsupported export format: %s", format), nil)
+	}
+	return exporter, nil
 }
 
 // ShiftsByDay represents shifts grouped by their logical day
@@ -132,13 +150,8 @@ func (e *ExportData) SortShifts() error {
 	return nil
 }
 
-// GenerateFilename generates a filename for the export based on the plan token
-func (e *ExportData) GenerateFilename() string {
-	return fmt.Sprintf("shift-plan-%s-%s.json", e.Plan.Token, e.ExportedAt.Format("2006-01-02"))
-}
-
-// ExportPlan exports a shift plan with all its data
-func (s *Service) ExportPlan(token string, adminToken string) (*ExportData, error) {
+// ExportPlanWithFilter exports a shift plan with all its data and applies filters if provided
+func (s *Service) ExportPlanWithFilter(token string, adminToken string, filter *ExportFilter) (*ExportData, error) {
 	// Get plan
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
@@ -170,7 +183,41 @@ func (s *Service) ExportPlan(token string, adminToken string) (*ExportData, erro
 		return nil, NewError(ErrInvalidInput, "Failed to sort shifts", err)
 	}
 
+	// Apply filters if provided and not empty
+	if filter != nil && !filter.IsEmpty() {
+		exportData = filter.ApplyFilters(exportData)
+	}
+
 	return exportData, nil
+}
+
+// Export exports a shift plan in the specified format with optional filtering
+func (s *Service) Export(token string, adminToken string, format string, filter *ExportFilter) ([]byte, string, string, error) {
+	// Get the exporter for the specified format
+	exporter, err := s.GetExporter(format)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	// Export the plan with filter
+	exportData, err := s.ExportPlanWithFilter(token, adminToken, filter)
+	if err != nil {
+		return nil, "", "", err
+	}
+
+	// Use the exporter to convert data
+	data, err := exporter.Export(exportData)
+	if err != nil {
+		return nil, "", "", NewError(ErrInvalidInput, "Failed to export data", err)
+	}
+
+	// Generate filename
+	filename := fmt.Sprintf("shift-plan-%s-%s.%s",
+		exportData.Plan.Token,
+		exportData.ExportedAt.Format("2006-01-02"),
+		exporter.FileExtension())
+
+	return data, exporter.ContentType(), filename, nil
 }
 
 // loadShiftTypes loads all shift types with their shifts and participants

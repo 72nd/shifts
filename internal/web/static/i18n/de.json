@@ -253,7 +253,9 @@
                 "format_json": "JSON",
                 "download": "Herunterladen",
                 "generating": "Wird generiert...",
-                "error": "Fehler beim Exportieren des Schichtplans"
+                "error": "Fehler beim Exportieren des Schichtplans",
+                "only_filtered": "Nur gefilterte Daten exportieren",
+                "filter_info": "{{ count }} Filter aktiv"
             }
         },
         "deleted": {
