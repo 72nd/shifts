@@ -11,7 +11,7 @@
             <label class="label">
                 <span class="label-text" x-text="$t('shift_plans.view.export_modal.format')"></span>
             </label>
-            <select class="select select-bordered w-full" x-model="exportFormat">
+            <select class="select select-bordered w-full" x-model="exportModal.exportFormat">
                 <option value="json" x-text="$t('shift_plans.view.export_modal.format_json')"></option>
             </select>
         </div>
@@ -19,16 +19,21 @@
         <!-- Filter Checkbox -->
         <div class="form-control">
             <label class="label cursor-pointer justify-start gap-3">
-                <input type="checkbox" class="checkbox" x-model="useFilters">
+                <input type="checkbox" class="checkbox" x-model="exportModal.useFilters">
                 <span class="label-text" x-text="$t('shift_plans.view.export_modal.only_filtered')"></span>
             </label>
-            <label class="label" x-show="useFilters && activeFilterCount() > 0">
-                <span class="label-text-alt text-info" x-text="$t('shift_plans.view.export_modal.filter_info', { count: activeFilterCount() })"></span>
-            </label>
+            <div x-show="exportModal.useFilters && activeFilterCount() > 0">
+                <label class="label">
+                    <span class="label-text-alt text-info">
+                        <span x-text="activeFilterCount()"></span>
+                        <span x-text="activeFilterCount() > 1 ? $t('shift_plans.view.export_modal.filters_active') : $t('shift_plans.view.export_modal.filter_active')"></span>
+                    </span>
+                </label>
+            </div>
         </div>
 
         <!-- Loading State -->
-        <div x-show="isExporting" class="mt-4">
+        <div x-show="exportModal.isExporting" class="mt-4">
             <div class="flex items-center gap-3">
                 <span class="loading loading-spinner"></span>
                 <span x-text="$t('shift_plans.view.export_modal.generating')"></span>
@@ -40,7 +45,7 @@
             <button class="btn" @click="closeExportModal()" x-text="$t('common.cancel')"></button>
             <button class="btn btn-primary" 
                     @click="downloadExport()" 
-                    :disabled="isExporting"
+                    :disabled="exportModal.isExporting"
                     x-text="$t('shift_plans.view.export_modal.download')">
             </button>
         </div>

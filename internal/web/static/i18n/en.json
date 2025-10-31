@@ -255,7 +255,8 @@
                 "generating": "Generating...",
                 "error": "Error exporting shift plan",
                 "only_filtered": "Export filtered data only",
-                "filter_info": "{{ count }} filter(s) active"
+                "filter_active": "filter active",
+                "filters_active": "filters active"
             }
         },
         "deleted": {

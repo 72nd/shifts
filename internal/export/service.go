@@ -51,9 +51,10 @@ type ShiftTypeWithDays struct {
 
 // ExportData represents the complete export structure for a shift plan
 type ExportData struct {
-	Plan       *db.ShiftPlan        `json:"plan"`
-	ShiftTypes []*ShiftTypeWithDays `json:"shift_types"`
-	ExportedAt time.Time            `json:"exported_at"`
+	Plan          *db.ShiftPlan        `json:"plan"`
+	ShiftTypes    []*ShiftTypeWithDays `json:"shift_types"`
+	ExportedAt    time.Time            `json:"exported_at"`
+	AppliedFilter *ExportFilter        `json:"applied_filter,omitempty"`
 }
 
 // NewExportData creates a new ExportData instance and validates the input
@@ -186,6 +187,8 @@ func (s *Service) ExportPlanWithFilter(token string, adminToken string, filter *
 	// Apply filters if provided and not empty
 	if filter != nil && !filter.IsEmpty() {
 		exportData = filter.ApplyFilters(exportData)
+		// Store the applied filter in the export data for documentation
+		exportData.AppliedFilter = filter
 	}
 
 	return exportData, nil

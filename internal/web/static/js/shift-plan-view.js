@@ -19,12 +19,6 @@ document.addEventListener('alpine:init', () => {
         isLoading: true,
         error: null,
 
-        // Filter state
-        selectedTypes: [],
-        selectedDay: '',
-        selectedStatus: 'all',
-        searchQuery: '',
-
         // Modal state
         currentShift: null,
         currentParticipant: null,
@@ -238,14 +232,8 @@ document.addEventListener('alpine:init', () => {
                     shifts: type.shifts || []
                 }));
 
-                // Initialize filter manager
-                this.filterManager = new FilterManager(
-                    this.shiftTypes,
-                    this.selectedTypes,
-                    this.selectedDay,
-                    this.selectedStatus,
-                    this.searchQuery
-                );
+                // Don't reinitialize filter manager - it's already created in init()
+                // The templates bind directly to filterManager properties
 
                 // Initialize modals
                 this.shiftModal = new ShiftModal(
@@ -573,7 +561,8 @@ document.addEventListener('alpine:init', () => {
             );
             this.exportModal = new ExportModal(
                 this.plan.token,
-                this.adminToken
+                this.adminToken,
+                this.filterManager
             );
 
             // Reload data to get admin-only fields

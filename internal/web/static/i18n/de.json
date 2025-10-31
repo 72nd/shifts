@@ -255,7 +255,8 @@
                 "generating": "Wird generiert...",
                 "error": "Fehler beim Exportieren des Schichtplans",
                 "only_filtered": "Nur gefilterte Daten exportieren",
-                "filter_info": "{{ count }} Filter aktiv"
+                "filter_active": "Filter aktiv",
+                "filters_active": "Filter aktiv"
             }
         },
         "deleted": {
