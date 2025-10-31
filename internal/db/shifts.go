@@ -8,15 +8,17 @@ import (
 
 // Shift represents a single shift instance
 type Shift struct {
-	ID           int64         `json:"id"`
-	TypeID       int64         `json:"type_id"`
-	StartTime    time.Time     `json:"start_time"`
-	Duration     int           `json:"duration"` // in minutes
-	Required     int           `json:"required"`
-	CommentDE    string        `json:"comment_de"`
-	CommentEN    string        `json:"comment_en"`
-	IsLocked     bool          `json:"is_locked"`
-	Participants []Participant `json:"participants,omitempty"`
+	ID            int64         `json:"id"`
+	TypeID        int64         `json:"type_id"`
+	StartTime     time.Time     `json:"start_time"`
+	Duration      int           `json:"duration"` // in minutes
+	Required      int           `json:"required"`
+	CommentDE     string        `json:"comment_de"`
+	CommentEN     string        `json:"comment_en"`
+	CommentDEHTML *string       `json:"comment_de_html,omitempty"`
+	CommentENHTML *string       `json:"comment_en_html,omitempty"`
+	IsLocked      bool          `json:"is_locked"`
+	Participants  []Participant `json:"participants,omitempty"`
 }
 
 // NewShift contains the data needed to create a new shift
@@ -139,6 +141,16 @@ func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 		}
 		s.Participants = participants
 
+		// Render markdown to HTML for comments
+		if s.CommentEN != "" {
+			html := renderMarkdown(s.CommentEN)
+			s.CommentENHTML = &html
+		}
+		if s.CommentDE != "" {
+			html := renderMarkdown(s.CommentDE)
+			s.CommentDEHTML = &html
+		}
+
 		shifts = append(shifts, s)
 	}
 
@@ -185,6 +197,16 @@ func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 		s.Participants, err = db.GetParticipantsByShift(s.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load participants: %w", err)
+		}
+
+		// Render markdown to HTML for comments
+		if s.CommentEN != "" {
+			html := renderMarkdown(s.CommentEN)
+			s.CommentENHTML = &html
+		}
+		if s.CommentDE != "" {
+			html := renderMarkdown(s.CommentDE)
+			s.CommentDEHTML = &html
 		}
 
 		shifts = append(shifts, s)
@@ -287,6 +309,16 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 		return s, fmt.Errorf("failed to load participants: %w", err)
 	}
 
+	// Render markdown to HTML for comments
+	if s.CommentEN != "" {
+		html := renderMarkdown(s.CommentEN)
+		s.CommentENHTML = &html
+	}
+	if s.CommentDE != "" {
+		html := renderMarkdown(s.CommentDE)
+		s.CommentDEHTML = &html
+	}
+
 	return s, nil
 }
 
@@ -384,6 +416,16 @@ func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
 	s.Participants, err = db.GetParticipantsByShift(s.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load participants: %w", err)
+	}
+
+	// Render markdown to HTML for comments
+	if s.CommentEN != "" {
+		html := renderMarkdown(s.CommentEN)
+		s.CommentENHTML = &html
+	}
+	if s.CommentDE != "" {
+		html := renderMarkdown(s.CommentDE)
+		s.CommentDEHTML = &html
 	}
 
 	return &s, nil

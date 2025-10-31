@@ -282,7 +282,7 @@ func renderMarkdown(text string) string {
 
 	// Create HTML renderer with safe options
 	opts := html.RendererOptions{
-		Flags: html.CommonFlags | html.HrefTargetBlank,
+		Flags: html.CommonFlags | html.HrefTargetBlank | html.SkipHTML,
 		// Add rel="nofollow" to links
 		RenderNodeHook: func(w io.Writer, node ast.Node, entering bool) (ast.WalkStatus, bool) {
 			if link, ok := node.(*ast.Link); ok && entering {

@@ -254,7 +254,8 @@
                 </svg>
                 <div>
                     <div x-show="(plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en)"
-                         x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en"></div>
+                         class="md-content"
+                         x-html="plan.is_multilingual ? ($locale() === 'de' ? (shift.comment_de_html || '') : (shift.comment_en_html || '')) : (shift.comment_en_html || '')"></div>
                     <!-- Locked shift explanation -->
                     <div x-show="shift.is_locked" 
                          class="text-info"
