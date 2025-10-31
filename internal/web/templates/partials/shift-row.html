@@ -4,14 +4,27 @@
     <tr class="hover:bg-base-300/50 border-b border-base-content/20" 
         :class="{ 
             'border-b-0': isExpanded || index === dateGroup.shifts.length - 1,
-            'cursor-pointer': plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en
+            'cursor-pointer': plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en,
+            'border-l-4 border-l-info': shift.is_locked
         }"
         @click="(plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) && (isExpanded = !isExpanded)">
         <td class="align-middle px-2 md:px-4 py-1 md:py-2">
             <!-- Desktop time display -->
             <div class="hidden md:block">
-                <div class="whitespace-nowrap font-medium"
-                    x-text="formatTime(shift.start_time, shift.duration)"></div>
+                <div class="flex items-center gap-1.5">
+                    <div class="whitespace-nowrap font-medium"
+                        x-text="formatTime(shift.start_time, shift.duration)"></div>
+                    <!-- Lock icon for locked shifts -->
+                    <svg x-show="shift.is_locked" 
+                         xmlns="http://www.w3.org/2000/svg" 
+                         class="h-3.5 w-3.5 text-info" 
+                         fill="none" 
+                         viewBox="0 0 24 24" 
+                         stroke="currentColor"
+                         :title="$t('shift_plans.view.shift_locked')">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
                 <!-- Comment preview -->
                 <div x-show="!isExpanded && (plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en)"
                      class="text-xs text-base-content/70 mt-0.5 max-w-[150px] truncate"
@@ -26,7 +39,18 @@
                             <span class="font-medium" x-text="formatTimeOnly(shift.start_time)"></span>
                             <span class="text-base-content/70 mx-1">–</span>
                         </div>
-                        <span class="text-base-content/70" x-text="formatTimeOnly(addMinutes(shift.start_time, shift.duration))"></span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-base-content/70" x-text="formatTimeOnly(addMinutes(shift.start_time, shift.duration))"></span>
+                            <!-- Lock icon for locked shifts (mobile) - rechts neben End-Zeit -->
+                            <svg x-show="shift.is_locked" 
+                                 xmlns="http://www.w3.org/2000/svg" 
+                                 class="h-3 w-3 text-info flex-shrink-0" 
+                                 fill="none" 
+                                 viewBox="0 0 24 24" 
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -57,6 +81,7 @@
                         <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-xs md:text-sm transition-colors border border-base-content/20">
                             <span x-text="participant.name" class="font-medium"></span>
                             <button @click.stop="openRemoveModal(shift, participant)"
+                                    x-show="!shift.is_locked || isAdmin"
                                     class="inline-flex items-center justify-center h-3.5 w-3.5 md:h-4 md:w-4 rounded hover:bg-base-content/10 text-base-content/70 hover:text-error transition-colors"
                                     :aria-label="$t('shift_plans.view.remove_participant')">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 md:h-3 md:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -86,10 +111,24 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m4-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>
+                    <!-- Lock/Unlock button (only in collaborative mode) -->
+                    <button x-show="isAdmin && plan.collaborative_mode"
+                            @click.stop="shift.is_locked ? unlockShift(shift, type) : lockShift(shift, type)"
+                            class="btn btn-square btn-outline btn-xs md:btn-sm"
+                            :class="shift.is_locked ? 'btn-info' : ''"
+                            :aria-label="shift.is_locked ? $t('shift_plans.view.unlock_shift') : $t('shift_plans.view.lock_shift')"
+                            :title="shift.is_locked ? $t('shift_plans.view.unlock_shift') : $t('shift_plans.view.lock_shift')">
+                        <svg x-show="!shift.is_locked" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        </svg>
+                        <svg x-show="shift.is_locked" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </button>
                     <button @click.stop="openJoinModal(shift)"
-                        :disabled="shift.required !== -1 && shift.participants?.length >= shift.required"
+                        :disabled="(shift.is_locked && !isAdmin) || (!plan.collaborative_mode && shift.required !== -1 && shift.participants?.length >= shift.required)"
                         class="btn btn-square btn-outline btn-success btn-xs  md:btn-sm"
-                        :class="{ 'btn-disabled': shift.required !== -1 && shift.participants?.length >= shift.required }"
+                        :class="{ 'btn-disabled': (shift.is_locked && !isAdmin) || (!plan.collaborative_mode && shift.required !== -1 && shift.participants?.length >= shift.required) }"
                         :aria-label="$t('shift_plans.view.join')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -108,7 +147,7 @@
                 <!-- Desktop Toggle Button or Placeholder -->
                 <div class="flex items-center h-[26px] md:h-[32px] w-3 md:w-4">
                     <button @click.stop="isExpanded = !isExpanded"
-                        x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
+                        x-show="(plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) || shift.is_locked"
                         class="btn btn-ghost btn-xs p-0 h-auto"
                         :aria-expanded="isExpanded"
                         :aria-label="$t(isExpanded ? 'shift_plans.view.collapse_details' : 'shift_plans.view.expand_details')">
@@ -128,9 +167,9 @@
                 <div class="join items-center gap-1">
                     <!-- Join Button (always visible) -->
                     <button @click.stop="openJoinModal(shift)"
-                        :disabled="shift.required !== -1 && shift.participants?.length >= shift.required"
+                        :disabled="(shift.is_locked && !isAdmin) || (!plan.collaborative_mode && shift.required !== -1 && shift.participants?.length >= shift.required)"
                         class="btn btn-square btn-outline btn-success btn-xs"
-                        :class="{ 'btn-disabled': shift.required !== -1 && shift.participants?.length >= shift.required }"
+                        :class="{ 'btn-disabled': (shift.is_locked && !isAdmin) || (!plan.collaborative_mode && shift.required !== -1 && shift.participants?.length >= shift.required) }"
                         :aria-label="$t('shift_plans.view.join')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -161,6 +200,18 @@
                                     <span x-text="$t('shift_plans.view.duplicate_shift')"></span>
                                 </a>
                             </li>
+                            <!-- Lock/Unlock option (only in collaborative mode) -->
+                            <li x-show="plan.collaborative_mode">
+                                <a @click.stop="shift.is_locked ? unlockShift(shift, type) : lockShift(shift, type)" :class="shift.is_locked ? 'text-info' : ''">
+                                    <svg x-show="!shift.is_locked" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                    </svg>
+                                    <svg x-show="shift.is_locked" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    <span x-text="shift.is_locked ? $t('shift_plans.view.unlock_shift') : $t('shift_plans.view.lock_shift')"></span>
+                                </a>
+                            </li>
                             <li>
                                 <a @click.stop="openDeleteShiftModal(shift, type)" class="text-error">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,7 +227,7 @@
                 <!-- Mobile Toggle Button or Placeholder -->
                 <div class="join-item w-3">
                     <button @click.stop="isExpanded = !isExpanded"
-                        x-show="plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en"
+                        x-show="(plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) || shift.is_locked"
                         class="btn btn-ghost btn-xs p-0 h-auto"
                         :aria-expanded="isExpanded"
                         :aria-label="$t(isExpanded ? 'shift_plans.view.collapse_details' : 'shift_plans.view.expand_details')">
@@ -193,7 +244,7 @@
         </td>
     </tr>
     <!-- Comment row -->
-    <tr x-show="isExpanded && (plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en)"
+    <tr x-show="isExpanded && ((plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) || shift.is_locked)"
         class="border-base-content/20 border-b border-base-content/20"
         :class="{ 'border-b-0': index === dateGroup.shifts.length - 1 }">
         <td colspan="5" class="px-2 md:px-4 py-2 text-xs md:text-sm text-base-content/80">
@@ -201,7 +252,15 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 flex-shrink-0 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                 </svg>
-                <div x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en"></div>
+                <div>
+                    <div x-show="(plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en)"
+                         x-text="plan.is_multilingual ? ($locale() === 'de' ? shift.comment_de : shift.comment_en) : shift.comment_en"></div>
+                    <!-- Locked shift explanation -->
+                    <div x-show="shift.is_locked" 
+                         class="text-info"
+                         :class="{ 'mt-2': (plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) }"
+                         x-text="$t('shift_plans.view.shift_locked_explanation')"></div>
+                </div>
             </div>
         </td>
     </tr>

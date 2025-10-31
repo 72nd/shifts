@@ -15,6 +15,7 @@ type Shift struct {
 	Required     int           `json:"required"`
 	CommentDE    string        `json:"comment_de"`
 	CommentEN    string        `json:"comment_en"`
+	IsLocked     bool          `json:"is_locked"`
 	Participants []Participant `json:"participants,omitempty"`
 }
 
@@ -37,6 +38,7 @@ var shiftSchema = `
         required INTEGER NOT NULL,
         comment_de TEXT,
         comment_en TEXT,
+        is_locked BOOLEAN NOT NULL DEFAULT false,
         FOREIGN KEY (type_id) REFERENCES shift_types(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_shifts_type_id ON shifts(type_id);
@@ -95,7 +97,7 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 	query := `
 		SELECT s.id, s.type_id, s.start_time, s.duration, s.required,
-			   s.comment_de, s.comment_en
+			   s.comment_de, s.comment_en, s.is_locked
 		FROM shifts s
 		WHERE s.type_id = ?
 		ORDER BY s.start_time
@@ -119,6 +121,7 @@ func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 			&s.Required,
 			&s.CommentDE,
 			&s.CommentEN,
+			&s.IsLocked,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan shift: %w", err)
 		}
@@ -146,7 +149,7 @@ func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 	query := `
         SELECT s.id, s.type_id, s.start_time, s.duration, s.required,
-               s.comment_de, s.comment_en
+               s.comment_de, s.comment_en, s.is_locked
         FROM shifts s
         JOIN shift_types st ON s.type_id = st.id
         WHERE st.plan_id = ?
@@ -171,6 +174,7 @@ func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 			&s.Required,
 			&s.CommentDE,
 			&s.CommentEN,
+			&s.IsLocked,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan shift: %w", err)
 		}
@@ -257,7 +261,7 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 
 	query := `
         SELECT id, type_id, start_time, duration, required,
-               comment_de, comment_en
+               comment_de, comment_en, is_locked
         FROM shifts
         WHERE id = ?
     `
@@ -269,6 +273,7 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 		&s.Required,
 		&s.CommentDE,
 		&s.CommentEN,
+		&s.IsLocked,
 	)
 	if err != nil {
 		return s, fmt.Errorf("failed to scan shift: %w", err)
@@ -302,4 +307,84 @@ func (db *DB) VerifyShiftBelongsToPlan(shiftID, planID int64) (bool, error) {
 		return false, fmt.Errorf("failed to verify shift ownership: %w", err)
 	}
 	return exists, nil
+}
+
+// LockShift locks a shift, preventing non-admin users from joining or leaving
+func (db *DB) LockShift(shiftID int64) error {
+	query := `UPDATE shifts SET is_locked = true WHERE id = ?`
+	result, err := db.Exec(query, shiftID)
+	if err != nil {
+		db.logError("LockShift", err, shiftID)
+		return fmt.Errorf("failed to lock shift: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("shift not found")
+	}
+
+	return nil
+}
+
+// UnlockShift unlocks a shift, allowing all users to join or leave
+func (db *DB) UnlockShift(shiftID int64) error {
+	query := `UPDATE shifts SET is_locked = false WHERE id = ?`
+	result, err := db.Exec(query, shiftID)
+	if err != nil {
+		db.logError("UnlockShift", err, shiftID)
+		return fmt.Errorf("failed to unlock shift: %w", err)
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("shift not found")
+	}
+
+	return nil
+}
+
+// GetShiftByID retrieves a shift by ID (public version for handlers)
+func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
+	var s Shift
+	var startTime string
+
+	query := `
+        SELECT id, type_id, start_time, duration, required,
+               comment_de, comment_en, is_locked
+        FROM shifts
+        WHERE id = ?
+    `
+	err := db.QueryRow(query, shiftID).Scan(
+		&s.ID,
+		&s.TypeID,
+		&startTime,
+		&s.Duration,
+		&s.Required,
+		&s.CommentDE,
+		&s.CommentEN,
+		&s.IsLocked,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		db.logError("GetShiftByID", err, shiftID)
+		return nil, fmt.Errorf("failed to get shift: %w", err)
+	}
+
+	s.StartTime, _ = time.Parse(time.RFC3339, startTime)
+
+	// Load participants
+	s.Participants, err = db.GetParticipantsByShift(s.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load participants: %w", err)
+	}
+
+	return &s, nil
 }

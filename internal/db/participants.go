@@ -43,19 +43,25 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 			return fmt.Errorf("participant already exists in this shift")
 		}
 
-		// Check if shift has space
+		// Get shift info and plan's collaborative mode
 		var required, current int
+		var collaborativeMode bool
 		err = tx.QueryRow(`
-            SELECT s.required, COUNT(p.id)
+            SELECT s.required, COUNT(p.id), sp.collaborative_mode
             FROM shifts s
             LEFT JOIN participants p ON s.id = p.shift_id
+            JOIN shift_types st ON s.type_id = st.id
+            JOIN shift_plans sp ON st.plan_id = sp.id
             WHERE s.id = ?
-            GROUP BY s.id, s.required
-        `, shiftID).Scan(&required, &current)
+            GROUP BY s.id, s.required, sp.collaborative_mode
+        `, shiftID).Scan(&required, &current, &collaborativeMode)
 		if err != nil {
 			return fmt.Errorf("failed to check shift capacity: %w", err)
 		}
-		if required != -1 && current >= required {
+
+		// In collaborative mode, skip capacity check (people can express interest)
+		// In normal mode, enforce capacity limits
+		if !collaborativeMode && required != -1 && current >= required {
 			return fmt.Errorf("shift is already full")
 		}
 

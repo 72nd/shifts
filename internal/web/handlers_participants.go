@@ -65,6 +65,61 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if shift is locked
+	shift, err := s.db.GetShiftByID(shiftID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if shift == nil {
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
+		return
+	}
+
+	// If shift is locked, only admins can add participants
+	if shift.IsLocked {
+		adminToken := r.Header.Get("X-Admin-Token")
+		if adminToken == "" {
+			s.RespondWithError(w, NewAppError(
+				ErrUnauthorized,
+				"Shift is locked - admin access required",
+				http.StatusForbidden,
+				nil,
+			))
+			return
+		}
+
+		isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
+		if err != nil {
+			s.RespondWithError(w, NewAppError(
+				ErrDatabaseError,
+				"Failed to verify admin token",
+				http.StatusInternalServerError,
+				err,
+			))
+			return
+		}
+		if !isValid {
+			s.RespondWithError(w, NewAppError(
+				ErrUnauthorized,
+				"Shift is locked - admin access required",
+				http.StatusForbidden,
+				nil,
+			))
+			return
+		}
+	}
+
 	var data struct {
 		Name string `json:"name"`
 	}
@@ -190,6 +245,61 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 			nil,
 		))
 		return
+	}
+
+	// Check if shift is locked
+	shift, err := s.db.GetShiftByID(shiftID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if shift == nil {
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
+		return
+	}
+
+	// If shift is locked, only admins can remove participants
+	if shift.IsLocked {
+		adminToken := r.Header.Get("X-Admin-Token")
+		if adminToken == "" {
+			s.RespondWithError(w, NewAppError(
+				ErrUnauthorized,
+				"Shift is locked - admin access required",
+				http.StatusForbidden,
+				nil,
+			))
+			return
+		}
+
+		isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
+		if err != nil {
+			s.RespondWithError(w, NewAppError(
+				ErrDatabaseError,
+				"Failed to verify admin token",
+				http.StatusInternalServerError,
+				err,
+			))
+			return
+		}
+		if !isValid {
+			s.RespondWithError(w, NewAppError(
+				ErrUnauthorized,
+				"Shift is locked - admin access required",
+				http.StatusForbidden,
+				nil,
+			))
+			return
+		}
 	}
 
 	// Get the participant from the database first to get their name

@@ -32,19 +32,21 @@ type ShiftPlan struct {
 	DescriptionENHTML *string   `json:"description_en_html,omitempty"`
 	AdminPassword     string    `json:"-"` // Never sent to client
 	DayBoundaryTime   string    `json:"day_boundary_time"`
+	CollaborativeMode bool      `json:"collaborative_mode"`
 }
 
 // NewShiftPlan contains the data needed to create a new shift plan
 type NewShiftPlan struct {
-	TitleDE         *string   `json:"title_de"`
-	TitleEN         string    `json:"title_en"`
-	DescriptionDE   *string   `json:"description_de"`
-	DescriptionEN   string    `json:"description_en"`
-	StartDate       time.Time `json:"start_date"`
-	EndDate         time.Time `json:"end_date"`
-	IsMultilingual  bool      `json:"is_multilingual"`
-	Password        string    `json:"password"`
-	DayBoundaryTime string    `json:"day_boundary_time"`
+	TitleDE           *string   `json:"title_de"`
+	TitleEN           string    `json:"title_en"`
+	DescriptionDE     *string   `json:"description_de"`
+	DescriptionEN     string    `json:"description_en"`
+	StartDate         time.Time `json:"start_date"`
+	EndDate           time.Time `json:"end_date"`
+	IsMultilingual    bool      `json:"is_multilingual"`
+	Password          string    `json:"password"`
+	DayBoundaryTime   string    `json:"day_boundary_time"`
+	CollaborativeMode bool      `json:"collaborative_mode"`
 }
 
 var shiftPlanSchema = `
@@ -60,7 +62,8 @@ var shiftPlanSchema = `
         title_en TEXT NOT NULL,
         description_de TEXT,
         description_en TEXT,
-        day_boundary_time TEXT NOT NULL DEFAULT '00:00'
+        day_boundary_time TEXT NOT NULL DEFAULT '00:00',
+        collaborative_mode BOOLEAN NOT NULL DEFAULT false
     );
     CREATE INDEX IF NOT EXISTS idx_shift_plans_token ON shift_plans(token);
 `
@@ -115,8 +118,8 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
             INSERT INTO shift_plans (
                 token, admin_password, start_date, end_date, created_at,
                 is_multilingual, title_de, title_en, description_de, description_en,
-                day_boundary_time
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                day_boundary_time, collaborative_mode
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
 		res, err := tx.Exec(query,
 			token,
@@ -130,6 +133,7 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 			plan.DescriptionDE,
 			plan.DescriptionEN,
 			plan.DayBoundaryTime,
+			plan.CollaborativeMode,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert shift plan: %w", err)
@@ -305,7 +309,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
                is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time
+               day_boundary_time, collaborative_mode
         FROM shift_plans
         WHERE token = ?
     `
@@ -322,6 +326,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		&plan.DescriptionDE,
 		&plan.DescriptionEN,
 		&plan.DayBoundaryTime,
+		&plan.CollaborativeMode,
 	)
 
 	if err != nil {
@@ -358,7 +363,7 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
                is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time
+               day_boundary_time, collaborative_mode
         FROM shift_plans
         WHERE id = ?
     `
@@ -375,6 +380,7 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 		&plan.DescriptionDE,
 		&plan.DescriptionEN,
 		&plan.DayBoundaryTime,
+		&plan.CollaborativeMode,
 	)
 	if err != nil {
 		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
@@ -434,7 +440,8 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
                 title_en = ?,
                 description_de = ?,
                 description_en = ?,
-                day_boundary_time = ?
+                day_boundary_time = ?,
+                collaborative_mode = ?
             WHERE token = ?
         `
 		res, err := tx.Exec(query,
@@ -446,6 +453,7 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 			plan.DescriptionDE,
 			plan.DescriptionEN,
 			plan.DayBoundaryTime,
+			plan.CollaborativeMode,
 			token,
 		)
 		if err != nil {

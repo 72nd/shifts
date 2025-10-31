@@ -12,6 +12,7 @@ export class SettingsModal extends Modal {
     reset() {
         super.clearError();
         this.is_multilingual = false;
+        this.collaborative_mode = false;
         this.title_de = '';
         this.title_en = '';
         this.description_de = '';
@@ -30,6 +31,7 @@ export class SettingsModal extends Modal {
         
         // Fill form with current plan data
         this.is_multilingual = plan.is_multilingual;
+        this.collaborative_mode = plan.collaborative_mode || false;
         this.title_de = plan.title_de || '';
         this.title_en = plan.title_en || '';
         this.description_de = plan.description_de || '';
@@ -111,6 +113,7 @@ export class SettingsModal extends Modal {
             },
             body: JSON.stringify({
                 is_multilingual: this.is_multilingual,
+                collaborative_mode: this.collaborative_mode,
                 title_de: this.is_multilingual ? this.title_de : null,
                 title_en: this.title_en,
                 description_de: this.is_multilingual ? this.description_de : null,

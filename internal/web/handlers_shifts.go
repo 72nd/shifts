@@ -243,3 +243,175 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (s *Server) handleLockShift(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	shiftId := vars["shiftId"]
+
+	// Parse shift ID
+	id, err := strconv.ParseInt(shiftId, 10, 64)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift ID",
+			http.StatusBadRequest,
+			err,
+		))
+		return
+	}
+
+	// Get plan ID from token
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	// Verify admin token
+	adminToken := r.Header.Get("X-Admin-Token")
+	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify admin token",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if !isValid {
+		s.RespondWithError(w, NewAppError(
+			ErrUnauthorized,
+			"Unauthorized",
+			http.StatusUnauthorized,
+			nil,
+		))
+		return
+	}
+
+	// Verify shift belongs to plan
+	belongs, err := s.db.VerifyShiftBelongsToPlan(id, plan.ID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift ownership",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if !belongs {
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
+		return
+	}
+
+	// Lock the shift
+	if err := s.db.LockShift(id); err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to lock shift",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) handleUnlockShift(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	shiftId := vars["shiftId"]
+
+	// Parse shift ID
+	id, err := strconv.ParseInt(shiftId, 10, 64)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			"Invalid shift ID",
+			http.StatusBadRequest,
+			err,
+		))
+		return
+	}
+
+	// Get plan ID from token
+	plan, err := s.db.GetShiftPlanByToken(token)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift plan",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	// Verify admin token
+	adminToken := r.Header.Get("X-Admin-Token")
+	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify admin token",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if !isValid {
+		s.RespondWithError(w, NewAppError(
+			ErrUnauthorized,
+			"Unauthorized",
+			http.StatusUnauthorized,
+			nil,
+		))
+		return
+	}
+
+	// Verify shift belongs to plan
+	belongs, err := s.db.VerifyShiftBelongsToPlan(id, plan.ID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to verify shift ownership",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if !belongs {
+		s.RespondWithError(w, NewAppError(
+			ErrResourceNotFound,
+			"Shift not found",
+			http.StatusNotFound,
+			nil,
+		))
+		return
+	}
+
+	// Unlock the shift
+	if err := s.db.UnlockShift(id); err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to unlock shift",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

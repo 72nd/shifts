@@ -88,6 +88,8 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}/shifts", s.middleware.adminMiddleware(s.handleCreateShift)).Methods("POST")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.middleware.adminMiddleware(s.handleUpdateShift)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.middleware.adminMiddleware(s.handleDeleteShift)).Methods("DELETE")
+	api.HandleFunc("/plans/{token}/shifts/{shiftId}/lock", s.middleware.adminMiddleware(s.handleLockShift)).Methods("POST")
+	api.HandleFunc("/plans/{token}/shifts/{shiftId}/unlock", s.middleware.adminMiddleware(s.handleUnlockShift)).Methods("POST")
 
 	// Participant routes
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")

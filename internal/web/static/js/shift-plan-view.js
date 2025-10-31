@@ -777,6 +777,61 @@ document.addEventListener('alpine:init', () => {
 
         async downloadExport() {
             await this.exportModal.downloadExport();
+        },
+
+        // Lock/Unlock shift functions
+        async lockShift(shift, type) {
+            if (!this.adminToken) {
+                console.error('Cannot lock shift: No admin token');
+                return;
+            }
+
+            const url = `/api/plans/${this.plan.token}/shifts/${shift.id}/lock`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Admin-Token': this.adminToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(AlpineI18n.t('shift_plans.view.error_locking_shift'));
+                }
+
+                // Optimistically update the UI
+                shift.is_locked = true;
+            } catch (error) {
+                console.error('Error locking shift:', error);
+                alert(AlpineI18n.t('shift_plans.view.error_locking_shift'));
+            }
+        },
+
+        async unlockShift(shift, type) {
+            if (!this.adminToken) {
+                console.error('Cannot unlock shift: No admin token');
+                return;
+            }
+
+            const url = `/api/plans/${this.plan.token}/shifts/${shift.id}/unlock`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Admin-Token': this.adminToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(AlpineI18n.t('shift_plans.view.error_unlocking_shift'));
+                }
+
+                // Optimistically update the UI
+                shift.is_locked = false;
+            } catch (error) {
+                console.error('Error unlocking shift:', error);
+                alert(AlpineI18n.t('shift_plans.view.error_unlocking_shift'));
+            }
         }
     }));
 }); 
