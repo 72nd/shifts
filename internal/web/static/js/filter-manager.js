@@ -90,6 +90,9 @@ export class FilterManager {
                 case 'critical':
                     if (percentage >= 50 || participantCount === shift.required) return false;
                     break;
+                case 'not_full':
+                    if (participantCount >= shift.required) return false;
+                    break;
                 case 'full':
                     if (participantCount !== shift.required) return false;
                     break;

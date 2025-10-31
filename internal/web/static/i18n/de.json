@@ -175,6 +175,7 @@
                 "status_all": "Alle Schichten",
                 "status_empty": "Komplett leer",
                 "status_critical": "Kritisch (< 50%)",
+                "status_not_full": "Nicht voll besetzt",
                 "status_full": "Voll besetzt",
                 "search": "Suche",
                 "search_placeholder": "Nach Namen suchen...",

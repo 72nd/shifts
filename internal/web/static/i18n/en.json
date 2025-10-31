@@ -176,6 +176,7 @@
                 "status_all": "All Shifts",
                 "status_empty": "Completely Empty",
                 "status_critical": "Critical (< 50%)",
+                "status_not_full": "Not Fully Staffed",
                 "status_full": "Fully Staffed",
                 "search": "Search",
                 "search_placeholder": "Search by name...",
