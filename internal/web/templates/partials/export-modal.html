@@ -13,7 +13,18 @@
             </label>
             <select class="select select-bordered w-full" x-model="exportModal.exportFormat">
                 <option value="json" x-text="$t('shift_plans.view.export_modal.format_json')"></option>
+                <option value="vacancies" x-text="$t('shift_plans.view.export_modal.format_vacancies')"></option>
             </select>
+        </div>
+
+        <!-- Format Description -->
+        <div class="mt-2">
+            <p x-show="exportModal.exportFormat === 'json'" 
+               class="text-sm text-base-content/70"
+               x-text="$t('shift_plans.view.export_modal.format_json_description')"></p>
+            <p x-show="exportModal.exportFormat === 'vacancies'" 
+               class="text-sm text-base-content/70"
+               x-text="$t('shift_plans.view.export_modal.format_vacancies_description')"></p>
         </div>
 
         <!-- Filter Checkbox -->

@@ -36,6 +36,7 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 	
 	// Register exporters
 	exportService.RegisterExporter(export.NewJSONExporter())
+	exportService.RegisterExporter(export.NewVacanciesExporter())
 
 	s := &Server{
 		db:            db,
