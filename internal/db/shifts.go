@@ -257,11 +257,11 @@ func (db *DB) UpdateShift(id int64, shift Shift) error {
 }
 
 // DeleteShift deletes a shift and all its participants
-func (db *DB) DeleteShift(id, typeID int64) error {
-	query := `DELETE FROM shifts WHERE id = ? AND type_id = ?`
-	result, err := db.Exec(query, id, typeID)
+func (db *DB) DeleteShift(id int64) error {
+	query := `DELETE FROM shifts WHERE id = ?`
+	result, err := db.Exec(query, id)
 	if err != nil {
-		db.logError("DeleteShift", err, id, typeID)
+		db.logError("DeleteShift", err, id)
 		return fmt.Errorf("failed to delete shift: %w", err)
 	}
 
@@ -270,7 +270,7 @@ func (db *DB) DeleteShift(id, typeID int64) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift not found or no permission")
+		return fmt.Errorf("shift not found")
 	}
 
 	return nil

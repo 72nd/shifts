@@ -231,7 +231,7 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete the shift
-	if err := s.db.DeleteShift(id, plan.ID); err != nil {
+	if err := s.db.DeleteShift(id); err != nil {
 		s.RespondWithError(w, NewAppError(
 			ErrDatabaseError,
 			"Failed to delete shift",
