@@ -82,8 +82,14 @@ func (tm *templateManager) render(w http.ResponseWriter, name string, data inter
 		return
 	}
 
+	// Wrap data to include version
+	templateData := map[string]interface{}{
+		"Data":    data,
+		"Version": Version,
+	}
+
 	// Execute template
-	if err := ts.Execute(w, data); err != nil {
+	if err := ts.Execute(w, templateData); err != nil {
 		tm.logger.Error("failed to execute template", "error", err, "name", name)
 		RespondWithErrorAndLogger(w, tm.logger, NewAppError(
 			ErrInternalError,

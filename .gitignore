@@ -24,6 +24,8 @@ go.work.sum
 # env file
 .env
 
+.cursor
+
 # config file
 config.toml
 

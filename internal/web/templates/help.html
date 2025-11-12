@@ -1,10 +1,10 @@
 {{ template "base.html" . }}
 
 {{ define "meta" }}
-<title>{{ if eq .Lang "de" }}Hilfe - Shifts{{ else }}Help - Shifts{{ end }}</title>
-<meta property="og:title" content="{{ if eq .Lang "de" }}Hilfe - Shifts{{ else }}Help - Shifts{{ end }}">
-<meta property="og:description" content="{{ if eq .Lang "de" }}Lernen Sie, wie Sie Shifts effektiv nutzen können. Vollständige Anleitung für Benutzer und Administratoren.{{ else }}Learn how to use Shifts effectively. Complete guide for users and administrators.{{ end }}">
-<meta name="description" content="{{ if eq .Lang "de" }}Lernen Sie, wie Sie Shifts effektiv nutzen können. Vollständige Anleitung für Benutzer und Administratoren.{{ else }}Learn how to use Shifts effectively. Complete guide for users and administrators.{{ end }}">
+<title>{{ if eq .Data.Lang "de" }}Hilfe - Shifts{{ else }}Help - Shifts{{ end }}</title>
+<meta property="og:title" content="{{ if eq .Data.Lang "de" }}Hilfe - Shifts{{ else }}Help - Shifts{{ end }}">
+<meta property="og:description" content="{{ if eq .Data.Lang "de" }}Lernen Sie, wie Sie Shifts effektiv nutzen können. Vollständige Anleitung für Benutzer und Administratoren.{{ else }}Learn how to use Shifts effectively. Complete guide for users and administrators.{{ end }}">
+<meta name="description" content="{{ if eq .Data.Lang "de" }}Lernen Sie, wie Sie Shifts effektiv nutzen können. Vollständige Anleitung für Benutzer und Administratoren.{{ else }}Learn how to use Shifts effectively. Complete guide for users and administrators.{{ end }}">
 {{ end }}
 
 {{ define "content" }}
