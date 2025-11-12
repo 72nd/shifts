@@ -36,12 +36,6 @@ func (tm *templateManager) parseTemplates() error {
 		return fmt.Errorf("failed to get partial files: %w", err)
 	}
 
-	// Get all help partials
-	helpPartials, err := fs.Glob(content, "templates/help-partials/*.html")
-	if err != nil {
-		return fmt.Errorf("failed to get help partial files: %w", err)
-	}
-
 	// Parse each template
 	for _, page := range pages {
 		name := filepath.Base(page)
@@ -51,9 +45,8 @@ func (tm *templateManager) parseTemplates() error {
 
 		// Parse base layout and all partials first
 		patterns := append([]string{"templates/layouts/base.html"}, partials...)
-		patterns = append(patterns, helpPartials...)
 		if _, err := tmpl.ParseFS(content, patterns...); err != nil {
-			return fmt.Errorf("failed to parse base, partials, and help partials for %s: %w", name, err)
+			return fmt.Errorf("failed to parse base and partials for %s: %w", name, err)
 		}
 
 		// Then parse the page template

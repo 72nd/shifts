@@ -257,12 +257,16 @@
   )
   #table(
     columns: (auto, ..range(data.shift_types.len()).map(it => 1fr)),
-    rows: (auto, ..range(24 * 4).map(it => ROW_HEIGHT), auto),
+    rows: (auto, ..range(24 * CELLS_PER_HOUR).map(it => ROW_HEIGHT), auto),
     stroke: (x, y) => if x > 0 and y > 0 and calc.rem(y, 4) != 1 {
       (
         top: (thickness: .9pt, dash: "dotted"),
         right: .9pt,
         left: .9pt,
+      )
+    } else if y  == 24 * CELLS_PER_HOUR + 1 {
+      (
+        top: 1pt,
       )
     } else { .9pt },
     table.header(..header_footer),

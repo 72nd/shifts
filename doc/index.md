@@ -1,53 +1,54 @@
 # Shifts – The friendly collaborative shift planning tool
 
-Shifts ist ein kollaboratives Schichtplanungstool, was versucht möglichst zugänglich zu sein.
+Shifts ist ein kollaboratives Schichtplanungstool, das auf größtmögliche Zugänglichkeit ausgelegt ist. Die Erfahrung zeigt, dass die Organisation größerer Gruppen dann am besten gelingt, wenn alle Beteiligten die Daten eigenständig bearbeiten können. Beispiele für dieses Prinzip sind etwa Etherpad oder webbasierte Tabellenkalkulations-Tools.
 
 
 ## Hintergrund und Ziele
 
-Das Programm wurde geschaffen, weil es bisher kein Schichtplanungstool gab, welches die Anforderungen von größeren bzw. komplexeren kollektiv organisierten Veranstaltungen erfüllte.
+Das Programm wurde entwickelt, weil bisherige Schichtplanungstools den Anforderungen größerer und komplexer organisierter kollektiver Veranstaltungen nicht gerecht wurden.
 
-- Für Menschen, die eine Schicht übernehmen möchten, soll das Tool _so einfach wie möglich zu bedienen_ sein. Je weniger Steine man interessierten Personen in den Weg legt, umso wahrscheinlicher ist es, dass sie sich tatsächlich in eine oder mehrere Schichten eintragen. Shifts braucht von einer helfenden Person nur ein Name. Keine Mailadresse, kein Login.
-- Kollaborative und kollektive Organisationsprozesse sollen damit abgebildet werden. Die Applikation soll _möglichst wenig Vorgaben_ machen, wie der Prozess der Schichtplanung und -vergabe gestaltet ist.
-- Die Applikation soll auch auf einem Smartphone gut und einfach zu bedienen sein.
-- Es sollte kein Problem sein, _viele Schichten_ zu verwalten und dennoch eine möglichst kompakte und übersichtliche Darstellung zu haben.
-- Menschen aus der Orga (Admin) sollen möglichst gut bei ihrer Arbeit unterstützt werden. Reichhaltige Filter, Export und Berichtsfunktionen. Das Anlegen und Bearbeiten von Schichten soll möglichst schnell von der Hand gehen.
+- Für Personen, die eine Schicht übernehmen möchten, soll das Tool _so einfach wie möglich zu bedienen_ sein. Je niedriger die Einstiegshürden, desto wahrscheinlicher ist es, dass Interessierte sich tatsächlich in eine oder mehrere Schichten eintragen. Shifts benötigt von Helfenden lediglich einen Namen – keine E-Mail-Adresse, kein Login.
+- Kollaborative und kollektive Organisationsprozesse sollen vollständig abgebildet werden können. Die Applikation macht _bewusst möglichst wenig Vorgaben_ darüber, wie die Schichtplanung und -vergabe konkret gestaltet wird.
+- Die Applikation soll auch auf Smartphones intuitiv und komfortabel bedienbar sein.
+- Die Verwaltung _vieler Schichten_ soll problemlos möglich sein, ohne dass die Übersichtlichkeit und Kompaktheit der Darstellung darunter leidet.
+- Organisator:innen (Admins) sollen durch umfangreiche Filter-, Export- und Berichtsfunktionen optimal unterstützt werden. Das Anlegen und Bearbeiten von Schichten soll dabei effizient und schnell von der Hand gehen.
+- Ein Übergang auf papierbasierte Verwaltung ist jederzeit möglich. Bei vielen Veranstaltungen hat es sich bewährt, während des Events auf eine papierbasierte Schichtverwaltung umzusteigen. Shifts stellt den Schichtplan hierfür nicht nur als druckbaren Plan, sondern auch als Posterversion zur Verfügung.
 
 
 ## Features
 
-- Menschen tragen sich mit einem Namen/Nick/Pseudonym in eine Schicht ein. Keine Mailadresse oder Login wird benötigt. Einmal verwendet, wird der Name beim Eintragen in weiteren Schichten vorgeschlagen.
-- Jede Person kann sich oder andere Personen jederzeit wieder austragen. Dies vereinfacht das Verwalten von Schichten.
-- Schichten sind in Schichttypen (z.B. Bar) gruppiert. Jeder Schichttyp kann mit einem Beschreibungstext versehen werden, welcher die Aufgabe erklärt. Markdown wird hierfür unterstützt.
+- Personen tragen sich mit einem Namen, Nickname oder Pseudonym in eine Schicht ein. Eine E-Mail-Adresse oder ein Login werden nicht benötigt. Einmal verwendete Namen werden beim Eintragen in weitere Schichten automatisch vorgeschlagen.
+- Jede Person kann sich selbst oder andere Personen jederzeit wieder austragen. Dies erleichtert die flexible Verwaltung von Schichten erheblich.
+- Schichten sind in Schichttypen (z. B. Bar, Küche) gruppiert. Jeder Schichttyp kann mit einem Beschreibungstext versehen werden, der die jeweilige Aufgabe erläutert. Markdown wird hierfür unterstützt.
 - Schichten
-    - Haben eine definierte Startzeit und Dauer.
-    - Anzahl der Helfenden kann definiert werden. Daneben ist es auch möglich Schichten zu erstellen, welche beliebig viele Helfende haben können. Dies kann für »All Hands on Deck« Situationen wie der Abbau hilfreich sein.
-    - Wie bei den Schichttypen kann auch jede Schicht mit einem Beschreibungstext (optional in Markdown) versehen werden. Denkbar ist etwa die in dieser Zeit auftretenden Acts oder Bands zu kommunizieren.
-- Filter: Der Schichtplan kann umfangreich gefiltert werden. So können gezielt bestimmte Schichttypen ein- und ausgeblendet werden oder nach den Belegungsstatus der Schichten gefiltert werden. Auch nach den Namen einzelner Helfer:innen kann gefiltert werden.
-- i18n: Die Applikation ist aktuell in Deutsch und Englisch verfügbar.
-- Tagesgrenze: Viele Veranstaltungen dauern lange in die Nacht. Oft werden hierbei die frühen Morgenstunden organisatorisch noch dem vorherigen Tag zugeordnet. Shifts erlaubt es deshalb, die Tagesgrenze für jeden Schichtplan individuell zu definieren.
-- Adminzugang: Beim Erstellen eines neuen Schichtplans wird jedem Schichtplan ein Adminpwasswort zugewiesen. Damit kann danach auf folgende Funktionen zugegriffen werden.
-    - Anlegen, Bearbeiten, Duplizieren von Schichten und Schichttypen.
-    - Die Sortierung von Schichttypen ändern.
-    - Beschreibungstext, Text, Tagesgrenze und weitere Einstellungen des Schichtplans anpassen.
-    - Export: Exportiert die Daten des Schichtplans in verschiedenen Formaten. Hierbei kann optional die aktuelle Filterkonfiguration berücksichtigt werden. Weitere Informationen zu den Exportformaten finden sich unten.
-- Kollaborativer Planungsmodus: Optimierter Modus für die Schichtplanung in Teams und Crews. Weitere Informationen weiter Unten.
-- Export. Ist nach Eingabe des Adminpassworts möglich. Wenn gewünscht, kann beim Export die aktuelle Filterkonfiguration berücksichtigt werden. Verfügbare Formate:
-    - JSON: Exportiert alle Daten des Schichtplans in JSON-Format.
-    - Offene Schichten als Textdatei: Exportiert eine Übersicht der offenen Schichten als Textdatei. Dies ist besonders hilfreich, wenn eine Übersicht über offene Schichten z.B. in einen Chat gepostet werden soll.
-    - Timetable (PDF): Stellt die Schichten und deren Belegung pro Tag als eine Zeittafel (»Stundenplan«) dar. Dies hilft insbesondere bei der Planung.
-    - Poster (PDF): Bei vielen kollektiven Veranstaltungen ist es sinnvoll, nach Beginn der Veranstaltung auf einen papierbasierten Schichtplan umzusteigen, in welchen sich Menschen vor Ort eintragen können. Dieser Export erstellt solch einen Schichtplan. Je Tag und Schichttyp wird eine A4-Seite erstellt. Diese können danach gedruckt und aufgehängt werden.
-    - Report (PDF): Erstellt eine für den Druck optimierte Ansicht des Schichtplans.
-    - Personal Overview (PDF): Ein Dokument im A5-Format, welches die Schichten einer Person übersichtlich aufführt.
+    - Verfügen über eine definierte Startzeit und Dauer.
+    - Die Anzahl der benötigten Helfenden kann festgelegt werden. Daneben ist es möglich, Schichten mit unbegrenzter Teilnehmendenzahl zu erstellen. Dies kann für »All Hands on Deck«-Situationen wie den Abbau hilfreich sein.
+    - Wie Schichttypen können auch einzelne Schichten mit einem Beschreibungstext (optional in Markdown) versehen werden. So lassen sich etwa die in dieser Zeit auftretenden Acts oder Bands kommunizieren.
+- Filter: Der Schichtplan kann umfangreich gefiltert werden. Gezielt können bestimmte Schichttypen ein- und ausgeblendet oder nach dem Belegungsstatus der Schichten gefiltert werden. Auch eine Filterung nach Namen einzelner Helfer:innen ist möglich.
+- Internationalisierung: Die Applikation ist aktuell auf Deutsch und Englisch verfügbar.
+- Tagesgrenze: Viele Veranstaltungen dauern bis tief in die Nacht. Häufig werden dabei die frühen Morgenstunden organisatorisch noch dem vorherigen Tag zugeordnet. Shifts ermöglicht es, die Tagesgrenze für jeden Schichtplan individuell zu definieren.
+- Adminzugang: Beim Erstellen eines Schichtplans wird automatisch ein Adminpasswort vergeben. Mit diesem können folgende Funktionen genutzt werden:
+    - Anlegen, Bearbeiten und Duplizieren von Schichten und Schichttypen.
+    - Ändern der Sortierung von Schichttypen.
+    - Anpassen von Beschreibungstext, Titel, Tagesgrenze und weiteren Einstellungen des Schichtplans.
+    - Export: Die Daten des Schichtplans können in verschiedenen Formaten exportiert werden, wobei optional die aktuelle Filterkonfiguration berücksichtigt werden kann. Weitere Informationen zu den Exportformaten finden sich unten.
+- Kollaborativer Planungsmodus: Ein optimierter Modus für die Schichtplanung in Teams und Crews. Weitere Informationen dazu finden sich weiter unten.
+- Export: Nach Eingabe des Adminpassworts stehen verschiedene Exportformate zur Verfügung. Auf Wunsch kann dabei die aktuelle Filterkonfiguration berücksichtigt werden. Verfügbare Formate:
+    - JSON: Exportiert alle Daten des Schichtplans im JSON-Format.
+    - Offene Schichten als Textdatei: Exportiert eine Übersicht der offenen Schichten als Textdatei. Dies ist besonders hilfreich, wenn die Übersicht beispielsweise in einem Chat geteilt werden soll.
+    - Timetable (PDF): Stellt die Schichten und deren Belegung pro Tag als Zeittafel (im Stil eines Stundenplans) dar. Dies unterstützt insbesondere die Planungsphase.
+    - Poster (PDF): Bei vielen kollektiven Veranstaltungen ist es sinnvoll, nach Beginn des Events auf einen papierbasierten Schichtplan umzusteigen, in den sich Personen vor Ort eintragen können. Dieser Export erstellt einen solchen Schichtplan. Pro Tag und Schichttyp wird eine DIN-A4-Seite erstellt, die ausgedruckt und aufgehängt werden kann.
+    - Report (PDF): Erstellt eine druckoptimierte Gesamtansicht des Schichtplans.
+    - Personal Overview (PDF): Ein Dokument im DIN-A5-Format, das die Schichten einer einzelnen Person übersichtlich aufführt.
 
 
 ## Kollaborativer Planungsmodus
 
-Auf Veranstaltungen gibt es zwei unterschiedliche Arten von Schichten. Viele Schichttypen können ohne große Absprache von fast allen Menschen übernommen werden. Diese erfordern in der Regel kaum Vorbereitungen oder Absprachen. Klassische Beispiele ist etwa der Abwasch. Dem gegenüber stehen Schichten, welche von organisierten Teams oder Crews übernommen werden. Diese erfordern oft Vorbereitung und Absprachen. Shifts möchte beiden Gruppen gerecht werden und bietet deshalb Crews den optionalen kollaborativen Planungsmodus an. Dieser kann in den Einstellungen des Schichtplans aktiviert werden.
+Bei Veranstaltungen lassen sich zwei grundsätzlich verschiedene Arten von Schichten unterscheiden. Viele Schichttypen können ohne größere Absprache von nahezu allen Beteiligten übernommen werden. Diese erfordern in der Regel kaum Vorbereitungen oder Koordination. Ein klassisches Beispiel hierfür ist etwa der Abwasch. Dem stehen Schichten gegenüber, die von organisierten Teams oder Crews übernommen werden. Diese erfordern häufig Vorbereitung und Abstimmung. Shifts möchte beiden Gruppen gerecht werden und bietet deshalb für Crews einen optionalen kollaborativen Planungsmodus an. Dieser kann in den Einstellungen des Schichtplans aktiviert werden.
 
-Der kollaborative Planungsmodus steht im Gegensatz zum normalen Modus, bei welchem es darum geht, möglichst schnell alle Schichten nach dem First-Come-First-Served-Prinzip zu besetzen. Der kollaborative Modus hingegen geht von einem zweistufigen Prozess aus.
+Der kollaborative Planungsmodus unterscheidet sich vom normalen Modus, bei dem es darum geht, alle Schichten möglichst zügig nach dem First-Come-First-Served-Prinzip zu besetzen. Der kollaborative Modus basiert hingegen auf einem zweistufigen Prozess:
 
-1. Alle Personen können Interesse an einer Schicht bekunden. Deshalb können Schichten in diesem Modus bewusst »überfüllt«/overbooked werden. Auf diese Art kann werden die Bedürfnisse und Wünsche aller Crewmitglieder offensichtlich gemacht.
-2. Auf Grundlage der Interessen kann nun das Team entscheiden, welche Schichten nun konkret besetzt werden. Die Schichten werden dann im Schichtplan entsprechend geändert. Fertig verteilte Schichten können dann vom Admin fixiert/gesperrt werden. Danach sind sie von normalen Usern nicht mehr veränderbar. Die fixierten Schichten werden farblich hervorgehoben.
+1. Alle Personen können zunächst Interesse an einer Schicht bekunden. Schichten können in diesem Modus bewusst »überbucht« werden. Auf diese Weise werden die Bedürfnisse und Wünsche aller Crewmitglieder transparent gemacht.
+2. Auf Grundlage der bekundeten Interessen kann das Team nun entscheiden, welche Schichten konkret wie besetzt werden. Die entsprechenden Änderungen werden im Schichtplan vorgenommen. Finalisierte Schichten können vom Admin fixiert bzw. gesperrt werden. Danach sind sie für reguläre Nutzer:innen nicht mehr veränderbar. Fixierte Schichten werden farblich hervorgehoben.
 
-Dadurch ist es zu jeder Zeit für alle Beteiligten offensichtlich, welche Schichten definitiv zugeteilt sind. Dadurch, dass Personen sich selbst nicht mehr aus Schichten austragen können, werden diese motiviert, sich bei Änderungen an ihre Crewkoordination zu melden.
+Dadurch ist für alle Beteiligten jederzeit ersichtlich, welche Schichten definitiv zugeteilt sind. Da Personen sich nicht mehr eigenständig aus fixierten Schichten austragen können, werden sie motiviert, sich bei notwendigen Änderungen an ihre Crewkoordination zu wenden.

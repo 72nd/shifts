@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//go:embed templates/* static/*
+//go:embed templates/* static/* docs/*.md docs/images/*
 var content embed.FS
 
 // Server represents the HTTP server
@@ -24,6 +24,7 @@ type Server struct {
 	db            *db.DB
 	logger        *slog.Logger
 	templates     *templateManager
+	docs          *documentationManager
 	middleware    *middlewareManager
 	router        *mux.Router
 	exportService *export.Service
@@ -45,6 +46,7 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 		db:            db,
 		logger:        logger,
 		templates:     newTemplateManager(logger),
+		docs:          newDocumentationManager(logger),
 		middleware:    newMiddlewareManager(logger, db, hashPassword),
 		router:        mux.NewRouter(),
 		exportService: exportService,
@@ -53,6 +55,11 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 	// Parse templates
 	if err := s.templates.parseTemplates(); err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
+	}
+
+	// Parse documentation
+	if err := s.docs.parseDocumentation(); err != nil {
+		return nil, fmt.Errorf("failed to parse documentation: %w", err)
 	}
 
 	// Setup routes
@@ -73,6 +80,7 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/plans/{token}/stats", s.handleShiftPlanStats).Methods("GET")
 	s.router.HandleFunc("/help", s.handleHelp).Methods("GET")
+	s.router.HandleFunc("/help/images/{filename}", s.handleHelpImage).Methods("GET")
 	s.router.HandleFunc("/plan-deleted", s.handlePlanDeleted()).Methods("GET")
 
 	// API routes
@@ -202,7 +210,65 @@ func (s *Server) RespondWithError(w http.ResponseWriter, err *AppError) {
 }
 
 func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
-	s.templates.render(w, "help.html", nil)
+	// Get language from query parameter or default to English
+	lang := r.URL.Query().Get("lang")
+	if lang != "de" && lang != "en" {
+		lang = "en"
+	}
+
+	// Get documentation for the specified language
+	doc, ok := s.docs.getDocumentation(lang)
+	if !ok {
+		s.logger.Error("documentation not found", "lang", lang)
+		http.Error(w, "Documentation not found", http.StatusInternalServerError)
+		return
+	}
+
+	// Prepare data for template
+	data := map[string]interface{}{
+		"Lang":    lang,
+		"Content": doc.HTML,
+		"TOC":     doc.TOC,
+	}
+
+	s.templates.render(w, "help.html", data)
+}
+
+func (s *Server) handleHelpImage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filename := vars["filename"]
+
+	// Construct the path to the image in the embedded filesystem
+	imagePath := fmt.Sprintf("docs/images/%s", filename)
+
+	// Read the image from the embedded filesystem
+	data, err := content.ReadFile(imagePath)
+	if err != nil {
+		s.logger.Error("failed to read help image", "error", err, "path", imagePath)
+		http.NotFound(w, r)
+		return
+	}
+
+	// Determine content type based on file extension
+	contentType := "application/octet-stream"
+	if strings.HasSuffix(filename, ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(filename, ".jpg") || strings.HasSuffix(filename, ".jpeg") {
+		contentType = "image/jpeg"
+	} else if strings.HasSuffix(filename, ".gif") {
+		contentType = "image/gif"
+	} else if strings.HasSuffix(filename, ".svg") {
+		contentType = "image/svg+xml"
+	} else if strings.HasSuffix(filename, ".webp") {
+		contentType = "image/webp"
+	}
+
+	// Set content type and cache headers
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
+
+	// Write the image data
+	w.Write(data)
 }
 
 func (s *Server) handlePlanDeleted() http.HandlerFunc {

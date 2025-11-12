@@ -8,41 +8,100 @@
 {{ end }}
 
 {{ define "content" }}
-<div class="prose max-w-none" x-data="{ activeTab: 'basics' }">
-    <!-- Navigation Tabs -->
-    <div class="tabs tabs-boxed justify-center mb-8">
-        <a class="tab" :class="{ 'tab-active': activeTab === 'basics' }" @click="activeTab = 'basics'" x-text="$locale() === 'de' ? 'Grundlagen' : 'Basics'">Basics</a>
-        <a class="tab" :class="{ 'tab-active': activeTab === 'participants' }" @click="activeTab = 'participants'" x-text="$locale() === 'de' ? 'Für Teilnehmer' : 'For Participants'">For Participants</a>
-        <a class="tab" :class="{ 'tab-active': activeTab === 'admins' }" @click="activeTab = 'admins'" x-text="$locale() === 'de' ? 'Für Administratoren' : 'For Admins'">For Admins</a>
-    </div>
-
-    <!-- Content Sections -->
-    <div class="container mx-auto px-4">
-        <!-- German Content -->
-        <div x-show="$locale() === 'de'">
-            <template x-if="activeTab === 'basics'">
-                {{ template "help-basics-de" . }}
-            </template>
-            <template x-if="activeTab === 'participants'">
-                {{ template "help-participants-de" . }}
-            </template>
-            <template x-if="activeTab === 'admins'">
-                {{ template "help-admins-de" . }}
-            </template>
+<div class="drawer lg:drawer-open">
+    <input id="toc-drawer" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content flex flex-col px-4 lg:px-8">
+        <!-- Page header with mobile menu button -->
+        <div class="flex items-center justify-between mb-6 lg:mb-8">
+            <h1 class="text-3xl font-bold">{{ if eq .Data.Lang "de" }}Hilfe{{ else }}Help{{ end }}</h1>
+            <label for="toc-drawer" class="btn btn-primary drawer-button lg:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+                {{ if eq .Data.Lang "de" }}Inhaltsverzeichnis{{ else }}Table of Contents{{ end }}
+            </label>
         </div>
 
-        <!-- English Content -->
-        <div x-show="$locale() === 'en'">
-            <template x-if="activeTab === 'basics'">
-                {{ template "help-basics-en" . }}
-            </template>
-            <template x-if="activeTab === 'participants'">
-                {{ template "help-participants-en" . }}
-            </template>
-            <template x-if="activeTab === 'admins'">
-                {{ template "help-admins-en" . }}
-            </template>
+        <!-- Language switcher -->
+        <div class="mb-6">
+            <div class="btn-group">
+                <a href="/help?lang=de" class="btn btn-sm {{ if eq .Data.Lang "de" }}btn-active{{ end }}">Deutsch</a>
+                <a href="/help?lang=en" class="btn btn-sm {{ if eq .Data.Lang "en" }}btn-active{{ end }}">English</a>
+            </div>
+        </div>
+
+        <!-- Main content with markdown styling -->
+        <article class="md-content">
+            {{ .Data.Content }}
+        </article>
+    </div>
+
+    <!-- Sidebar with table of contents -->
+    <div class="drawer-side">
+        <label for="toc-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+        <div class="menu bg-base-200 min-h-full w-80 p-4">
+            <div class="mb-4">
+                <h2 class="text-xl font-bold px-4 mb-2">
+                    {{ if eq .Data.Lang "de" }}Inhaltsverzeichnis{{ else }}Table of Contents{{ end }}
+                </h2>
+            </div>
+            <ul class="space-y-1">
+                {{ range .Data.TOC }}
+                    {{ if eq .Level 2 }}
+                        <li><a href="#{{ .ID }}" class="font-semibold">{{ .Title }}</a></li>
+                    {{ else if eq .Level 3 }}
+                        <li class="ml-4"><a href="#{{ .ID }}" class="text-sm">{{ .Title }}</a></li>
+                    {{ else if eq .Level 4 }}
+                        <li class="ml-8"><a href="#{{ .ID }}" class="text-xs opacity-80">{{ .Title }}</a></li>
+                    {{ end }}
+                {{ end }}
+            </ul>
         </div>
     </div>
 </div>
-{{ end }} 
+
+<style>
+    /* Smooth scrolling for anchor links */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Add padding to anchor targets to account for fixed header */
+    article :target::before {
+        content: "";
+        display: block;
+        height: 80px;
+        margin-top: -80px;
+        visibility: hidden;
+    }
+
+    /* Ensure drawer sidebar scrolls independently */
+    .drawer-side .menu {
+        overflow-y: auto;
+    }
+
+    /* Close drawer on link click on mobile */
+    @media (max-width: 1023px) {
+        .drawer-side a {
+            cursor: pointer;
+        }
+    }
+</style>
+
+<script>
+    // Auto-close drawer when clicking a TOC link on mobile
+    document.addEventListener('DOMContentLoaded', () => {
+        const drawer = document.getElementById('toc-drawer');
+        const tocLinks = document.querySelectorAll('.drawer-side a[href^="#"]');
+        
+        tocLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                // Only close on mobile (when drawer toggle is visible)
+                if (window.innerWidth < 1024) {
+                    drawer.checked = false;
+                }
+            });
+        });
+    });
+</script>
+{{ end }}
