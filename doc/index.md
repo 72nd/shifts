@@ -1,4 +1,4 @@
-# Shifts – Das kollaborative Schichtplanungstool für Menschen
+# Shifts – The friendly collaborative shift planning tool
 
 Shifts ist ein kollaboratives Schichtplanungstool, was versucht möglichst zugänglich zu sein.
 
