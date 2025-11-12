@@ -37,6 +37,9 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 	// Register exporters
 	exportService.RegisterExporter(export.NewJSONExporter())
 	exportService.RegisterExporter(export.NewVacanciesExporter())
+	exportService.RegisterExporter(export.NewTimetableExporter())
+	exportService.RegisterExporter(export.NewReportExporter())
+	exportService.RegisterExporter(export.NewPosterExporter())
 
 	s := &Server{
 		db:            db,
@@ -112,10 +115,11 @@ func (s *Server) setupRoutes() {
 // Start starts the HTTP server
 func (s *Server) Start(host string, port int) error {
 	// Create server with timeouts
+	// WriteTimeout increased to 120s to accommodate PDF generation with Typst
 	srv := &http.Server{
 		Handler:      s.router,
 		Addr:         fmt.Sprintf("%s:%d", host, port),
-		WriteTimeout: 15 * time.Second,
+		WriteTimeout: 120 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}

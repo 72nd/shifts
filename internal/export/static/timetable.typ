@@ -12,7 +12,12 @@
 // DATA
 // ================================================
 
-#let data = json("plan.json")
+#let data = if "data" in sys.inputs {
+  json(sys.inputs.data)
+} else {
+  json("plan.json")
+  // json("confidential.json")
+}
 
 // Count of shift types.
 #let types_count = data.shift_types.len()
@@ -84,8 +89,9 @@
   let participants = if "participants" in shift { shift.participants.len() } else { 0 }
   let percentage = if shift.required == -1 { 100% } else { participants / shift.required * 100% }
   let required = if shift.required == -1 { sym.infinity } else { shift.required }
+  let participants_list = if "participants" in shift [ --- #shift.participants.map(it => it.name).join(", ") ] else { "" }
   [
-    #participants/#required
+    #participants/#required#participants_list
     #place(
       top + right,
       rect(width: 5mm, height: 5mm, fill: status_gradient.sample(percentage)),
@@ -130,9 +136,6 @@
     if shift.starts.day() == cell_day.day() [
       *#shift.shift_type*\
       #shift.starts.display("[hour]:[minute]") -- #shift.ends.display("[hour]:[minute]") --- #shift_count(shift)
-      #if "participants" in shift {
-        [#shift.participants.map(it => it.name).join(", ").]
-      }
     ] else [
       Cond. #shift.shift_type
     ],
@@ -272,6 +275,7 @@
 // ================================================
 
 #set page(
+  "a3",
   flipped: true,
   margin: 10mm,
 )
@@ -297,6 +301,9 @@
 */
 
 
-#for day in days {
+#for (index, day) in days.enumerate() {
   render_day(day)
+  if index < days.len() - 1 {
+    pagebreak()
+  }
 }

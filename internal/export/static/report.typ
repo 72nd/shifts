@@ -1,6 +1,10 @@
 #import "lib.typ": template, show_if, fmt_duration, fs, truncate, parse_iso_datetime
 
-#let data = json("plan.json")
+#let data = if "data" in sys.inputs {
+  json(sys.inputs.data)
+} else {
+  json("plan.json")
+}
 
 #let day_section(day) = [
   == Day #day.day_count -- #parse_iso_datetime(day.date).display("[weekday], [day].[month].[year]")
