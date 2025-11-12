@@ -69,8 +69,8 @@
 }
 
 .md-content p {
-  margin-bottom: 1rem;
-  line-height: 1.75rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
 }
 
 .md-content a {
