@@ -209,12 +209,6 @@ document.addEventListener('alpine:init', () => {
                 if (!response.ok) throw new Error('Failed to load plan');
                 const plan = await response.json();
 
-                // Debug output to verify the loaded data
-                console.log('Loaded plan:', {
-                    ...plan,
-                    day_boundary_time: plan.day_boundary_time
-                });
-
                 // Update plan data
                 this.plan = {
                     ...plan,
@@ -729,12 +723,6 @@ document.addEventListener('alpine:init', () => {
             // Update the plan data in a way that triggers Alpine.js reactivity
             Object.keys(updatedPlan).forEach(key => {
                 this.plan[key] = updatedPlan[key];
-            });
-
-            // Debug output to verify the update
-            console.log('Updated plan:', {
-                ...this.plan,
-                day_boundary_time: this.plan.day_boundary_time
             });
 
             // Update modals that depend on plan settings
