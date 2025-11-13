@@ -80,7 +80,7 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/plans/{token}/stats", s.handleShiftPlanStats).Methods("GET")
 	s.router.HandleFunc("/help", s.handleHelp).Methods("GET")
-	s.router.HandleFunc("/help/images/{filename}", s.handleHelpImage).Methods("GET")
+	s.router.HandleFunc("/images/{filename}", s.handleHelpImage).Methods("GET")
 	s.router.HandleFunc("/plan-deleted", s.handlePlanDeleted()).Methods("GET")
 
 	// API routes
