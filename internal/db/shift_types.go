@@ -7,17 +7,19 @@ import (
 
 // ShiftType represents a category of shifts
 type ShiftType struct {
-	ID            int64   `json:"id"`
-	PlanID        int64   `json:"plan_id"`
-	Password      *string `json:"-"` // Optional, never sent to client
-	SortOrder     int     `json:"sort_order"`
-	TitleDE       string  `json:"title_de"`
-	TitleEN       string  `json:"title_en"`
-	DescriptionDE string  `json:"description_de"`
-	DescriptionEN string  `json:"description_en"`
-	LocationDE    string  `json:"location_de"`
-	LocationEN    string  `json:"location_en"`
-	Shifts        []Shift `json:"shifts,omitempty"` // Added field for shifts
+	ID                int64   `json:"id"`
+	PlanID            int64   `json:"plan_id"`
+	Password          *string `json:"-"` // Optional, never sent to client
+	SortOrder         int     `json:"sort_order"`
+	TitleDE           string  `json:"title_de"`
+	TitleEN           string  `json:"title_en"`
+	DescriptionDE     string  `json:"description_de"`
+	DescriptionEN     string  `json:"description_en"`
+	DescriptionDEHTML *string `json:"description_de_html,omitempty"`
+	DescriptionENHTML *string `json:"description_en_html,omitempty"`
+	LocationDE        string  `json:"location_de"`
+	LocationEN        string  `json:"location_en"`
+	Shifts            []Shift `json:"shifts,omitempty"` // Added field for shifts
 }
 
 // NewShiftType contains the data needed to create a new shift type
@@ -144,6 +146,16 @@ func (db *DB) GetShiftTypesByPlan(planID int64) ([]ShiftType, error) {
 			&st.LocationEN,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan shift type: %w", err)
+		}
+
+		// Render markdown to HTML for descriptions
+		if st.DescriptionEN != "" {
+			html := renderMarkdown(st.DescriptionEN)
+			st.DescriptionENHTML = &html
+		}
+		if st.DescriptionDE != "" {
+			html := renderMarkdown(st.DescriptionDE)
+			st.DescriptionDEHTML = &html
 		}
 
 		// Load shifts for this type
@@ -289,6 +301,16 @@ func (db *DB) getShiftTypeByID(tx *sql.Tx, id int64) (ShiftType, error) {
 	)
 	if err != nil {
 		return st, fmt.Errorf("failed to scan shift type: %w", err)
+	}
+
+	// Render markdown to HTML for descriptions
+	if st.DescriptionEN != "" {
+		html := renderMarkdown(st.DescriptionEN)
+		st.DescriptionENHTML = &html
+	}
+	if st.DescriptionDE != "" {
+		html := renderMarkdown(st.DescriptionDE)
+		st.DescriptionDEHTML = &html
 	}
 
 	return st, nil

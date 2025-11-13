@@ -121,10 +121,15 @@
             <!-- Description with toggle -->
             <div class="cursor-pointer" @click.stop>
                 <div class="relative">
-                    <p x-ref="description" class="text-base-content/70 text-sm transition-all duration-200"
-                        :class="{ 'line-clamp-3': !isDescriptionExpanded && isDescriptionLong }"
-                        x-text="plan.is_multilingual ? ($locale() === 'de' ? type.description_de : type.description_en) : type.description_en">
-                    </p>
+                    <div x-ref="description" class="text-base-content/70 text-sm transition-all duration-200 md-content"
+                        :class="{ 'line-clamp-3': !isDescriptionExpanded && isDescriptionLong }">
+                        <template x-if="plan.is_multilingual">
+                            <div x-html="$locale() === 'de' ? (type.description_de_html || '') : (type.description_en_html || '')"></div>
+                        </template>
+                        <template x-if="!plan.is_multilingual">
+                            <div x-html="type.description_en_html || ''"></div>
+                        </template>
+                    </div>
 
                     <!-- Toggle Button for Description (only shown if description is actually long) -->
                     <button @click.stop="isDescriptionExpanded = !isDescriptionExpanded; $event.stopPropagation();"
