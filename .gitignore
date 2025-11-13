@@ -29,6 +29,7 @@ go.work.sum
 # config file
 config.toml
 
-# data directory
+# data directory and stuff
 data/
 confidential.json
+SECRET.txt
