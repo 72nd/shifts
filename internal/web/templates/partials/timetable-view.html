@@ -29,7 +29,7 @@
                     x-show="timetableModel.days.length > 0"
                     :style="`grid-template-columns: repeat(${timetableModel.normalizedTypes.length}, minmax(200px, 1fr))`">
                     <template x-for="type in timetableModel.normalizedTypes" :key="`header-${type.id}`">
-                        <div class="timetable-column-header" :style="{ '--shift-color': type.color }">
+                        <div class="timetable-column-header">
                             <div class="flex items-center justify-between gap-2 text-sm font-medium">
                                 <span x-text="type.title"></span>
                             </div>
