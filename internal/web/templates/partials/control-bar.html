@@ -1,0 +1,257 @@
+{{ define "control-bar" }}
+<!-- Unified Control Bar -->
+<div class="card card-bordered border-base-content/10 shadow md:block hidden">
+    <div class="card-body p-2.5 md:px-2 md:py-1.5">
+        <!-- Desktop Layout -->
+        <div class="flex items-center justify-between gap-2">
+            <!-- Left Side: Admin Tools / Login -->
+            <div class="flex items-center gap-1">
+                <!-- Admin Login (when not logged in) -->
+                <template x-if="!isAdmin">
+                    <button @click="openAdminModal()"
+                        class="btn btn-outline btn-primary btn-xs md:btn-xs gap-1 text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span x-text="$t('shift_plans.view.admin_login')"></span>
+                    </button>
+                </template>
+
+                <!-- Admin Tools (when logged in) -->
+                <template x-if="isAdmin">
+                    <ul class="menu menu-horizontal rounded-box p-0 gap-0 text-xs">
+                        <li>
+                            <a @click="openShiftModal(null)" class="tooltip tooltip-bottom text-success" data-tip="Add Shift">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.add_shift')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click="openShiftTypeModal()" class="tooltip tooltip-bottom text-success" data-tip="Add Shift Type">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.add_shift_type')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click="openSortTypesModal()" class="tooltip tooltip-bottom" data-tip="Sort Types">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m4 0v12m0 0l4-4m-4 4l-4-4" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.sort_types')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click="openSettingsModal()" class="tooltip tooltip-bottom" data-tip="Settings">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.settings')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a :href="'/plans/' + plan.token + '/stats'" target="_blank" class="tooltip tooltip-bottom" data-tip="Statistics">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.statistics')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click="openExportModal()" class="tooltip tooltip-bottom" data-tip="Export">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.export')"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a @click="logoutAdmin()" class="tooltip tooltip-bottom text-error" data-tip="Logout">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                <span class="hidden lg:inline" x-text="$t('shift_plans.view.admin_logout')"></span>
+                            </a>
+                        </li>
+                    </ul>
+                </template>
+            </div>
+
+            <!-- Right Side: View Mode Toggle -->
+            <div class="join border border-base-content/20 rounded-box">
+                <button
+                    class="join-item btn btn-xs text-xs"
+                    :class="viewMode === 'list' ? 'btn-primary' : 'btn-ghost'"
+                    :aria-pressed="viewMode === 'list'"
+                    @click="setViewMode('list')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.view_mode_list')"></span>
+                </button>
+                <button
+                    class="join-item btn btn-xs text-xs"
+                    :class="viewMode === 'timetable' ? 'btn-primary' : 'btn-ghost'"
+                    :aria-pressed="viewMode === 'timetable'"
+                    @click="setViewMode('timetable')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.view_mode_timetable')"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Layout -->
+<div class="md:hidden flex flex-col gap-3">
+    <!-- View Mode Toggle (Mobile) -->
+    <div class="join w-full border border-base-content/20 rounded-box">
+        <button
+            class="join-item btn btn-sm flex-1"
+            :class="viewMode === 'list' ? 'btn-primary' : 'btn-ghost'"
+            :aria-pressed="viewMode === 'list'"
+            @click="setViewMode('list')">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span x-text="$t('shift_plans.view.view_mode_list')"></span>
+        </button>
+        <button
+            class="join-item btn btn-sm flex-1"
+            :class="viewMode === 'timetable' ? 'btn-primary' : 'btn-ghost'"
+            :aria-pressed="viewMode === 'timetable'"
+            @click="setViewMode('timetable')">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span x-text="$t('shift_plans.view.view_mode_timetable')"></span>
+        </button>
+    </div>
+
+    <!-- Admin Menu (Mobile) -->
+    <div class="dropdown dropdown-end w-full">
+        <label tabindex="0" class="btn btn-primary btn-sm gap-2 w-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span x-show="!isAdmin" x-text="$t('shift_plans.view.admin_login')"></span>
+            <span x-show="isAdmin" x-text="$t('shift_plans.view.admin_actions')"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 9l-7 7-7-7" />
+            </svg>
+        </label>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64">
+            <!-- Admin Login (when not logged in) -->
+            <li x-show="!isAdmin">
+                <a @click="openAdminModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.admin_login')"></span>
+                </a>
+            </li>
+
+            <!-- Admin Tools (when logged in) -->
+            <li x-show="isAdmin" class="menu-title">
+                <span x-text="$t('shift_plans.view.admin_actions')"></span>
+            </li>
+            <li x-show="isAdmin">
+                <a @click="openShiftModal(null)" class="text-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.add_shift')"></span>
+                </a>
+            </li>
+            <li x-show="isAdmin">
+                <a @click="openShiftTypeModal()" class="text-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.add_shift_type')"></span>
+                </a>
+            </li>
+            <li x-show="isAdmin">
+                <a @click="openSortTypesModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16V4m0 0L3 8m4-4l4 4m4 0v12m0 0l4-4m-4 4l-4-4" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.sort_types')"></span>
+                </a>
+            </li>
+            <li x-show="isAdmin">
+                <a @click="openSettingsModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.settings')"></span>
+                </a>
+            </li>
+            <li x-show="isAdmin">
+                <a :href="'/plans/' + plan.token + '/stats'" target="_blank">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.statistics')"></span>
+                </a>
+            </li>
+            <li x-show="isAdmin">
+                <a @click="openExportModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.export')"></span>
+                </a>
+            </li>
+            <li x-show="isAdmin" class="menu-title mt-4 text-error">
+                <span x-text="$t('shift_plans.view.admin_security')"></span>
+            </li>
+            <li x-show="isAdmin">
+                <a @click="logoutAdmin()" class="text-error">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span x-text="$t('shift_plans.view.admin_logout')"></span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+{{ end }}
+
