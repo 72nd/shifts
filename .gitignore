@@ -23,7 +23,6 @@ go.work.sum
 
 # env file
 .env
-
 .cursor
 
 # config file
@@ -33,3 +32,6 @@ config.toml
 data/
 confidential.json
 SECRET.txt
+
+# stuff
+.DS_Store

@@ -10,6 +10,7 @@ import { SortTypesModal } from './sort-types-modal.js';
 import { SettingsModal } from './settings-modal.js';
 import { FilterManager } from './filter-manager.js';
 import { ExportModal } from './export-modal.js';
+import { buildTimetableModel } from './timetable-view-model.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -43,9 +44,23 @@ document.addEventListener('alpine:init', () => {
         isExporting: false,
         exportError: null,
 
+        // View state
+        viewMode: 'list',
+        planToken: '',
+        timetableSlotHeight: 16,
+        expandedTimetableShifts: {},
+
         // Computed property für den Ladezustand
         get isReady() {
             return !this.isLoading && !this.error && this.plan;
+        },
+
+        get isTimetableView() {
+            return this.viewMode === 'timetable';
+        },
+
+        get timetableMinuteHeight() {
+            return this.timetableSlotHeight / 15;
         },
 
         // Computed property für verfügbare Tage
@@ -56,6 +71,14 @@ document.addEventListener('alpine:init', () => {
         // Computed property für gefilterte Schichttypen
         get filteredShiftTypes() {
             return this.filterManager.filterShiftTypes(this.shiftTypes);
+        },
+
+        get timetableModel() {
+            return buildTimetableModel({
+                shiftTypes: this.filteredShiftTypes || [],
+                plan: this.plan || {},
+                locale: this.$locale()
+            });
         },
 
         // Filter functions
@@ -101,6 +124,8 @@ document.addEventListener('alpine:init', () => {
             // Hole Token aus URL
             const pathParts = window.location.pathname.split('/');
             const token = pathParts[pathParts.length - 1];
+            this.planToken = token;
+            this.initializeViewMode(token);
 
             // Versuche Admin-Token aus localStorage zu laden
             const storedToken = localStorage.getItem(`admin_token_${token}`);
@@ -138,6 +163,227 @@ document.addEventListener('alpine:init', () => {
 
             // Load initial data
             this.loadPlan(token);
+        },
+
+        initializeViewMode(token) {
+            const params = new URLSearchParams(window.location.search);
+            const requested = params.get('view');
+            const stored = localStorage.getItem(`shift_view_mode_${token}`);
+
+            if (requested === 'list' || requested === 'timetable') {
+                this.viewMode = requested;
+                localStorage.setItem(`shift_view_mode_${token}`, requested);
+                return;
+            }
+
+            if (stored === 'list' || stored === 'timetable') {
+                this.viewMode = stored;
+                this.syncViewModeQuery(stored);
+                return;
+            }
+
+            this.viewMode = 'list';
+            this.syncViewModeQuery('list');
+        },
+
+        syncViewModeQuery(mode) {
+            const url = new URL(window.location.href);
+            if (mode === 'list') {
+                url.searchParams.delete('view');
+            } else {
+                url.searchParams.set('view', mode);
+            }
+            const newUrl = `${url.pathname}${url.search ? `?${url.searchParams.toString()}` : ''}`;
+            window.history.replaceState({}, '', newUrl);
+        },
+
+        setViewMode(mode) {
+            if (mode !== 'list' && mode !== 'timetable') return;
+            if (this.viewMode === mode) return;
+            this.viewMode = mode;
+            if (this.planToken) {
+                localStorage.setItem(`shift_view_mode_${this.planToken}`, mode);
+            }
+            this.syncViewModeQuery(mode);
+            this.$nextTick(() => {
+                this.$dispatch('shift-view-mode-changed', { mode });
+            });
+            if (mode !== 'timetable') {
+                this.expandedTimetableShifts = {};
+            }
+        },
+
+        getTimetableColumnTemplate(day) {
+            const columnCount = day?.columns?.length || 0;
+            const count = Math.max(columnCount, 1);
+            return `repeat(${count}, minmax(220px, 1fr))`;
+        },
+
+        getTimetableDayShiftCount(day) {
+            if (!day?.columns) return 0;
+            return day.columns.reduce((acc, column) => acc + (column.shifts?.length || 0), 0);
+        },
+
+        getTimetableShiftStyle(shift) {
+            if (!shift) return {};
+            const minuteHeight = this.timetableMinuteHeight;
+            const top = Math.max(0, (shift.startMinutes || 0) * minuteHeight);
+            const height = Math.max(this.timetableSlotHeight, (shift.durationMinutes || this.timetableSlotHeight) * minuteHeight);
+            const laneCount = Math.max(shift.laneCount || 1, 1);
+            const laneIndex = Math.min(shift.laneIndex || 0, laneCount - 1);
+            const widthPercent = 100 / laneCount;
+            const leftPercent = widthPercent * laneIndex;
+            const horizontalPadding = laneCount > 1 ? 6 : 4;
+
+            return {
+                top: `${top}px`,
+                height: `${height}px`,
+                left: `calc(${leftPercent}% + 2px)`,
+                width: `calc(${widthPercent}% - ${horizontalPadding}px)`,
+                '--shift-color': shift.typeColor || 'oklch(var(--p))'
+            };
+        },
+
+        isTimetableShiftExpanded(shiftId) {
+            return Boolean(this.expandedTimetableShifts?.[shiftId]);
+        },
+
+        toggleTimetableShift(shiftId) {
+            if (!shiftId) return;
+            const nextState = { ...this.expandedTimetableShifts };
+            nextState[shiftId] = !nextState[shiftId];
+            this.expandedTimetableShifts = nextState;
+        },
+
+        handleTimetableShiftClick(shift, event) {
+            if (!shift) return;
+            
+            // Find the actual shift object and type from shiftTypes
+            let actualShift = null;
+            let actualType = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    actualType = type;
+                    break;
+                }
+            }
+            
+            if (!actualShift) return;
+            
+            // For admins on right-click, show context menu options
+            if (this.isAdmin && event.button === 2) {
+                event.preventDefault();
+                this.showTimetableShiftContextMenu(actualShift, actualType, event);
+                return;
+            }
+            
+            // Open join modal for normal click
+            this.openJoinModal(actualShift);
+        },
+
+        showTimetableShiftContextMenu(shift, type, event) {
+            // This will be handled by the template with x-data
+            // We just dispatch an event
+            this.$dispatch('show-timetable-context-menu', { 
+                shift, 
+                type,
+                x: event.clientX, 
+                y: event.clientY 
+            });
+        },
+
+        handleTimetableShiftEdit(shift, column) {
+            // Find the actual shift and type objects
+            let actualShift = null;
+            let actualType = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    actualType = type;
+                    break;
+                }
+            }
+            if (actualShift && actualType) {
+                this.openShiftModal(actualShift, actualType, false);
+            }
+        },
+
+        handleTimetableShiftDuplicate(shift, column) {
+            // Find the actual shift and type objects
+            let actualShift = null;
+            let actualType = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    actualType = type;
+                    break;
+                }
+            }
+            if (actualShift && actualType) {
+                this.openShiftModal(actualShift, actualType, true);
+            }
+        },
+
+        handleTimetableShiftDelete(shift, column) {
+            // Find the actual shift and type objects
+            let actualShift = null;
+            let actualType = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    actualType = type;
+                    break;
+                }
+            }
+            if (actualShift && actualType) {
+                this.openDeleteShiftModal(actualShift, actualType);
+            }
+        },
+
+        handleTimetableShiftToggleLock(shift, column) {
+            // Find the actual shift and type objects
+            let actualShift = null;
+            let actualType = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    actualType = type;
+                    break;
+                }
+            }
+            if (actualShift && actualType) {
+                if (actualShift.is_locked) {
+                    this.unlockShift(actualShift, actualType);
+                } else {
+                    this.lockShift(actualShift, actualType);
+                }
+            }
+        },
+
+        handleTimetableParticipantRemove(shift, participant, event) {
+            if (!shift || !participant) return;
+            event.stopPropagation();
+            
+            // Find the actual shift object from shiftTypes
+            let actualShift = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    break;
+                }
+            }
+            
+            if (!actualShift) return;
+            
+            // Open remove modal
+            this.openRemoveModal(actualShift, participant);
         },
 
         // Gruppiere Schichten nach Datum

@@ -266,7 +266,11 @@
                 "only_filtered": "Export filtered data only",
                 "filter_active": "filter active",
                 "filters_active": "filters active"
-            }
+            },
+            "view_mode": "View",
+            "view_mode_list": "Grouped List",
+            "view_mode_timetable": "Timetable",
+            "timetable_loading": "Timetable view is loading…"
         },
         "deleted": {
             "title": "Shift Plan Deleted",

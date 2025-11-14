@@ -266,7 +266,11 @@
                 "only_filtered": "Nur gefilterte Daten exportieren",
                 "filter_active": "Filter aktiv",
                 "filters_active": "Filter aktiv"
-            }
+            },
+            "view_mode": "Ansicht",
+            "view_mode_list": "Gruppierte Liste",
+            "view_mode_timetable": "Zeittafel",
+            "timetable_loading": "Zeittafel wird geladen…"
         },
         "deleted": {
             "title": "Schichtplan gelöscht",

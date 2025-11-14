@@ -1,0 +1,537 @@
+/* Timetable View Styles */
+
+/* Container for full-width timetable */
+.timetable-container {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 0 1rem;
+}
+
+/* Unified timetable - one continuous table */
+.timetable-unified {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr;
+  gap: 0;
+  position: relative;
+  overflow: auto;
+  background: oklch(var(--b1));
+  border-radius: 0.5rem;
+  border: 1px solid oklch(var(--bc) / 0.2);
+  max-height: 85vh;
+}
+
+/* Left time rail - sticky column (grid row 2, col 1) */
+.timetable-time-rail {
+  grid-row: 2;
+  grid-column: 1;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: oklch(var(--b1));
+  border-right: 2px solid oklch(var(--bc) / 0.2);
+  min-width: 60px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Time header wrapper (grid row 1, col 1) */
+.timetable-time-header-wrapper {
+  grid-row: 1;
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: oklch(var(--b2));
+  border-bottom: 2px solid oklch(var(--bc) / 0.2);
+}
+
+/* Time label */
+.timetable-time-label {
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  color: oklch(var(--bc) / 0.7);
+  min-height: 36px; /* Height for single header row */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Time grid container */
+.timetable-time-grid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Time day section - each day's time slots */
+.timetable-time-day-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 3px solid oklch(var(--p) / 0.4);
+}
+
+.timetable-time-day-section:last-child {
+  border-bottom: none;
+}
+
+/* Individual time slot */
+.timetable-time-slot {
+  height: var(--timetable-slot-height, 16px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border-top: 1px solid oklch(var(--bc) / 0.05);
+  padding-top: 2px;
+  font-size: 0.65rem;
+  color: oklch(var(--bc) / 0.6);
+}
+
+.timetable-time-slot.is-hour {
+  border-top: 1px solid oklch(var(--bc) / 0.15);
+  font-weight: 600;
+}
+
+.timetable-time-slot.is-day-start {
+  border-top: 3px solid oklch(var(--p) / 0.4);
+  background: oklch(var(--p) / 0.05);
+  font-weight: 700;
+  color: oklch(var(--p));
+}
+
+.timetable-time-slot span {
+  line-height: 1;
+  padding: 0 0.25rem;
+}
+
+/* Columns wrapper - scrollable (grid row 2, col 2) */
+.timetable-columns-wrapper {
+  grid-row: 2;
+  grid-column: 2;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Day section - contains headers and columns for one day */
+.timetable-day-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 3px solid oklch(var(--p) / 0.4);
+}
+
+.timetable-day-section:last-child {
+  border-bottom: none;
+}
+
+/* Type headers row - sticky at top (grid row 1, col 2) */
+.timetable-type-headers {
+  grid-row: 1;
+  grid-column: 2;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: grid;
+  background: oklch(var(--b2));
+  border-bottom: 2px solid oklch(var(--bc) / 0.2);
+}
+
+/* Columns grid */
+.timetable-columns {
+  display: grid;
+  gap: 0;
+  min-width: 100%;
+}
+
+/* Individual column (just the content area now) */
+.timetable-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid oklch(var(--bc) / 0.1);
+  position: relative;
+}
+
+.timetable-column:last-child {
+  border-right: none;
+}
+
+/* Column header (in type headers row) */
+.timetable-column-header {
+  background: oklch(var(--b2));
+  border-bottom: 2px solid oklch(var(--bc) / 0.2);
+  border-right: 1px solid oklch(var(--bc) / 0.15);
+  padding: 0.5rem 0.75rem;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.timetable-column-header:last-child {
+  border-right: none;
+}
+
+.timetable-column-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--shift-color, oklch(var(--p)));
+  opacity: 0.8;
+}
+
+/* Column body - contains shifts */
+.timetable-column-body {
+  position: relative;
+  height: calc(96 * var(--timetable-slot-height, 16px)); /* 24h * 4 slots/h */
+  min-height: 0;
+}
+
+/* Background grid lines */
+.timetable-grid-lines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.timetable-grid-slot {
+  height: var(--timetable-slot-height, 16px);
+  border-top: 1px solid oklch(var(--bc) / 0.05);
+}
+
+.timetable-grid-slot.is-hour {
+  border-top: 1px solid oklch(var(--bc) / 0.1);
+}
+
+/* Empty column placeholder */
+.timetable-column-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: oklch(var(--bc) / 0.4);
+  font-size: 0.75rem;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* Shift card - positioned absolutely based on time */
+.timetable-shift {
+  position: absolute;
+  right: 2px;
+  background: oklch(var(--b1));
+  border: 2px solid oklch(var(--bc) / 0.2);
+  border-radius: 0.375rem;
+  padding: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 1px 3px oklch(var(--bc) / 0.1);
+}
+
+.timetable-shift:hover {
+  border-width: 3px;
+  box-shadow: 0 4px 12px oklch(var(--bc) / 0.2);
+  z-index: 1;
+  transform: translateY(-1px);
+}
+
+.timetable-shift.is-expanded {
+  z-index: 2;
+  box-shadow: 0 8px 24px oklch(var(--bc) / 0.25);
+}
+
+.timetable-shift.is-locked {
+  border-style: solid;
+  border-color: oklch(var(--in));
+  background: oklch(var(--b1));
+}
+
+.timetable-shift.is-locked:hover {
+  border-color: oklch(var(--in));
+}
+
+/* Admin actions */
+.timetable-shift-admin-actions {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: flex;
+  gap: 0.125rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 10;
+  background: oklch(var(--b1) / 0.95);
+  border-radius: 0.25rem;
+  padding: 0.125rem;
+  box-shadow: 0 2px 8px oklch(var(--bc) / 0.2);
+}
+
+.timetable-shift:hover .timetable-shift-admin-actions {
+  opacity: 1;
+}
+
+.timetable-shift-admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: oklch(var(--b2));
+  border: 1px solid oklch(var(--bc) / 0.2);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: oklch(var(--bc) / 0.7);
+}
+
+.timetable-shift-admin-btn:hover {
+  background: oklch(var(--p));
+  border-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  transform: scale(1.05);
+}
+
+.timetable-shift-admin-btn-danger:hover {
+  background: oklch(var(--er));
+  border-color: oklch(var(--er));
+  color: oklch(var(--erc));
+}
+
+/* Shift header - time and fill status */
+.timetable-shift-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.timetable-shift-time {
+  color: oklch(var(--bc) / 0.9);
+  white-space: nowrap;
+}
+
+.timetable-shift-fill {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background: var(--shift-color, oklch(var(--p)));
+  color: oklch(var(--pc));
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+/* Participants list */
+.timetable-shift-participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  min-height: 1rem;
+}
+
+.timetable-shift-participants-empty {
+  color: oklch(var(--bc) / 0.4);
+  font-style: italic;
+}
+
+.timetable-shift-participant {
+  padding: 0.125rem 0.375rem;
+  background: oklch(var(--b2));
+  border-radius: 0.25rem;
+  color: oklch(var(--bc) / 0.8);
+  white-space: nowrap;
+  border: 1px solid oklch(var(--bc) / 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.timetable-shift-participant.has-remove {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timetable-shift-participant.has-remove:hover {
+  background: oklch(var(--er) / 0.2);
+  border-color: oklch(var(--er) / 0.3);
+  color: oklch(var(--er));
+}
+
+/* Shift comment */
+.timetable-shift-comment {
+  font-size: 0.7rem;
+  line-height: 1.3;
+  color: oklch(var(--bc) / 0.7);
+}
+
+.timetable-shift-comment-collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.timetable-shift-comment-expanded {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Shift footer - expand/collapse indicator */
+.timetable-shift-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.25rem;
+  margin-top: 0.125rem;
+  border-top: 1px solid oklch(var(--bc) / 0.1);
+  font-size: 0.65rem;
+  color: oklch(var(--bc) / 0.5);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.timetable-shift-footer:hover {
+  color: oklch(var(--bc) / 0.8);
+}
+
+/* Fill status colors */
+.timetable-shift[data-fill-status="empty"] .timetable-shift-fill {
+  background: oklch(var(--er));
+  color: oklch(var(--erc));
+}
+
+.timetable-shift[data-fill-status="partial"] .timetable-shift-fill {
+  background: oklch(var(--wa));
+  color: oklch(var(--wac));
+}
+
+.timetable-shift[data-fill-status="full"] .timetable-shift-fill {
+  background: oklch(var(--su));
+  color: oklch(var(--suc));
+}
+
+.timetable-shift[data-fill-status="unlimited"] .timetable-shift-fill {
+  background: oklch(var(--in));
+  color: oklch(var(--inc));
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .timetable-time-rail {
+    min-width: 50px;
+  }
+
+  .timetable-time-header {
+    font-size: 0.65rem;
+    padding: 0.375rem;
+    min-height: 36px;
+  }
+
+  .timetable-column-header {
+    position: sticky;
+    top: 0;
+    z-index: 10; /* ensures it stays above grid content */
+    background: white; /* or your theme background */
+    padding: 8px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+    min-height: 36px;
+  }
+
+  .timetable-shift {
+    padding: 0.25rem;
+    gap: 0.125rem;
+  }
+
+  .timetable-shift-header {
+    font-size: 0.65rem;
+    gap: 0.25rem;
+  }
+
+  .timetable-shift-fill {
+    font-size: 0.6rem;
+    padding: 0.125rem 0.25rem;
+  }
+
+  .timetable-shift-participants,
+  .timetable-shift-comment {
+    font-size: 0.65rem;
+  }
+
+  .timetable-shift-footer {
+    font-size: 0.6rem;
+    padding-top: 0.125rem;
+  }
+
+  .timetable-time-slot {
+    font-size: 0.6rem;
+  }
+
+  /* Reduce slot height on mobile for better overview */
+  .timetable-day-body {
+    --timetable-slot-height: 12px;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+  .timetable-columns {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  }
+
+  .timetable-time-rail {
+    min-width: 45px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .timetable-shift {
+    border-width: 1px;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  .timetable-shift:hover {
+    border-width: 1px;
+    transform: none;
+  }
+
+  .timetable-time-rail,
+  .timetable-time-header,
+  .timetable-column-header {
+    position: static;
+  }
+}
+

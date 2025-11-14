@@ -1,0 +1,178 @@
+{{ define "timetable-view" }}
+<!-- Timetable View Container -->
+<template x-if="isTimetableView">
+    <div class="timetable-container">
+        <template x-if="!timetableModel.hasAnyShifts">
+            <div class="card card-bordered border-base-content/10 shadow">
+                <div class="card-body p-4 text-sm text-base-content/70">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M12 8v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span x-text="$t('shift_plans.view.timetable_empty')"></span>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="timetableModel.hasAnyShifts">
+            <div class="timetable-unified" :style="`--timetable-slot-height: ${timetableSlotHeight}px`">
+                <!-- Time header (top left) -->
+                <div class="timetable-time-header-wrapper">
+                    <div class="timetable-time-label" x-text="$t('shift_plans.view.time')"></div>
+                </div>
+
+                <!-- Type headers row (top right, sticky) -->
+                <div class="timetable-type-headers"
+                    x-show="timetableModel.days.length > 0"
+                    :style="`grid-template-columns: repeat(${timetableModel.normalizedTypes.length}, minmax(200px, 1fr))`">
+                    <template x-for="type in timetableModel.normalizedTypes" :key="`header-${type.id}`">
+                        <div class="timetable-column-header" :style="{ '--shift-color': type.color }">
+                            <div class="flex items-center justify-between gap-2 text-sm font-medium">
+                                <span x-text="type.title"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Time rail (bottom left) -->
+                <div class="timetable-time-rail">
+                    <!-- Time grid for all days combined -->
+                    <div class="timetable-time-grid">
+                        <template x-for="day in timetableModel.days" :key="`day-time-${day.dateKey}`">
+                            <div class="timetable-time-day-section">
+                                <template x-for="(slot, index) in timetableModel.timeScale" :key="`time-${day.dateKey}-${slot.minute}`">
+                                    <div class="timetable-time-slot" 
+                                        :class="{ 'is-hour': slot.isHour, 'is-day-start': slot.minute === 0 && index === 0 }">
+                                        <span x-show="slot.isHour" x-text="slot.label"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Columns wrapper (bottom right) -->
+                <div class="timetable-columns-wrapper">
+                    <!-- Days vertically stacked -->
+                    <template x-for="day in timetableModel.days" :key="`day-section-${day.dateKey}`">
+                        <div class="timetable-day-section">
+                            <!-- Columns grid for this day -->
+                            <div class="timetable-columns"
+                                :style="`grid-template-columns: repeat(${day.columns.length}, minmax(200px, 1fr))`">
+                                <template x-for="column in day.columns" :key="`col-${day.dateKey}-${column.typeId}`">
+                                    <div class="timetable-column">
+                                        <div class="timetable-column-body">
+                                            <div class="timetable-grid-lines">
+                                                <template x-for="slot in timetableModel.timeScale" :key="slot.minute">
+                                                    <div class="timetable-grid-slot" :class="slot.isHour ? 'is-hour' : ''"></div>
+                                                </template>
+                                            </div>
+
+                                            <template x-if="column.shifts.length === 0">
+                                                <div class="timetable-column-empty" x-text="$t('shift_plans.view.timetable_empty_column')"></div>
+                                            </template>
+
+                                            <template x-for="shift in column.shifts" :key="shift.id">
+                                                <div class="timetable-shift"
+                                                    :style="getTimetableShiftStyle(shift)"
+                                                    :data-fill-status="shift.fillStatus"
+                                                    @click="handleTimetableShiftClick(shift, $event)"
+                                                    @contextmenu="isAdmin ? handleTimetableShiftClick(shift, $event) : null"
+                                                    :class="{ 'is-expanded': isTimetableShiftExpanded(shift.id), 'is-locked': shift.isLocked }">
+                                                    <!-- Admin Actions (visible on hover) -->
+                                                    <div x-show="isAdmin" class="timetable-shift-admin-actions" @click.stop>
+                                                        <button @click="handleTimetableShiftEdit(shift, column)"
+                                                            class="timetable-shift-admin-btn"
+                                                            title="Edit">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button @click="handleTimetableShiftDuplicate(shift, column)"
+                                                            class="timetable-shift-admin-btn"
+                                                            title="Duplicate">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button @click="handleTimetableShiftToggleLock(shift, column)"
+                                                            class="timetable-shift-admin-btn"
+                                                            :title="shift.isLocked ? 'Unlock' : 'Lock'">
+                                                            <svg x-show="!shift.isLocked" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <svg x-show="shift.isLocked" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button @click="handleTimetableShiftDelete(shift, column)"
+                                                            class="timetable-shift-admin-btn timetable-shift-admin-btn-danger"
+                                                            title="Delete">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="timetable-shift-header">
+                                                        <div class="timetable-shift-time" x-text="shift.displayTime"></div>
+                                                        <div class="timetable-shift-fill">
+                                                            <span x-text="shift.fillText"></span>
+                                                            <svg x-show="shift.isLocked" xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-3.5 w-3.5 text-info" fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                    <div class="timetable-shift-participants" @click.stop>
+                                                        <template x-if="shift.participants.length === 0">
+                                                            <span class="timetable-shift-participants-empty"
+                                                                x-text="$t('shift_plans.view.timetable_no_participants')"></span>
+                                                        </template>
+                                                        <template x-for="participant in shift.participants" :key="participant.id">
+                                                            <span class="timetable-shift-participant" 
+                                                                :class="{ 'has-remove': !shift.isLocked || isAdmin }"
+                                                                @click="handleTimetableParticipantRemove(shift, participant, $event)">
+                                                                <span x-text="participant.name"></span>
+                                                                <svg x-show="!shift.isLocked || isAdmin" xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-3 w-3 ml-1 inline-block opacity-60 hover:opacity-100"
+                                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </span>
+                                                        </template>
+                                                    </div>
+                                                    <div class="timetable-shift-comment" x-show="shift.comment" @click.stop>
+                                                        <p class="timetable-shift-comment-collapsed"
+                                                            x-show="!isTimetableShiftExpanded(shift.id)"
+                                                            x-text="shift.comment"></p>
+                                                        <div class="timetable-shift-comment-expanded md-content"
+                                                            x-show="isTimetableShiftExpanded(shift.id)"
+                                                            x-html="shift.commentHtml || shift.comment"></div>
+                                                    </div>
+                                                    <div class="timetable-shift-footer" 
+                                                        x-show="shift.comment"
+                                                        @click.stop="toggleTimetableShift(shift.id)">
+                                                        <span
+                                                            x-text="isTimetableShiftExpanded(shift.id) ? $t('common.show_less') : $t('common.show_more')"></span>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+{{ end }}
+
