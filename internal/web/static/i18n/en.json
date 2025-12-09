@@ -158,7 +158,7 @@
             "hours": "{hours} hours",
             "hours_minutes": "{hours} hours {minutes} minutes",
             "admin_login": "Admin Login",
-            "admin_logout": "Admin Logout",
+            "admin_logout": "Logout",
             "admin_password": "Administrator Password",
             "admin_password_placeholder": "Enter password",
             "error_password_required": "Please enter a password",
