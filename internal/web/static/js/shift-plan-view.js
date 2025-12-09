@@ -49,6 +49,7 @@ document.addEventListener('alpine:init', () => {
         planToken: '',
         timetableSlotHeight: 16,
         expandedTimetableShifts: {},
+        shiftOverflowState: {},
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -208,9 +209,6 @@ document.addEventListener('alpine:init', () => {
             this.$nextTick(() => {
                 this.$dispatch('shift-view-mode-changed', { mode });
             });
-            if (mode !== 'timetable') {
-                this.expandedTimetableShifts = {};
-            }
         },
 
         getTimetableColumnTemplate(day) {
@@ -250,9 +248,84 @@ document.addEventListener('alpine:init', () => {
 
         toggleTimetableShift(shiftId) {
             if (!shiftId) return;
+            // Only toggle if there's overflow
+            if (!this.hasShiftOverflow(shiftId)) return;
             const nextState = { ...this.expandedTimetableShifts };
             nextState[shiftId] = !nextState[shiftId];
             this.expandedTimetableShifts = nextState;
+        },
+
+        // Check if a shift cell has overflow
+        hasShiftOverflow(shiftId) {
+            return Boolean(this.shiftOverflowState?.[shiftId]);
+        },
+
+        // Detect overflow by comparing content height to container height
+        detectShiftOverflow(shiftId, containerEl) {
+            if (!shiftId || !containerEl) return;
+            
+            // Find the content wrapper inside the container
+            const contentEl = containerEl.querySelector('.timetable-shift-content');
+            if (!contentEl) return;
+            
+            // Get the container's available height (minus padding for expand hint)
+            const containerHeight = containerEl.clientHeight;
+            const contentHeight = contentEl.scrollHeight;
+            
+            // Consider overflow if content is taller than container
+            // Add a small buffer (5px) to account for rounding
+            const hasOverflow = contentHeight > (containerHeight - 5);
+            
+            // Only update state if it changed
+            if (this.shiftOverflowState[shiftId] !== hasOverflow) {
+                this.shiftOverflowState = {
+                    ...this.shiftOverflowState,
+                    [shiftId]: hasOverflow
+                };
+            }
+        },
+
+        // Handle register button click in timetable view
+        handleTimetableRegister(shift) {
+            if (!shift) return;
+            
+            // Find the actual shift object from shiftTypes
+            let actualShift = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    break;
+                }
+            }
+            
+            if (!actualShift) return;
+            
+            // Open join modal
+            this.openJoinModal(actualShift);
+        },
+
+        // Handle right-click context menu for admins
+        handleTimetableShiftContextMenu(shift, event) {
+            if (!shift || !this.isAdmin) return;
+            
+            event.preventDefault();
+            
+            // Find the actual shift object and type from shiftTypes
+            let actualShift = null;
+            let actualType = null;
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shift.id);
+                if (found) {
+                    actualShift = found;
+                    actualType = type;
+                    break;
+                }
+            }
+            
+            if (!actualShift) return;
+            
+            this.showTimetableShiftContextMenu(actualShift, actualType, event);
         },
 
         handleTimetableShiftClick(shift, event) {

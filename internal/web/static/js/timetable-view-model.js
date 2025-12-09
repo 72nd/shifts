@@ -72,6 +72,10 @@ function normalizeShift({
         fillStatus = 'partial';
     }
 
+    // Determine if user can register for this shift
+    const isLocked = Boolean(shift.is_locked);
+    const canRegister = !isLocked && (required === -1 || participants.length < required);
+
     return {
         id: shift.id,
         typeId: typeMeta.id,
@@ -88,6 +92,7 @@ function normalizeShift({
         fillRatio: required > 0 ? Math.min(participants.length / required, 1) : 1,
         fillText: required === -1 ? `${participants.length}/∞` : `${participants.length}/${required}`,
         fillStatus,
+        canRegister,
         comment: getLocalizedValue({
             de: shift.comment_de,
             en: shift.comment_en
@@ -97,7 +102,7 @@ function normalizeShift({
             en: shift.comment_en_html
         }, isMultilingual, locale),
         typeColor: typeMeta.color,
-        isLocked: Boolean(shift.is_locked)
+        isLocked
     };
 }
 

@@ -270,7 +270,9 @@
             "view_mode": "View",
             "view_mode_list": "Grouped List",
             "view_mode_timetable": "Timetable",
-            "timetable_loading": "Timetable view is loading…"
+            "timetable_loading": "Timetable view is loading…",
+            "register": "Join",
+            "timetable_no_participants": "No participants yet"
         },
         "deleted": {
             "title": "Shift Plan Deleted",

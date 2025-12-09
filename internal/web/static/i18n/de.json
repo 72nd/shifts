@@ -270,7 +270,9 @@
             "view_mode": "Ansicht",
             "view_mode_list": "Gruppierte Liste",
             "view_mode_timetable": "Zeittafel",
-            "timetable_loading": "Zeittafel wird geladen…"
+            "timetable_loading": "Zeittafel wird geladen…",
+            "register": "Eintragen",
+            "timetable_no_participants": "Noch keine Helfenden"
         },
         "deleted": {
             "title": "Schichtplan gelöscht",
