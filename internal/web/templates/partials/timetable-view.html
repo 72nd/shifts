@@ -18,7 +18,22 @@
         </template>
 
         <template x-if="timetableModel.hasAnyShifts">
-            <div class="timetable-unified" :style="`--timetable-slot-height: ${timetableSlotHeight}px`">
+            <div class="timetable-unified" 
+                 :style="`--timetable-slot-height: ${timetableSlotHeight}px`"
+                 x-ref="timetableContainer"
+                 x-init="initTimetableActiveDay()"
+                 @scroll="handleTimetableScroll()">
+                <!-- Day navigation bar (top, spans full width) -->
+                <div class="timetable-day-navigation"
+                     x-show="timetableModel.days.length > 0">
+                    <template x-for="day in timetableModel.days" :key="`nav-${day.dateKey}`">
+                        <button class="timetable-day-nav-tab"
+                                :class="{ 'is-active': activeDayKey === day.dateKey }"
+                                @click="scrollToDay(day.dateKey)"
+                                x-text="day.dateLabel"></button>
+                    </template>
+                </div>
+
                 <!-- Time header (top left) -->
                 <div class="timetable-time-header-wrapper">
                     <div class="timetable-time-label" x-text="$t('shift_plans.view.time')"></div>
@@ -66,7 +81,8 @@
                 <div class="timetable-columns-wrapper">
                     <!-- Days vertically stacked -->
                     <template x-for="day in timetableModel.days" :key="`day-section-${day.dateKey}`">
-                        <div class="timetable-day-section">
+                        <div class="timetable-day-section"
+                             :data-day-key="day.dateKey">
                             <!-- Columns grid for this day -->
                             <div class="timetable-columns"
                                 :style="`grid-template-columns: repeat(${day.columns.length}, minmax(200px, 1fr))`">

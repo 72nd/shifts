@@ -50,6 +50,8 @@ document.addEventListener('alpine:init', () => {
         timetableSlotHeight: 16,
         expandedTimetableShifts: {},
         shiftOverflowState: {},
+        activeDayKey: null,
+        scrollTimeout: null,
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -208,6 +210,10 @@ document.addEventListener('alpine:init', () => {
             this.syncViewModeQuery(mode);
             this.$nextTick(() => {
                 this.$dispatch('shift-view-mode-changed', { mode });
+                // Initialize active day when switching to timetable view
+                if (mode === 'timetable') {
+                    this.initTimetableActiveDay();
+                }
             });
         },
 
@@ -283,6 +289,121 @@ document.addEventListener('alpine:init', () => {
                     [shiftId]: hasOverflow
                 };
             }
+        },
+
+        // Get the day navigation bar height from CSS variable
+        getDayNavHeight() {
+            const container = this.$refs.timetableContainer;
+            if (!container) return 40; // Fallback value
+            const computedStyle = getComputedStyle(container);
+            const height = computedStyle.getPropertyValue('--timetable-day-nav-height');
+            return height ? parseInt(height) : 40; // Default to 40px if not found
+        },
+
+        // Scroll to a specific day in the timetable
+        scrollToDay(dateKey) {
+            if (!dateKey || !this.timetableModel?.days) return;
+            
+            const container = this.$refs.timetableContainer;
+            if (!container) return;
+
+            // Find the day section element
+            const daySection = container.querySelector(`[data-day-key="${dateKey}"]`);
+            if (!daySection) return;
+
+            // Calculate the scroll position
+            // We need to account for the sticky headers
+            const dayNavHeight = this.getDayNavHeight();
+            const headerHeight = 36; // Height of type headers
+            
+            // Get the position of the day section relative to the container
+            const containerRect = container.getBoundingClientRect();
+            const dayRect = daySection.getBoundingClientRect();
+            
+            // Calculate scroll position: current scroll + offset from container top - sticky header heights
+            const scrollTop = container.scrollTop + (dayRect.top - containerRect.top) - dayNavHeight - headerHeight;
+
+            // Smooth scroll to the day
+            container.scrollTo({
+                top: Math.max(0, scrollTop),
+                behavior: 'smooth'
+            });
+
+            // Update active day immediately for better UX
+            this.activeDayKey = dateKey;
+        },
+
+        // Handle scroll events to update active day
+        handleTimetableScroll() {
+            // Debounce scroll handling
+            if (this.scrollTimeout) {
+                clearTimeout(this.scrollTimeout);
+            }
+
+            this.scrollTimeout = setTimeout(() => {
+                this.updateActiveDay();
+            }, 100);
+        },
+
+        // Update which day is currently visible based on scroll position
+        updateActiveDay() {
+            const container = this.$refs.timetableContainer;
+            if (!container || !this.timetableModel?.days || this.timetableModel.days.length === 0) {
+                return;
+            }
+
+            const containerRect = container.getBoundingClientRect();
+            const dayNavHeight = this.getDayNavHeight();
+            const headerHeight = 36; // Height of type headers
+            const viewportTop = container.scrollTop + dayNavHeight + headerHeight + 20; // Small offset for better UX
+
+            // Find which day section is currently most visible in the viewport
+            let activeDay = null;
+            let maxVisibleArea = 0;
+
+            this.timetableModel.days.forEach(day => {
+                const daySection = container.querySelector(`[data-day-key="${day.dateKey}"]`);
+                if (!daySection) return;
+
+                const dayRect = daySection.getBoundingClientRect();
+                const dayTop = dayRect.top - containerRect.top + container.scrollTop;
+                const dayBottom = dayTop + daySection.offsetHeight;
+                const containerBottom = container.scrollTop + container.clientHeight;
+
+                // Calculate how much of this day is visible
+                const visibleTop = Math.max(viewportTop, dayTop);
+                const visibleBottom = Math.min(containerBottom, dayBottom);
+                const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                // If this day has more visible area than the current best, make it active
+                if (visibleArea > maxVisibleArea) {
+                    maxVisibleArea = visibleArea;
+                    activeDay = day.dateKey;
+                }
+            });
+
+            // Fallback: if no day found (shouldn't happen), use the first day
+            if (!activeDay && this.timetableModel.days.length > 0) {
+                activeDay = this.timetableModel.days[0].dateKey;
+            }
+
+            if (activeDay && this.activeDayKey !== activeDay) {
+                this.activeDayKey = activeDay;
+            }
+        },
+
+        // Initialize active day when timetable is shown
+        initTimetableActiveDay() {
+            this.$nextTick(() => {
+                if (this.timetableModel?.days && this.timetableModel.days.length > 0) {
+                    // Set initial active day to the first day
+                    this.activeDayKey = this.timetableModel.days[0].dateKey;
+                    // Update based on scroll position after a short delay
+                    setTimeout(() => {
+                        this.updateActiveDay();
+                    }, 100);
+                }
+            });
         },
 
         // Handle register button click in timetable view
