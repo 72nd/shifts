@@ -177,6 +177,10 @@
                                                                 class="timetable-shift-comment-full md-content"
                                                                 x-html="shift.commentHtml || shift.comment"></div>
                                                         </div>
+                                                        <!-- Locked shift explanation -->
+                                                        <div x-show="shift.isLocked" 
+                                                             class="timetable-locked-shift-comment text-info text-xs mt-2"
+                                                             x-text="$t('shift_plans.view.shift_locked_explanation')"></div>
                                                     </div>
                                                     <!-- Expand indicator - only show when content overflows -->
                                                     <div class="timetable-shift-expand-hint" 

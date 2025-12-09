@@ -403,6 +403,10 @@
   color: oklch(var(--bc) / 0.7);
 }
 
+.timetable-locked-shift-comment {
+  font-size: 0.7rem;
+}
+
 .timetable-shift-comment-truncated {
   margin: 0;
   display: -webkit-box;
