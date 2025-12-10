@@ -32,6 +32,7 @@ config.toml
 data/
 confidential.json
 SECRET.txt
+12w-deploy.md
 
 # stuff
 .DS_Store

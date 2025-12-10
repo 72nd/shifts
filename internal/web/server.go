@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -34,7 +35,7 @@ type Server struct {
 func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 	// Create export service
 	exportService := export.NewService(db)
-	
+
 	// Register exporters
 	exportService.RegisterExporter(export.NewJSONExporter())
 	exportService.RegisterExporter(export.NewVacanciesExporter())
@@ -70,8 +71,13 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 
 // setupRoutes configures all routes for the application
 func (s *Server) setupRoutes() {
-	// Static files
-	s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("internal/web/static"))))
+	// Static files - use embedded filesystem
+	staticFS, err := fs.Sub(content, "static")
+	if err != nil {
+		s.logger.Error("failed to setup static file server", "error", err)
+	} else {
+		s.router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	}
 
 	// HTML routes
 	s.router.HandleFunc("/", s.handleIndex).Methods("GET")
