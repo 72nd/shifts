@@ -185,14 +185,9 @@
                                                                 </span>
                                                             </template>
                                                         </div>
-                                                        <div class="timetable-shift-comment" x-show="shift.comment">
-                                                            <p x-show="!isTimetableShiftExpanded(shift.id)" 
-                                                                class="timetable-shift-comment-truncated"
-                                                                x-text="shift.comment"></p>
-                                                            <div x-show="isTimetableShiftExpanded(shift.id)" 
-                                                                class="timetable-shift-comment-full md-content"
-                                                                x-html="shift.commentHtml || shift.comment"></div>
-                                                        </div>
+                                                        <div class="timetable-shift-comment md-content" x-show="shift.comment"
+                                                            :class="{ 'timetable-shift-comment-truncated': !isTimetableShiftExpanded(shift.id), 'timetable-shift-comment-full': isTimetableShiftExpanded(shift.id) }"
+                                                            x-html="shift.commentHtml || shift.comment"></div>
                                                         <!-- Locked shift explanation -->
                                                         <div x-show="shift.isLocked" 
                                                              class="timetable-locked-shift-comment text-info text-xs mt-2"
