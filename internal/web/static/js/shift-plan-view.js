@@ -765,12 +765,32 @@ document.addEventListener('alpine:init', () => {
 
                 // Use the current language from Alpine store
                 const locale = this.$locale() === 'de' ? 'de-DE' : 'en-US';
-                const formatted = date.toLocaleDateString(locale, options);
+                let formatted = date.toLocaleDateString(locale, options);
 
                 // For German: Capitalize first letter
                 if (this.$locale() === 'de') {
-                    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+                    formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
                 }
+                
+                // Calculate day count relative to plan start date
+                if (this.plan?.start_date) {
+                    const startDate = new Date(this.plan.start_date);
+                    if (!isNaN(startDate.getTime())) {
+                        // Set both dates to midnight for accurate day calculation
+                        const dateMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                        const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                        
+                        // Calculate difference in days
+                        const diffTime = dateMidnight.getTime() - startMidnight.getTime();
+                        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        // Day count: start date is Day 1, day before is Day 0, etc.
+                        const dayCount = diffDays + 1;
+                        
+                        return `${formatted} – ${dayCount}`;
+                    }
+                }
+                
                 return formatted;
             } catch (error) {
                 console.error('Error formatting date:', error);

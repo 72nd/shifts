@@ -36,15 +36,36 @@ function formatTimeRange(date, durationMinutes, locale) {
     return `${formatter.format(date)} – ${formatter.format(endDate)}`;
 }
 
-function formatDisplayDate(date, locale) {
+function formatDisplayDate(date, locale, startDate = null) {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
         return '';
     }
-    return new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', {
+    const formatted = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric'
     }).format(date);
+    
+    // Calculate day count if startDate is provided
+    if (startDate) {
+        const start = new Date(startDate);
+        if (!isNaN(start.getTime())) {
+            // Set both dates to midnight for accurate day calculation
+            const dateMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const startMidnight = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+            
+            // Calculate difference in days
+            const diffTime = dateMidnight.getTime() - startMidnight.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Day count: start date is Day 1, day before is Day 0, etc.
+            const dayCount = diffDays + 1;
+            
+            return `${formatted} (${dayCount})`;
+        }
+    }
+    
+    return formatted;
 }
 
 function normalizeShift({
@@ -191,7 +212,7 @@ export function buildTimetableModel({
 
             return {
                 dateKey: dayEntry.dateKey,
-                dateLabel: formatDisplayDate(dayEntry.date, locale),
+                dateLabel: formatDisplayDate(dayEntry.date, locale, plan.start_date),
                 date: dayEntry.date,
                 columns,
                 hasShifts: columns.some(column => column.hasShifts)
