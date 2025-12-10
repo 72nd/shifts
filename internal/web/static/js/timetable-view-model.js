@@ -73,7 +73,8 @@ function normalizeShift({
     typeMeta,
     offsetMinutes,
     locale,
-    isMultilingual
+    isMultilingual,
+    collaborativeMode
 }) {
     const participants = Array.isArray(shift.participants) ? shift.participants : [];
     const required = typeof shift.required === 'number' ? shift.required : 0;
@@ -94,8 +95,9 @@ function normalizeShift({
     }
 
     // Determine if user can register for this shift
+    // In collaborative mode, users can register even if the shift is full
     const isLocked = Boolean(shift.is_locked);
-    const canRegister = !isLocked && (required === -1 || participants.length < required);
+    const canRegister = !isLocked && (collaborativeMode || required === -1 || participants.length < required);
 
     return {
         id: shift.id,
@@ -134,6 +136,7 @@ export function buildTimetableModel({
 }) {
     const boundaryMinutes = parseBoundaryTime(plan.day_boundary_time || '00:00');
     const isMultilingual = Boolean(plan.is_multilingual);
+    const collaborativeMode = Boolean(plan.collaborative_mode);
     const normalizedTypes = shiftTypes.map((type, index) => {
         const title = getLocalizedValue({
             de: type.title_de,
@@ -188,7 +191,8 @@ export function buildTimetableModel({
                 typeMeta,
                 offsetMinutes,
                 locale,
-                isMultilingual
+                isMultilingual,
+                collaborativeMode
             }));
         });
     });
