@@ -39,11 +39,13 @@
   gap: 0.5rem;
   padding: 0.375rem 0.75rem;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   height: var(--timetable-day-nav-height);
   min-height: var(--timetable-day-nav-height);
+  max-height: var(--timetable-day-nav-height);
   align-items: center;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .timetable-day-nav-tab {
