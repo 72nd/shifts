@@ -38,13 +38,13 @@ type ShiftPlan struct {
 // NewShiftPlan contains the data needed to create a new shift plan
 type NewShiftPlan struct {
 	TitleDE           *string   `json:"title_de"`
-	TitleEN           string    `json:"title_en"`
+	TitleEN           string    `json:"title_en" validate:"required" maxLength:"150"`
 	DescriptionDE     *string   `json:"description_de"`
 	DescriptionEN     string    `json:"description_en"`
 	StartDate         time.Time `json:"start_date"`
 	EndDate           time.Time `json:"end_date"`
 	IsMultilingual    bool      `json:"is_multilingual"`
-	Password          string    `json:"password"`
+	Password          string    `json:"password" swaggerignore:"true"`
 	DayBoundaryTime   string    `json:"day_boundary_time"`
 	CollaborativeMode bool      `json:"collaborative_mode"`
 }

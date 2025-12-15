@@ -6,9 +6,27 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/72nd/shifts/internal/db"
 	"github.com/gorilla/mux"
 )
 
+// handleAddParticipant adds a participant to a shift
+// @Summary Add participant to shift
+// @Description Adds a participant to a shift. Admin token required if shift is locked.
+// @Tags Participants
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param shiftId path int true "Shift ID"
+// @Param X-Admin-Token header string false "Admin token (required if shift is locked)"
+// @Param data body object true "Participant name" SchemaExample({"name": "John Doe"})
+// @Success 200 {object} db.Participant "Added participant"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 403 {string} string "Shift is locked - admin access required"
+// @Failure 404 {string} string "Plan or shift not found"
+// @Failure 409 {string} string "Shift full or duplicate name"
+// @Failure 500 {string} string "Internal server error"
+// @Router /plans/{token}/shifts/{shiftId}/participants [post]
 func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
@@ -154,7 +172,8 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	participant, err := s.db.AddParticipant(shiftID, name)
+	var participant *db.Participant
+	participant, err = s.db.AddParticipant(shiftID, name)
 	if err != nil {
 		// Spezifische Fehlerbehandlung für volle Schichten
 		if strings.Contains(err.Error(), "shift is already full") {
@@ -191,6 +210,22 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(participant)
 }
 
+// handleRemoveParticipant removes a participant from a shift
+// @Summary Remove participant from shift
+// @Description Removes a participant from a shift. Admin token required if shift is locked.
+// @Tags Participants
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param shiftId path int true "Shift ID"
+// @Param participantId path int true "Participant ID"
+// @Param X-Admin-Token header string false "Admin token (required if shift is locked)"
+// @Success 204 "Participant removed successfully"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 403 {string} string "Shift is locked - admin access required"
+// @Failure 404 {string} string "Plan, shift, or participant not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /plans/{token}/shifts/{shiftId}/participants/{participantId} [delete]
 func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]

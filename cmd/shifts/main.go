@@ -11,6 +11,22 @@ import (
 	"github.com/72nd/shifts/internal/web"
 )
 
+// @title Shifts API
+// @version 1.0
+// @description API for collaborative shift planning and management. This API allows you to create shift plans, manage shift types, create and manage shifts, and handle participant sign-ups.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url https://github.com/72nd/shifts
+
+// @host localhost:8080
+// @BasePath /api
+
+// @securityDefinitions.apikey AdminToken
+// @in header
+// @name X-Admin-Token
+// @description Admin authentication token. Required for admin-only endpoints. The token is the admin password set when creating a shift plan.
+
 func main() {
 	// Parse command line flags
 	configPath := flag.String("config", "", "path to config file (optional)")

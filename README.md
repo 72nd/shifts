@@ -4,7 +4,7 @@ Shifts is a modern, web-based application for collaborative shift planning and m
 
 ![Shifts Logo](internal/web/static/favicon.svg)
 
-## 🌟 Features
+## Features
 
 - **Intuitive Shift Management**
   - Create, edit, and delete shifts with customizable details
@@ -31,13 +31,13 @@ Shifts is a modern, web-based application for collaborative shift planning and m
   - Manage shift types and their properties
   - Configure plan settings including day boundaries
 
-## 📋 Requirements
+## Requirements
 
 - Go 1.16 or higher
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 - Sqlite3
 
-## 🚀 Installation
+## Installation
 
 1. Clone the repository:
    ```bash
@@ -58,7 +58,7 @@ Shifts is a modern, web-based application for collaborative shift planning and m
 4. Access the application at `http://localhost:8080` (or your configured port)
 
 
-## 🔧 Configuration
+## Configuration
 
 The application uses a TOML configuration file for its settings. By default, it looks for a `config.toml` file in the current working directory. You can specify a different configuration file location using the `--config` flag.
 
@@ -89,63 +89,38 @@ db_path = "data/shifts.db"
 log_level = "info"
 ```
 
-## 📱 Usage Guide
+## API Documentation
 
-### Creating a New Shift Plan
+### Generating Documentation
 
-1. Access the home page and click "Create New Plan"
-2. Enter a title, description, and optional admin password
-3. Configure the day boundary time (default: 00:00)
-4. Click "Create Plan" to generate your new shift plan
+To generate the Swagger documentation, run from the project root:
 
-### Managing Shift Types
+```bash
+swag init -g cmd/shifts/main.go -o docs --parseDependency --parseInternal
+```
 
-1. Log in as admin by clicking the admin icon and entering your password
-2. Click "Manage Shift Types" to add, edit, or delete shift types
-3. For each type, you can set:
-   - Name and description
-   - Color for visual identification
-   - Minimum and maximum participants
-   - Whether the type should be visible to all users
+If you encounter errors about not finding types, ensure:
+1. All handler files that reference `db.*` types import the `db` package
+2. The command is run from the project root directory
+3. All dependencies are installed: `go mod download`
 
-### Adding Shifts
+This will generate:
+- `swagger.json` - OpenAPI specification in JSON format
+- `swagger.yaml` - OpenAPI specification in YAML format
+- `docs.go` - Go code for serving the documentation
 
-1. Log in as admin
-2. Click "Add Shift" and select a shift type
-3. Set the date, start time, and duration
-4. Add a description if needed
-5. Click "Save" to create the shift
+### Accessing Documentation
 
-### Signing Up for Shifts
+After generating the documentation and starting the server, you can access:
 
-1. Browse the available shifts on the main plan view
-2. Click on a shift you want to join
-3. Enter your name in the modal that appears
-4. Click "Join" to sign up for the shift
+- Swagger UI: `http://localhost:8080/swagger/index.html`
+- OpenAPI JSON: `http://localhost:8080/swagger/doc.json`
 
-### Filtering and Sorting
+### Requirements
 
-- Use the filter panel to show/hide specific shift types
-- Shifts are automatically grouped by date
-- Admin users can reorder shift types for consistent display
+Install the swag CLI tool:
 
-## 🔒 Security Considerations
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+```
 
-- Admin functions are protected by a password
-- The application does not collect personal data beyond names
-- All data is stored locally on the server
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgements
-
-- [Go](https://golang.org/) - The programming language used
-- [Alpine.js](https://alpinejs.dev/) - JavaScript framework for interactivity
-- [DaisyUI](https://daisyui.com/) - Tailwind CSS component library
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework 

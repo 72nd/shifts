@@ -15,6 +15,9 @@ import (
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
+	
+	_ "github.com/72nd/shifts/docs" // Import generated swagger docs
 )
 
 //go:embed templates/* static/* docs/*.md docs/images/*
@@ -119,6 +122,11 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
+	// Swagger documentation
+	s.router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
+
 	// Add middleware
 	s.router.Use(s.middleware.loggingMiddleware)
 
@@ -144,6 +152,19 @@ func (s *Server) Start(host string, port int) error {
 }
 
 // handleVerifyAdmin verifies the admin password for a shift plan
+// @Summary Verify admin password
+// @Description Verifies the admin password for a shift plan and returns the token if valid
+// @Tags Plans
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param data body object true "Password to verify" SchemaExample({"password": "admin123"})
+// @Success 200 {object} map[string]string "Token if password is valid"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Invalid password"
+// @Failure 404 {string} string "Plan not found"
+// @Failure 500 {string} string "Internal server error"
+// @Router /plans/{token}/verify-admin [post]
 func (s *Server) handleVerifyAdmin(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]

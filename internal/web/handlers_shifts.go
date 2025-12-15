@@ -9,6 +9,22 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// handleCreateShift creates a new shift
+// @Summary Create shift
+// @Description Creates a new shift for a shift type. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param shift body db.NewShift true "Shift details"
+// @Success 200 {object} db.Shift "Created shift"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or type not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts [post]
 func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
@@ -83,6 +99,23 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(createdShift)
 }
 
+// handleUpdateShift updates an existing shift
+// @Summary Update shift
+// @Description Updates an existing shift. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param shiftId path int true "Shift ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param shift body db.Shift true "Updated shift details"
+// @Success 204 "Shift updated successfully"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or shift not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/{shiftId} [put]
 func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
@@ -158,6 +191,22 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// handleDeleteShift deletes an existing shift
+// @Summary Delete shift
+// @Description Deletes a shift and all its participants. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param shiftId path int true "Shift ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Success 204 "Shift deleted successfully"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or shift not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/{shiftId} [delete]
 func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
@@ -244,6 +293,22 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// handleLockShift locks a shift
+// @Summary Lock shift
+// @Description Locks a shift, preventing non-admin users from joining or leaving. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param shiftId path int true "Shift ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Success 204 "Shift locked successfully"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or shift not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/{shiftId}/lock [post]
 func (s *Server) handleLockShift(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
@@ -330,6 +395,22 @@ func (s *Server) handleLockShift(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// handleUnlockShift unlocks a shift
+// @Summary Unlock shift
+// @Description Unlocks a shift, allowing all users to join or leave. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param shiftId path int true "Shift ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Success 204 "Shift unlocked successfully"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or shift not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/{shiftId}/unlock [post]
 func (s *Server) handleUnlockShift(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]

@@ -36,3 +36,6 @@ SECRET.txt
 
 # stuff
 .DS_Store
+
+# Generated swagger documentation
+docs/

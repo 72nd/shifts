@@ -1,55 +1,49 @@
 package web
 
 import (
-	"fmt"
-	"io/fs"
+	"embed"
+	"log/slog"
 )
 
-// documentationManager handles markdown documentation rendering and caching
+//go:embed docs/*.md
+var docsFS embed.FS
+
+// documentationManager manages user documentation (help pages)
 type documentationManager struct {
-	docs   map[string]DocumentContent
-	logger Logger
+	logger        *slog.Logger
+	documentation map[string]DocumentContent
 }
 
 // newDocumentationManager creates a new documentation manager
-func newDocumentationManager(logger Logger) *documentationManager {
+func newDocumentationManager(logger *slog.Logger) *documentationManager {
 	return &documentationManager{
-		docs:   make(map[string]DocumentContent),
-		logger: logger,
+		logger:        logger,
+		documentation: make(map[string]DocumentContent),
 	}
 }
 
-// parseDocumentation parses all markdown documentation files and caches them
+// parseDocumentation loads and parses all documentation files
 func (dm *documentationManager) parseDocumentation() error {
-	// Define the documentation files to parse
-	docFiles := []string{
-		"docs/help-en.md",
-		"docs/help-de.md",
+	// Load English documentation
+	enContent, err := docsFS.ReadFile("docs/help-en.md")
+	if err != nil {
+		return err
 	}
+	dm.documentation["en"] = renderMarkdownWithTOC(string(enContent))
 
-	for _, docPath := range docFiles {
-		// Read markdown file from embedded filesystem
-		data, err := fs.ReadFile(content, docPath)
-		if err != nil {
-			return fmt.Errorf("failed to read documentation file %s: %w", docPath, err)
-		}
-
-		// Render markdown with TOC
-		rendered := renderMarkdownWithTOC(string(data))
-
-		// Extract language from filename (help-en.md -> en)
-		lang := docPath[len(docPath)-5 : len(docPath)-3]
-
-		// Cache the rendered documentation
-		dm.docs[lang] = rendered
+	// Load German documentation
+	deContent, err := docsFS.ReadFile("docs/help-de.md")
+	if err != nil {
+		return err
 	}
+	dm.documentation["de"] = renderMarkdownWithTOC(string(deContent))
 
+	dm.logger.Info("documentation loaded", "languages", []string{"en", "de"})
 	return nil
 }
 
-// getDocumentation returns the cached documentation for the given language
+// getDocumentation retrieves documentation for a specific language
 func (dm *documentationManager) getDocumentation(lang string) (DocumentContent, bool) {
-	doc, ok := dm.docs[lang]
+	doc, ok := dm.documentation[lang]
 	return doc, ok
 }
-
