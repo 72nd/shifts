@@ -16,7 +16,7 @@ import (
 	"github.com/72nd/shifts/internal/export"
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	
+
 	_ "github.com/72nd/shifts/docs" // Import generated swagger docs
 )
 
@@ -45,6 +45,7 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 	exportService.RegisterExporter(export.NewTimetableExporter())
 	exportService.RegisterExporter(export.NewReportExporter())
 	exportService.RegisterExporter(export.NewPosterExporter())
+	exportService.RegisterExporter(export.NewCSVExporter())
 
 	s := &Server{
 		db:            db,

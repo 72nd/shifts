@@ -252,6 +252,8 @@
                 "format": "Format",
                 "format_json": "JSON",
                 "format_json_description": "Exports all shift data as structured JSON file. Ideal for further processing in other programs or for backups.",
+                "format_csv": "CSV",
+                "format_csv_description": "Exports all shifts as a CSV file with shift type ID, names, times, and participants. Perfect for spreadsheet applications and data analysis.",
                 "format_vacancies": "Open Shifts (Text)",
                 "format_vacancies_description": "Exports a text overview of vacant shift positions grouped by day. Perfect for posting in group chats.",
                 "format_timetable": "Timetable (PDF)",

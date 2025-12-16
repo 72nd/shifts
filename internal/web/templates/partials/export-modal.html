@@ -13,6 +13,7 @@
             </label>
             <select class="select select-bordered w-full" x-model="exportModal.exportFormat">
                 <option value="json" x-text="$t('shift_plans.view.export_modal.format_json')"></option>
+                <option value="csv" x-text="$t('shift_plans.view.export_modal.format_csv')"></option>
                 <option value="vacancies" x-text="$t('shift_plans.view.export_modal.format_vacancies')"></option>
                 <option value="timetable" x-text="$t('shift_plans.view.export_modal.format_timetable')"></option>
                 <option value="report" x-text="$t('shift_plans.view.export_modal.format_report')"></option>
@@ -25,6 +26,9 @@
             <p x-show="exportModal.exportFormat === 'json'" 
                class="text-sm text-base-content/70"
                x-text="$t('shift_plans.view.export_modal.format_json_description')"></p>
+            <p x-show="exportModal.exportFormat === 'csv'" 
+               class="text-sm text-base-content/70"
+               x-text="$t('shift_plans.view.export_modal.format_csv_description')"></p>
             <p x-show="exportModal.exportFormat === 'vacancies'" 
                class="text-sm text-base-content/70"
                x-text="$t('shift_plans.view.export_modal.format_vacancies_description')"></p>
