@@ -1,9 +1,8 @@
 package validation
 
 import (
-	"time"
-
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 )
 
 // ValidateNewShift validates a NewShift struct for creation.
@@ -38,19 +37,8 @@ func ValidateNewShift(s *db.NewShift) *Result {
 	return r
 }
 
-// ShiftUpdate represents the fields that can be updated on a shift.
-// This is separate from db.Shift to control which fields are updatable.
-type ShiftUpdate struct {
-	TypeID    int64     `json:"type_id"`
-	StartTime time.Time `json:"start_time"`
-	Duration  int       `json:"duration"`
-	Required  int       `json:"required"`
-	CommentDE string    `json:"comment_de"`
-	CommentEN string    `json:"comment_en"`
-}
-
 // ValidateShiftUpdate validates a shift update request.
-func ValidateShiftUpdate(s *ShiftUpdate) *Result {
+func ValidateShiftUpdate(s *model.ShiftUpdateRequest) *Result {
 	r := NewResult()
 
 	// TypeID is required and must be positive

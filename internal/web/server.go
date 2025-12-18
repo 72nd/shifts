@@ -163,8 +163,8 @@ func (s *Server) Start(host string, port int) error {
 // @Accept json
 // @Produce json
 // @Param token path string true "Plan token"
-// @Param data body object true "Password to verify" SchemaExample({"password": "admin123"})
-// @Success 200 {object} map[string]string "Token if password is valid"
+// @Param data body VerifyAdminRequest true "Password to verify"
+// @Success 200 {object} VerifyAdminResponse "Token if password is valid"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Invalid password"
 // @Failure 404 {string} string "Plan not found"

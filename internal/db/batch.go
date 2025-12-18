@@ -4,41 +4,18 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/72nd/shifts/internal/model"
 )
-
-// BatchItemError represents an error for a specific item in a batch operation.
-type BatchItemError struct {
-	Index int    `json:"index"`
-	Error string `json:"error"`
-	Code  string `json:"code"`
-}
-
-// BatchCreateResult holds the results of a batch create operation.
-type BatchCreateResult struct {
-	Created []Shift          `json:"created"`
-	Failed  []BatchItemError `json:"failed,omitempty"`
-}
-
-// BatchUpdateResult holds the results of a batch update operation.
-type BatchUpdateResult struct {
-	Updated []int64          `json:"updated"` // IDs of successfully updated shifts
-	Failed  []BatchItemError `json:"failed,omitempty"`
-}
-
-// BatchDeleteResult holds the results of a batch delete operation.
-type BatchDeleteResult struct {
-	Deleted []int64          `json:"deleted"` // IDs of successfully deleted shifts
-	Failed  []BatchItemError `json:"failed,omitempty"`
-}
 
 // CreateShiftsBatch creates multiple shifts in a single transaction.
 // It validates all shifts first, then creates them. If any validation fails,
 // the entire operation is aborted. If a DB error occurs during creation,
 // the transaction is rolled back.
-func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateResult, error) {
-	result := &BatchCreateResult{
-		Created: []Shift{},
-		Failed:  []BatchItemError{},
+func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*model.BatchResult[Shift], error) {
+	result := &model.BatchResult[Shift]{
+		Success: []Shift{},
+		Failed:  []model.BatchItemError{},
 	}
 
 	if len(shifts) == 0 {
@@ -59,7 +36,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateRe
 	for i, shift := range shifts {
 		// Validate required field
 		if shift.Required != -1 && shift.Required < 1 {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: ErrInvalidRequired.Error(),
 				Code:  "invalid_required",
@@ -69,7 +46,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateRe
 
 		// Validate type belongs to plan
 		if !validTypeIDs[shift.TypeID] {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: "shift type not found in this plan",
 				Code:  "invalid_type_id",
@@ -101,7 +78,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateRe
 			)
 			if err != nil {
 				// On DB error, add to failed and continue (partial success)
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to insert shift: %v", err),
 					Code:  "db_error",
@@ -111,7 +88,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateRe
 
 			id, err := res.LastInsertId()
 			if err != nil {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to get insert ID: %v", err),
 					Code:  "db_error",
@@ -122,7 +99,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateRe
 			// Load the created shift
 			created, err := db.getShiftByIDInTx(tx, id)
 			if err != nil {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to load created shift: %v", err),
 					Code:  "db_error",
@@ -130,7 +107,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*BatchCreateRe
 				continue
 			}
 
-			result.Created = append(result.Created, created)
+			result.Success = append(result.Success, created)
 		}
 
 		return nil
@@ -157,10 +134,10 @@ type ShiftBatchUpdate struct {
 
 // UpdateShiftsBatch updates multiple shifts in a single transaction.
 // It validates all updates first, then applies them.
-func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*BatchUpdateResult, error) {
-	result := &BatchUpdateResult{
-		Updated: []int64{},
-		Failed:  []BatchItemError{},
+func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*model.BatchResult[int64], error) {
+	result := &model.BatchResult[int64]{
+		Success: []int64{},
+		Failed:  []model.BatchItemError{},
 	}
 
 	if len(updates) == 0 {
@@ -181,7 +158,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 	for i, update := range updates {
 		// Validate required field
 		if update.Required != -1 && update.Required < 1 {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: ErrInvalidRequired.Error(),
 				Code:  "invalid_required",
@@ -191,7 +168,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 
 		// Validate type belongs to plan
 		if !validTypeIDs[update.TypeID] {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: "shift type not found in this plan",
 				Code:  "invalid_type_id",
@@ -202,7 +179,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 		// Validate shift belongs to plan
 		belongs, err := db.VerifyShiftBelongsToPlan(update.ID, planID)
 		if err != nil {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: fmt.Sprintf("failed to verify shift ownership: %v", err),
 				Code:  "db_error",
@@ -210,7 +187,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 			continue
 		}
 		if !belongs {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: "shift not found in this plan",
 				Code:  "not_found",
@@ -246,7 +223,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 				update.ID,
 			)
 			if err != nil {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to update shift: %v", err),
 					Code:  "db_error",
@@ -256,7 +233,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 
 			rows, err := res.RowsAffected()
 			if err != nil {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to get rows affected: %v", err),
 					Code:  "db_error",
@@ -265,7 +242,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 			}
 
 			if rows == 0 {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: "shift not found",
 					Code:  "not_found",
@@ -273,7 +250,7 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 				continue
 			}
 
-			result.Updated = append(result.Updated, update.ID)
+			result.Success = append(result.Success, update.ID)
 		}
 
 		return nil
@@ -289,10 +266,10 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*Batc
 
 // DeleteShiftsBatch deletes multiple shifts in a single transaction.
 // It validates all IDs first, then deletes them.
-func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteResult, error) {
-	result := &BatchDeleteResult{
-		Deleted: []int64{},
-		Failed:  []BatchItemError{},
+func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*model.BatchResult[int64], error) {
+	result := &model.BatchResult[int64]{
+		Success: []int64{},
+		Failed:  []model.BatchItemError{},
 	}
 
 	if len(shiftIDs) == 0 {
@@ -303,7 +280,7 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteRes
 	for i, shiftID := range shiftIDs {
 		belongs, err := db.VerifyShiftBelongsToPlan(shiftID, planID)
 		if err != nil {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: fmt.Sprintf("failed to verify shift ownership: %v", err),
 				Code:  "db_error",
@@ -311,7 +288,7 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteRes
 			continue
 		}
 		if !belongs {
-			result.Failed = append(result.Failed, BatchItemError{
+			result.Failed = append(result.Failed, model.BatchItemError{
 				Index: i,
 				Error: "shift not found in this plan",
 				Code:  "not_found",
@@ -330,7 +307,7 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteRes
 			// Participants are deleted automatically via CASCADE
 			res, err := tx.Exec("DELETE FROM shifts WHERE id = ?", shiftID)
 			if err != nil {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to delete shift: %v", err),
 					Code:  "db_error",
@@ -340,7 +317,7 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteRes
 
 			rows, err := res.RowsAffected()
 			if err != nil {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: fmt.Sprintf("failed to get rows affected: %v", err),
 					Code:  "db_error",
@@ -349,7 +326,7 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteRes
 			}
 
 			if rows == 0 {
-				result.Failed = append(result.Failed, BatchItemError{
+				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,
 					Error: "shift not found",
 					Code:  "not_found",
@@ -357,7 +334,7 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*BatchDeleteRes
 				continue
 			}
 
-			result.Deleted = append(result.Deleted, shiftID)
+			result.Success = append(result.Success, shiftID)
 		}
 
 		return nil

@@ -19,8 +19,8 @@ import (
 // @Param token path string true "Plan token"
 // @Param shiftId path int true "Shift ID"
 // @Param X-Admin-Token header string false "Admin token (required if shift is locked)"
-// @Param data body object true "Participant name" SchemaExample({"name": "John Doe"})
-// @Success 200 {object} db.Participant "Added participant"
+// @Param data body AddParticipantRequest true "Participant name"
+// @Success 200 {object} ParticipantResponse "Added participant"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 403 {string} string "Shift is locked - admin access required"
 // @Failure 404 {string} string "Plan or shift not found"

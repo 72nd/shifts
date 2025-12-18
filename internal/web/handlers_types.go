@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 	"github.com/72nd/shifts/internal/validation"
 )
 
@@ -100,7 +101,7 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 // @Param token path string true "Plan token"
 // @Param typeId path int true "Shift type ID"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param shiftType body object true "Updated shift type details" SchemaExample({"title_en": "Kitchen Duty", "title_de": "Küchendienst", "description_en": "Help in kitchen", "description_de": "Hilfe in Küche", "location_en": "Main Kitchen", "location_de": "Hauptküche"})
+// @Param shiftType body ShiftTypeUpdateRequest true "Updated shift type details"
 // @Success 200 "Shift type updated successfully"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
@@ -120,13 +121,13 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse request body
-	var requestData validation.ShiftTypeUpdate
-	if !s.parseJSON(w, r, &requestData) {
+	var req model.ShiftTypeUpdateRequest
+	if !s.parseJSON(w, r, &req) {
 		return
 	}
 
 	// Validate and sanitize input
-	if result := validation.ValidateShiftTypeUpdate(&requestData, plan.IsMultilingual); result.HasErrors() {
+	if result := validation.ValidateShiftTypeUpdate(&req, plan.IsMultilingual); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -135,12 +136,12 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 	shiftType := db.ShiftType{
 		ID:            typeID,
 		PlanID:        plan.ID,
-		TitleDE:       requestData.TitleDE,
-		TitleEN:       requestData.TitleEN,
-		DescriptionDE: requestData.DescriptionDE,
-		DescriptionEN: requestData.DescriptionEN,
-		LocationDE:    requestData.LocationDE,
-		LocationEN:    requestData.LocationEN,
+		TitleDE:       req.TitleDE,
+		TitleEN:       req.TitleEN,
+		DescriptionDE: req.DescriptionDE,
+		DescriptionEN: req.DescriptionEN,
+		LocationDE:    req.LocationDE,
+		LocationEN:    req.LocationEN,
 	}
 
 	// Update shift type

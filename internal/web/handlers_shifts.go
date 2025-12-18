@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 	"github.com/72nd/shifts/internal/validation"
 )
 
@@ -15,8 +16,8 @@ import (
 // @Produce json
 // @Param token path string true "Plan token"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param shift body db.NewShift true "Shift details"
-// @Success 200 {object} db.Shift "Created shift"
+// @Param shift body ShiftCreateRequest true "Shift details"
+// @Success 200 {object} ShiftResponse "Created shift"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 404 {string} string "Plan or type not found"
@@ -96,7 +97,7 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 // @Param token path string true "Plan token"
 // @Param shiftId path int true "Shift ID"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param shift body db.Shift true "Updated shift details"
+// @Param shift body ShiftUpdateRequest true "Updated shift details"
 // @Success 204 "Shift updated successfully"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
@@ -122,24 +123,24 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse and validate input
-	var shiftUpdate validation.ShiftUpdate
-	if !s.parseJSON(w, r, &shiftUpdate) {
+	var req model.ShiftUpdateRequest
+	if !s.parseJSON(w, r, &req) {
 		return
 	}
 
-	if result := validation.ValidateShiftUpdate(&shiftUpdate); result.HasErrors() {
+	if result := validation.ValidateShiftUpdate(&req); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
 
 	// Convert to db.Shift for the update
 	shift := db.Shift{
-		TypeID:    shiftUpdate.TypeID,
-		StartTime: shiftUpdate.StartTime,
-		Duration:  shiftUpdate.Duration,
-		Required:  shiftUpdate.Required,
-		CommentDE: shiftUpdate.CommentDE,
-		CommentEN: shiftUpdate.CommentEN,
+		TypeID:    req.TypeID,
+		StartTime: req.StartTime,
+		Duration:  req.Duration,
+		Required:  req.Required,
+		CommentDE: req.CommentDE,
+		CommentEN: req.CommentEN,
 	}
 
 	// Update the shift

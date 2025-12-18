@@ -2,6 +2,7 @@ package validation
 
 import (
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 )
 
 // ValidateNewShiftPlan validates a NewShiftPlan struct for creation.
@@ -39,19 +40,8 @@ func ValidateNewShiftPlan(p *db.NewShiftPlan) *Result {
 	return r
 }
 
-// ShiftPlanUpdate represents the fields that can be updated on a shift plan.
-type ShiftPlanUpdate struct {
-	TitleDE           *string `json:"title_de"`
-	TitleEN           string  `json:"title_en"`
-	DescriptionDE     *string `json:"description_de"`
-	DescriptionEN     string  `json:"description_en"`
-	IsMultilingual    bool    `json:"is_multilingual"`
-	DayBoundaryTime   string  `json:"day_boundary_time"`
-	CollaborativeMode bool    `json:"collaborative_mode"`
-}
-
 // ValidateShiftPlanUpdate validates a shift plan update request.
-func ValidateShiftPlanUpdate(p *ShiftPlanUpdate) *Result {
+func ValidateShiftPlanUpdate(p *model.ShiftPlanUpdateRequest) *Result {
 	r := NewResult()
 
 	// English title is always required

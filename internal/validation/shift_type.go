@@ -2,6 +2,7 @@ package validation
 
 import (
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 )
 
 // ValidateNewShiftType validates a NewShiftType struct for creation.
@@ -31,19 +32,9 @@ func ValidateNewShiftType(st *db.NewShiftType, isMultilingual bool) *Result {
 	return r
 }
 
-// ShiftTypeUpdate represents the fields that can be updated on a shift type.
-type ShiftTypeUpdate struct {
-	TitleDE       string `json:"title_de"`
-	TitleEN       string `json:"title_en"`
-	DescriptionDE string `json:"description_de"`
-	DescriptionEN string `json:"description_en"`
-	LocationDE    string `json:"location_de"`
-	LocationEN    string `json:"location_en"`
-}
-
 // ValidateShiftTypeUpdate validates a shift type update request.
 // isMultilingual determines whether German fields are required.
-func ValidateShiftTypeUpdate(st *ShiftTypeUpdate, isMultilingual bool) *Result {
+func ValidateShiftTypeUpdate(st *model.ShiftTypeUpdateRequest, isMultilingual bool) *Result {
 	r := NewResult()
 
 	// English title is always required

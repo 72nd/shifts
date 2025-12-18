@@ -196,7 +196,7 @@ func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request)
 // @Produce json
 // @Param token path string true "Plan token"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param data body object true "Type IDs in desired order" SchemaExample({"type_ids": [1, 2, 3]})
+// @Param data body ShiftTypeOrderRequest true "Type IDs in desired order"
 // @Success 200 {string} string "Order updated successfully"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
@@ -240,7 +240,7 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 // @Produce json
 // @Param token path string true "Plan token"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param plan body db.NewShiftPlan true "Updated plan details"
+// @Param plan body ShiftPlanUpdateRequest true "Updated plan details"
 // @Success 200 {object} db.ShiftPlan "Updated shift plan"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
