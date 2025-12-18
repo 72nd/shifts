@@ -10,7 +10,6 @@ import (
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
 	"github.com/72nd/shifts/internal/validation"
-	"github.com/gorilla/mux"
 )
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -101,26 +100,8 @@ func (s *Server) handleGetShiftPlan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.logger.Error("failed to get shift plan", "error", err)
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
-	if plan == nil {
-		data := map[string]interface{}{
-			"error": fmt.Sprintf("Shift plan with ID '%s' does not exist", token),
-		}
-		s.templates.render(w, "404.html", data)
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
@@ -128,26 +109,8 @@ func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
@@ -249,9 +212,6 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 // @Security AdminToken
 // @Router /plans/{token} [put]
 func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
 	plan, ok := s.getPlanByToken(w, r)
 	if !ok {
 		return
@@ -275,7 +235,7 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update plan
-	updatedPlan, err := s.db.UpdateShiftPlan(token, updateData)
+	updatedPlan, err := s.db.UpdateShiftPlan(plan.Token, updateData)
 	if err != nil {
 		s.RespondWithError(w, NewAppError(
 			ErrDatabaseError,
@@ -310,27 +270,14 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 // @Security AdminToken
 // @Router /plans/{token}/export [get]
 func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-	if token == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Missing plan token",
-			http.StatusBadRequest,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
 	// Get admin token from header
-	adminToken := r.Header.Get("X-Admin-Token")
-	if adminToken == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrUnauthorized,
-			"Admin token required",
-			http.StatusUnauthorized,
-			nil,
-		))
+	adminToken, ok := s.getAdminToken(w, r)
+	if !ok {
 		return
 	}
 
@@ -344,7 +291,7 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 	filter := s.parseExportFilters(r)
 
 	// Export plan using the export service
-	data, contentType, filename, err := s.exportService.Export(token, hashPassword(adminToken), format, filter)
+	data, contentType, filename, err := s.exportService.Export(plan.Token, hashPassword(adminToken), format, filter)
 	if err != nil {
 		var appErr *AppError
 		switch e := err.(type) {
@@ -419,23 +366,19 @@ func splitAndTrim(s, sep string) []string {
 // @Security AdminToken
 // @Router /plans/{token} [delete]
 func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
 
 	// Get admin token from header
-	adminToken := r.Header.Get("X-Admin-Token")
-	if adminToken == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrUnauthorized,
-			"Admin token required",
-			http.StatusUnauthorized,
-			nil,
-		))
+	adminToken, ok := s.getAdminToken(w, r)
+	if !ok {
 		return
 	}
 
 	// Delete the plan (handles auth internally)
-	if err := s.db.DeleteShiftPlan(token, hashPassword(adminToken)); err != nil {
+	if err := s.db.DeleteShiftPlan(plan.Token, hashPassword(adminToken)); err != nil {
 		var status int
 		var errType string
 		var message string

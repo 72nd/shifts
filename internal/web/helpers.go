@@ -177,9 +177,9 @@ func (s *Server) verifyAdminForLockedShift(w http.ResponseWriter, r *http.Reques
 	return true
 }
 
-// verifyAdminToken verifies the admin token from the request header.
-// Returns true if valid, or writes an error response and returns false.
-func (s *Server) verifyAdminToken(w http.ResponseWriter, r *http.Request, plan *db.ShiftPlan) bool {
+// getAdminToken extracts the admin token from the request header.
+// Returns the token and true if present, or writes an error response and returns empty string, false.
+func (s *Server) getAdminToken(w http.ResponseWriter, r *http.Request) (string, bool) {
 	adminToken := r.Header.Get("X-Admin-Token")
 	if adminToken == "" {
 		s.RespondWithError(w, NewAppError(
@@ -188,6 +188,16 @@ func (s *Server) verifyAdminToken(w http.ResponseWriter, r *http.Request, plan *
 			http.StatusUnauthorized,
 			nil,
 		))
+		return "", false
+	}
+	return adminToken, true
+}
+
+// verifyAdminToken verifies the admin token from the request header.
+// Returns true if valid, or writes an error response and returns false.
+func (s *Server) verifyAdminToken(w http.ResponseWriter, r *http.Request, plan *db.ShiftPlan) bool {
+	adminToken, ok := s.getAdminToken(w, r)
+	if !ok {
 		return false
 	}
 
