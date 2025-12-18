@@ -10,6 +10,7 @@ import (
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
+	"github.com/72nd/shifts/internal/validation"
 	"github.com/gorilla/mux"
 )
 
@@ -61,55 +62,15 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validiere und sanitisiere die Titel
-	plan.TitleEN = SanitizeText(plan.TitleEN)
-	if plan.TitleEN == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrMissingField,
-			"English title is required",
-			http.StatusBadRequest,
-			nil,
-		))
-		return
-	}
-	if len(plan.TitleEN) > 150 {
+	// Validate and sanitize input
+	if result := validation.ValidateNewShiftPlan(&plan); result.HasErrors() {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
-			"English title cannot exceed 150 characters",
+			result.FirstError(),
 			http.StatusBadRequest,
 			nil,
 		))
 		return
-	}
-
-	if plan.IsMultilingual && plan.TitleDE != nil {
-		*plan.TitleDE = SanitizeText(*plan.TitleDE)
-		if *plan.TitleDE == "" {
-			s.RespondWithError(w, NewAppError(
-				ErrMissingField,
-				"German title is required for multilingual plans",
-				http.StatusBadRequest,
-				nil,
-			))
-			return
-		}
-		if len(*plan.TitleDE) > 150 {
-			s.RespondWithError(w, NewAppError(
-				ErrInvalidInput,
-				"German title cannot exceed 150 characters",
-				http.StatusBadRequest,
-				nil,
-			))
-			return
-		}
-	}
-
-	// Sanitisiere die Beschreibungen (optional)
-	if plan.DescriptionEN != "" {
-		plan.DescriptionEN = SanitizeText(plan.DescriptionEN)
-	}
-	if plan.DescriptionDE != nil && *plan.DescriptionDE != "" {
-		*plan.DescriptionDE = SanitizeText(*plan.DescriptionDE)
 	}
 
 	// Create plan
@@ -433,6 +394,17 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 			"Invalid request body",
 			http.StatusBadRequest,
 			err,
+		))
+		return
+	}
+
+	// Validate and sanitize input
+	if result := validation.ValidateNewShiftPlan(&updateData); result.HasErrors() {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			result.FirstError(),
+			http.StatusBadRequest,
+			nil,
 		))
 		return
 	}

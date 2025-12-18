@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/validation"
 	"github.com/gorilla/mux"
 )
 
@@ -36,6 +37,17 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 			"Invalid request body",
 			http.StatusBadRequest,
 			err,
+		))
+		return
+	}
+
+	// Validate and sanitize input
+	if result := validation.ValidateNewShift(&shift); result.HasErrors() {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			result.FirstError(),
+			http.StatusBadRequest,
+			nil,
 		))
 		return
 	}
@@ -166,8 +178,8 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var shift db.Shift
-	if err := json.NewDecoder(r.Body).Decode(&shift); err != nil {
+	var shiftUpdate validation.ShiftUpdate
+	if err := json.NewDecoder(r.Body).Decode(&shiftUpdate); err != nil {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
 			"Invalid request body",
@@ -175,6 +187,27 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 			err,
 		))
 		return
+	}
+
+	// Validate and sanitize input
+	if result := validation.ValidateShiftUpdate(&shiftUpdate); result.HasErrors() {
+		s.RespondWithError(w, NewAppError(
+			ErrInvalidInput,
+			result.FirstError(),
+			http.StatusBadRequest,
+			nil,
+		))
+		return
+	}
+
+	// Convert to db.Shift for the update
+	shift := db.Shift{
+		TypeID:    shiftUpdate.TypeID,
+		StartTime: shiftUpdate.StartTime,
+		Duration:  shiftUpdate.Duration,
+		Required:  shiftUpdate.Required,
+		CommentDE: shiftUpdate.CommentDE,
+		CommentEN: shiftUpdate.CommentEN,
 	}
 
 	// Update the shift

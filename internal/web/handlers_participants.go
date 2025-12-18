@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/validation"
 	"github.com/gorilla/mux"
 )
 
@@ -151,21 +152,12 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validiere und sanitisiere den Namen
-	name := SanitizeText(data.Name)
-	if name == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrMissingField,
-			"Name is required",
-			http.StatusBadRequest,
-			nil,
-		))
-		return
-	}
-	if len(name) > 20 {
+	// Validate and sanitize the name
+	name, result := validation.ValidateParticipantName(data.Name)
+	if result.HasErrors() {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
-			"Name cannot exceed 20 characters",
+			result.FirstError(),
 			http.StatusBadRequest,
 			nil,
 		))

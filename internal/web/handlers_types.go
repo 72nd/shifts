@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/validation"
 	"github.com/gorilla/mux"
 )
 
@@ -116,63 +117,15 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validiere und sanitisiere die Titel
-	shiftType.TitleEN = SanitizeText(shiftType.TitleEN)
-	if shiftType.TitleEN == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrMissingField,
-			"English title is required",
-			http.StatusBadRequest,
-			nil,
-		))
-		return
-	}
-	if len(shiftType.TitleEN) > 150 {
+	// Validate and sanitize input
+	if result := validation.ValidateNewShiftType(&shiftType, plan.IsMultilingual); result.HasErrors() {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
-			"English title cannot exceed 150 characters",
+			result.FirstError(),
 			http.StatusBadRequest,
 			nil,
 		))
 		return
-	}
-
-	if plan.IsMultilingual {
-		shiftType.TitleDE = SanitizeText(shiftType.TitleDE)
-		if shiftType.TitleDE == "" {
-			s.RespondWithError(w, NewAppError(
-				ErrMissingField,
-				"German title is required for multilingual plans",
-				http.StatusBadRequest,
-				nil,
-			))
-			return
-		}
-		if len(shiftType.TitleDE) > 150 {
-			s.RespondWithError(w, NewAppError(
-				ErrInvalidInput,
-				"German title cannot exceed 150 characters",
-				http.StatusBadRequest,
-				nil,
-			))
-			return
-		}
-	}
-
-	// Sanitisiere die Beschreibungen (optional)
-	if shiftType.DescriptionEN != "" {
-		shiftType.DescriptionEN = SanitizeText(shiftType.DescriptionEN)
-	}
-	if shiftType.DescriptionDE != "" {
-		shiftType.DescriptionDE = SanitizeText(shiftType.DescriptionDE)
-	}
-
-	// Sanitisiere die Orte (optional)
-	if shiftType.LocationEN != "" {
-		shiftType.LocationEN = SanitizeText(shiftType.LocationEN)
-	}
-	if shiftType.LocationDE != "" {
-		shiftType.LocationDE = SanitizeText(shiftType.LocationDE)
 	}
 
 	// Set plan ID
@@ -248,15 +201,8 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse request body into a temporary struct that matches the frontend field names
-	var requestData struct {
-		TitleDE       string `json:"title_de"`
-		TitleEN       string `json:"title_en"`
-		DescriptionDE string `json:"description_de"`
-		DescriptionEN string `json:"description_en"`
-		LocationDE    string `json:"location_de"`
-		LocationEN    string `json:"location_en"`
-	}
+	// Parse request body
+	var requestData validation.ShiftTypeUpdate
 	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
@@ -267,63 +213,15 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validiere und sanitisiere die Titel
-	requestData.TitleEN = SanitizeText(requestData.TitleEN)
-	if requestData.TitleEN == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrMissingField,
-			"English title is required",
-			http.StatusBadRequest,
-			nil,
-		))
-		return
-	}
-	if len(requestData.TitleEN) > 150 {
+	// Validate and sanitize input
+	if result := validation.ValidateShiftTypeUpdate(&requestData, plan.IsMultilingual); result.HasErrors() {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
-			"English title cannot exceed 150 characters",
+			result.FirstError(),
 			http.StatusBadRequest,
 			nil,
 		))
 		return
-	}
-
-	if plan.IsMultilingual {
-		requestData.TitleDE = SanitizeText(requestData.TitleDE)
-		if requestData.TitleDE == "" {
-			s.RespondWithError(w, NewAppError(
-				ErrMissingField,
-				"German title is required for multilingual plans",
-				http.StatusBadRequest,
-				nil,
-			))
-			return
-		}
-		if len(requestData.TitleDE) > 150 {
-			s.RespondWithError(w, NewAppError(
-				ErrInvalidInput,
-				"German title cannot exceed 150 characters",
-				http.StatusBadRequest,
-				nil,
-			))
-			return
-		}
-	}
-
-	// Sanitisiere die Beschreibungen (optional)
-	if requestData.DescriptionEN != "" {
-		requestData.DescriptionEN = SanitizeText(requestData.DescriptionEN)
-	}
-	if requestData.DescriptionDE != "" {
-		requestData.DescriptionDE = SanitizeText(requestData.DescriptionDE)
-	}
-
-	// Sanitisiere die Orte (optional)
-	if requestData.LocationEN != "" {
-		requestData.LocationEN = SanitizeText(requestData.LocationEN)
-	}
-	if requestData.LocationDE != "" {
-		requestData.LocationDE = SanitizeText(requestData.LocationDE)
 	}
 
 	// Convert to ShiftType
