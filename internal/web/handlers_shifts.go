@@ -30,15 +30,15 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate and sanitize input
-	if result := validation.ValidateNewShift(&shift); result.HasErrors() {
-		s.respondValidationError(w, result)
+	// Get plan first (needed for validation)
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
-	// Get plan
-	plan, ok := s.getPlanByToken(w, r)
-	if !ok {
+	// Validate and sanitize input (including plan date range check)
+	if result := validation.ValidateNewShiftWithPlanDates(&shift, plan.StartDate, plan.EndDate); result.HasErrors() {
+		s.respondValidationError(w, result)
 		return
 	}
 
@@ -130,7 +130,8 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if result := validation.ValidateShiftUpdate(&req); result.HasErrors() {
+	// Validate including plan date range check
+	if result := validation.ValidateShiftUpdateWithPlanDates(&req, plan.StartDate, plan.EndDate); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -329,8 +330,8 @@ func (s *Server) handleBatchCreateShifts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Validate request
-	if result := validation.ValidateBatchShiftCreateRequest(&req); result.HasErrors() {
+	// Validate request (including plan date range check)
+	if result := validation.ValidateBatchShiftCreateRequestWithPlanDates(&req, plan.StartDate, plan.EndDate); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}

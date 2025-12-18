@@ -32,13 +32,13 @@ func ShiftPlanToResponse(plan *db.ShiftPlan) model.ShiftPlanResponse {
 // CreateShiftPlanRequestToNew converts a model.CreateShiftPlanRequest to a db.NewShiftPlan
 func CreateShiftPlanRequestToNew(req *model.CreateShiftPlanRequest) db.NewShiftPlan {
 	return db.NewShiftPlan{
-		TitleDE:           req.TitleDE,
-		TitleEN:           req.TitleEN,
-		DescriptionDE:     req.DescriptionDE,
-		DescriptionEN:     req.DescriptionEN,
-		StartDate:         req.StartDate,
-		EndDate:           req.EndDate,
-		IsMultilingual:    req.IsMultilingual,
+		TitleDE:        req.TitleDE,
+		TitleEN:        req.TitleEN,
+		DescriptionDE:  req.DescriptionDE,
+		DescriptionEN:  req.DescriptionEN,
+		StartDate:      req.StartDate,
+		EndDate:        req.EndDate,
+		IsMultilingual: req.IsMultilingual,
 		// Password is auto-generated in the database layer
 		DayBoundaryTime:   req.DayBoundaryTime,
 		CollaborativeMode: req.CollaborativeMode,
