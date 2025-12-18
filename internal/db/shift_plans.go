@@ -394,6 +394,45 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 	return plan, nil
 }
 
+// getShiftPlanByToken retrieves a shift plan by token within a transaction
+func (db *DB) getShiftPlanByToken(tx *sql.Tx, token string) (ShiftPlan, error) {
+	var plan ShiftPlan
+	var startDate, endDate, createdAt string
+
+	query := `
+        SELECT id, token, admin_password, start_date, end_date, created_at,
+               is_multilingual, title_de, title_en, description_de, description_en,
+               day_boundary_time, collaborative_mode
+        FROM shift_plans
+        WHERE token = ?
+    `
+	err := tx.QueryRow(query, token).Scan(
+		&plan.ID,
+		&plan.Token,
+		&plan.AdminPassword,
+		&startDate,
+		&endDate,
+		&createdAt,
+		&plan.IsMultilingual,
+		&plan.TitleDE,
+		&plan.TitleEN,
+		&plan.DescriptionDE,
+		&plan.DescriptionEN,
+		&plan.DayBoundaryTime,
+		&plan.CollaborativeMode,
+	)
+	if err != nil {
+		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
+	}
+
+	// Parse dates
+	plan.StartDate, _ = time.Parse(time.RFC3339, startDate)
+	plan.EndDate, _ = time.Parse(time.RFC3339, endDate)
+	plan.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+
+	return plan, nil
+}
+
 // ValidateShiftPlanPassword checks if the provided password matches the plan's admin password
 func (db *DB) ValidateShiftPlanPassword(planID int64, hashedPassword string) (bool, error) {
 	var storedHash string
@@ -413,7 +452,7 @@ func (db *DB) ValidateShiftPlanPassword(planID int64, hashedPassword string) (bo
 
 // UpdateShiftPlan updates an existing shift plan with new data
 func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, error) {
-	var result *ShiftPlan
+	var result ShiftPlan
 
 	// Validate required fields
 	if plan.TitleEN == "" {
@@ -468,8 +507,8 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 			return fmt.Errorf("shift plan not found")
 		}
 
-		// Get the updated plan
-		result, err = db.GetShiftPlanByToken(token)
+		// Get the updated plan within the transaction to avoid deadlock
+		result, err = db.getShiftPlanByToken(tx, token)
 		if err != nil {
 			return fmt.Errorf("failed to load updated shift plan: %w", err)
 		}
@@ -482,7 +521,7 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 		return nil, err
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 // DeleteShiftPlan deletes a shift plan and all its related data (shifts, types, participants)
