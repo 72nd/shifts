@@ -132,15 +132,29 @@ func (db *DB) RemoveParticipant(shiftID int64, name string) error {
 
 // GetParticipantsByShift retrieves all participants for a shift
 func (db *DB) GetParticipantsByShift(shiftID int64) ([]Participant, error) {
+	return db.getParticipantsByShift(nil, shiftID)
+}
+
+// getParticipantsByShift retrieves all participants for a shift, optionally within a transaction
+func (db *DB) getParticipantsByShift(tx *sql.Tx, shiftID int64) ([]Participant, error) {
 	query := `
         SELECT id, shift_id, name, created_at
         FROM participants
         WHERE shift_id = ?
         ORDER BY created_at
     `
-	rows, err := db.Query(query, shiftID)
+
+	var rows *sql.Rows
+	var err error
+
+	if tx != nil {
+		rows, err = tx.Query(query, shiftID)
+	} else {
+		rows, err = db.Query(query, shiftID)
+	}
+
 	if err != nil {
-		db.logError("GetParticipantsByShift", err, shiftID)
+		db.logError("getParticipantsByShift", err, shiftID)
 		return nil, fmt.Errorf("failed to query participants: %w", err)
 	}
 	defer rows.Close()

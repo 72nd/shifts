@@ -312,8 +312,8 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 
 	s.StartTime, _ = time.Parse(time.RFC3339, startTime)
 
-	// Load participants
-	s.Participants, err = db.GetParticipantsByShift(s.ID)
+	// Load participants using the transaction
+	s.Participants, err = db.getParticipantsByShift(tx, s.ID)
 	if err != nil {
 		return s, fmt.Errorf("failed to load participants: %w", err)
 	}
