@@ -50,7 +50,7 @@ var shiftSchema = `
 func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 	// Validate required field
 	if shift.Required != -1 && shift.Required < 1 {
-		return nil, fmt.Errorf("required participants must be either -1 for unlimited or a positive number")
+		return nil, ErrInvalidRequired
 	}
 
 	var result Shift
@@ -219,7 +219,7 @@ func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 func (db *DB) UpdateShift(id int64, shift Shift) error {
 	// Validate required field
 	if shift.Required != -1 && shift.Required < 1 {
-		return fmt.Errorf("required participants must be either -1 for unlimited or a positive number")
+		return ErrInvalidRequired
 	}
 
 	query := `
@@ -250,7 +250,7 @@ func (db *DB) UpdateShift(id int64, shift Shift) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift not found or no permission")
+		return ErrNotFound
 	}
 
 	return nil
@@ -270,7 +270,7 @@ func (db *DB) DeleteShift(id int64) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift not found")
+		return ErrNotFound
 	}
 
 	return nil
@@ -355,7 +355,7 @@ func (db *DB) LockShift(shiftID int64) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift not found")
+		return ErrNotFound
 	}
 
 	return nil
@@ -375,7 +375,7 @@ func (db *DB) UnlockShift(shiftID int64) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift not found")
+		return ErrNotFound
 	}
 
 	return nil

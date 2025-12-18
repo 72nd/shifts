@@ -2,9 +2,9 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/gorilla/mux"
@@ -176,7 +176,7 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	participant, err = s.db.AddParticipant(shiftID, name)
 	if err != nil {
 		// Spezifische Fehlerbehandlung für volle Schichten
-		if strings.Contains(err.Error(), "shift is already full") {
+		if errors.Is(err, db.ErrShiftFull) {
 			s.RespondWithError(w, NewAppError(
 				ErrShiftFull,
 				"Shift is already full",
@@ -187,7 +187,7 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Spezifische Fehlerbehandlung für doppelte Namen
-		if strings.Contains(err.Error(), "participant already exists") {
+		if errors.Is(err, db.ErrParticipantExists) {
 			s.RespondWithError(w, NewAppError(
 				ErrDuplicateName,
 				"Name already taken",

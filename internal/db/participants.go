@@ -40,7 +40,7 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 			return fmt.Errorf("failed to check participant existence: %w", err)
 		}
 		if exists {
-			return fmt.Errorf("participant already exists in this shift")
+			return ErrParticipantExists
 		}
 
 		// Get shift info and plan's collaborative mode
@@ -62,7 +62,7 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 		// In collaborative mode, skip capacity check (people can express interest)
 		// In normal mode, enforce capacity limits
 		if !collaborativeMode && required != -1 && current >= required {
-			return fmt.Errorf("shift is already full")
+			return ErrShiftFull
 		}
 
 		// Add participant
@@ -114,7 +114,7 @@ func (db *DB) RemoveParticipant(shiftID int64, name string) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("participant not found")
+		return ErrNotFound
 	}
 
 	return nil

@@ -202,7 +202,7 @@ func (db *DB) UpdateShiftType(id int64, st ShiftType) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift type not found or no permission")
+		return ErrNotFound
 	}
 
 	return nil
@@ -227,7 +227,7 @@ func (db *DB) UpdateShiftTypeOrder(planID int64, typeIDs []int64) error {
 				return fmt.Errorf("failed to get rows affected: %w", err)
 			}
 			if rows == 0 {
-				return fmt.Errorf("shift type %d not found or no permission", id)
+				return fmt.Errorf("%w: shift type %d", ErrNotFound, id)
 			}
 		}
 		return nil
@@ -248,7 +248,7 @@ func (db *DB) DeleteShiftType(planID, id int64) error {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("shift type not found or no permission")
+		return ErrNotFound
 	}
 
 	return nil

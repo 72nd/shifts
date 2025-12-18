@@ -494,14 +494,14 @@ func (db *DB) DeleteShiftPlan(token string, hashedPassword string) error {
 		err := tx.QueryRow("SELECT id, admin_password FROM shift_plans WHERE token = ?", token).Scan(&planID, &storedHash)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return fmt.Errorf("shift plan not found")
+				return ErrNotFound
 			}
 			return fmt.Errorf("failed to get shift plan: %w", err)
 		}
 
 		// Verify password
 		if hashedPassword != storedHash {
-			return fmt.Errorf("invalid password")
+			return ErrInvalidPassword
 		}
 
 		// Delete all participants first (no foreign key constraints)

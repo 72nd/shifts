@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -608,12 +609,12 @@ func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
 		var errType string
 		var message string
 
-		switch err.Error() {
-		case "shift plan not found":
+		switch {
+		case errors.Is(err, db.ErrNotFound):
 			status = http.StatusNotFound
 			errType = ErrResourceNotFound
 			message = "Shift plan not found"
-		case "invalid password":
+		case errors.Is(err, db.ErrInvalidPassword):
 			status = http.StatusUnauthorized
 			errType = ErrInvalidPassword
 			message = "Invalid password"
