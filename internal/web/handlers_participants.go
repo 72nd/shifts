@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -29,145 +28,52 @@ import (
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token}/shifts/{shiftId}/participants [post]
 func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-	shiftID, err := strconv.ParseInt(vars["shiftId"], 10, 64)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid shift ID",
-			http.StatusBadRequest,
-			err,
-		))
+	// Get plan and shift ID
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
-	// Verify the shift belongs to the plan
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to verify shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	shiftID, ok := s.getShiftID(w, r)
+	if !ok {
 		return
 	}
 
-	// Verify the shift belongs to this plan
-	belongs, err := s.db.VerifyShiftBelongsToPlan(shiftID, plan.ID)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to verify shift ownership",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if !belongs {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift not found",
-			http.StatusNotFound,
-			nil,
-		))
+	// Verify shift belongs to plan
+	if !s.verifyShiftOwnership(w, shiftID, plan.ID) {
 		return
 	}
 
-	// Check if shift is locked
-	shift, err := s.db.GetShiftByID(shiftID)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if shift == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift not found",
-			http.StatusNotFound,
-			nil,
-		))
+	// Get shift to check if locked
+	shift, ok := s.getShiftByID(w, shiftID)
+	if !ok {
 		return
 	}
 
-	// If shift is locked, only admins can add participants
-	if shift.IsLocked {
-		adminToken := r.Header.Get("X-Admin-Token")
-		if adminToken == "" {
-			s.RespondWithError(w, NewAppError(
-				ErrUnauthorized,
-				"Shift is locked - admin access required",
-				http.StatusForbidden,
-				nil,
-			))
-			return
-		}
-
-		isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
-		if err != nil {
-			s.RespondWithError(w, NewAppError(
-				ErrDatabaseError,
-				"Failed to verify admin token",
-				http.StatusInternalServerError,
-				err,
-			))
-			return
-		}
-		if !isValid {
-			s.RespondWithError(w, NewAppError(
-				ErrUnauthorized,
-				"Shift is locked - admin access required",
-				http.StatusForbidden,
-				nil,
-			))
-			return
-		}
+	// If shift is locked, verify admin access
+	if !s.verifyAdminForLockedShift(w, r, shift, plan) {
+		return
 	}
 
+	// Parse request body
 	var data struct {
 		Name string `json:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid request body",
-			http.StatusBadRequest,
-			err,
-		))
+	if !s.parseJSON(w, r, &data) {
 		return
 	}
 
 	// Validate and sanitize the name
 	name, result := validation.ValidateParticipantName(data.Name)
 	if result.HasErrors() {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			result.FirstError(),
-			http.StatusBadRequest,
-			nil,
-		))
+		s.respondValidationError(w, result)
 		return
 	}
 
-	var participant *db.Participant
-	participant, err = s.db.AddParticipant(shiftID, name)
+	// Add participant
+	participant, err := s.db.AddParticipant(shiftID, name)
 	if err != nil {
-		// Spezifische Fehlerbehandlung für volle Schichten
+		// Handle specific errors
 		if errors.Is(err, db.ErrShiftFull) {
 			s.RespondWithError(w, NewAppError(
 				ErrShiftFull,
@@ -178,7 +84,6 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Spezifische Fehlerbehandlung für doppelte Namen
 		if errors.Is(err, db.ErrParticipantExists) {
 			s.RespondWithError(w, NewAppError(
 				ErrDuplicateName,
@@ -198,8 +103,7 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(participant)
+	s.respondJSON(w, participant)
 }
 
 // handleRemoveParticipant removes a participant from a shift
@@ -219,134 +123,53 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token}/shifts/{shiftId}/participants/{participantId} [delete]
 func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request) {
+	// Get plan and shift ID
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+
+	shiftID, ok := s.getShiftID(w, r)
+	if !ok {
+		return
+	}
+
+	// Verify shift belongs to plan
+	if !s.verifyShiftOwnership(w, shiftID, plan.ID) {
+		return
+	}
+
+	// Get shift to check if locked
+	shift, ok := s.getShiftByID(w, shiftID)
+	if !ok {
+		return
+	}
+
+	// If shift is locked, verify admin access
+	if !s.verifyAdminForLockedShift(w, r, shift, plan) {
+		return
+	}
+
+	// Parse participant ID
 	vars := mux.Vars(r)
-	token := vars["token"]
-	shiftID, err := strconv.ParseInt(vars["shiftId"], 10, 64)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid shift ID",
-			http.StatusBadRequest,
-			err,
-		))
-		return
-	}
-
-	// Verify the shift belongs to the plan
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to verify shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
-		return
-	}
-
-	// Verify the shift belongs to this plan
-	belongs, err := s.db.VerifyShiftBelongsToPlan(shiftID, plan.ID)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to verify shift ownership",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if !belongs {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift not found",
-			http.StatusNotFound,
-			nil,
-		))
-		return
-	}
-
-	// Check if shift is locked
-	shift, err := s.db.GetShiftByID(shiftID)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if shift == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift not found",
-			http.StatusNotFound,
-			nil,
-		))
-		return
-	}
-
-	// If shift is locked, only admins can remove participants
-	if shift.IsLocked {
-		adminToken := r.Header.Get("X-Admin-Token")
-		if adminToken == "" {
-			s.RespondWithError(w, NewAppError(
-				ErrUnauthorized,
-				"Shift is locked - admin access required",
-				http.StatusForbidden,
-				nil,
-			))
-			return
-		}
-
-		isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
-		if err != nil {
-			s.RespondWithError(w, NewAppError(
-				ErrDatabaseError,
-				"Failed to verify admin token",
-				http.StatusInternalServerError,
-				err,
-			))
-			return
-		}
-		if !isValid {
-			s.RespondWithError(w, NewAppError(
-				ErrUnauthorized,
-				"Shift is locked - admin access required",
-				http.StatusForbidden,
-				nil,
-			))
-			return
-		}
-	}
-
-	// Get the participant from the database first to get their name
-	participants, err := s.db.GetParticipantsByShift(shiftID)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get participants",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
 	participantID, err := strconv.ParseInt(vars["participantId"], 10, 64)
 	if err != nil {
 		s.RespondWithError(w, NewAppError(
 			ErrInvalidInput,
 			"Invalid participant ID",
 			http.StatusBadRequest,
+			err,
+		))
+		return
+	}
+
+	// Get participants to find the name
+	participants, err := s.db.GetParticipantsByShift(shiftID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get participants",
+			http.StatusInternalServerError,
 			err,
 		))
 		return
@@ -371,9 +194,8 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Remove the participant using their name
-	err = s.db.RemoveParticipant(shiftID, participantName)
-	if err != nil {
+	// Remove the participant
+	if err := s.db.RemoveParticipant(shiftID, participantName); err != nil {
 		s.RespondWithError(w, NewAppError(
 			ErrInternalError,
 			"Failed to remove participant",
@@ -383,5 +205,5 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	s.respondNoContent(w)
 }

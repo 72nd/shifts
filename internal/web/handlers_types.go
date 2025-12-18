@@ -1,13 +1,10 @@
 package web
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/validation"
-	"github.com/gorilla/mux"
 )
 
 // handleGetShiftTypes retrieves all shift types for a plan
@@ -22,28 +19,8 @@ import (
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token}/types [get]
 func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	// Get plan first to verify it exists and get its ID
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
@@ -59,8 +36,7 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(types)
+	s.respondJSON(w, types)
 }
 
 // handleCreateShiftType handles the creation of a new shift type
@@ -80,51 +56,20 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 // @Security AdminToken
 // @Router /plans/{token}/types [post]
 func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	// Get plan first to verify it exists and get its ID
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
 	// Parse request body
 	var shiftType db.NewShiftType
-	if err := json.NewDecoder(r.Body).Decode(&shiftType); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid request body",
-			http.StatusBadRequest,
-			err,
-		))
+	if !s.parseJSON(w, r, &shiftType) {
 		return
 	}
 
 	// Validate and sanitize input
 	if result := validation.ValidateNewShiftType(&shiftType, plan.IsMultilingual); result.HasErrors() {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			result.FirstError(),
-			http.StatusBadRequest,
-			nil,
-		))
+		s.respondValidationError(w, result)
 		return
 	}
 
@@ -143,9 +88,7 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return created shift type
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(createdType)
+	s.respondJSON(w, createdType)
 }
 
 // handleUpdateShiftType handles updating an existing shift type
@@ -166,61 +109,25 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 // @Security AdminToken
 // @Router /plans/{token}/types/{typeId} [put]
 func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid shift type ID",
-			http.StatusBadRequest,
-			err,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
-	// Get plan first to verify it exists
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	typeID, ok := s.getTypeID(w, r)
+	if !ok {
 		return
 	}
 
 	// Parse request body
 	var requestData validation.ShiftTypeUpdate
-	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid request body",
-			http.StatusBadRequest,
-			err,
-		))
+	if !s.parseJSON(w, r, &requestData) {
 		return
 	}
 
 	// Validate and sanitize input
 	if result := validation.ValidateShiftTypeUpdate(&requestData, plan.IsMultilingual); result.HasErrors() {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			result.FirstError(),
-			http.StatusBadRequest,
-			nil,
-		))
+		s.respondValidationError(w, result)
 		return
 	}
 
@@ -247,7 +154,7 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	s.respondOK(w)
 }
 
 // handleDeleteShiftType handles deleting an existing shift type
@@ -266,38 +173,13 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 // @Security AdminToken
 // @Router /plans/{token}/types/{typeId} [delete]
 func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-	typeID, err := strconv.ParseInt(vars["typeId"], 10, 64)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid shift type ID",
-			http.StatusBadRequest,
-			err,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
-	// Get plan first to verify it exists
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	typeID, ok := s.getTypeID(w, r)
+	if !ok {
 		return
 	}
 
@@ -312,5 +194,5 @@ func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	s.respondOK(w)
 }

@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -52,24 +51,13 @@ func (s *Server) handleShiftPlanSuccess(w http.ResponseWriter, r *http.Request) 
 // @Router /plans [post]
 func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	var plan db.NewShiftPlan
-	if err := json.NewDecoder(r.Body).Decode(&plan); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid request body",
-			http.StatusBadRequest,
-			err,
-		))
+	if !s.parseJSON(w, r, &plan) {
 		return
 	}
 
 	// Validate and sanitize input
 	if result := validation.ValidateNewShiftPlan(&plan); result.HasErrors() {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			result.FirstError(),
-			http.StatusBadRequest,
-			nil,
-		))
+		s.respondValidationError(w, result)
 		return
 	}
 
@@ -85,9 +73,7 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return plan data
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	s.respondJSON(w, map[string]interface{}{
 		"token":    createdPlan.Token,
 		"url":      fmt.Sprintf("/plans/%s", createdPlan.Token),
 		"password": createdPlan.AdminPassword,
@@ -106,32 +92,12 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token} [get]
 func (s *Server) handleGetShiftPlan(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(plan)
+	s.respondJSON(w, plan)
 }
 
 func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +131,6 @@ func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 
-	// Check if plan exists
 	plan, err := s.db.GetShiftPlanByToken(token)
 	if err != nil {
 		s.RespondWithError(w, NewAppError(
@@ -203,28 +168,8 @@ func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token}/stats [get]
 func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	// Get plan first to verify it exists and get its ID
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
@@ -240,8 +185,7 @@ func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	s.respondJSON(w, stats)
 }
 
 // handleUpdateShiftTypeOrder updates the sort order of shift types
@@ -261,27 +205,8 @@ func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request)
 // @Security AdminToken
 // @Router /plans/{token}/types/order [put]
 func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	token := vars["token"]
-
-	// Get plan to verify ownership
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
@@ -289,13 +214,7 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 	var data struct {
 		TypeIDs []int64 `json:"type_ids"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid request body",
-			http.StatusBadRequest,
-			err,
-		))
+	if !s.parseJSON(w, r, &data) {
 		return
 	}
 
@@ -310,7 +229,7 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	s.respondOK(w)
 }
 
 // handleUpdateShiftPlan updates an existing shift plan
@@ -333,79 +252,25 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	token := vars["token"]
 
-	// Get plan to verify ownership
-	plan, err := s.db.GetShiftPlanByToken(token)
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to get shift plan",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if plan == nil {
-		s.RespondWithError(w, NewAppError(
-			ErrResourceNotFound,
-			"Shift plan not found",
-			http.StatusNotFound,
-			nil,
-		))
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
 		return
 	}
 
 	// Verify admin token
-	adminToken := r.Header.Get("X-Admin-Token")
-	if adminToken == "" {
-		s.RespondWithError(w, NewAppError(
-			ErrUnauthorized,
-			"Admin token required",
-			http.StatusUnauthorized,
-			nil,
-		))
-		return
-	}
-
-	isValid, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(adminToken))
-	if err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrDatabaseError,
-			"Failed to validate admin token",
-			http.StatusInternalServerError,
-			err,
-		))
-		return
-	}
-	if !isValid {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidPassword,
-			"Invalid admin token",
-			http.StatusUnauthorized,
-			nil,
-		))
+	if !s.verifyAdminToken(w, r, plan) {
 		return
 	}
 
 	// Parse request body
 	var updateData db.NewShiftPlan
-	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			"Invalid request body",
-			http.StatusBadRequest,
-			err,
-		))
+	if !s.parseJSON(w, r, &updateData) {
 		return
 	}
 
 	// Validate and sanitize input
 	if result := validation.ValidateNewShiftPlan(&updateData); result.HasErrors() {
-		s.RespondWithError(w, NewAppError(
-			ErrInvalidInput,
-			result.FirstError(),
-			http.StatusBadRequest,
-			nil,
-		))
+		s.respondValidationError(w, result)
 		return
 	}
 
@@ -421,9 +286,7 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return updated plan data
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedPlan)
+	s.respondJSON(w, updatedPlan)
 }
 
 // handleExportPlan handles the export of a shift plan
@@ -447,7 +310,6 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 // @Security AdminToken
 // @Router /plans/{token}/export [get]
 func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
-	// Get plan token from URL
 	vars := mux.Vars(r)
 	token := vars["token"]
 	if token == "" {
@@ -481,7 +343,7 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 	// Parse filter parameters from query string
 	filter := s.parseExportFilters(r)
 
-	// Export plan using the export service with the new Export method
+	// Export plan using the export service
 	data, contentType, filename, err := s.exportService.Export(token, hashPassword(adminToken), format, filter)
 	if err != nil {
 		var appErr *AppError
@@ -572,11 +434,8 @@ func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash the admin token for verification
-	hashedPassword := hashPassword(adminToken)
-
-	// Delete the plan
-	if err := s.db.DeleteShiftPlan(token, hashedPassword); err != nil {
+	// Delete the plan (handles auth internally)
+	if err := s.db.DeleteShiftPlan(token, hashPassword(adminToken)); err != nil {
 		var status int
 		var errType string
 		var message string
@@ -605,6 +464,5 @@ func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return success with no content
-	w.WriteHeader(http.StatusNoContent)
+	s.respondNoContent(w)
 }
