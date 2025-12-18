@@ -299,3 +299,165 @@ func (s *Server) handleUnlockShift(w http.ResponseWriter, r *http.Request) {
 
 	s.respondNoContent(w)
 }
+
+// handleBatchCreateShifts creates multiple shifts in a single operation
+// @Summary Batch create shifts
+// @Description Creates multiple shifts in a single transaction. All shifts are validated first, then created. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param request body model.BatchShiftCreateRequest true "Batch create request with array of shifts"
+// @Success 200 {object} model.BatchCreateResponse "Batch create result with created shifts and any failures"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/batch [post]
+func (s *Server) handleBatchCreateShifts(w http.ResponseWriter, r *http.Request) {
+	// Get plan
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+
+	// Parse request
+	var req model.BatchShiftCreateRequest
+	if !s.parseJSON(w, r, &req) {
+		return
+	}
+
+	// Validate request
+	if result := validation.ValidateBatchShiftCreateRequest(&req); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	// Map to DB models
+	newShifts := BatchShiftCreateRequestToNewShifts(req.Shifts)
+
+	// Call DB layer
+	result, err := s.db.CreateShiftsBatch(newShifts, plan.ID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to create shifts",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	// Map response
+	response := BatchCreateResultToResponse(result)
+	s.respondJSON(w, response)
+}
+
+// handleBatchUpdateShifts updates multiple shifts in a single operation
+// @Summary Batch update shifts
+// @Description Updates multiple shifts in a single transaction. All updates are validated first, then applied. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param request body model.BatchShiftUpdateRequest true "Batch update request with array of shift updates"
+// @Success 200 {object} model.BatchUpdateResponse "Batch update result with updated shift IDs and any failures"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/batch [put]
+func (s *Server) handleBatchUpdateShifts(w http.ResponseWriter, r *http.Request) {
+	// Get plan
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+
+	// Parse request
+	var req model.BatchShiftUpdateRequest
+	if !s.parseJSON(w, r, &req) {
+		return
+	}
+
+	// Validate request
+	if result := validation.ValidateBatchShiftUpdateRequest(&req); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	// Map to DB models
+	updates := BatchShiftUpdateRequestToBatchUpdates(req.Shifts)
+
+	// Call DB layer
+	result, err := s.db.UpdateShiftsBatch(updates, plan.ID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to update shifts",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	// Map response
+	response := BatchUpdateResultToResponse(result)
+	s.respondJSON(w, response)
+}
+
+// handleBatchDeleteShifts deletes multiple shifts in a single operation
+// @Summary Batch delete shifts
+// @Description Deletes multiple shifts in a single transaction. All shift IDs are validated first, then deleted. Requires admin authentication.
+// @Tags Shifts
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param request body model.BatchShiftDeleteRequest true "Batch delete request with array of shift IDs"
+// @Success 200 {object} model.BatchDeleteResponse "Batch delete result with deleted shift IDs and any failures"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/shifts/batch [delete]
+func (s *Server) handleBatchDeleteShifts(w http.ResponseWriter, r *http.Request) {
+	// Get plan
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+
+	// Parse request
+	var req model.BatchShiftDeleteRequest
+	if !s.parseJSON(w, r, &req) {
+		return
+	}
+
+	// Validate request
+	if result := validation.ValidateBatchShiftDeleteRequest(&req); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	// Call DB layer
+	result, err := s.db.DeleteShiftsBatch(req.ShiftIDs, plan.ID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to delete shifts",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+
+	// Map response
+	response := BatchDeleteResultToResponse(result)
+	s.respondJSON(w, response)
+}

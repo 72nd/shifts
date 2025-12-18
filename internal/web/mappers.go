@@ -149,6 +149,85 @@ func ShiftsToResponse(shifts []db.Shift) []model.ShiftResponse {
 }
 
 // =============================================================================
+// Batch Shift Mappers
+// =============================================================================
+
+// BatchShiftCreateRequestToNewShifts converts a slice of model.ShiftCreateRequest to a slice of db.NewShift
+func BatchShiftCreateRequestToNewShifts(items []model.ShiftCreateRequest) []db.NewShift {
+	newShifts := make([]db.NewShift, len(items))
+	for i, item := range items {
+		newShifts[i] = db.NewShift{
+			TypeID:    item.TypeID,
+			StartTime: item.StartTime,
+			Duration:  item.Duration,
+			Required:  item.Required,
+			CommentDE: item.CommentDE,
+			CommentEN: item.CommentEN,
+		}
+	}
+	return newShifts
+}
+
+// BatchShiftUpdateRequestToBatchUpdates converts a slice of model.BatchShiftUpdateItem to a slice of db.ShiftBatchUpdate
+func BatchShiftUpdateRequestToBatchUpdates(items []model.BatchShiftUpdateItem) []db.ShiftBatchUpdate {
+	updates := make([]db.ShiftBatchUpdate, len(items))
+	for i, item := range items {
+		updates[i] = db.ShiftBatchUpdate{
+			ID:        item.ID,
+			TypeID:    item.TypeID,
+			StartTime: item.StartTime,
+			Duration:  item.Duration,
+			Required:  item.Required,
+			CommentDE: item.CommentDE,
+			CommentEN: item.CommentEN,
+		}
+	}
+	return updates
+}
+
+// BatchCreateResultToResponse converts a model.BatchResult[db.Shift] to a model.BatchCreateResponse
+func BatchCreateResultToResponse(result *model.BatchResult[db.Shift]) model.BatchCreateResponse {
+	response := model.BatchCreateResponse{
+		Created: ShiftsToResponse(result.Success),
+	}
+
+	// Only include Failed array if there are failures
+	if len(result.Failed) > 0 {
+		response.Failed = result.Failed
+	}
+
+	return response
+}
+
+// BatchUpdateResultToResponse converts a model.BatchResult[int64] to a model.BatchUpdateResponse
+func BatchUpdateResultToResponse(result *model.BatchResult[int64]) model.BatchUpdateResponse {
+	response := model.BatchUpdateResponse{
+		Updated: result.Success,
+	}
+
+	// Only include Failed array if there are failures
+	if len(result.Failed) > 0 {
+		response.Failed = result.Failed
+	}
+
+	return response
+}
+
+// BatchDeleteResultToResponse converts a model.BatchResult[int64] to a model.BatchDeleteResponse
+func BatchDeleteResultToResponse(result *model.BatchResult[int64]) model.BatchDeleteResponse {
+	response := model.BatchDeleteResponse{
+		Deleted: result.Success,
+	}
+
+	// Only include Failed array if there are failures
+	if len(result.Failed) > 0 {
+		response.Failed = result.Failed
+	}
+
+	return response
+}
+
+// =============================================================================
 // Participant Mappers
 // =============================================================================
 

@@ -97,6 +97,11 @@ func (s *Server) setupRoutes() {
 	api := s.router.PathPrefix("/api").Subrouter()
 	// Apply CORS middleware only to API routes (needed for Swagger UI and external API clients)
 	api.Use(s.middleware.corsMiddleware)
+	// Handle OPTIONS preflight requests for all API routes (catch-all)
+	api.PathPrefix("/").Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// CORS headers are already set by the middleware
+		w.WriteHeader(http.StatusOK)
+	})
 
 	// Plan routes
 	api.HandleFunc("/plans", s.handleCreateShiftPlan).Methods("POST")
@@ -120,6 +125,11 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.middleware.adminMiddleware(s.handleDeleteShift)).Methods("DELETE")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/lock", s.middleware.adminMiddleware(s.handleLockShift)).Methods("POST")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/unlock", s.middleware.adminMiddleware(s.handleUnlockShift)).Methods("POST")
+
+	// Batch shift operations
+	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchCreateShifts)).Methods("POST")
+	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchUpdateShifts)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchDeleteShifts)).Methods("DELETE")
 
 	// Participant routes
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")
