@@ -91,6 +91,14 @@ log_level = "info"
 
 ## API Documentation
 
+### Requirements
+
+Install the swag CLI tool:
+
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+```
+
 ### Generating Documentation
 
 To generate the Swagger documentation, run from the project root:
@@ -115,12 +123,4 @@ After generating the documentation and starting the server, you can access:
 
 - Swagger UI: `http://localhost:8080/swagger/index.html`
 - OpenAPI JSON: `http://localhost:8080/swagger/doc.json`
-
-### Requirements
-
-Install the swag CLI tool:
-
-```bash
-go install github.com/swaggo/swag/cmd/swag@latest
-```
 
