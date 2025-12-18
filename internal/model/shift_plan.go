@@ -23,8 +23,6 @@ type CreateShiftPlanRequest struct {
 	EndDate time.Time `json:"end_date" example:"2024-12-22T00:00:00Z" validate:"required"`
 	// Whether the plan supports multiple languages
 	IsMultilingual bool `json:"is_multilingual" example:"true"`
-	// Admin password for managing the plan
-	Password string `json:"password" example:"secretpassword123" validate:"required"`
 	// Time when a new day starts (HH:MM format, e.g., "06:00" for 6 AM)
 	DayBoundaryTime string `json:"day_boundary_time" example:"00:00"`
 	// Whether participants can see each other's names

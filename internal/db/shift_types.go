@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 // ShiftType represents a category of shifts
@@ -112,16 +113,24 @@ func (db *DB) CreateShiftType(st NewShiftType) (*ShiftType, error) {
 	return &result, nil
 }
 
-// GetShiftTypesByPlan retrieves all shift types for a plan, ordered by sort_order
+// GetShiftTypesByPlan retrieves all shift types for a plan, ordered by sort_order.
+// This uses a single JOIN query to fetch all types, shifts, and participants efficiently,
+// avoiding the N+1 query problem.
 func (db *DB) GetShiftTypesByPlan(planID int64) ([]ShiftType, error) {
+	// Single query with JOINs to fetch all data at once
 	query := `
-        SELECT id, plan_id, password, sort_order,
-               title_de, title_en,
-               description_de, description_en,
-               location_de, location_en
-        FROM shift_types
-        WHERE plan_id = ?
-        ORDER BY sort_order
+        SELECT 
+            st.id, st.plan_id, st.password, st.sort_order,
+            st.title_de, st.title_en, st.description_de, st.description_en,
+            st.location_de, st.location_en,
+            s.id, s.start_time, s.duration, s.required,
+            s.comment_de, s.comment_en, s.is_locked,
+            p.id, p.name, p.created_at
+        FROM shift_types st
+        LEFT JOIN shifts s ON s.type_id = st.id
+        LEFT JOIN participants p ON p.shift_id = s.id
+        WHERE st.plan_id = ?
+        ORDER BY st.sort_order, s.start_time, p.created_at
     `
 	rows, err := db.Query(query, planID)
 	if err != nil {
@@ -130,42 +139,149 @@ func (db *DB) GetShiftTypesByPlan(planID int64) ([]ShiftType, error) {
 	}
 	defer rows.Close()
 
-	var types []ShiftType
+	return db.groupShiftTypesResult(rows)
+}
+
+// groupShiftTypesResult groups flat JOIN query results into nested ShiftType -> Shift -> Participant structure
+func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
+	typeMap := make(map[int64]*ShiftType)
+	shiftMap := make(map[int64]*Shift)
+	typeOrder := []int64{}
+
 	for rows.Next() {
-		var st ShiftType
+		// ShiftType fields
+		var typeID int64
+		var typePlanID int64
+		var typePassword *string
+		var typeSortOrder int
+		var typeTitleDE, typeTitleEN string
+		var typeDescDE, typeDescEN string
+		var typeLocDE, typeLocEN string
+
+		// Shift fields (nullable due to LEFT JOIN)
+		var shiftID sql.NullInt64
+		var shiftStartTime sql.NullString
+		var shiftDuration sql.NullInt64
+		var shiftRequired sql.NullInt64
+		var shiftCommentDE sql.NullString
+		var shiftCommentEN sql.NullString
+		var shiftIsLocked sql.NullBool
+
+		// Participant fields (nullable due to LEFT JOIN)
+		var participantID sql.NullInt64
+		var participantName sql.NullString
+		var participantCreatedAt sql.NullString
+
 		if err := rows.Scan(
-			&st.ID,
-			&st.PlanID,
-			&st.Password,
-			&st.SortOrder,
-			&st.TitleDE,
-			&st.TitleEN,
-			&st.DescriptionDE,
-			&st.DescriptionEN,
-			&st.LocationDE,
-			&st.LocationEN,
+			&typeID, &typePlanID, &typePassword, &typeSortOrder,
+			&typeTitleDE, &typeTitleEN, &typeDescDE, &typeDescEN,
+			&typeLocDE, &typeLocEN,
+			&shiftID, &shiftStartTime, &shiftDuration, &shiftRequired,
+			&shiftCommentDE, &shiftCommentEN, &shiftIsLocked,
+			&participantID, &participantName, &participantCreatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan shift type: %w", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
-		// Render markdown to HTML for descriptions
-		if st.DescriptionEN != "" {
-			html := renderMarkdown(st.DescriptionEN)
-			st.DescriptionENHTML = &html
-		}
-		if st.DescriptionDE != "" {
-			html := renderMarkdown(st.DescriptionDE)
-			st.DescriptionDEHTML = &html
+		// Get or create ShiftType
+		st, exists := typeMap[typeID]
+		if !exists {
+			st = &ShiftType{
+				ID:            typeID,
+				PlanID:        typePlanID,
+				Password:      typePassword,
+				SortOrder:     typeSortOrder,
+				TitleDE:       typeTitleDE,
+				TitleEN:       typeTitleEN,
+				DescriptionDE: typeDescDE,
+				DescriptionEN: typeDescEN,
+				LocationDE:    typeLocDE,
+				LocationEN:    typeLocEN,
+				Shifts:        []Shift{},
+			}
+
+			// Render markdown to HTML for descriptions
+			if st.DescriptionEN != "" {
+				html := renderMarkdown(st.DescriptionEN)
+				st.DescriptionENHTML = &html
+			}
+			if st.DescriptionDE != "" {
+				html := renderMarkdown(st.DescriptionDE)
+				st.DescriptionDEHTML = &html
+			}
+
+			typeMap[typeID] = st
+			typeOrder = append(typeOrder, typeID)
 		}
 
-		// Load shifts for this type
-		shifts, err := db.GetShiftsByType(st.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load shifts for type %d: %w", st.ID, err)
-		}
-		st.Shifts = shifts
+		// Handle shift if present
+		if shiftID.Valid {
+			shift, shiftExists := shiftMap[shiftID.Int64]
+			if !shiftExists {
+				startTime, _ := time.Parse(time.RFC3339, shiftStartTime.String)
+				shift = &Shift{
+					ID:           shiftID.Int64,
+					TypeID:       typeID,
+					StartTime:    startTime,
+					Duration:     int(shiftDuration.Int64),
+					Required:     int(shiftRequired.Int64),
+					CommentDE:    shiftCommentDE.String,
+					CommentEN:    shiftCommentEN.String,
+					IsLocked:     shiftIsLocked.Bool,
+					Participants: []Participant{},
+				}
 
-		types = append(types, st)
+				// Render markdown to HTML for comments
+				if shift.CommentEN != "" {
+					html := renderMarkdown(shift.CommentEN)
+					shift.CommentENHTML = &html
+				}
+				if shift.CommentDE != "" {
+					html := renderMarkdown(shift.CommentDE)
+					shift.CommentDEHTML = &html
+				}
+
+				shiftMap[shiftID.Int64] = shift
+				st.Shifts = append(st.Shifts, *shift)
+			}
+
+			// Handle participant if present
+			if participantID.Valid {
+				// Find the shift in st.Shifts and add participant
+				for i := range st.Shifts {
+					if st.Shifts[i].ID == shiftID.Int64 {
+						// Check if participant already added (shouldn't happen with proper ORDER BY)
+						participantExists := false
+						for _, p := range st.Shifts[i].Participants {
+							if p.ID == participantID.Int64 {
+								participantExists = true
+								break
+							}
+						}
+						if !participantExists {
+							createdAt, _ := time.Parse(time.RFC3339, participantCreatedAt.String)
+							st.Shifts[i].Participants = append(st.Shifts[i].Participants, Participant{
+								ID:        participantID.Int64,
+								ShiftID:   shiftID.Int64,
+								Name:      participantName.String,
+								CreatedAt: createdAt,
+							})
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	// Convert map to ordered slice
+	types := make([]ShiftType, 0, len(typeOrder))
+	for _, id := range typeOrder {
+		types = append(types, *typeMap[id])
 	}
 
 	return types, nil

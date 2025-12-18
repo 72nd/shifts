@@ -39,7 +39,7 @@ func CreateShiftPlanRequestToNew(req *model.CreateShiftPlanRequest) db.NewShiftP
 		StartDate:         req.StartDate,
 		EndDate:           req.EndDate,
 		IsMultilingual:    req.IsMultilingual,
-		Password:          req.Password,
+		// Password is auto-generated in the database layer
 		DayBoundaryTime:   req.DayBoundaryTime,
 		CollaborativeMode: req.CollaborativeMode,
 	}

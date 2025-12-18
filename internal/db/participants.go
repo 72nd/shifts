@@ -25,58 +25,68 @@ var participantSchema = `
     CREATE INDEX IF NOT EXISTS idx_participants_shift_id ON participants(shift_id);
 `
 
-// AddParticipant adds a participant to a shift
+// AddParticipant adds a participant to a shift.
+// This uses an atomic INSERT with capacity check to prevent race conditions
+// where two users could simultaneously take the last available spot.
 func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 	var result Participant
 
-	err := db.transaction(func(tx *sql.Tx) error {
-		// Check if participant already exists
-		var exists bool
-		err := tx.QueryRow(
-			"SELECT EXISTS(SELECT 1 FROM participants WHERE shift_id = ? AND name = ?)",
-			shiftID, name,
-		).Scan(&exists)
-		if err != nil {
-			return fmt.Errorf("failed to check participant existence: %w", err)
-		}
-		if exists {
-			return ErrParticipantExists
-		}
+	// Use IMMEDIATE transaction to acquire write lock at the start,
+	// preventing race conditions in the check-then-insert pattern
+	err := db.transactionImmediate(func(tx *sql.Tx) error {
+		createdAt := time.Now().Format(time.RFC3339)
 
-		// Get shift info and plan's collaborative mode
-		var required, current int
-		var collaborativeMode bool
-		err = tx.QueryRow(`
-            SELECT s.required, COUNT(p.id), sp.collaborative_mode
-            FROM shifts s
-            LEFT JOIN participants p ON s.id = p.shift_id
-            JOIN shift_types st ON s.type_id = st.id
-            JOIN shift_plans sp ON st.plan_id = sp.id
-            WHERE s.id = ?
-            GROUP BY s.id, s.required, sp.collaborative_mode
-        `, shiftID).Scan(&required, &current, &collaborativeMode)
-		if err != nil {
-			return fmt.Errorf("failed to check shift capacity: %w", err)
-		}
-
-		// In collaborative mode, skip capacity check (people can express interest)
-		// In normal mode, enforce capacity limits
-		if !collaborativeMode && required != -1 && current >= required {
-			return ErrShiftFull
-		}
-
-		// Add participant
+		// Atomic INSERT with all checks in a single query.
+		// This prevents TOCTOU race conditions by making the check and insert atomic.
+		// The INSERT only succeeds if:
+		// 1. No participant with same name exists for this shift
+		// 2. Either collaborative_mode is enabled, OR required is -1 (unlimited), OR current count < required
 		query := `
             INSERT INTO participants (shift_id, name, created_at)
-            VALUES (?, ?, ?)
+            SELECT ?, ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1 FROM participants WHERE shift_id = ? AND name = ?
+            )
+            AND (
+                SELECT CASE 
+                    WHEN sp.collaborative_mode = 1 THEN 1
+                    WHEN s.required = -1 THEN 1
+                    WHEN (SELECT COUNT(*) FROM participants WHERE shift_id = ?) < s.required THEN 1
+                    ELSE 0
+                END
+                FROM shifts s
+                JOIN shift_types st ON s.type_id = st.id
+                JOIN shift_plans sp ON st.plan_id = sp.id
+                WHERE s.id = ?
+            ) = 1
         `
-		res, err := tx.Exec(query,
-			shiftID,
-			name,
-			time.Now().Format(time.RFC3339),
-		)
+		res, err := tx.Exec(query, shiftID, name, createdAt, shiftID, name, shiftID, shiftID)
 		if err != nil {
 			return fmt.Errorf("failed to insert participant: %w", err)
+		}
+
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to get rows affected: %w", err)
+		}
+
+		// If no rows were inserted, determine why
+		if rowsAffected == 0 {
+			// Check if participant already exists
+			var exists bool
+			err := tx.QueryRow(
+				"SELECT EXISTS(SELECT 1 FROM participants WHERE shift_id = ? AND name = ?)",
+				shiftID, name,
+			).Scan(&exists)
+			if err != nil {
+				return fmt.Errorf("failed to check participant existence: %w", err)
+			}
+			if exists {
+				return ErrParticipantExists
+			}
+
+			// Otherwise the shift must be full
+			return ErrShiftFull
 		}
 
 		id, err := res.LastInsertId()

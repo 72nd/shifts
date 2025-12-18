@@ -37,11 +37,6 @@ func ValidateCreateShiftPlanRequest(p *model.CreateShiftPlanRequest) *Result {
 		r.AddInvalid("end_date", "End date must be after start date")
 	}
 
-	// Password is required for creation
-	if p.Password == "" {
-		r.AddRequired("password", "Admin password")
-	}
-
 	return r
 }
 

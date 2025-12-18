@@ -95,14 +95,17 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 	return &result, nil
 }
 
-// GetShiftsByType retrieves all shifts for a shift type, ordered by start time
+// GetShiftsByType retrieves all shifts for a shift type, ordered by start time.
+// This uses a single JOIN query to fetch shifts and participants efficiently.
 func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 	query := `
 		SELECT s.id, s.type_id, s.start_time, s.duration, s.required,
-			   s.comment_de, s.comment_en, s.is_locked
+			   s.comment_de, s.comment_en, s.is_locked,
+			   p.id, p.name, p.created_at
 		FROM shifts s
+		LEFT JOIN participants p ON p.shift_id = s.id
 		WHERE s.type_id = ?
-		ORDER BY s.start_time
+		ORDER BY s.start_time, p.created_at
 	`
 	rows, err := db.Query(query, typeID)
 	if err != nil {
@@ -111,61 +114,21 @@ func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 	}
 	defer rows.Close()
 
-	var shifts []Shift
-	for rows.Next() {
-		var s Shift
-		var startTime string
-		if err := rows.Scan(
-			&s.ID,
-			&s.TypeID,
-			&startTime,
-			&s.Duration,
-			&s.Required,
-			&s.CommentDE,
-			&s.CommentEN,
-			&s.IsLocked,
-		); err != nil {
-			return nil, fmt.Errorf("failed to scan shift: %w", err)
-		}
-
-		// Parse start time
-		s.StartTime, err = time.Parse(time.RFC3339, startTime)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse start time: %w", err)
-		}
-
-		// Load participants for this shift
-		participants, err := db.GetParticipantsByShift(s.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load participants for shift %d: %w", s.ID, err)
-		}
-		s.Participants = participants
-
-		// Render markdown to HTML for comments
-		if s.CommentEN != "" {
-			html := renderMarkdown(s.CommentEN)
-			s.CommentENHTML = &html
-		}
-		if s.CommentDE != "" {
-			html := renderMarkdown(s.CommentDE)
-			s.CommentDEHTML = &html
-		}
-
-		shifts = append(shifts, s)
-	}
-
-	return shifts, nil
+	return db.groupShiftsResult(rows)
 }
 
-// GetShiftsByPlan retrieves all shifts for a plan
+// GetShiftsByPlan retrieves all shifts for a plan.
+// This uses a single JOIN query to fetch shifts and participants efficiently.
 func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 	query := `
         SELECT s.id, s.type_id, s.start_time, s.duration, s.required,
-               s.comment_de, s.comment_en, s.is_locked
+               s.comment_de, s.comment_en, s.is_locked,
+               p.id, p.name, p.created_at
         FROM shifts s
         JOIN shift_types st ON s.type_id = st.id
+        LEFT JOIN participants p ON p.shift_id = s.id
         WHERE st.plan_id = ?
-        ORDER BY s.start_time
+        ORDER BY s.start_time, p.created_at
     `
 	rows, err := db.Query(query, planID)
 	if err != nil {
@@ -174,42 +137,88 @@ func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 	}
 	defer rows.Close()
 
-	var shifts []Shift
+	return db.groupShiftsResult(rows)
+}
+
+// groupShiftsResult groups flat JOIN query results into Shift -> Participant structure
+func (db *DB) groupShiftsResult(rows *sql.Rows) ([]Shift, error) {
+	shiftMap := make(map[int64]*Shift)
+	shiftOrder := []int64{}
+
 	for rows.Next() {
-		var s Shift
-		var startTime string
+		// Shift fields
+		var shiftID int64
+		var shiftTypeID int64
+		var shiftStartTime string
+		var shiftDuration int
+		var shiftRequired int
+		var shiftCommentDE string
+		var shiftCommentEN string
+		var shiftIsLocked bool
+
+		// Participant fields (nullable due to LEFT JOIN)
+		var participantID sql.NullInt64
+		var participantName sql.NullString
+		var participantCreatedAt sql.NullString
+
 		if err := rows.Scan(
-			&s.ID,
-			&s.TypeID,
-			&startTime,
-			&s.Duration,
-			&s.Required,
-			&s.CommentDE,
-			&s.CommentEN,
-			&s.IsLocked,
+			&shiftID, &shiftTypeID, &shiftStartTime, &shiftDuration, &shiftRequired,
+			&shiftCommentDE, &shiftCommentEN, &shiftIsLocked,
+			&participantID, &participantName, &participantCreatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan shift: %w", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
-		s.StartTime, _ = time.Parse(time.RFC3339, startTime)
+		// Get or create Shift
+		s, exists := shiftMap[shiftID]
+		if !exists {
+			startTime, _ := time.Parse(time.RFC3339, shiftStartTime)
+			s = &Shift{
+				ID:           shiftID,
+				TypeID:       shiftTypeID,
+				StartTime:    startTime,
+				Duration:     shiftDuration,
+				Required:     shiftRequired,
+				CommentDE:    shiftCommentDE,
+				CommentEN:    shiftCommentEN,
+				IsLocked:     shiftIsLocked,
+				Participants: []Participant{},
+			}
 
-		// Load participants
-		s.Participants, err = db.GetParticipantsByShift(s.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load participants: %w", err)
+			// Render markdown to HTML for comments
+			if s.CommentEN != "" {
+				html := renderMarkdown(s.CommentEN)
+				s.CommentENHTML = &html
+			}
+			if s.CommentDE != "" {
+				html := renderMarkdown(s.CommentDE)
+				s.CommentDEHTML = &html
+			}
+
+			shiftMap[shiftID] = s
+			shiftOrder = append(shiftOrder, shiftID)
 		}
 
-		// Render markdown to HTML for comments
-		if s.CommentEN != "" {
-			html := renderMarkdown(s.CommentEN)
-			s.CommentENHTML = &html
+		// Handle participant if present
+		if participantID.Valid {
+			createdAt, _ := time.Parse(time.RFC3339, participantCreatedAt.String)
+			s.Participants = append(s.Participants, Participant{
+				ID:        participantID.Int64,
+				ShiftID:   shiftID,
+				Name:      participantName.String,
+				CreatedAt: createdAt,
+			})
 		}
-		if s.CommentDE != "" {
-			html := renderMarkdown(s.CommentDE)
-			s.CommentDEHTML = &html
-		}
+	}
 
-		shifts = append(shifts, s)
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	// Convert map to ordered slice
+	shifts := make([]Shift, 0, len(shiftOrder))
+	for _, id := range shiftOrder {
+		shifts = append(shifts, *shiftMap[id])
 	}
 
 	return shifts, nil

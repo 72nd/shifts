@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -29,11 +30,19 @@ func New(dbPath string, logger *slog.Logger) (*DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Set pragmas for better performance and safety
+	// Configure connection pool for SQLite
+	// SQLite works best with a single writer connection to avoid lock contention
+	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxIdleConns(1)
+	sqlDB.SetConnMaxLifetime(0) // Connections don't expire
+
+	// Set pragmas for better performance, safety, and concurrency handling
 	if _, err := sqlDB.Exec(`
         PRAGMA foreign_keys = ON;
         PRAGMA journal_mode = WAL;
         PRAGMA synchronous = NORMAL;
+        PRAGMA busy_timeout = 5000;
+        PRAGMA cache_size = -64000;
     `); err != nil {
 		sqlDB.Close()
 		return nil, fmt.Errorf("failed to set database pragmas: %w", err)
@@ -84,6 +93,31 @@ func (db *DB) transaction(fn func(*sql.Tx) error) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	if err := fn(tx); err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("failed to rollback transaction: %v (original error: %w)", rbErr, err)
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+// transactionImmediate executes a function within a transaction with IMMEDIATE mode.
+// This acquires a write lock at the start of the transaction, preventing race conditions
+// in check-then-act scenarios like capacity checks.
+func (db *DB) transactionImmediate(fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to begin immediate transaction: %w", err)
 	}
 
 	if err := fn(tx); err != nil {
