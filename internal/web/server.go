@@ -95,6 +95,8 @@ func (s *Server) setupRoutes() {
 
 	// API routes
 	api := s.router.PathPrefix("/api").Subrouter()
+	// Apply CORS middleware only to API routes (needed for Swagger UI and external API clients)
+	api.Use(s.middleware.corsMiddleware)
 
 	// Plan routes
 	api.HandleFunc("/plans", s.handleCreateShiftPlan).Methods("POST")
@@ -123,12 +125,14 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
 
-	// Swagger documentation
-	s.router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+	// Swagger documentation - also needs CORS for cross-origin requests
+	swaggerRouter := s.router.PathPrefix("/swagger/").Subrouter()
+	swaggerRouter.Use(s.middleware.corsMiddleware)
+	swaggerRouter.PathPrefix("/").Handler(httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))
 
-	// Add middleware
+	// Add logging middleware to all routes
 	s.router.Use(s.middleware.loggingMiddleware)
 
 	// 404 Handler for HTML routes (must be added last)

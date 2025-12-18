@@ -26,6 +26,25 @@ func newMiddlewareManager(logger *slog.Logger, db *db.DB, hashPassword func(stri
 	}
 }
 
+// corsMiddleware handles CORS headers for cross-origin requests (e.g., from Swagger UI)
+func (m *middlewareManager) corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Admin-Token, Authorization")
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Type")
+
+		// Handle preflight OPTIONS requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 // loggingMiddleware logs all requests with their path, method and duration
 func (m *middlewareManager) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
