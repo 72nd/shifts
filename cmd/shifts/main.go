@@ -14,7 +14,7 @@ import (
 // @title Shifts API
 // @version 1.0
 // @description API for collaborative shift planning and management. This API allows you to create shift plans, manage shift types, create and manage shifts, and handle participant sign-ups.
-// @termsOfService http://swagger.io/terms/
+// @description Please note that this documentation was generated automatically from the code and thus is work in progress. As the API is fairly simple the current state should be enough to implement clients. But a certain degree of thinking  and interpretation on your side is necessary. This is particularly true when it comes to the documentation of the data classes. The extent to which individual fields are delivered by the API or actually need to be set in a request is not explicitly documented, but should always be apparent from the context.
 
 // @contact.name API Support
 // @contact.url https://github.com/72nd/shifts
