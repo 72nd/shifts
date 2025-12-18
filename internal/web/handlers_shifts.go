@@ -16,8 +16,8 @@ import (
 // @Produce json
 // @Param token path string true "Plan token"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param shift body ShiftCreateRequest true "Shift details"
-// @Success 200 {object} ShiftResponse "Created shift"
+// @Param shift body model.ShiftCreateRequest true "Shift details"
+// @Success 200 {object} model.ShiftResponse "Created shift"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 404 {string} string "Plan or type not found"
@@ -85,7 +85,9 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, createdShift)
+	// Convert to response DTO
+	response := ShiftToResponse(createdShift)
+	s.respondJSON(w, response)
 }
 
 // handleUpdateShift updates an existing shift

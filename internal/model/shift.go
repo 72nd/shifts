@@ -85,78 +85,63 @@ type BatchShiftDeleteRequest struct {
 } // @name BatchShiftDeleteRequest
 
 // =============================================================================
-// Participant DTOs
+// Shift Response DTOs
 // =============================================================================
 
-// AddParticipantRequest represents a request to add a participant to a shift
-// @Description Request body for adding a participant to a shift
-type AddParticipantRequest struct {
-	// Name of the participant to add
-	Name string `json:"name" example:"John Doe" validate:"required,min=1,max=100"`
-} // @name AddParticipantRequest
+// ShiftResponse represents a shift in API responses
+// @Description Shift data returned in API responses
+type ShiftResponse struct {
+	// Unique identifier of the shift
+	ID int64 `json:"id" example:"42"`
+	// ID of the shift type this shift belongs to
+	TypeID int64 `json:"type_id" example:"1"`
+	// Start time of the shift
+	StartTime time.Time `json:"start_time" example:"2024-12-20T09:00:00Z"`
+	// Duration of the shift in minutes
+	Duration int `json:"duration" example:"120"`
+	// Number of required participants (-1 for unlimited)
+	Required int `json:"required" example:"3"`
+	// Comment in German (raw Markdown)
+	CommentDE string `json:"comment_de" example:"Bitte pünktlich erscheinen"`
+	// Comment in English (raw Markdown)
+	CommentEN string `json:"comment_en" example:"Please arrive on time"`
+	// Rendered HTML of German comment (only present if comment_de is set)
+	CommentDEHTML *string `json:"comment_de_html,omitempty"`
+	// Rendered HTML of English comment (only present if comment_en is set)
+	CommentENHTML *string `json:"comment_en_html,omitempty"`
+	// Whether the shift is locked for participant changes
+	IsLocked bool `json:"is_locked" example:"false"`
+	// List of participants (only present when requested)
+	Participants []ParticipantResponse `json:"participants,omitempty"`
+} // @name ShiftResponse
 
 // =============================================================================
-// Shift Type DTOs
+// Batch Response DTOs
 // =============================================================================
 
-// ShiftTypeUpdateRequest represents the fields that can be updated on a shift type
-// @Description Request body for updating a shift type
-type ShiftTypeUpdateRequest struct {
-	// Title in German
-	TitleDE string `json:"title_de" example:"Küchendienst" validate:"max=150"`
-	// Title in English
-	TitleEN string `json:"title_en" example:"Kitchen Duty" validate:"required,max=150"`
-	// Description in German (supports Markdown)
-	DescriptionDE string `json:"description_de" example:"Hilfe in der Küche"`
-	// Description in English (supports Markdown)
-	DescriptionEN string `json:"description_en" example:"Help in the kitchen"`
-	// Location in German
-	LocationDE string `json:"location_de" example:"Hauptküche"`
-	// Location in English
-	LocationEN string `json:"location_en" example:"Main Kitchen"`
-} // @name ShiftTypeUpdateRequest
+// BatchCreateResponse holds the results of a batch shift create operation
+// @Description Response body for batch shift creation
+type BatchCreateResponse struct {
+	// Array of successfully created shifts
+	Created []ShiftResponse `json:"created"`
+	// Array of items that failed to create (only present if there were failures)
+	Failed []BatchItemError `json:"failed,omitempty"`
+} // @name BatchCreateResponse
 
-// =============================================================================
-// Shift Plan DTOs
-// =============================================================================
+// BatchUpdateResponse holds the results of a batch shift update operation
+// @Description Response body for batch shift update
+type BatchUpdateResponse struct {
+	// Array of IDs of successfully updated shifts
+	Updated []int64 `json:"updated"`
+	// Array of items that failed to update (only present if there were failures)
+	Failed []BatchItemError `json:"failed,omitempty"`
+} // @name BatchUpdateResponse
 
-// ShiftPlanUpdateRequest represents the fields that can be updated on a shift plan
-// @Description Request body for updating a shift plan
-type ShiftPlanUpdateRequest struct {
-	// Title in German (required if multilingual)
-	TitleDE *string `json:"title_de" example:"Sommerfest 2024"`
-	// Title in English
-	TitleEN string `json:"title_en" example:"Summer Festival 2024" validate:"required,max=150"`
-	// Description in German (supports Markdown)
-	DescriptionDE *string `json:"description_de" example:"Beschreibung des Events"`
-	// Description in English (supports Markdown)
-	DescriptionEN string `json:"description_en" example:"Event description"`
-	// Start date of the plan
-	StartDate time.Time `json:"start_date" example:"2024-12-20T00:00:00Z" validate:"required"`
-	// End date of the plan
-	EndDate time.Time `json:"end_date" example:"2024-12-22T00:00:00Z" validate:"required"`
-	// Whether the plan supports multiple languages
-	IsMultilingual bool `json:"is_multilingual" example:"true"`
-	// Time when a new day starts (HH:MM format, e.g., "06:00" for 6 AM)
-	DayBoundaryTime string `json:"day_boundary_time" example:"00:00"`
-	// Whether participants can see each other's names
-	CollaborativeMode bool `json:"collaborative_mode" example:"false"`
-} // @name ShiftPlanUpdateRequest
-
-// ShiftTypeOrderRequest represents a request to update shift type order
-// @Description Request body for updating the display order of shift types
-type ShiftTypeOrderRequest struct {
-	// Array of type IDs in the desired display order
-	TypeIDs []int64 `json:"type_ids" validate:"required"`
-} // @name ShiftTypeOrderRequest
-
-// =============================================================================
-// Admin DTOs
-// =============================================================================
-
-// VerifyAdminRequest represents a request to verify admin password
-// @Description Request body for verifying admin password
-type VerifyAdminRequest struct {
-	// Admin password to verify
-	Password string `json:"password" example:"secretpassword123" validate:"required"`
-} // @name VerifyAdminRequest
+// BatchDeleteResponse holds the results of a batch shift delete operation
+// @Description Response body for batch shift deletion
+type BatchDeleteResponse struct {
+	// Array of IDs of successfully deleted shifts
+	Deleted []int64 `json:"deleted"`
+	// Array of items that failed to delete (only present if there were failures)
+	Failed []BatchItemError `json:"failed,omitempty"`
+} // @name BatchDeleteResponse

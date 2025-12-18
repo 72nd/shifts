@@ -15,7 +15,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param token path string true "Plan token"
-// @Success 200 {array} db.ShiftType "List of shift types"
+// @Success 200 {array} model.ShiftTypeResponse "List of shift types"
 // @Failure 404 {string} string "Plan not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token}/types [get]
@@ -37,7 +37,9 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, types)
+	// Convert to response DTOs
+	response := ShiftTypesToResponse(types)
+	s.respondJSON(w, response)
 }
 
 // handleCreateShiftType handles the creation of a new shift type
@@ -48,8 +50,8 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param token path string true "Plan token"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param shiftType body db.NewShiftType true "Shift type details"
-// @Success 200 {object} db.ShiftType "Created shift type"
+// @Param shiftType body model.CreateShiftTypeRequest true "Shift type details"
+// @Success 200 {object} model.ShiftTypeResponse "Created shift type"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 404 {string} string "Plan not found"
@@ -63,19 +65,19 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse request body
-	var shiftType db.NewShiftType
-	if !s.parseJSON(w, r, &shiftType) {
+	var req model.CreateShiftTypeRequest
+	if !s.parseJSON(w, r, &req) {
 		return
 	}
 
 	// Validate and sanitize input
-	if result := validation.ValidateNewShiftType(&shiftType, plan.IsMultilingual); result.HasErrors() {
+	if result := validation.ValidateCreateShiftTypeRequest(&req, plan.IsMultilingual); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
 
-	// Set plan ID
-	shiftType.PlanID = plan.ID
+	// Convert to db model
+	shiftType := CreateShiftTypeRequestToNew(&req, plan.ID)
 
 	// Create shift type
 	createdType, err := s.db.CreateShiftType(shiftType)
@@ -89,7 +91,9 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, createdType)
+	// Convert to response DTO
+	response := ShiftTypeToResponse(createdType)
+	s.respondJSON(w, response)
 }
 
 // handleUpdateShiftType handles updating an existing shift type

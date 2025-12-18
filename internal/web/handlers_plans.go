@@ -9,6 +9,7 @@ import (
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
+	"github.com/72nd/shifts/internal/model"
 	"github.com/72nd/shifts/internal/validation"
 )
 
@@ -43,22 +44,25 @@ func (s *Server) handleShiftPlanSuccess(w http.ResponseWriter, r *http.Request) 
 // @Tags Plans
 // @Accept json
 // @Produce json
-// @Param plan body db.NewShiftPlan true "Shift plan details"
-// @Success 200 {object} map[string]interface{} "Created plan with token, URL, and password"
+// @Param plan body model.CreateShiftPlanRequest true "Shift plan details"
+// @Success 200 {object} model.CreateShiftPlanResponse "Created plan with token, URL, and password"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans [post]
 func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
-	var plan db.NewShiftPlan
-	if !s.parseJSON(w, r, &plan) {
+	var req model.CreateShiftPlanRequest
+	if !s.parseJSON(w, r, &req) {
 		return
 	}
 
 	// Validate and sanitize input
-	if result := validation.ValidateNewShiftPlan(&plan); result.HasErrors() {
+	if result := validation.ValidateCreateShiftPlanRequest(&req); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
+
+	// Convert to db model
+	plan := CreateShiftPlanRequestToNew(&req)
 
 	// Create plan
 	createdPlan, err := s.db.CreateShiftPlan(plan)
@@ -72,11 +76,14 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, map[string]interface{}{
-		"token":    createdPlan.Token,
-		"url":      fmt.Sprintf("/plans/%s", createdPlan.Token),
-		"password": createdPlan.AdminPassword,
-	})
+	// Return response DTO
+	response := model.CreateShiftPlanResponse{
+		Token:    createdPlan.Token,
+		URL:      fmt.Sprintf("/plans/%s", createdPlan.Token),
+		Password: createdPlan.AdminPassword,
+	}
+
+	s.respondJSON(w, response)
 }
 
 // handleGetShiftPlan retrieves a shift plan by token
@@ -86,7 +93,7 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param token path string true "Plan token"
-// @Success 200 {object} db.ShiftPlan "Shift plan details"
+// @Success 200 {object} model.ShiftPlanResponse "Shift plan details"
 // @Failure 404 {string} string "Plan not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token} [get]
@@ -96,7 +103,9 @@ func (s *Server) handleGetShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, plan)
+	// Convert to response DTO
+	response := ShiftPlanToResponse(plan)
+	s.respondJSON(w, response)
 }
 
 func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +135,7 @@ func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param token path string true "Plan token"
-// @Success 200 {object} db.Stats "Plan statistics"
+// @Success 200 {object} model.StatsResponse "Plan statistics"
 // @Failure 404 {string} string "Plan not found"
 // @Failure 500 {string} string "Internal server error"
 // @Router /plans/{token}/stats [get]
@@ -148,7 +157,9 @@ func (s *Server) handleGetShiftPlanStats(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	s.respondJSON(w, stats)
+	// Convert to response DTO
+	response := StatsToResponse(stats)
+	s.respondJSON(w, response)
 }
 
 // handleUpdateShiftTypeOrder updates the sort order of shift types
@@ -203,8 +214,8 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 // @Produce json
 // @Param token path string true "Plan token"
 // @Param X-Admin-Token header string true "Admin token"
-// @Param plan body ShiftPlanUpdateRequest true "Updated plan details"
-// @Success 200 {object} db.ShiftPlan "Updated shift plan"
+// @Param plan body model.ShiftPlanUpdateRequest true "Updated plan details"
+// @Success 200 {object} model.ShiftPlanResponse "Updated shift plan"
 // @Failure 400 {string} string "Invalid input"
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 404 {string} string "Plan not found"
@@ -223,16 +234,19 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse request body
-	var updateData db.NewShiftPlan
-	if !s.parseJSON(w, r, &updateData) {
+	var req model.ShiftPlanUpdateRequest
+	if !s.parseJSON(w, r, &req) {
 		return
 	}
 
 	// Validate and sanitize input
-	if result := validation.ValidateNewShiftPlan(&updateData); result.HasErrors() {
+	if result := validation.ValidateShiftPlanUpdate(&req); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
+
+	// Convert to db model
+	updateData := UpdateShiftPlanRequestToNew(&req)
 
 	// Update plan
 	updatedPlan, err := s.db.UpdateShiftPlan(plan.Token, updateData)
@@ -246,7 +260,9 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.respondJSON(w, updatedPlan)
+	// Convert to response DTO
+	response := ShiftPlanToResponse(updatedPlan)
+	s.respondJSON(w, response)
 }
 
 // handleExportPlan handles the export of a shift plan
