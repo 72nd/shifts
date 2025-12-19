@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/72nd/shifts/internal/model"
@@ -122,14 +123,15 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*model.BatchRe
 }
 
 // ShiftBatchUpdate represents an update operation for a single shift in a batch.
+// Fields are optional (use nil to skip updating that field).
 type ShiftBatchUpdate struct {
-	ID        int64  `json:"id"`
-	TypeID    int64  `json:"type_id"`
-	StartTime string `json:"start_time"` // RFC3339 format
-	Duration  int    `json:"duration"`
-	Required  int    `json:"required"`
-	CommentDE string `json:"comment_de"`
-	CommentEN string `json:"comment_en"`
+	ID        int64   `json:"id"`
+	TypeID    *int64  `json:"type_id,omitempty"`
+	StartTime *string `json:"start_time,omitempty"` // RFC3339 format
+	Duration  *int    `json:"duration,omitempty"`
+	Required  *int    `json:"required,omitempty"`
+	CommentDE *string `json:"comment_de,omitempty"`
+	CommentEN *string `json:"comment_en,omitempty"`
 }
 
 // UpdateShiftsBatch updates multiple shifts in a single transaction.
@@ -156,24 +158,28 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*mode
 
 	// Pre-validate all updates
 	for i, update := range updates {
-		// Validate required field
-		if update.Required != -1 && update.Required < 1 {
-			result.Failed = append(result.Failed, model.BatchItemError{
-				Index: i,
-				Error: ErrInvalidRequired.Error(),
-				Code:  "invalid_required",
-			})
-			continue
+		// Validate required field if provided
+		if update.Required != nil {
+			if *update.Required != -1 && *update.Required < 1 {
+				result.Failed = append(result.Failed, model.BatchItemError{
+					Index: i,
+					Error: ErrInvalidRequired.Error(),
+					Code:  "invalid_required",
+				})
+				continue
+			}
 		}
 
-		// Validate type belongs to plan
-		if !validTypeIDs[update.TypeID] {
-			result.Failed = append(result.Failed, model.BatchItemError{
-				Index: i,
-				Error: "shift type not found in this plan",
-				Code:  "invalid_type_id",
-			})
-			continue
+		// Validate type belongs to plan if provided
+		if update.TypeID != nil {
+			if !validTypeIDs[*update.TypeID] {
+				result.Failed = append(result.Failed, model.BatchItemError{
+					Index: i,
+					Error: "shift type not found in this plan",
+					Code:  "invalid_type_id",
+				})
+				continue
+			}
 		}
 
 		// Validate shift belongs to plan
@@ -203,25 +209,52 @@ func (db *DB) UpdateShiftsBatch(updates []ShiftBatchUpdate, planID int64) (*mode
 	// All validations passed, update shifts in a transaction
 	err = db.transaction(func(tx *sql.Tx) error {
 		for i, update := range updates {
-			query := `
-				UPDATE shifts SET
-					type_id = ?,
-					start_time = ?,
-					duration = ?,
-					required = ?,
-					comment_de = ?,
-					comment_en = ?
-				WHERE id = ?
-			`
-			res, err := tx.Exec(query,
-				update.TypeID,
-				update.StartTime,
-				update.Duration,
-				update.Required,
-				update.CommentDE,
-				update.CommentEN,
-				update.ID,
-			)
+			// Build dynamic UPDATE query based on provided fields
+			setClauses := []string{}
+			args := []interface{}{}
+
+			if update.TypeID != nil {
+				setClauses = append(setClauses, "type_id = ?")
+				args = append(args, *update.TypeID)
+			}
+			if update.StartTime != nil {
+				setClauses = append(setClauses, "start_time = ?")
+				args = append(args, *update.StartTime)
+			}
+			if update.Duration != nil {
+				setClauses = append(setClauses, "duration = ?")
+				args = append(args, *update.Duration)
+			}
+			if update.Required != nil {
+				setClauses = append(setClauses, "required = ?")
+				args = append(args, *update.Required)
+			}
+			if update.CommentDE != nil {
+				setClauses = append(setClauses, "comment_de = ?")
+				args = append(args, *update.CommentDE)
+			}
+			if update.CommentEN != nil {
+				setClauses = append(setClauses, "comment_en = ?")
+				args = append(args, *update.CommentEN)
+			}
+
+			// Skip if no fields to update
+			if len(setClauses) == 0 {
+				result.Failed = append(result.Failed, model.BatchItemError{
+					Index: i,
+					Error: "no fields to update",
+					Code:  "invalid_input",
+				})
+				continue
+			}
+
+			// Construct query with dynamic SET clause
+			query := "UPDATE shifts SET " + strings.Join(setClauses, ", ") + " WHERE id = ?"
+
+			// Add ID to args
+			args = append(args, update.ID)
+
+			res, err := tx.Exec(query, args...)
 			if err != nil {
 				result.Failed = append(result.Failed, model.BatchItemError{
 					Index: i,

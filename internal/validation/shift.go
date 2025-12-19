@@ -256,34 +256,40 @@ func ValidateBatchShiftUpdateRequest(req *model.BatchShiftUpdateRequest) *Result
 		item := &req.Shifts[i]
 		prefix := "shifts[" + itoa(i) + "]."
 
-		// Validate ID is positive
+		// Validate ID is positive (always required)
 		if item.ID <= 0 {
 			r.Add(prefix+"id", CodeInvalidValue, "Shift ID must be a positive number")
 		}
 
-		// Validate TypeID is positive
-		if item.TypeID <= 0 {
+		// Validate TypeID is positive (if provided)
+		if item.TypeID != nil && *item.TypeID <= 0 {
 			r.Add(prefix+"type_id", CodeInvalidValue, "Type ID must be a positive number")
 		}
 
-		// Validate StartTime is not empty (format validation happens at DB layer)
-		if item.StartTime == "" {
-			r.Add(prefix+"start_time", CodeRequired, "Start time is required")
+		// Validate StartTime is not empty (if provided)
+		if item.StartTime != nil && *item.StartTime == "" {
+			r.Add(prefix+"start_time", CodeInvalidValue, "Start time cannot be empty")
 		}
 
-		// Validate Duration is positive
-		if item.Duration <= 0 {
+		// Validate Duration is positive (if provided)
+		if item.Duration != nil && *item.Duration <= 0 {
 			r.Add(prefix+"duration", CodeInvalidValue, "Duration must be a positive number of minutes")
 		}
 
-		// Validate Required is -1 or positive
-		if item.Required != -1 && item.Required < 1 {
+		// Validate Required is -1 or positive (if provided)
+		if item.Required != nil && *item.Required != -1 && *item.Required < 1 {
 			r.Add(prefix+"required", CodeInvalidValue, "Required participants must be either -1 for unlimited or a positive number")
 		}
 
-		// Sanitize comments
-		item.CommentDE = ValidateOptional(item.CommentDE)
-		item.CommentEN = ValidateOptional(item.CommentEN)
+		// Sanitize comments if provided
+		if item.CommentDE != nil {
+			sanitized := ValidateOptional(*item.CommentDE)
+			item.CommentDE = &sanitized
+		}
+		if item.CommentEN != nil {
+			sanitized := ValidateOptional(*item.CommentEN)
+			item.CommentEN = &sanitized
+		}
 	}
 
 	return r

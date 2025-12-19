@@ -52,22 +52,22 @@ type BatchShiftCreateRequest struct {
 } // @name BatchShiftCreateRequest
 
 // BatchShiftUpdateItem represents a single shift update in a batch operation
-// @Description Single shift update item within a batch update request
+// @Description Single shift update item within a batch update request. Only include fields you want to update (partial updates supported).
 type BatchShiftUpdateItem struct {
 	// ID of the shift to update
 	ID int64 `json:"id" example:"42" validate:"required,min=1"`
-	// ID of the shift type this shift belongs to
-	TypeID int64 `json:"type_id" example:"1" validate:"required,min=1"`
-	// Start time of the shift in RFC3339 format
-	StartTime string `json:"start_time" example:"2024-12-20T09:00:00Z" validate:"required"`
-	// Duration of the shift in minutes
-	Duration int `json:"duration" example:"120" validate:"required,min=1"`
-	// Number of required participants (-1 for unlimited)
-	Required int `json:"required" example:"3" validate:"required,min=-1"`
-	// Optional comment in German (supports Markdown)
-	CommentDE string `json:"comment_de" example:"Bitte pünktlich erscheinen"`
-	// Optional comment in English (supports Markdown)
-	CommentEN string `json:"comment_en" example:"Please arrive on time"`
+	// ID of the shift type this shift belongs to (optional, only set if you want to change it)
+	TypeID *int64 `json:"type_id,omitempty" example:"1"`
+	// Start time of the shift in RFC3339 format (optional, only set if you want to change it)
+	StartTime *string `json:"start_time,omitempty" example:"2024-12-20T09:00:00Z"`
+	// Duration of the shift in minutes (optional, only set if you want to change it)
+	Duration *int `json:"duration,omitempty" example:"120"`
+	// Number of required participants, -1 for unlimited (optional, only set if you want to change it)
+	Required *int `json:"required,omitempty" example:"3"`
+	// Optional comment in German (supports Markdown). Use null to clear existing comment.
+	CommentDE *string `json:"comment_de,omitempty" example:"Bitte pünktlich erscheinen"`
+	// Optional comment in English (supports Markdown). Use null to clear existing comment.
+	CommentEN *string `json:"comment_en,omitempty" example:"Please arrive on time"`
 } // @name BatchShiftUpdateItem
 
 // BatchShiftUpdateRequest represents a batch update request for shifts
