@@ -99,7 +99,7 @@ function normalizeShift({
     const isLocked = Boolean(shift.is_locked);
     const canRegister = !isLocked && (collaborativeMode || required === -1 || participants.length < required);
 
-    return {
+    const result = {
         id: shift.id,
         typeId: typeMeta.id,
         typeTitle: typeMeta.title,
@@ -127,6 +127,8 @@ function normalizeShift({
         typeColor: typeMeta.color,
         isLocked
     };
+    
+    return result;
 }
 
 export function buildTimetableModel({
