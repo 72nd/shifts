@@ -121,15 +121,17 @@ func (s *Server) setupRoutes() {
 
 	// Shift routes
 	api.HandleFunc("/plans/{token}/shifts", s.middleware.adminMiddleware(s.handleCreateShift)).Methods("POST")
+
+	// Batch shift operations (must be before {shiftId} routes to avoid routing conflicts)
+	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchCreateShifts)).Methods("POST")
+	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchUpdateShifts)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchDeleteShifts)).Methods("DELETE")
+
+	// Single shift operations
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.middleware.adminMiddleware(s.handleUpdateShift)).Methods("PUT")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}", s.middleware.adminMiddleware(s.handleDeleteShift)).Methods("DELETE")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/lock", s.middleware.adminMiddleware(s.handleLockShift)).Methods("POST")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/unlock", s.middleware.adminMiddleware(s.handleUnlockShift)).Methods("POST")
-
-	// Batch shift operations
-	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchCreateShifts)).Methods("POST")
-	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchUpdateShifts)).Methods("PUT")
-	api.HandleFunc("/plans/{token}/shifts/batch", s.middleware.adminMiddleware(s.handleBatchDeleteShifts)).Methods("DELETE")
 
 	// Participant routes
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")
