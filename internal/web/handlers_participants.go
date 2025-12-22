@@ -75,6 +75,10 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Handle specific errors
 		if errors.Is(err, db.ErrShiftFull) {
+			// Track failed join due to capacity
+			participantJoinsTotal.WithLabelValues(plan.Token, "failure").Inc()
+			participantJoinsFailedTotal.WithLabelValues(plan.Token, "capacity").Inc()
+
 			s.RespondWithError(w, NewAppError(
 				ErrShiftFull,
 				"Shift is already full",
@@ -85,6 +89,10 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if errors.Is(err, db.ErrParticipantExists) {
+			// Track failed join due to duplicate name
+			participantJoinsTotal.WithLabelValues(plan.Token, "failure").Inc()
+			participantJoinsFailedTotal.WithLabelValues(plan.Token, "duplicate").Inc()
+
 			s.RespondWithError(w, NewAppError(
 				ErrDuplicateName,
 				"Name already taken",
@@ -94,6 +102,10 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Track other failures
+		participantJoinsTotal.WithLabelValues(plan.Token, "failure").Inc()
+		participantJoinsFailedTotal.WithLabelValues(plan.Token, "error").Inc()
+
 		s.RespondWithError(w, NewAppError(
 			ErrInternalError,
 			"Failed to add participant",
@@ -102,6 +114,9 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+
+	// Track successful join
+	participantJoinsTotal.WithLabelValues(plan.Token, "success").Inc()
 
 	s.respondJSON(w, participant)
 }
@@ -204,6 +219,9 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 		))
 		return
 	}
+
+	// Track metrics
+	participantRemovalsTotal.WithLabelValues(plan.Token).Inc()
 
 	s.respondNoContent(w)
 }

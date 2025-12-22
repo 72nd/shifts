@@ -76,6 +76,9 @@ func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Track metrics
+	shiftPlansCreatedTotal.Inc()
+
 	// Return response DTO
 	response := model.CreateShiftPlanResponse{
 		Token:    createdPlan.Token,
@@ -422,6 +425,9 @@ func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+
+	// Track metrics
+	shiftPlansDeletedTotal.Inc()
 
 	s.respondNoContent(w)
 }

@@ -36,6 +36,69 @@ var (
 	)
 )
 
+// Business Metrics - Shift Operations
+var (
+	shiftsCreatedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "shifts_created_total",
+			Help: "Total number of shifts created",
+		},
+		[]string{"plan_token"},
+	)
+
+	shiftsDeletedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "shifts_deleted_total",
+			Help: "Total number of shifts deleted",
+		},
+		[]string{"plan_token"},
+	)
+)
+
+// Business Metrics - Participant Operations
+var (
+	participantJoinsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "participant_joins_total",
+			Help: "Total number of participant join attempts",
+		},
+		[]string{"plan_token", "result"},
+	)
+
+	participantJoinsFailedTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "participant_joins_failed_total",
+			Help: "Total number of failed participant joins by reason",
+		},
+		[]string{"plan_token", "reason"},
+	)
+
+	participantRemovalsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "participant_removals_total",
+			Help: "Total number of participant removals",
+		},
+		[]string{"plan_token"},
+	)
+)
+
+// Business Metrics - Plan Operations
+var (
+	shiftPlansCreatedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "shift_plans_created_total",
+			Help: "Total number of shift plans created",
+		},
+	)
+
+	shiftPlansDeletedTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "shift_plans_deleted_total",
+			Help: "Total number of shift plans deleted",
+		},
+	)
+)
+
 // responseWriter wraps http.ResponseWriter to capture the status code
 type responseWriter struct {
 	http.ResponseWriter
