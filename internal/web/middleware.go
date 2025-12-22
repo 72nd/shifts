@@ -66,6 +66,9 @@ func (m *middlewareManager) loggingMiddleware(next http.Handler) http.Handler {
 // adminMiddleware verifies that the request has a valid admin token
 func (m *middlewareManager) adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Track authentication duration
+		start := time.Now()
+		
 		vars := mux.Vars(r)
 		token := vars["token"]
 		adminToken := r.Header.Get("X-Admin-Token")
@@ -88,9 +91,19 @@ func (m *middlewareManager) adminMiddleware(next http.HandlerFunc) http.HandlerF
 
 		// Verify admin token
 		if hashedToken != plan.AdminPassword {
+			// Track failed authentication
+			duration := time.Since(start).Seconds()
+			adminAuthDuration.Observe(duration)
+			adminAuthAttemptsTotal.WithLabelValues("failure").Inc()
+			
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+
+		// Track successful authentication
+		duration := time.Since(start).Seconds()
+		adminAuthDuration.Observe(duration)
+		adminAuthAttemptsTotal.WithLabelValues("success").Inc()
 
 		next(w, r)
 	}

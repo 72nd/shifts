@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
@@ -309,9 +310,30 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 	// Parse filter parameters from query string
 	filter := s.parseExportFilters(r)
 
+	// Track export duration
+	start := time.Now()
+
 	// Export plan using the export service
 	data, contentType, filename, err := s.exportService.Export(plan.Token, hashPassword(adminToken), format, filter)
+
+	// Record export duration and result
+	duration := time.Since(start).Seconds()
+	exportDuration.WithLabelValues(format).Observe(duration)
+
 	if err != nil {
+		// Track export failure
+		exportRequestsTotal.WithLabelValues(format, "failure").Inc()
+
+		// Categorize error type
+		var errorType string
+		switch e := err.(type) {
+		case *export.Error:
+			errorType = string(e.Type)
+		default:
+			errorType = "internal_error"
+		}
+		exportErrorsTotal.WithLabelValues(format, errorType).Inc()
+
 		var appErr *AppError
 		switch e := err.(type) {
 		case *export.Error:
@@ -322,6 +344,9 @@ func (s *Server) handleExportPlan(w http.ResponseWriter, r *http.Request) {
 		s.RespondWithError(w, appErr)
 		return
 	}
+
+	// Track successful export
+	exportRequestsTotal.WithLabelValues(format, "success").Inc()
 
 	// Set headers for file download
 	w.Header().Set("Content-Type", contentType)

@@ -99,6 +99,53 @@ var (
 	)
 )
 
+// Performance Metrics - Export Operations
+var (
+	exportRequestsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "export_requests_total",
+			Help: "Total number of export requests",
+		},
+		[]string{"format", "result"},
+	)
+
+	exportDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "export_duration_seconds",
+			Help:    "Export generation duration in seconds",
+			Buckets: []float64{.1, .5, 1, 2.5, 5, 10, 30, 60, 90, 120},
+		},
+		[]string{"format"},
+	)
+
+	exportErrorsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "export_errors_total",
+			Help: "Total number of export errors",
+		},
+		[]string{"format", "error_type"},
+	)
+)
+
+// Performance Metrics - Authentication
+var (
+	adminAuthAttemptsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "admin_auth_attempts_total",
+			Help: "Total number of admin authentication attempts",
+		},
+		[]string{"result"},
+	)
+
+	adminAuthDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "admin_auth_duration_seconds",
+			Help:    "Admin authentication check duration in seconds",
+			Buckets: []float64{.0001, .0005, .001, .005, .01, .025, .05, .1},
+		},
+	)
+)
+
 // responseWriter wraps http.ResponseWriter to capture the status code
 type responseWriter struct {
 	http.ResponseWriter

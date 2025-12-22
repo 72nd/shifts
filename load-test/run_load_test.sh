@@ -19,7 +19,7 @@ set -e
 
 # Default values
 MODE="${1:-web}"
-HOST="${2:-http://localhost:8080}"
+HOST="${2:-https://shifts.c3shoc.de}"
 USERS=258
 SPAWN_RATE=10
 
