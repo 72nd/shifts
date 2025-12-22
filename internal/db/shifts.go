@@ -48,6 +48,11 @@ var shiftSchema = `
 
 // CreateShift creates a new shift
 func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("insert", "shifts", start)
+	}()
+
 	// Validate required field
 	if shift.Required != -1 && shift.Required < 1 {
 		return nil, ErrInvalidRequired
@@ -89,6 +94,7 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 
 	if err != nil {
 		db.logError("CreateShift", err, shift)
+		db.recordError("insert", err)
 		return nil, err
 	}
 
@@ -267,10 +273,16 @@ func (db *DB) UpdateShift(id int64, shift Shift) error {
 
 // DeleteShift deletes a shift and all its participants
 func (db *DB) DeleteShift(id int64) error {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("delete", "shifts", start)
+	}()
+
 	query := `DELETE FROM shifts WHERE id = ?`
 	result, err := db.Exec(query, id)
 	if err != nil {
 		db.logError("DeleteShift", err, id)
+		db.recordError("delete", err)
 		return fmt.Errorf("failed to delete shift: %w", err)
 	}
 

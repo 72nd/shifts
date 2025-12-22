@@ -76,6 +76,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Start metrics server on separate port if enabled
+	if cfg.MetricsEnabled {
+		go func() {
+			if err := server.StartMetricsServer(cfg.MetricsPort); err != nil {
+				logger.Error("metrics server error", "error", err)
+			}
+		}()
+		logger.Info("metrics enabled", "port", cfg.MetricsPort)
+	}
+
 	// Start server
 	if err := server.Start(cfg.Host, cfg.Port); err != nil {
 		logger.Error("server error", "error", err)

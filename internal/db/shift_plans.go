@@ -88,6 +88,11 @@ func hashPassword(password string) string {
 
 // CreateShiftPlan creates a new shift plan and returns it with the generated ID and token
 func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("insert", "shift_plans", start)
+	}()
+
 	var result ShiftPlan
 
 	// Validate required fields
@@ -162,6 +167,7 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 
 	if err != nil {
 		db.logError("CreateShiftPlan", err, plan)
+		db.recordError("insert", err)
 		return nil, err
 	}
 
@@ -303,6 +309,11 @@ func renderMarkdown(text string) string {
 
 // GetShiftPlanByToken retrieves a shift plan by its token
 func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("select", "shift_plans", start)
+	}()
+
 	var plan ShiftPlan
 	var startDate, endDate, createdAt string
 
@@ -334,6 +345,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 			return nil, nil
 		}
 		db.logError("GetShiftPlanByToken", err, token)
+		db.recordError("select", err)
 		return nil, fmt.Errorf("failed to get shift plan: %w", err)
 	}
 
@@ -526,7 +538,12 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 
 // DeleteShiftPlan deletes a shift plan and all its related data (shifts, types, participants)
 func (db *DB) DeleteShiftPlan(token string, hashedPassword string) error {
-	return db.transaction(func(tx *sql.Tx) error {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("delete", "shift_plans", start)
+	}()
+
+	err := db.transaction(func(tx *sql.Tx) error {
 		// First verify the plan exists and password matches
 		var planID int64
 		var storedHash string
@@ -571,4 +588,10 @@ func (db *DB) DeleteShiftPlan(token string, hashedPassword string) error {
 
 		return nil
 	})
+
+	if err != nil {
+		db.recordError("delete", err)
+	}
+
+	return err
 }

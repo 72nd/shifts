@@ -7,3 +7,7 @@ db_path = "data/shifts.db"
 
 # Logging configuration
 log_level = "info" 
+
+# Metrics configuration (separate port, not exposed publicly)
+metrics_enabled = true
+metrics_port = 9090 
