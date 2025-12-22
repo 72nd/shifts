@@ -15,6 +15,7 @@ import (
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/export"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	_ "github.com/72nd/shifts/docs" // Import generated swagger docs
@@ -147,6 +148,9 @@ func (s *Server) setupRoutes() {
 	// Add logging middleware to all routes
 	s.router.Use(s.middleware.loggingMiddleware)
 
+	// Add metrics middleware to all routes
+	s.router.Use(s.middleware.metricsMiddleware)
+
 	// 404 Handler for HTML routes (must be added last)
 	s.router.NotFoundHandler = s.handle404()
 }
@@ -166,6 +170,24 @@ func (s *Server) Start(host string, port int) error {
 	// Start server
 	s.logger.Info("starting server", "addr", srv.Addr)
 	return srv.ListenAndServe()
+}
+
+// StartMetricsServer starts a separate HTTP server for Prometheus metrics
+// This server runs on a different port and only exposes /metrics endpoint
+func (s *Server) StartMetricsServer(port int) error {
+	metricsRouter := http.NewServeMux()
+	metricsRouter.Handle("/metrics", promhttp.Handler())
+
+	metricsServer := &http.Server{
+		Addr:         fmt.Sprintf("localhost:%d", port),
+		Handler:      metricsRouter,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
+	}
+
+	s.logger.Info("starting metrics server", "addr", metricsServer.Addr)
+	return metricsServer.ListenAndServe()
 }
 
 // handleVerifyAdmin verifies the admin password for a shift plan

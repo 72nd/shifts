@@ -29,6 +29,11 @@ var participantSchema = `
 // This uses an atomic INSERT with capacity check to prevent race conditions
 // where two users could simultaneously take the last available spot.
 func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("insert", "participants", start)
+	}()
+
 	var result Participant
 
 	// Use IMMEDIATE transaction to acquire write lock at the start,
@@ -104,6 +109,7 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 
 	if err != nil {
 		db.logError("AddParticipant", err, shiftID, name)
+		db.recordError("insert", err)
 		return nil, err
 	}
 
@@ -112,10 +118,16 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 
 // RemoveParticipant removes a participant from a shift
 func (db *DB) RemoveParticipant(shiftID int64, name string) error {
+	start := time.Now()
+	defer func() {
+		db.recordQuery("delete", "participants", start)
+	}()
+
 	query := `DELETE FROM participants WHERE shift_id = ? AND name = ?`
 	result, err := db.Exec(query, shiftID, name)
 	if err != nil {
 		db.logError("RemoveParticipant", err, shiftID, name)
+		db.recordError("delete", err)
 		return fmt.Errorf("failed to remove participant: %w", err)
 	}
 

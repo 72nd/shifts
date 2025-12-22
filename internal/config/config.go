@@ -18,15 +18,21 @@ type Config struct {
 
 	// Logging configuration
 	LogLevel string `toml:"log_level"`
+
+	// Metrics configuration
+	MetricsEnabled bool `toml:"metrics_enabled"`
+	MetricsPort    int  `toml:"metrics_port"`
 }
 
 // DefaultConfig returns a configuration with default values
 func DefaultConfig() Config {
 	return Config{
-		Host:     "localhost",
-		Port:     8080,
-		DBPath:   "data/shifts.db",
-		LogLevel: "info",
+		Host:           "localhost",
+		Port:           8080,
+		DBPath:         "data/shifts.db",
+		LogLevel:       "info",
+		MetricsEnabled: false,
+		MetricsPort:    9090,
 	}
 }
 
