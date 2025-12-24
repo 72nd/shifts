@@ -45,7 +45,7 @@ document.addEventListener('alpine:init', () => {
         exportError: null,
 
         // View state
-        viewMode: 'list',
+        viewMode: 'timetable',
         planToken: '',
         timetableSlotHeight: 16,
         expandedTimetableShifts: {},
@@ -185,13 +185,13 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            this.viewMode = 'list';
-            this.syncViewModeQuery('list');
+            this.viewMode = 'timetable';
+            this.syncViewModeQuery('timetable');
         },
 
         syncViewModeQuery(mode) {
             const url = new URL(window.location.href);
-            if (mode === 'list') {
+            if (mode === 'timetable') {
                 url.searchParams.delete('view');
             } else {
                 url.searchParams.set('view', mode);
