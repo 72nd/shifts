@@ -106,3 +106,8 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 #### Personal Overview (PDF)
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+## API für Entwickler:innen
+
+Alle Funktionen des Frontends stehen auch als API zur Verfügung. Die Dokumentation findet sich unter [swagger/index.html](/swagger/index.html), die maschinenlesbare Swagger/OpenAPI-Spezifikation unter [swagger/doc.json](/swagger/doc.json).
+
