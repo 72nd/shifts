@@ -241,6 +241,7 @@
             "error_updating_settings": "Fehler beim Aktualisieren der Einstellungen",
             "shift_locked": "Fixiert",
             "shift_locked_explanation": "Diese Schicht ist fixiert. Die Einteilung wurde abgeschlossen und kann nur noch von Admins bearbeitet werden.",
+            "participant_collision": "Diese Person hat überlappende Schichten",
             "lock_shift": "Schicht fixieren",
             "unlock_shift": "Schicht entsperren",
             "error_shift_locked": "Diese Schicht ist fixiert und kann nur von Admins bearbeitet werden",

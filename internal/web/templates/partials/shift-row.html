@@ -80,6 +80,16 @@
                     <template x-for="participant in shift.participants || []" :key="participant.id">
                         <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-xs md:text-sm transition-colors border border-base-content/20">
                             <span x-text="participant.name" class="font-medium"></span>
+                            <!-- Collision warning icon -->
+                            <svg x-show="hasCollision(participant.name)"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 class="h-2.5 w-2.5 md:h-3 md:w-3 text-warning flex-shrink-0"
+                                 fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke="currentColor"
+                                 :title="$t('shift_plans.view.participant_collision')">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
                             <button @click.stop="openRemoveModal(shift, participant)"
                                     x-show="!shift.is_locked || isAdmin"
                                     class="inline-flex items-center justify-center h-3.5 w-3.5 md:h-4 md:w-4 rounded hover:bg-base-content/10 text-base-content/70 hover:text-error transition-colors"

@@ -241,6 +241,7 @@
             "error_updating_settings": "Error updating settings",
             "shift_locked": "Locked",
             "shift_locked_explanation": "This shift is locked. The assignment has been completed and can only be edited by admins.",
+            "participant_collision": "This participant has overlapping shifts",
             "lock_shift": "Lock Shift",
             "unlock_shift": "Unlock Shift",
             "error_shift_locked": "This shift is locked and can only be edited by admins",

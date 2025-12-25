@@ -53,6 +53,9 @@ document.addEventListener('alpine:init', () => {
         activeDayKey: null,
         scrollTimeout: null,
 
+        // Collision detection state
+        participantCollisions: {}, // Map: participant name -> array of colliding shift IDs
+
         // Computed property für den Ladezustand
         get isReady() {
             return !this.isLoading && !this.error && this.plan;
@@ -666,6 +669,9 @@ document.addEventListener('alpine:init', () => {
                     shifts: type.shifts || []
                 }));
 
+                // Detect collisions after loading shifts
+                this.detectCollisions();
+
                 // Don't reinitialize filter manager - it's already created in init()
                 // The templates bind directly to filterManager properties
 
@@ -884,6 +890,89 @@ document.addEventListener('alpine:init', () => {
             };
         },
 
+        // Collision detection functions
+        shiftsOverlap(shift1, shift2) {
+            if (!shift1 || !shift2 || !shift1.start_time || !shift2.start_time) {
+                return false;
+            }
+
+            const start1 = new Date(shift1.start_time).getTime();
+            const end1 = start1 + (shift1.duration || 0) * 60000; // duration in minutes, convert to ms
+            const start2 = new Date(shift2.start_time).getTime();
+            const end2 = start2 + (shift2.duration || 0) * 60000;
+
+            // Two shifts overlap if: start1 < end2 AND start2 < end1
+            return start1 < end2 && start2 < end1;
+        },
+
+        detectCollisions() {
+            // Reset collisions map
+            this.participantCollisions = {};
+
+            // Collect all shifts from all types
+            const allShifts = [];
+            this.shiftTypes.forEach(type => {
+                if (type.shifts && Array.isArray(type.shifts)) {
+                    type.shifts.forEach(shift => {
+                        if (shift.participants && Array.isArray(shift.participants)) {
+                            allShifts.push(shift);
+                        }
+                    });
+                }
+            });
+
+            // Group participants by name and collect their shifts
+            const participantShifts = {};
+            allShifts.forEach(shift => {
+                shift.participants.forEach(participant => {
+                    const name = participant.name;
+                    if (!participantShifts[name]) {
+                        participantShifts[name] = [];
+                    }
+                    participantShifts[name].push(shift);
+                });
+            });
+
+            // Detect collisions for each participant
+            Object.keys(participantShifts).forEach(name => {
+                const shifts = participantShifts[name];
+                const collisions = [];
+
+                // Check all pairs of shifts for this participant
+                for (let i = 0; i < shifts.length; i++) {
+                    for (let j = i + 1; j < shifts.length; j++) {
+                        if (this.shiftsOverlap(shifts[i], shifts[j])) {
+                            // Add both shift IDs to collisions if not already present
+                            if (!collisions.includes(shifts[i].id)) {
+                                collisions.push(shifts[i].id);
+                            }
+                            if (!collisions.includes(shifts[j].id)) {
+                                collisions.push(shifts[j].id);
+                            }
+                        }
+                    }
+                }
+
+                // Only store collisions if there are any
+                if (collisions.length > 0) {
+                    this.participantCollisions[name] = collisions;
+                }
+            });
+        },
+
+        hasCollision(participantName) {
+            if (!participantName) return false;
+            return Array.isArray(this.participantCollisions[participantName]) && 
+                   this.participantCollisions[participantName].length > 0;
+        },
+
+        getCollidingShifts(participantName) {
+            if (!this.hasCollision(participantName)) {
+                return [];
+            }
+            return this.participantCollisions[participantName] || [];
+        },
+
         // Helper for shift type progress calculation and styling
         getShiftTypeProgress(type) {
             if (!type.shifts || type.shifts.length === 0) {
@@ -1078,6 +1167,9 @@ document.addEventListener('alpine:init', () => {
                     this.shiftTypes[typeIndex].shiftsByDate = this.groupShiftsByDate(this.shiftTypes[typeIndex].shifts);
                 }
             }
+
+            // Recalculate collisions after shift deletion
+            this.detectCollisions();
         },
 
         // Helper function to update a shift in the shiftTypes array
@@ -1099,6 +1191,9 @@ document.addEventListener('alpine:init', () => {
                     this.shiftTypes[typeIndex].shiftsByDate = this.groupShiftsByDate(this.shiftTypes[typeIndex].shifts);
                 }
             }
+
+            // Recalculate collisions after shift update (participants may have changed)
+            this.detectCollisions();
         },
 
         // Add new method to handle shift updates
@@ -1122,6 +1217,9 @@ document.addEventListener('alpine:init', () => {
                 // Sort shifts by start time
                 type.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
             });
+
+            // Recalculate collisions after shifts are updated
+            this.detectCollisions();
         },
 
         // Open sort types modal
@@ -1149,6 +1247,9 @@ document.addEventListener('alpine:init', () => {
                         shifts: type.shifts || [],
                         shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                     }));
+
+                    // Recalculate collisions after reloading types
+                    this.detectCollisions();
                 })
                 .catch(error => {
                     console.error('Error reloading types:', error);
