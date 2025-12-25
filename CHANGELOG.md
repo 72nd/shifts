@@ -21,3 +21,9 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Refactor: HTTP Handler** Code repetition within the HTTP handlers has been substantially reduced by introducing helper methods for common functionality.
 - **Fix: AlpineJS Template Directive** Bug in the frontend code.
 - **Fix: Database Deadlock** A deadlock in the database layer when updating the settings for a shift plan has been fixed.
+
+
+## v0.5.1 – Quality of life features
+
+- **Feature: Overbooked shifts filter** The shift view filters now include a "overbooked" filter. This filter shows shifts that have more participants than the required number of participants.
+- **Feature: Collision detection** The shift view now shows a warning icon if a participant has joined two shifts that overlap in time.
