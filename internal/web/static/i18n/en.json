@@ -178,6 +178,7 @@
                 "status_critical": "Critical (< 50%)",
                 "status_not_full": "Not Fully Staffed",
                 "status_full": "Fully Staffed",
+                "status_overbooked": "Overbooked (>100%)",
                 "search": "Search",
                 "search_placeholder": "Search by name...",
                 "clear": "Clear filters",

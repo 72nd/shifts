@@ -96,6 +96,11 @@ export class FilterManager {
                 case 'full':
                     if (participantCount !== shift.required) return false;
                     break;
+                case 'overbooked':
+                    // Overbooked: more participants than required slots
+                    // Exclude unlimited shifts (required === -1) and shifts that are not overbooked
+                    if (shift.required === -1 || shift.required <= 0 || participantCount <= shift.required) return false;
+                    break;
             }
 
             // Name search

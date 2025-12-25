@@ -177,6 +177,7 @@
                 "status_critical": "Kritisch (< 50%)",
                 "status_not_full": "Nicht voll besetzt",
                 "status_full": "Voll besetzt",
+                "status_overbooked": "Überbucht (>100%)",
                 "search": "Suche",
                 "search_placeholder": "Nach Namen suchen...",
                 "clear": "Filter zurücksetzen",

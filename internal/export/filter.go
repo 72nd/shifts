@@ -10,7 +10,7 @@ import (
 type ExportFilter struct {
 	TypeIDs     []int64 // List of shift type IDs to include (empty = all)
 	Day         string  // ISO date for day filter (empty = all days)
-	Status      string  // Status filter: "all", "empty", "critical", "not_full", "full"
+	Status      string  // Status filter: "all", "empty", "critical", "not_full", "full", "overbooked"
 	SearchQuery string  // Search query for participant names (empty = no search)
 }
 
@@ -146,6 +146,10 @@ func (f *ExportFilter) matchesStatusFilter(shift db.Shift) bool {
 		return participantCount < shift.Required
 	case "full":
 		return participantCount == shift.Required
+	case "overbooked":
+		// Overbooked: more participants than required slots
+		// Exclude unlimited shifts (Required <= 0)
+		return shift.Required > 0 && participantCount > shift.Required
 	default:
 		return true
 	}
