@@ -35,6 +35,12 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Fix: Z-Index** Th z-index of the filter and the mobile admin menu has been fixed. They do not obscure the header of the table view anymore.
 
 
+## v0.5.3 – Statistics view enhancements
+
+- **Feature: Daily participant statistics** The statistics view now includes a new section showing participant shifts per day, grouped by shift type with counts. Includes participant name filtering for quick overview.
+- **Enhancement: Collapsible helper rankings** The helper rankings table in the statistics view is now collapsible and collapsed by default, showing only the top 5 entries when collapsed.
+
+
 ## Feature Request / Backlog
 
 - [ ] Dark mode Toggle hört auf nur auf Icon
