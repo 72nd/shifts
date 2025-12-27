@@ -244,37 +244,78 @@
                 <!-- Day Tables -->
                 <template x-for="dayStat in getFilteredDailyParticipantStats()" :key="dayStat.dayKey">
                     <div class="mb-6">
-                        <h3 class="text-lg font-semibold mb-2" x-text="formatDate(dayStat.date)"></h3>
-                        <div class="overflow-x-auto">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th x-text="$t('stats.name')"></th>
-                                        <th x-text="$t('stats.shifts')"></th>
-                                        <th x-text="$t('stats.shift_types')"></th>
-                                        <th x-text="$t('stats.total_hours')"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="participant in dayStat.participants" :key="participant.name">
+                        <!-- Day Header with Collapse Button -->
+                        <div class="flex items-center justify-between cursor-pointer mb-2" @click.stop="toggleDay(dayStat.dayKey)">
+                            <h3 class="text-lg font-semibold mb-0" x-text="formatDate(dayStat.date)"></h3>
+                            <button @click.stop="toggleDay(dayStat.dayKey)" class="btn btn-ghost btn-xs p-0 h-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" 
+                                     :class="{ 'rotate-180': isDayExpanded(dayStat.dayKey) }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Day Table (collapsible) -->
+                        <div x-show="isDayExpanded(dayStat.dayKey)">
+                            <div class="overflow-x-auto">
+                                <table class="table">
+                                    <thead>
                                         <tr>
-                                            <td x-text="participant.name"></td>
-                                            <td x-text="participant.shiftCount"></td>
-                                            <td>
-                                                <div class="flex flex-wrap gap-1">
-                                                    <template x-for="typeInfo in participant.shiftTypes" :key="typeInfo.typeName">
-                                                        <span class="badge badge-outline">
-                                                            <span x-text="typeInfo.typeName"></span>
-                                                            <span class="ml-1 font-semibold" x-text="'(' + typeInfo.count + ')'"></span>
-                                                        </span>
-                                                    </template>
+                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'name')">
+                                                <div class="flex items-center gap-2">
+                                                    <span x-text="$t('stats.name')"></span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'name')" />
+                                                    </svg>
                                                 </div>
-                                            </td>
-                                            <td x-text="formatHours(participant.totalHours) + 'h'"></td>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'shifts')">
+                                                <div class="flex items-center gap-2">
+                                                    <span x-text="$t('stats.shifts')"></span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'shifts')" />
+                                                    </svg>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'types')">
+                                                <div class="flex items-center gap-2">
+                                                    <span x-text="$t('stats.shift_types')"></span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'types')" />
+                                                    </svg>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'hours')">
+                                                <div class="flex items-center gap-2">
+                                                    <span x-text="$t('stats.total_hours')"></span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'hours')" />
+                                                    </svg>
+                                                </div>
+                                            </th>
                                         </tr>
-                                    </template>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="participant in dayStat.participants" :key="participant.name">
+                                            <tr>
+                                                <td x-text="participant.name"></td>
+                                                <td x-text="participant.shiftCount"></td>
+                                                <td>
+                                                    <div class="flex flex-wrap gap-1">
+                                                        <template x-for="typeInfo in participant.shiftTypes" :key="typeInfo.typeName">
+                                                            <span class="badge badge-outline">
+                                                                <span x-text="typeInfo.typeName"></span>
+                                                                <span class="ml-1 font-semibold" x-text="'(' + typeInfo.count + ')'"></span>
+                                                            </span>
+                                                        </template>
+                                                    </div>
+                                                </td>
+                                                <td x-text="formatHours(participant.totalHours) + 'h'"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </template>

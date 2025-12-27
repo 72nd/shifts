@@ -10,6 +10,8 @@ document.addEventListener('alpine:init', () => {
         isHelperRankingsExpanded: false,
         helperRankingsCollapsedLimit: 5,
         selectedParticipantFilter: '',
+        expandedDays: {}, // Track which days are expanded: { dayKey: true }
+        daySortConfig: {}, // Map<dayKey, { column: string, direction: 'asc' | 'desc' }>
         
         // Initialize
         init() {
@@ -22,6 +24,21 @@ document.addEventListener('alpine:init', () => {
             
             // Load data
             this.loadStats(token);
+        },
+        
+        // Initialize expanded days after stats are loaded
+        initExpandedDays() {
+            if (!this.stats?.helper_stats) return;
+            
+            // Expand all days by default if not already set
+            const dailyStats = this.getDailyParticipantStats();
+            const newExpandedDays = { ...this.expandedDays };
+            dailyStats.forEach(dayStat => {
+                if (!(dayStat.dayKey in newExpandedDays)) {
+                    newExpandedDays[dayStat.dayKey] = true;
+                }
+            });
+            this.expandedDays = newExpandedDays;
         },
         
         // Load statistics data
@@ -43,6 +60,11 @@ document.addEventListener('alpine:init', () => {
                 
                 this.plan = planData;
                 this.stats = statsData;
+                
+                // Initialize expanded days after stats are loaded
+                setTimeout(() => {
+                    this.initExpandedDays();
+                }, 0);
                 
             } catch (error) {
                 console.error('Error loading stats:', error);
@@ -344,17 +366,105 @@ document.addEventListener('alpine:init', () => {
             const dailyStats = this.getDailyParticipantStats();
             const filter = this.selectedParticipantFilter.trim().toLowerCase();
             
-            if (!filter) {
-                return dailyStats;
+            let filtered = dailyStats;
+            
+            // Apply participant filter
+            if (filter) {
+                filtered = dailyStats.map(dayStat => ({
+                    ...dayStat,
+                    participants: dayStat.participants.filter(p => 
+                        p.name.toLowerCase().includes(filter)
+                    )
+                })).filter(dayStat => dayStat.participants.length > 0);
             }
             
-            // Filter participants in each day
-            return dailyStats.map(dayStat => ({
-                ...dayStat,
-                participants: dayStat.participants.filter(p => 
-                    p.name.toLowerCase().includes(filter)
-                )
-            })).filter(dayStat => dayStat.participants.length > 0);
+            // Apply sorting for each day
+            return filtered.map(dayStat => {
+                const sortConfig = this.daySortConfig[dayStat.dayKey];
+                if (!sortConfig) {
+                    return dayStat;
+                }
+                
+                const sortedParticipants = [...dayStat.participants].sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (sortConfig.column) {
+                        case 'name':
+                            aVal = a.name.toLowerCase();
+                            bVal = b.name.toLowerCase();
+                            break;
+                        case 'shifts':
+                            aVal = a.shiftCount;
+                            bVal = b.shiftCount;
+                            break;
+                        case 'hours':
+                            aVal = a.totalHours;
+                            bVal = b.totalHours;
+                            break;
+                        case 'types':
+                            aVal = a.shiftTypes.length;
+                            bVal = b.shiftTypes.length;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                
+                return {
+                    ...dayStat,
+                    participants: sortedParticipants
+                };
+            });
+        },
+        
+        // Toggle day expansion
+        toggleDay(dayKey) {
+            this.expandedDays[dayKey] = !this.expandedDays[dayKey];
+            // Force reactivity
+            this.expandedDays = { ...this.expandedDays };
+        },
+        
+        // Check if day is expanded (defaults to true if not set)
+        isDayExpanded(dayKey) {
+            return this.expandedDays[dayKey] !== false;
+        },
+        
+        // Handle column sorting
+        sortColumn(dayKey, column) {
+            const currentSort = this.daySortConfig[dayKey];
+            
+            if (currentSort && currentSort.column === column) {
+                // Toggle direction if same column
+                this.daySortConfig[dayKey] = {
+                    column: column,
+                    direction: currentSort.direction === 'asc' ? 'desc' : 'asc'
+                };
+            } else {
+                // New column, default to ascending
+                this.daySortConfig[dayKey] = {
+                    column: column,
+                    direction: 'asc'
+                };
+            }
+            
+            // Force reactivity
+            this.daySortConfig = { ...this.daySortConfig };
+        },
+        
+        // Get sort icon for column
+        getSortIcon(dayKey, column) {
+            const sortConfig = this.daySortConfig[dayKey];
+            if (!sortConfig || sortConfig.column !== column) {
+                return 'M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4'; // Sort icon (both directions)
+            }
+            if (sortConfig.direction === 'asc') {
+                return 'M5 15l7-7 7 7'; // Up arrow
+            }
+            return 'M19 9l-7 7-7-7'; // Down arrow
         },
         
         // Get helper rankings preview message
