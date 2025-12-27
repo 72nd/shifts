@@ -31,13 +31,12 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 
 ## v0.5.2 – Bug fixes
 
-- [ ] Text overflow for shifts with a lot of participants
-- [ ] Z-Index Filter Shift-Types
-- [ ] Z-Index Mobile Admin Menu
+- **Fix: Text overflow for shifts with a lot of participants** The text overflow for shifts with a lot of participants has been fixed.
+- **Fix: Z-Index** Th z-index of the filter and the mobile admin menu has been fixed. They do not obscure the header of the table view anymore.
+
+
+## Feature Request / Backlog
+
 - [ ] Dark mode Toggle hört auf nur auf Icon
-
-
-## Feature Request:w
-
 - Random Kickout
 - Experience per Participant
