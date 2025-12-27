@@ -273,25 +273,38 @@ document.addEventListener('alpine:init', () => {
         detectShiftOverflow(shiftId, containerEl) {
             if (!shiftId || !containerEl) return;
             
-            // Find the content wrapper inside the container
-            const contentEl = containerEl.querySelector('.timetable-shift-content');
-            if (!contentEl) return;
-            
-            // Get the container's available height (minus padding for expand hint)
-            const containerHeight = containerEl.clientHeight;
-            const contentHeight = contentEl.scrollHeight;
-            
-            // Consider overflow if content is taller than container
-            // Add a small buffer (5px) to account for rounding
-            const hasOverflow = contentHeight > (containerHeight - 5);
-            
-            // Only update state if it changed
-            if (this.shiftOverflowState[shiftId] !== hasOverflow) {
-                this.shiftOverflowState = {
-                    ...this.shiftOverflowState,
-                    [shiftId]: hasOverflow
-                };
-            }
+            // Use requestAnimationFrame to ensure layout is complete, especially for wrapped participants
+            requestAnimationFrame(() => {
+                if (!containerEl.isConnected) return; // Element may have been removed
+                
+                // Find the content wrapper inside the container
+                const contentEl = containerEl.querySelector('.timetable-shift-content');
+                if (!contentEl) return;
+                
+                // Get the container's available height
+                const containerHeight = containerEl.clientHeight;
+                const contentHeight = contentEl.scrollHeight;
+                
+                // Account for padding and expand hint space
+                // When has-overflow class is present, there's extra padding-bottom (1.25rem = 20px)
+                // We need to check if content would overflow without that padding
+                const computedStyle = getComputedStyle(containerEl);
+                const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+                const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
+                const availableHeight = containerHeight - paddingTop - paddingBottom;
+                
+                // Consider overflow if content is taller than available space
+                // Add a small buffer (3px) to account for rounding and sub-pixel rendering
+                const hasOverflow = contentHeight > (availableHeight - 3);
+                
+                // Only update state if it changed
+                if (this.shiftOverflowState[shiftId] !== hasOverflow) {
+                    this.shiftOverflowState = {
+                        ...this.shiftOverflowState,
+                        [shiftId]: hasOverflow
+                    };
+                }
+            });
         },
 
         // Get the day navigation bar height from CSS variable
@@ -1194,6 +1207,14 @@ document.addEventListener('alpine:init', () => {
 
             // Recalculate collisions after shift update (participants may have changed)
             this.detectCollisions();
+            
+            // Re-detect overflow after participants change (they may wrap differently now)
+            this.$nextTick(() => {
+                const containerEl = document.querySelector(`[data-shift-id="${updatedShift.id}"]`);
+                if (containerEl) {
+                    this.detectShiftOverflow(updatedShift.id, containerEl);
+                }
+            });
         },
 
         // Add new method to handle shift updates
@@ -1220,6 +1241,16 @@ document.addEventListener('alpine:init', () => {
 
             // Recalculate collisions after shifts are updated
             this.detectCollisions();
+            
+            // Re-detect overflow for all updated shifts after layout is complete
+            this.$nextTick(() => {
+                shifts.forEach(shift => {
+                    const containerEl = document.querySelector(`[data-shift-id="${shift.id}"]`);
+                    if (containerEl) {
+                        this.detectShiftOverflow(shift.id, containerEl);
+                    }
+                });
+            });
         },
 
         // Open sort types modal

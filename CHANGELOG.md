@@ -27,3 +27,17 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 
 - **Feature: Overbooked shifts filter** The shift view filters now include a "overbooked" filter. This filter shows shifts that have more participants than the required number of participants.
 - **Feature: Collision detection** The shift view now shows a warning icon if a participant has joined two shifts that overlap in time.
+
+
+## v0.5.2 – Bug fixes
+
+- [ ] Text overflow for shifts with a lot of participants
+- [ ] Z-Index Filter Shift-Types
+- [ ] Z-Index Mobile Admin Menu
+- [ ] Dark mode Toggle hört auf nur auf Icon
+
+
+## Feature Request:w
+
+- Random Kickout
+- Experience per Participant
