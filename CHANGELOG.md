@@ -41,6 +41,12 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Collapsible helper rankings** The helper rankings table in the statistics view is now collapsible and collapsed by default, showing only the top 5 entries when collapsed.
 
 
+## v0.5.4 – Daily statistics improvements
+
+- **Enhancement: Collapsible days in daily participant statistics** Each day section in the daily participant statistics view can now be collapsed or expanded individually, making it easier to focus on specific days.
+- **Enhancement: Sortable columns in daily participant statistics** All columns in the daily participant statistics tables are now sortable (name, shifts, shift types, total hours), with visual indicators showing the current sort direction.
+
+
 ## Feature Request / Backlog
 
 - [ ] Dark mode Toggle hört auf nur auf Icon
