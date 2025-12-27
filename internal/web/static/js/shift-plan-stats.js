@@ -7,6 +7,9 @@ document.addEventListener('alpine:init', () => {
         error: null,
         adminToken: '',
         selectedHelper: null,
+        isHelperRankingsExpanded: false,
+        helperRankingsCollapsedLimit: 5,
+        selectedParticipantFilter: '',
         
         // Initialize
         init() {
@@ -267,6 +270,100 @@ document.addEventListener('alpine:init', () => {
         getSelectedHelperDetails() {
             if (!this.selectedHelper || !this.stats) return null;
             return this.stats.helper_stats.find(h => h.name === this.selectedHelper);
+        },
+        
+        // Get visible helper rankings (for collapsed view)
+        getVisibleHelperRankings() {
+            if (!this.stats?.helper_stats) return [];
+            return this.stats.helper_stats.slice(0, this.helperRankingsCollapsedLimit);
+        },
+        
+        // Get daily participant statistics grouped by day
+        getDailyParticipantStats() {
+            if (!this.stats?.helper_stats) return [];
+            
+            // Map to store daily stats: dayKey -> { date, participants: Map<name, {shifts, types, hours}> }
+            const dailyMap = new Map();
+            
+            // Process each helper's shift details
+            this.stats.helper_stats.forEach(helper => {
+                helper.shift_details?.forEach(shiftDetail => {
+                    // Format date as YYYY-MM-DD for grouping
+                    const shiftDate = new Date(shiftDetail.date);
+                    const dayKey = shiftDate.toISOString().split('T')[0];
+                    
+                    // Get or create day entry
+                    let dayStats = dailyMap.get(dayKey);
+                    if (!dayStats) {
+                        dayStats = {
+                            date: shiftDate,
+                            dayKey: dayKey,
+                            participants: new Map()
+                        };
+                        dailyMap.set(dayKey, dayStats);
+                    }
+                    
+                    // Get or create participant entry for this day
+                    let participantStats = dayStats.participants.get(helper.name);
+                    if (!participantStats) {
+                        participantStats = {
+                            name: helper.name,
+                            shiftCount: 0,
+                            shiftTypes: new Map(), // Map<type_name, count>
+                            totalHours: 0
+                        };
+                        dayStats.participants.set(helper.name, participantStats);
+                    }
+                    
+                    // Update participant stats
+                    participantStats.shiftCount++;
+                    const currentCount = participantStats.shiftTypes.get(shiftDetail.type_name) || 0;
+                    participantStats.shiftTypes.set(shiftDetail.type_name, currentCount + 1);
+                    participantStats.totalHours += shiftDetail.duration;
+                });
+            });
+            
+            // Convert to array and sort by date
+            return Array.from(dailyMap.values())
+                .sort((a, b) => a.date - b.date)
+                .map(dayStats => ({
+                    ...dayStats,
+                    participants: Array.from(dayStats.participants.values())
+                        .map(p => ({
+                            ...p,
+                            shiftTypes: Array.from(p.shiftTypes.entries())
+                                .map(([typeName, count]) => ({ typeName, count }))
+                                .sort((a, b) => a.typeName.localeCompare(b.typeName))
+                        }))
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                }));
+        },
+        
+        // Get filtered daily participant stats
+        getFilteredDailyParticipantStats() {
+            const dailyStats = this.getDailyParticipantStats();
+            const filter = this.selectedParticipantFilter.trim().toLowerCase();
+            
+            if (!filter) {
+                return dailyStats;
+            }
+            
+            // Filter participants in each day
+            return dailyStats.map(dayStat => ({
+                ...dayStat,
+                participants: dayStat.participants.filter(p => 
+                    p.name.toLowerCase().includes(filter)
+                )
+            })).filter(dayStat => dayStat.participants.length > 0);
+        },
+        
+        // Get helper rankings preview message
+        getHelperRankingsPreviewMessage() {
+            const total = this.stats?.helper_stats?.length || 0;
+            if (total <= this.helperRankingsCollapsedLimit) {
+                return '';
+            }
+            return `Showing top ${this.helperRankingsCollapsedLimit} (${total} total)`;
         }
     }));
 }); 

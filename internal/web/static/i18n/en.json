@@ -48,6 +48,13 @@
         "status_future": "Future",
         "type_statistics": "Statistics by Shift Type",
         "daily_statistics": "Daily Statistics",
+        "daily_participant_statistics": "Daily Participant Statistics",
+        "filter_participant": "Filter by Participant",
+        "filter_participant_placeholder": "Search by participant name...",
+        "shift_types": "Shift Types",
+        "no_daily_participant_data": "No participant data available for the selected filter",
+        "showing_top_n": "Showing top {n} entries",
+        "total": "total",
         "open_positions": "Open Positions",
         "filled_percentage": "Filled"
     },

@@ -48,6 +48,13 @@
         "status_future": "Zukünftig",
         "type_statistics": "Statistiken nach Schichttyp",
         "daily_statistics": "Tagesstatistiken",
+        "daily_participant_statistics": "Tägliche Teilnehmerstatistiken",
+        "filter_participant": "Nach Teilnehmer filtern",
+        "filter_participant_placeholder": "Nach Teilnehmernamen suchen...",
+        "shift_types": "Schichttypen",
+        "no_daily_participant_data": "Keine Teilnehmerdaten für den ausgewählten Filter verfügbar",
+        "showing_top_n": "Zeige Top {n} Einträge",
+        "total": "gesamt",
         "open_positions": "Offene Positionen",
         "filled_percentage": "Besetzt"
     },
