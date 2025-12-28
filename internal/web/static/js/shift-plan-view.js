@@ -909,9 +909,21 @@ document.addEventListener('alpine:init', () => {
                 return false;
             }
 
-            const start1 = new Date(shift1.start_time).getTime();
+            const date1 = new Date(shift1.start_time);
+            const date2 = new Date(shift2.start_time);
+
+            // Check if shifts are on the same day
+            const date1Str = `${date1.getFullYear()}-${String(date1.getMonth() + 1).padStart(2, '0')}-${String(date1.getDate()).padStart(2, '0')}`;
+            const date2Str = `${date2.getFullYear()}-${String(date2.getMonth() + 1).padStart(2, '0')}-${String(date2.getDate()).padStart(2, '0')}`;
+            
+            // If shifts are on different days, they cannot overlap
+            if (date1Str !== date2Str) {
+                return false;
+            }
+
+            const start1 = date1.getTime();
             const end1 = start1 + (shift1.duration || 0) * 60000; // duration in minutes, convert to ms
-            const start2 = new Date(shift2.start_time).getTime();
+            const start2 = date2.getTime();
             const end2 = start2 + (shift2.duration || 0) * 60000;
 
             // Two shifts overlap if: start1 < end2 AND start2 < end1
