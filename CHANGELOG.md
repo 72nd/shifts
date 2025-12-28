@@ -47,6 +47,12 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Sortable columns in daily participant statistics** All columns in the daily participant statistics tables are now sortable (name, shifts, shift types, total hours), with visual indicators showing the current sort direction.
 
 
+## v0.5.5 – Bug fixes
+
+- **Fix: Timezone conversion bug in frontend time display** A bug in the view that caused incorrect timezone conversion in the frontend time display has been fixed.
+- **Fix: Collision detection** Collision detection now only checks shifts on the same day, preventing false positives for shifts that span across day boundaries.
+
+
 ## Feature Request / Backlog
 
 - [ ] Dark mode Toggle hört auf nur auf Icon
