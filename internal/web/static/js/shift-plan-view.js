@@ -803,27 +803,17 @@ document.addEventListener('alpine:init', () => {
                 const startDate = new Date(dateStr);
                 if (isNaN(startDate.getTime())) return '';
 
-                // Format start time in 24h format
-                const startTime = startDate.toLocaleTimeString(
-                    this.$locale() === 'de' ? 'de-DE' : 'en-GB',
-                    {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    }
-                );
+                // Extract UTC hours and minutes to avoid timezone conversion
+                const startHours = startDate.getUTCHours();
+                const startMinutes = startDate.getUTCMinutes();
+                const startTime = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
 
-                // Calculate end time
+                // Calculate end time in UTC
                 const endDate = new Date(startDate.getTime());
-                endDate.setMinutes(endDate.getMinutes() + duration);
-                const endTime = endDate.toLocaleTimeString(
-                    this.$locale() === 'de' ? 'de-DE' : 'en-GB',
-                    {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    }
-                );
+                endDate.setUTCMinutes(endDate.getUTCMinutes() + duration);
+                const endHours = endDate.getUTCHours();
+                const endMinutes = endDate.getUTCMinutes();
+                const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
 
                 return `${startTime} – ${endTime}`;
             } catch (error) {
@@ -845,14 +835,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         formatTimeOnly(time) {
-            return new Date(time).toLocaleTimeString(
-                this.$locale() === 'de' ? 'de-DE' : 'en-GB',
-                { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false 
-                }
-            );
+            if (!time) return '';
+            try {
+                const date = new Date(time);
+                if (isNaN(date.getTime())) return '';
+                
+                // Extract UTC hours and minutes to avoid timezone conversion
+                const hours = date.getUTCHours();
+                const minutes = date.getUTCMinutes();
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            } catch (error) {
+                console.error('Error formatting time:', error);
+                return '';
+            }
         },
 
         addMinutes(time, minutes) {

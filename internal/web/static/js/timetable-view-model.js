@@ -24,16 +24,20 @@ function formatTimeRange(date, durationMinutes, locale) {
     }
 
     const safeDuration = Number.isFinite(durationMinutes) ? durationMinutes : 0;
+    
+    // Extract UTC hours and minutes to avoid timezone conversion
+    const startHours = date.getUTCHours();
+    const startMinutes = date.getUTCMinutes();
+    const startTime = `${String(startHours).padStart(2, '0')}:${String(startMinutes).padStart(2, '0')}`;
+
+    // Calculate end time in UTC
     const endDate = new Date(date.getTime());
-    endDate.setMinutes(endDate.getMinutes() + safeDuration);
+    endDate.setUTCMinutes(endDate.getUTCMinutes() + safeDuration);
+    const endHours = endDate.getUTCHours();
+    const endMinutes = endDate.getUTCMinutes();
+    const endTime = `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
 
-    const formatter = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    });
-
-    return `${formatter.format(date)} – ${formatter.format(endDate)}`;
+    return `${startTime} – ${endTime}`;
 }
 
 function formatDisplayDate(date, locale, startDate = null) {
