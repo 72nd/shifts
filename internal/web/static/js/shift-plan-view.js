@@ -174,7 +174,20 @@ document.addEventListener('alpine:init', () => {
         initializeViewMode(token) {
             const params = new URLSearchParams(window.location.search);
             const requested = params.get('view');
-            const stored = localStorage.getItem(`shift_view_mode_${token}`);
+
+            // Resolve the server-configured default from the rendered attribute
+            const el = document.querySelector('[data-default-view]');
+            const raw = el?.dataset?.defaultView;
+            const configDefault = raw === 'list' || raw === 'timetable' ? raw : 'timetable';
+
+            // Cache-busting: if the server default changed since the preference was saved,
+            // discard the saved preference so the new default takes effect.
+            const storedDefaultKey = `shift_view_mode_default_${token}`;
+            const storedDefault = localStorage.getItem(storedDefaultKey);
+            if (storedDefault !== configDefault) {
+                localStorage.removeItem(`shift_view_mode_${token}`);
+                localStorage.setItem(storedDefaultKey, configDefault);
+            }
 
             if (requested === 'list' || requested === 'timetable') {
                 this.viewMode = requested;
@@ -182,20 +195,15 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
+            const stored = localStorage.getItem(`shift_view_mode_${token}`);
             if (stored === 'list' || stored === 'timetable') {
                 this.viewMode = stored;
                 this.syncViewModeQuery(stored);
                 return;
             }
 
-            const el = document.querySelector('[data-default-view]');
-            const configDefault = el?.dataset?.defaultView;
-            const fallback =
-                configDefault === 'list' || configDefault === 'timetable'
-                    ? configDefault
-                    : 'timetable';
-            this.viewMode = fallback;
-            this.syncViewModeQuery(fallback);
+            this.viewMode = configDefault;
+            this.syncViewModeQuery(configDefault);
         },
 
         syncViewModeQuery(mode) {
