@@ -112,13 +112,22 @@ func (s *Server) handleGetShiftPlan(w http.ResponseWriter, r *http.Request) {
 	s.respondJSON(w, response)
 }
 
+// viewShiftPlanPageData is passed to view.html (wrapped as template "Data").
+type viewShiftPlanPageData struct {
+	Plan        *db.ShiftPlan
+	DefaultView string
+}
+
 func (s *Server) handleViewShiftPlan(w http.ResponseWriter, r *http.Request) {
 	plan, ok := s.getPlanByToken(w, r)
 	if !ok {
 		return
 	}
 
-	s.templates.render(w, "view.html", plan)
+	s.templates.render(w, "view.html", viewShiftPlanPageData{
+		Plan:        plan,
+		DefaultView: s.defaultView,
+	})
 }
 
 func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {

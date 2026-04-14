@@ -188,8 +188,14 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            this.viewMode = 'timetable';
-            this.syncViewModeQuery('timetable');
+            const el = document.querySelector('[data-default-view]');
+            const configDefault = el?.dataset?.defaultView;
+            const fallback =
+                configDefault === 'list' || configDefault === 'timetable'
+                    ? configDefault
+                    : 'timetable';
+            this.viewMode = fallback;
+            this.syncViewModeQuery(fallback);
         },
 
         syncViewModeQuery(mode) {

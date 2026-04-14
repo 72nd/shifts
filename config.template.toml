@@ -10,4 +10,7 @@ log_level = "info"
 
 # Metrics configuration (separate port, not exposed publicly)
 metrics_enabled = true
-metrics_port = 9090 
+metrics_port = 9090
+
+# Default view for shift plans when the visitor has no ?view= or saved preference ("timetable" or "list")
+default_view = "timetable"

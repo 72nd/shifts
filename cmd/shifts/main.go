@@ -42,6 +42,10 @@ func main() {
 		logger.Error("failed to load config", "error", err)
 		os.Exit(1)
 	}
+	if err := cfg.NormalizeDefaultView(); err != nil {
+		logger.Error("invalid config", "error", err)
+		os.Exit(1)
+	}
 
 	// Update log level if specified in config
 	if cfg.LogLevel != "" {
@@ -70,7 +74,7 @@ func main() {
 	defer database.Close()
 
 	// Create server
-	server, err := web.NewServer(database, logger)
+	server, err := web.NewServer(database, logger, cfg.DefaultView)
 	if err != nil {
 		logger.Error("failed to create server", "error", err)
 		os.Exit(1)

@@ -22,6 +22,9 @@ type Config struct {
 	// Metrics configuration
 	MetricsEnabled bool `toml:"metrics_enabled"`
 	MetricsPort    int  `toml:"metrics_port"`
+
+	// UI: default shift plan view when URL and localStorage do not specify one ("list" or "timetable")
+	DefaultView string `toml:"default_view"`
 }
 
 // DefaultConfig returns a configuration with default values
@@ -33,7 +36,20 @@ func DefaultConfig() Config {
 		LogLevel:       "info",
 		MetricsEnabled: false,
 		MetricsPort:    9090,
+		DefaultView:    "timetable",
 	}
+}
+
+// NormalizeDefaultView sets DefaultView to "timetable" if empty and validates it is "list" or "timetable".
+func (c *Config) NormalizeDefaultView() error {
+	if c.DefaultView == "" {
+		c.DefaultView = "timetable"
+		return nil
+	}
+	if c.DefaultView != "list" && c.DefaultView != "timetable" {
+		return fmt.Errorf("invalid default_view %q: must be %q or %q", c.DefaultView, "list", "timetable")
+	}
+	return nil
 }
 
 // LoadConfig loads the configuration from a TOML file

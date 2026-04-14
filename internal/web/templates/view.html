@@ -1,14 +1,14 @@
 {{ template "base.html" . }}
 
 {{ define "meta" }}
-<title>{{ .Data.TitleEN }} - Shifts</title>
-<meta property="og:title" content="{{ .Data.TitleEN }} - Schipla">
-<meta property="og:description" content="{{ if .Data.DescriptionEN }}{{ .Data.DescriptionEN }}{{ else }}Shift plan for {{ .Data.TitleEN }}. Manage and join shifts easily.{{ end }}">
-<meta name="description" content="{{ if .Data.DescriptionEN }}{{ .Data.DescriptionEN }}{{ else }}Shift plan for {{ .Data.TitleEN }}. Manage and join shifts easily.{{ end }}">
+<title>{{ .Data.Plan.TitleEN }} - Shifts</title>
+<meta property="og:title" content="{{ .Data.Plan.TitleEN }} - Schipla">
+<meta property="og:description" content="{{ if .Data.Plan.DescriptionEN }}{{ .Data.Plan.DescriptionEN }}{{ else }}Shift plan for {{ .Data.Plan.TitleEN }}. Manage and join shifts easily.{{ end }}">
+<meta name="description" content="{{ if .Data.Plan.DescriptionEN }}{{ .Data.Plan.DescriptionEN }}{{ else }}Shift plan for {{ .Data.Plan.TitleEN }}. Manage and join shifts easily.{{ end }}">
 {{ end }}
 
 {{ define "content" }}
-<div x-data="shiftPlanView" x-init="init()" class="container mx-auto px-0 md:px-2">
+<div x-data="shiftPlanView" x-init="init()" class="container mx-auto px-0 md:px-2" data-default-view="{{ .Data.DefaultView }}">
     <!-- Loading State -->
     <template x-if="isLoading">
         <div class="flex justify-center items-center min-h-[50vh]">

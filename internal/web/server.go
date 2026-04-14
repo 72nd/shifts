@@ -33,10 +33,11 @@ type Server struct {
 	middleware    *middlewareManager
 	router        *mux.Router
 	exportService *export.Service
+	defaultView   string // "list" or "timetable" — fallback for shift plan page view mode
 }
 
-// NewServer creates a new server instance
-func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
+// NewServer creates a new server instance. defaultView must be "list" or "timetable".
+func NewServer(db *db.DB, logger *slog.Logger, defaultView string) (*Server, error) {
 	// Create export service
 	exportService := export.NewService(db)
 
@@ -56,6 +57,7 @@ func NewServer(db *db.DB, logger *slog.Logger) (*Server, error) {
 		middleware:    newMiddlewareManager(logger, db, hashPassword),
 		router:        mux.NewRouter(),
 		exportService: exportService,
+		defaultView:   defaultView,
 	}
 
 	// Parse templates
