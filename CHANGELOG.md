@@ -52,6 +52,14 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Fix: Collision detection** Collision detection now only checks shifts on the same day, preventing false positives for shifts that span across day boundaries.
 
 
+## v0.5.6 – Timetable performance improvements
+
+- **Feature: Configurable default view** The default view for shift plans can now be configured in the `config.toml` file.
+- **Enhancement: Default view preference reset** When the configured default view changes, previously saved per-plan view preferences in the browser are cleared so the new default applies.
+- **Enhancement: Timetable view performance** Large shift plans load faster: background grid lines are drawn with CSS instead of hundreds of DOM nodes, overflow detection runs in one batched pass, list view uses pre-grouped shifts by date, and day sections use `content-visibility` so off-screen content is skipped during layout.
+
+
+
 ## Feature Request / Backlog
 
 - [ ] Dark mode Toggle hört auf nur auf Icon

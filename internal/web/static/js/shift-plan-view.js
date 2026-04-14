@@ -230,6 +230,7 @@ document.addEventListener('alpine:init', () => {
                 // Initialize active day when switching to timetable view
                 if (mode === 'timetable') {
                     this.initTimetableActiveDay();
+                    this.detectAllShiftOverflows();
                 }
             });
         },
@@ -276,6 +277,7 @@ document.addEventListener('alpine:init', () => {
             const nextState = { ...this.expandedTimetableShifts };
             nextState[shiftId] = !nextState[shiftId];
             this.expandedTimetableShifts = nextState;
+            this.$nextTick(() => this.detectAllShiftOverflows());
         },
 
         // Check if a shift cell has overflow
@@ -283,41 +285,26 @@ document.addEventListener('alpine:init', () => {
             return Boolean(this.shiftOverflowState?.[shiftId]);
         },
 
-        // Detect overflow by comparing content height to container height
-        detectShiftOverflow(shiftId, containerEl) {
-            if (!shiftId || !containerEl) return;
-            
-            // Use requestAnimationFrame to ensure layout is complete, especially for wrapped participants
+        /** One RAF pass over all timetable shift cells — single reactivity update (performance). */
+        detectAllShiftOverflows() {
             requestAnimationFrame(() => {
-                if (!containerEl.isConnected) return; // Element may have been removed
-                
-                // Find the content wrapper inside the container
-                const contentEl = containerEl.querySelector('.timetable-shift-content');
-                if (!contentEl) return;
-                
-                // Get the container's available height
-                const containerHeight = containerEl.clientHeight;
-                const contentHeight = contentEl.scrollHeight;
-                
-                // Account for padding and expand hint space
-                // When has-overflow class is present, there's extra padding-bottom (1.25rem = 20px)
-                // We need to check if content would overflow without that padding
-                const computedStyle = getComputedStyle(containerEl);
-                const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-                const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-                const availableHeight = containerHeight - paddingTop - paddingBottom;
-                
-                // Consider overflow if content is taller than available space
-                // Add a small buffer (3px) to account for rounding and sub-pixel rendering
-                const hasOverflow = contentHeight > (availableHeight - 3);
-                
-                // Only update state if it changed
-                if (this.shiftOverflowState[shiftId] !== hasOverflow) {
-                    this.shiftOverflowState = {
-                        ...this.shiftOverflowState,
-                        [shiftId]: hasOverflow
-                    };
-                }
+                const container = this.$refs.timetableContainer;
+                if (!container) return;
+                const newState = {};
+                container.querySelectorAll('[data-shift-id]').forEach(el => {
+                    const shiftId = el.dataset.shiftId;
+                    if (!shiftId) return;
+                    const contentEl = el.querySelector('.timetable-shift-content');
+                    if (!contentEl) return;
+                    const containerHeight = el.clientHeight;
+                    const contentHeight = contentEl.scrollHeight;
+                    const style = getComputedStyle(el);
+                    const paddingTop = parseFloat(style.paddingTop) || 0;
+                    const paddingBottom = parseFloat(style.paddingBottom) || 0;
+                    const availableHeight = containerHeight - paddingTop - paddingBottom;
+                    newState[shiftId] = contentHeight > (availableHeight - 3);
+                });
+                this.shiftOverflowState = newState;
             });
         },
 
@@ -693,7 +680,8 @@ document.addEventListener('alpine:init', () => {
                 // Update shift types with their shifts
                 this.shiftTypes = types.map(type => ({
                     ...type,
-                    shifts: type.shifts || []
+                    shifts: type.shifts || [],
+                    shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
 
                 // Detect collisions after loading shifts
@@ -768,6 +756,7 @@ document.addEventListener('alpine:init', () => {
                 this.shiftTypes = [];
             } finally {
                 this.isLoading = false;
+                this.$nextTick(() => this.detectAllShiftOverflows());
             }
         },
 
@@ -1234,21 +1223,17 @@ document.addEventListener('alpine:init', () => {
             // Recalculate collisions after shift update (participants may have changed)
             this.detectCollisions();
             
-            // Re-detect overflow after participants change (they may wrap differently now)
-            this.$nextTick(() => {
-                const containerEl = document.querySelector(`[data-shift-id="${updatedShift.id}"]`);
-                if (containerEl) {
-                    this.detectShiftOverflow(updatedShift.id, containerEl);
-                }
-            });
+            this.$nextTick(() => this.detectAllShiftOverflows());
         },
 
         // Add new method to handle shift updates
         handleShiftsUpdate(shifts) {
+            const touchedTypeIndices = new Set();
             // Update or add the shifts to their respective types
             shifts.forEach(shift => {
                 const typeIndex = this.shiftTypes.findIndex(type => type.id === shift.type_id);
                 if (typeIndex === -1) return;
+                touchedTypeIndices.add(typeIndex);
 
                 const type = this.shiftTypes[typeIndex];
                 type.shifts = type.shifts || [];
@@ -1265,18 +1250,15 @@ document.addEventListener('alpine:init', () => {
                 type.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
             });
 
+            touchedTypeIndices.forEach(typeIndex => {
+                const t = this.shiftTypes[typeIndex];
+                t.shiftsByDate = this.groupShiftsByDate(t.shifts || []);
+            });
+
             // Recalculate collisions after shifts are updated
             this.detectCollisions();
-            
-            // Re-detect overflow for all updated shifts after layout is complete
-            this.$nextTick(() => {
-                shifts.forEach(shift => {
-                    const containerEl = document.querySelector(`[data-shift-id="${shift.id}"]`);
-                    if (containerEl) {
-                        this.detectShiftOverflow(shift.id, containerEl);
-                    }
-                });
-            });
+
+            this.$nextTick(() => this.detectAllShiftOverflows());
         },
 
         // Open sort types modal

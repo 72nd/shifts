@@ -157,7 +157,7 @@
 
             <!-- Shifts grouped by date -->
             <template x-if="type.shifts && type.shifts.length > 0">
-                <template x-for="dateGroup in groupShiftsByDate(type.shifts)" :key="dateGroup.date">
+                <template x-for="dateGroup in (type.shiftsByDate || [])" :key="dateGroup.date">
                     <div class="mb-4 mt-3">
                         <div class="flex items-center gap-2 mb-1 md:mb-2">
                             <h3 class="text-base font-medium" x-text="formatDate(dateGroup.date)"></h3>

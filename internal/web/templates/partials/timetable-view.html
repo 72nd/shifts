@@ -89,12 +89,6 @@
                                 <template x-for="column in day.columns" :key="`col-${day.dateKey}-${column.typeId}`">
                                     <div class="timetable-column">
                                         <div class="timetable-column-body">
-                                            <div class="timetable-grid-lines">
-                                                <template x-for="slot in timetableModel.timeScale" :key="slot.minute">
-                                                    <div class="timetable-grid-slot" :class="slot.isHour ? 'is-hour' : ''"></div>
-                                                </template>
-                                            </div>
-
                                             <template x-if="column.shifts.length === 0">
                                                 <div class="timetable-column-empty" x-text="$t('shift_plans.view.timetable_empty_column')"></div>
                                             </template>
@@ -104,7 +98,6 @@
                                                     :style="getTimetableShiftStyle(shift)"
                                                     :data-fill-status="shift.fillStatus"
                                                     :data-shift-id="shift.id"
-                                                    x-init="$nextTick(() => detectShiftOverflow(shift.id, $el))"
                                                     @click="hasShiftOverflow(shift.id) ? toggleTimetableShift(shift.id) : null"
                                                     @contextmenu="isAdmin ? handleTimetableShiftContextMenu(shift, $event) : null"
                                                     :class="{ 
