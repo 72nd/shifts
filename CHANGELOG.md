@@ -4,10 +4,10 @@
 
 This release was prepared for 39c3 and now contains (hopefully) all features necessary for Congress.
 
-- **Feature: (Open) API Documentation** The API is now documented and can be accessed via `your-domain.com/swagger/index.html` and `your-domain.com/swagger/doc.json`.
+- **Feature: (Open) API Documentation** The API is now documented and can be accessed via `YOUR_DOMAIN/swagger/index.html` and `YOUR_DOMAIN/swagger/doc.json`.
 - **Feature: API Batch Operations** The API now supports batch operations for the creation, (partial) updating and deletion of shifts.
 - **Feature: Export Shifts as CSV** Shifts can now be exported to CSV files.
-- **Feature: Metrics Endpoint** The application now exposes a Prometheus metrics endpoint at `127.0.0.1:METRICS_PORT/metrics`. This provides insight into both the performance and business metrics of the application.
+- **Feature: Metrics Endpoint** The application now exposes a Prometheus metrics endpoint at `YOUR_DOMAIN:METRICS_PORT/metrics`. This provides insight into both the performance and business metrics of the application.
 - **Feature: Validation of Shift Date and Time** Shifts can now only be created within the start and end date of the shift plan.
 - **Enhancement: Transactional DB Operations** All database operations are now wrapped in a transaction. This should make the database layer more robust.
 - **Enhancement: Table View** Shifts with descriptions that overflow the cell height are now handled much better. The description is always rendered as markdown and the expanding/collapsing is now much more stable.
@@ -59,9 +59,19 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Timetable view performance** Large shift plans load faster: background grid lines are drawn with CSS instead of hundreds of DOM nodes, overflow detection runs in one batched pass, list view uses pre-grouped shifts by date, and day sections use `content-visibility` so off-screen content is skipped during layout.
 
 
+## v0.5.7 – Documentation and installation improvements
+
+- **Enhancement: Landing page rewritten for clarity** The start page was simplified and de-cluttered.
+- **Enhancement: README rewritten** The README has been completely revised to be clearer and more organized.
+- **Enhancement: Installation section added to README** Pre-built Linux binaries (amd64/arm64) are linked from GitHub Releases; all other platforms require a manual build due to CGo (SQLite).
+- enhancement: ältere changelog entries wurden in ihrer verständlichkeit verbessert.
+- **Development: `make dist` target** The Makefile now includes a `dist` target that cross-compiles the application for Linux and Windows on both amd64 and arm64. Binaries are written to a `dist/` folder with names indicating the target platform and architecture (e.g. `shifts-linux-arm64`). `make clean` also removes the `dist/` folder.
+
 
 ## Feature Request / Backlog
 
 - [ ] Dark mode Toggle hört auf nur auf Icon
 - Random Kickout
 - Experience per Participant
+- DB migration infrastructure
+- Usable README
