@@ -1,33 +1,26 @@
-# Makefile to pull latest tag in current repo and build Go binary
+# Makefile for building the Shifts application
 
-REPO_URL := git@github.com/72nd/schipla.git  # replace OWNER/REPO
-BRANCH   ?= v2                             # git dev branch
+REPO_URL  := git@github.com/72nd/schipla.git
+BRANCH    ?= v2
 GO_OUTPUT := shifts
-GO_MAIN := cmd/shifts/main.go
-
-# Mode: tag | dev
-MODE ?= dev
-
-# Repository configuration
-REPO_URL := https://github.com/OWNER/REPO.git   # replace OWNER/REPO
-BRANCH   ?= main                                # dev branch
+GO_MAIN   := cmd/shifts/main.go
 
 # Mode: tag | dev
 MODE ?= tag
-
-# Go build configuration
-GO_OUTPUT := shifts
-GO_MAIN   := cmd/shifts/main.go
 
 # Go tooling
 GO_BIN := $(shell go env GOPATH)/bin
 SWAG   := $(GO_BIN)/swag
 
-.PHONY: all update docs build clean status tools
+.PHONY: all install update docs build clean status tools help
 
-all: update docs build
+## all: Update to the latest release and rebuild (shortcut for: make update && make install)
+all: update install
 
-# Clone if needed, then switch based on MODE
+## install: Generate Swagger docs and compile the binary
+install: docs build
+
+## update: Fetch and switch to the latest release tag (use MODE=dev for the dev branch)
 update:
 	@if [ ! -d ".git" ]; then \
 		echo "No git repo found. Cloning..."; \
@@ -45,7 +38,7 @@ update:
 		git checkout $$LATEST_TAG; \
 	fi
 
-# Ensure swag is installed
+## tools: Install the Swag CLI tool if not already present
 tools:
 	@if [ ! -x "$(SWAG)" ]; then \
 		echo "Installing swag..."; \
@@ -54,7 +47,7 @@ tools:
 		echo "swag already installed"; \
 	fi
 
-# Build Swagger API docs
+## docs: Generate Swagger API documentation (runs tools first)
 docs: tools
 	@echo "Generating Swagger docs..."
 	@$(SWAG) init \
@@ -63,22 +56,26 @@ docs: tools
 		--parseDependency \
 		--parseInternal
 
-# Build Go binary with CGO enabled
+## build: Compile the binary (CGO_ENABLED=1 required for SQLite)
 build:
-	@echo "Building $(GO_OUTPUT) (MODE=$(MODE), CGO_ENABLED=1)..."
+	@echo "Building $(GO_OUTPUT)..."
 	@CGO_ENABLED=1 go build -o $(GO_OUTPUT) $(GO_MAIN)
-	@echo "Build complete: $(GO_OUTPUT)"
+	@echo "Build complete: ./$(GO_OUTPUT)"
 
-# Show current git state
+## status: Show current git state and active branch
 status:
 	@echo "MODE=$(MODE)"
 	@echo "BRANCH=$(BRANCH)"
 	@git --no-pager describe --tags --dirty --always
 	@git --no-pager branch --show-current
 
-# Clean generated files
+## clean: Remove the compiled binary and generated docs/ folder
 clean:
 	@echo "Cleaning up..."
 	@rm -f $(GO_OUTPUT)
 	@rm -rf docs
 
+## help: List all available targets
+help:
+	@echo "Available targets:"
+	@grep -E '^## ' Makefile | sed 's/## /  make /'
