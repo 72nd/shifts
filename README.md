@@ -1,35 +1,52 @@
 # Shifts - Collaborative Shift Planning
 
-Shifts is a modern, web-based application for collaborative shift planning and management. It provides an intuitive interface for creating, organizing, and signing up for shifts, making it ideal for volunteer organizations, event planning, and team coordination.
+The Shifts shift planning web application enables the collaborative coordination of shift cover for an event. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. The application also offers exports in various formats as well as printable PDFs.
 
-![Shifts Logo](internal/web/static/favicon.svg)
+![Shifts Logo](internal/web/static/img/favicon.svg)
+
+The application was developed out of frustration that existing tools were either too complicated for participants to use (login, email, etc.) or simply could not handle more complex events with numerous shifts and shift types.
+
+> [!WARNING]
+> **LLM Disclaimer.** This tool is the result of an experiment designed to investigate the potential applications of Vibe Coding. The architecture was specified by humans. Nevertheless, it is likely that this code will contain the usual problems and errors associated with LLM coding agents. Use is therefore at your own risk, and you must carry out your own risk assessment. Apart from a freely chosen nickname, the tool does not store any user data.
 
 ## Features
 
-- **Intuitive Shift Management**
-  - Create, edit, and delete shifts with customizable details
-  - Set shift duration, required participants, and descriptions
-  - Organize shifts by type with color-coding for easy identification
+- Written in Go, with SQLite used as the database backend. Deployment is straightforward, requiring just a single binary.
+- Participants simply need the link to the shift schedule and can then sign up using a nickname of their choice. No login or email address is required. The aim was to minimise the hassle for event participants as much as possible.
+- No login is required to create shift schedules either. A single Shifts instance can manage any number of shift schedules. 
+- The administration mode is secured with an admin password, which is displayed once after the schedule has been created.
+- Each shift schedule includes a description (Markdown is supported) as well as shift types and shifts. The number of people required is defined for each shift. An unlimited number of people per shift is supported.
+- Filter functions
+- Two different views of the shifts: one as a list and one as a table/timetable. The list view is particularly suitable for small screens (smartphones), whilst the table view offers a convenient overview of many shifts.
+- Organisers have access to comprehensive statistical functions.
+- Shift schedules can be exported as CSV or PDF files. For example, this allows for a transition to a paper-based shift schedule during the event via the poster export feature.
+- The collaborative planning mode supports scenarios where a significantly larger number of people are interested in shifts and/or where organisers wish to retain control over the final shift allocation themselves. In this mode, any number of participants can ‘apply’ for a shift. The organisers then select the participants and lock the shift. After that, it can no longer be modified by non-admins.
+- Bilingualism: Shift schedules can be created in either a single language or in two languages (currently German and English).
+- A REST API and its documentation are available.
+- Light and dark modes are supported.
 
-- **Collaborative Participation**
-  - Sign up for shifts with a simple click
-  - View who else has signed up for each shift
-  - Remove yourself from shifts when needed
+## Showcase
 
-- **Flexible Organization**
-  - Group shifts by date with customizable day boundaries
-  - Filter shifts by type to focus on relevant information
-  - Sort shift types to prioritize important categories
 
-- **User-Friendly Interface**
-  - Responsive design works on desktop and mobile devices
-  - Dark/light theme support for comfortable viewing
-  - Multilingual support (currently English and German)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/list_view.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
+  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/table_view.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
+</p>
+<p align="center">
+  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">List view: Optimized for small screens with clear overview and filter options.</span>
+  <span style="display: inline-block; width: 45%; text-align: center;">Table/timetable view: Convenient overview for events with many shifts and types.</span>
+</p>
 
-- **Administrative Controls**
-  - Password-protected admin functions
-  - Manage shift types and their properties
-  - Configure plan settings including day boundaries
+<p align="center">
+  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/admin_panel.png" alt="Admin Panel" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
+  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/statistics_view.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
+</p>
+<p align="center">
+  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Admin panel: Manage shift types, lock shifts, and access all exports.</span>
+  <span style="display: inline-block; width: 45%; text-align: center;">Statistics view: Get quick daily overviews and helper rankings.</span>
+</p>
+
+
 
 ## Requirements
 
