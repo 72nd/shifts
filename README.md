@@ -19,8 +19,8 @@ The application was developed out of frustration that existing tools were either
   <img src="opt/showcase-02.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
 </p>
 <p align="center">
-  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">List view: Optimized for small screens with clear overview and filter options.</span>
-  <span style="display: inline-block; width: 45%; text-align: center;">Table/timetable view: Convenient overview for events with many shifts and types.</span>
+  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Create a new shift plan.</span>
+  <span style="display: inline-block; width: 45%; text-align: center;">List view</span>
 </p>
 
 <p align="center">
@@ -28,8 +28,8 @@ The application was developed out of frustration that existing tools were either
   <img src="opt/showcase-04.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
 </p>
 <p align="center">
-  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Admin panel: Manage shift types, lock shifts, and access all exports.</span>
-  <span style="display: inline-block; width: 45%; text-align: center;">Statistics view: Get quick daily overviews and helper rankings.</span>
+  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Table view.</span>
+  <span style="display: inline-block; width: 45%; text-align: center;">Edit shifts and shift types.</span>
 </p>
 
 ## Features
