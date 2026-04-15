@@ -1,15 +1,36 @@
-# Shifts - Collaborative Shift Planning
-
-The Shifts shift planning web application enables the collaborative coordination of shift cover for an event. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. The application also offers exports in various formats as well as printable PDFs.
-
 <p align="center">
   <img src="internal/web/static/img/favicon.svg" alt="Shifts Logo" style="width: 120px;" />
 </p>
+
+# Shifts - Collaborative Shift Planning
+
+The Shifts shift planning web application enables the collaborative coordination of shift cover for an event. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. The application also offers exports in various formats as well as printable PDFs.
 
 The application was developed out of frustration that existing tools were either too complicated for participants to use (login, email, etc.) or simply could not handle more complex events with numerous shifts and shift types.
 
 > [!WARNING]
 > **LLM Disclaimer.** This tool is the result of an experiment designed to investigate the potential applications of Vibe Coding. The architecture was specified by humans. Nevertheless, it is likely that this code will contain the usual problems and errors associated with LLM coding agents. Use is therefore at your own risk, and you must carry out your own risk assessment. Apart from a freely chosen nickname, the tool does not store any user data.
+
+
+## Showcase
+
+<p align="center">
+  <img src="opt/showcase-01.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
+  <img src="opt/showcase-02.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
+</p>
+<p align="center">
+  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">List view: Optimized for small screens with clear overview and filter options.</span>
+  <span style="display: inline-block; width: 45%; text-align: center;">Table/timetable view: Convenient overview for events with many shifts and types.</span>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/admin_panel.png" alt="Admin Panel" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
+  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/statistics_view.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
+</p>
+<p align="center">
+  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Admin panel: Manage shift types, lock shifts, and access all exports.</span>
+  <span style="display: inline-block; width: 45%; text-align: center;">Statistics view: Get quick daily overviews and helper rankings.</span>
+</p>
 
 ## Features
 
@@ -28,26 +49,6 @@ The application was developed out of frustration that existing tools were either
 - A REST API and its documentation are available.
 - Light and dark modes are supported.
 
-## Showcase
-
-
-<p align="center">
-  <img src="opt/01-showcase.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
-  <img src="opt/02-showcase.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
-</p>
-<p align="center">
-  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">List view: Optimized for small screens with clear overview and filter options.</span>
-  <span style="display: inline-block; width: 45%; text-align: center;">Table/timetable view: Convenient overview for events with many shifts and types.</span>
-</p>
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/admin_panel.png" alt="Admin Panel" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
-  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/statistics_view.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
-</p>
-<p align="center">
-  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Admin panel: Manage shift types, lock shifts, and access all exports.</span>
-  <span style="display: inline-block; width: 45%; text-align: center;">Statistics view: Get quick daily overviews and helper rankings.</span>
-</p>
 
 
 
