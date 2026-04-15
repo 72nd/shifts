@@ -1,25 +1,19 @@
 {{ template "base.html" . }}
 
 {{ define "meta" }}
-<title>Shifts - Shift Planning Made Easy</title>
-<meta property="og:title" content="Shifts - Shift Planning Made Easy">
+<title>Shifts - Shift Planning for Events</title>
+<meta property="og:title" content="Shifts - Shift Planning for Events">
 <meta property="og:description"
-    content="Create and manage shift plans effortlessly. Perfect for events, volunteer work, and team organization. Start organizing your team today!">
+    content="Free shift planning for events. Create a plan, share one link, and coordinate sign-ups in list or timetable view.">
 <meta name="description"
-    content="Create and manage shift plans effortlessly. Perfect for events, volunteer work, and team organization. Start organizing your team today!">
+    content="Free shift planning for events. Create a plan, share one link, and coordinate sign-ups in list or timetable view.">
 {{ end }}
 
 {{ define "content" }}
 <div x-data="indexPage" class="min-h-screen">
     <!-- Hero Section -->
-    <div class="hero min-h-[55vh] bg-base-200 relative overflow-hidden">
-        <!-- Background Pattern -->
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute inset-0"
-                style="background-image: radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0); background-size: 32px 32px;">
-            </div>
-        </div>
-        <div class="hero-content text-center flex flex-col max-w-4xl relative">
+    <div class="hero min-h-[55vh] bg-base-200">
+        <div class="hero-content text-center flex flex-col max-w-4xl">
             <div class="w-24 h-24 mb-8">
                 <svg class="w-full h-full text-primary" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
                     <path d="M813.009 310.274v-28.548h21.399c69.402 0 125.632 52.769 125.632 117.629v22.028h-30.08v-22.028c0-49.226-42.879-89.081-95.552-89.081h-21.399Z" style="fill:currentColor" transform="matrix(1.36688 0 0 1.44023 -297.877 -301.083)"/>
@@ -30,9 +24,9 @@
                     <path style="fill:currentColor" d="M447.415 281.829h290.171v28.342H447.415z" transform="matrix(1.34598 0 0 1.44023 -285.493 -301.083)"/>
                 </svg>
             </div>
-            <h1 class="text-5xl pb-1 md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent" x-text="$t('home.title')">Collaborative Shift Planning for Humans</h1>
-            <p class="text-xl md:text-2xl mb-12 max-w-2xl mx-auto opacity-90" x-text="$t('home.subtitle')">Create and
-                manage shift plans effortlessly. Perfect for events, volunteer work, and team organization.</p>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" x-text="$t('home.title')">Shift planning for events.</h1>
+            <p class="text-lg md:text-xl mb-12 max-w-2xl mx-auto opacity-90" x-text="$t('home.subtitle')">A free tool to
+                coordinate who covers which shift - no accounts needed for participants.</p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <button @click="createNewPlan" class="btn btn-primary btn-lg gap-2 min-w-[200px]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -46,124 +40,66 @@
         </div>
     </div>
 
-    <!-- Features Section -->
-    <div id="features" class="py-16 bg-base-100">
-        <div class="container mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12" x-text="$t('home.features')">Features</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="card bg-base-200">
-                    <div class="card-body items-center text-center">
-                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                        </div>
-                        <h3 class="card-title" x-text="$t('home.feature_1_title')">Easy Planning</h3>
-                        <p class="opacity-80" x-text="$t('home.feature_1_desc')">Create and manage shifts with an
-                            intuitive interface. Perfect for any type of event or team.</p>
-                    </div>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="card bg-base-200">
-                    <div class="card-body items-center text-center">
-                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </div>
-                        <h3 class="card-title" x-text="$t('home.feature_2_title')">Team Management</h3>
-                        <p class="opacity-80" x-text="$t('home.feature_2_desc')">Track participants, manage roles, and
-                            ensure all shifts are properly staffed.</p>
-                    </div>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="card bg-base-200">
-                    <div class="card-body items-center text-center">
-                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <h3 class="card-title" x-text="$t('home.feature_3_title')">Real-time Updates</h3>
-                        <p class="opacity-80" x-text="$t('home.feature_3_desc')">Stay informed with instant
-                            notifications about shift changes and updates.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- How it Works Section -->
-    <div class="py-16 bg-base-200">
+    <div class="py-16 bg-base-100">
         <div class="container mx-auto px-4">
             <h2 class="text-3xl font-bold text-center mb-12" x-text="$t('home.how_it_works')">How it Works</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- Step 1 -->
-                <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-primary text-primary-content rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                        1</div>
-                    <h3 class="font-bold mb-2" x-text="$t('home.step_1_title')">Create a Plan</h3>
-                    <p class="opacity-80" x-text="$t('home.step_1_desc')">Start by creating a new shift plan and
-                        customize it to your needs.</p>
-                </div>
+            <ol class="max-w-3xl mx-auto space-y-6 list-decimal list-inside text-left">
+                <li>
+                    <span class="font-semibold" x-text="$t('home.step_1_title')">Create a Plan</span>
+                    <p class="opacity-80 mt-1" x-text="$t('home.step_1_desc')">Create the plan, then receive the URL and an admin password from the app.</p>
+                </li>
+                <li>
+                    <span class="font-semibold" x-text="$t('home.step_2_title')">Add Shifts</span>
+                    <p class="opacity-80 mt-1" x-text="$t('home.step_2_desc')">Add shift types and individual shifts with time, duration, and headcount.</p>
+                </li>
+                <li>
+                    <span class="font-semibold" x-text="$t('home.step_3_title')">Share & Invite</span>
+                    <p class="opacity-80 mt-1" x-text="$t('home.step_3_desc')">Share the link with participants. They open it, enter their name, and sign up.</p>
+                </li>
+                <li>
+                    <span class="font-semibold" x-text="$t('home.step_4_title')">Manage & Monitor</span>
+                    <p class="opacity-80 mt-1" x-text="$t('home.step_4_desc')">Lock shifts, track fill status, and export data from the same URL.</p>
+                </li>
+            </ol>
+        </div>
+    </div>
 
-                <!-- Step 2 -->
-                <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-primary text-primary-content rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                        2</div>
-                    <h3 class="font-bold mb-2" x-text="$t('home.step_2_title')">Add Shifts</h3>
-                    <p class="opacity-80" x-text="$t('home.step_2_desc')">Define your shifts, including time slots and
-                        required participants.</p>
+    <!-- Views Section -->
+    <div class="py-16 bg-base-200">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12" x-text="$t('home.views')">Two ways to look at your plan</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div class="card bg-base-100">
+                    <div class="card-body">
+                        <h3 class="card-title" x-text="$t('home.view_list_title')">List view</h3>
+                        <p class="opacity-80" x-text="$t('home.view_list_desc')">Shifts grouped by day and type. Expand a row to see participants, fill status, and details.</p>
+                    </div>
                 </div>
-
-                <!-- Step 3 -->
-                <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-primary text-primary-content rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                        3</div>
-                    <h3 class="font-bold mb-2" x-text="$t('home.step_3_title')">Share & Invite</h3>
-                    <p class="opacity-80" x-text="$t('home.step_3_desc')">Share the plan URL with your team and let them
-                        join shifts.</p>
-                </div>
-
-                <!-- Step 4 -->
-                <div class="text-center">
-                    <div
-                        class="w-12 h-12 bg-primary text-primary-content rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                        4</div>
-                    <h3 class="font-bold mb-2" x-text="$t('home.step_4_title')">Manage & Monitor</h3>
-                    <p class="opacity-80" x-text="$t('home.step_4_desc')">Track participation and make adjustments as
-                        needed.</p>
+                <div class="card bg-base-100">
+                    <div class="card-body">
+                        <h3 class="card-title" x-text="$t('home.view_timetable_title')">Timetable</h3>
+                        <p class="opacity-80" x-text="$t('home.view_timetable_desc')">A visual timeline of all shifts in a day. Useful for spotting gaps or overlaps at a glance.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CTA Section -->
+    <!-- Good to Know Section -->
     <div class="py-16 bg-base-100">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl font-bold mb-6" x-text="$t('home.ready_to_start')">Ready to Get Started?</h2>
-            <p class="text-lg opacity-80 mb-8 max-w-2xl mx-auto" x-text="$t('home.cta_desc')">Create your first shift
-                plan in minutes and start organizing your team efficiently.</p>
-            <button @click="createNewPlan" class="btn btn-primary btn-lg gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span x-text="$t('home.create_plan')">Create New Plan</span>
-            </button>
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-8" x-text="$t('home.good_to_know')">Good to know</h2>
+            <ul class="max-w-3xl mx-auto space-y-3 list-disc list-inside opacity-90">
+                <li x-text="$t('home.fact_1')">Free and open source.</li>
+                <li x-text="$t('home.fact_2')">Participants need no account - just a name.</li>
+                <li x-text="$t('home.fact_3')">Your admin password controls administrative actions.</li>
+                <li x-text="$t('home.fact_4')">Collaborative mode lets participants express interest while admins confirm assignments.</li>
+                <li x-text="$t('home.fact_5')">Export as CSV, PDF report, PDF timetable, or a printable poster.</li>
+                <li x-text="$t('home.fact_6')">Statistics view shows hours per person, fill rates, and participant collisions.</li>
+                <li x-text="$t('home.fact_7')">Bilingual plans (German and English) are supported.</li>
+                <li x-text="$t('home.fact_8')">REST API available for automation and integrations.</li>
+            </ul>
         </div>
     </div>
 
@@ -171,8 +107,8 @@
     <div class="py-16 bg-base-100">
         <div class="container mx-auto px-4 text-center">
             <h2 class="text-3xl font-bold mb-6" x-text="$t('home.join_existing')">Joining an Existing Plan?</h2>
-            <p class="text-lg opacity-80 max-w-2xl mx-auto" x-text="$t('home.join_existing_desc')">You'll need the
-                plan's URL to join. Please contact your plan administrator to get the link.</p>
+            <p class="text-lg opacity-80 max-w-2xl mx-auto" x-text="$t('home.join_existing_desc')">Open the link directly.
+                If you do not have it, ask whoever is organizing the event.</p>
         </div>
     </div>
 </div>
