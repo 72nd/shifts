@@ -2,7 +2,9 @@
 
 The Shifts shift planning web application enables the collaborative coordination of shift cover for an event. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. The application also offers exports in various formats as well as printable PDFs.
 
-![Shifts Logo](internal/web/static/img/favicon.svg)
+<p align="center">
+  <img src="internal/web/static/img/favicon.svg" alt="Shifts Logo" style="max-width: 120px; width: 100%;" />
+</p>
 
 The application was developed out of frustration that existing tools were either too complicated for participants to use (login, email, etc.) or simply could not handle more complex events with numerous shifts and shift types.
 
@@ -18,6 +20,7 @@ The application was developed out of frustration that existing tools were either
 - Each shift schedule includes a description (Markdown is supported) as well as shift types and shifts. The number of people required is defined for each shift. An unlimited number of people per shift is supported.
 - Filter functions
 - Two different views of the shifts: one as a list and one as a table/timetable. The list view is particularly suitable for small screens (smartphones), whilst the table view offers a convenient overview of many shifts.
+- The app aims to make applying multiple layers as easy as possible.
 - Organisers have access to comprehensive statistical functions.
 - Shift schedules can be exported as CSV or PDF files. For example, this allows for a transition to a paper-based shift schedule during the event via the poster export feature.
 - The collaborative planning mode supports scenarios where a significantly larger number of people are interested in shifts and/or where organisers wish to retain control over the final shift allocation themselves. In this mode, any number of participants can ‘apply’ for a shift. The organisers then select the participants and lock the shift. After that, it can no longer be modified by non-admins.
@@ -29,8 +32,8 @@ The application was developed out of frustration that existing tools were either
 
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/list_view.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
-  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/table_view.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
+  <img src="opt/01-showcase.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
+  <img src="opt/02-showcase.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
 </p>
 <p align="center">
   <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">List view: Optimized for small screens with clear overview and filter options.</span>
