@@ -14,31 +14,28 @@ The application was developed out of frustration that existing tools were either
 
 ## Showcase
 
-<p align="center">
-  <img src="opt/showcase-01.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
-  <img src="opt/showcase-02.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
-</p>
-<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2%; margin-bottom: 0.5em;">
-  <div style="width: 45%; text-align: center;">
-    <img src="opt/showcase-01.png" alt="Create a new shift plan." width="100%" style="display: block; margin: 0 auto;" />
-    <div style="margin-top: 0.5em;">Create a new shift plan.</div>
-  </div>
-  <div style="width: 45%; text-align: center;">
-    <img src="opt/showcase-02.png" alt="List view" width="100%" style="display: block; margin: 0 auto;" />
-    <div style="margin-top: 0.5em;">List view</div>
-  </div>
-</div>
-
-<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2%; margin-bottom: 0.5em;">
-  <div style="width: 45%; text-align: center;">
-    <img src="opt/showcase-03.png" alt="Table view." width="100%" style="display: block; margin: 0 auto;" />
-    <div style="margin-top: 0.5em;">Table view.</div>
-  </div>
-  <div style="width: 45%; text-align: center;">
-    <img src="opt/showcase-04.png" alt="Edit shifts and shift types." width="100%" style="display: block; margin: 0 auto;" />
-    <div style="margin-top: 0.5em;">Edit shifts and shift types.</div>
-  </div>
-</div>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="opt/showcase-01.png" alt="Create a new shift plan." width="100%" />
+      <br /><em>Create a new shift plan.</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="opt/showcase-02.png" alt="List view" width="100%" />
+      <br /><em>List view</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="opt/showcase-03.png" alt="Table view." width="100%" />
+      <br /><em>Table view.</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="opt/showcase-04.png" alt="Edit shifts and shift types." width="100%" />
+      <br /><em>Edit shifts and shift types.</em>
+    </td>
+  </tr>
+</table>
 
 ## Features
 
