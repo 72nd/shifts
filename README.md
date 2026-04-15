@@ -24,8 +24,8 @@ The application was developed out of frustration that existing tools were either
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/admin_panel.png" alt="Admin Panel" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
-  <img src="https://raw.githubusercontent.com/72nd/shifts/main/docs/screenshots/statistics_view.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
+  <img src="opt/showcase-03.png" alt="Admin Panel" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
+  <img src="opt/showcase-04.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
 </p>
 <p align="center">
   <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Admin panel: Manage shift types, lock shifts, and access all exports.</span>
