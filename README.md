@@ -3,7 +3,7 @@
 The Shifts shift planning web application enables the collaborative coordination of shift cover for an event. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. The application also offers exports in various formats as well as printable PDFs.
 
 <p align="center">
-  <img src="internal/web/static/img/favicon.svg" alt="Shifts Logo" style="max-width: 120px; width: 100%;" />
+  <img src="internal/web/static/img/favicon.svg" alt="Shifts Logo" style="width: 120px;" />
 </p>
 
 The application was developed out of frustration that existing tools were either too complicated for participants to use (login, email, etc.) or simply could not handle more complex events with numerous shifts and shift types.
