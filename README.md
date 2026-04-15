@@ -18,19 +18,27 @@ The application was developed out of frustration that existing tools were either
   <img src="opt/showcase-01.png" alt="List View" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
   <img src="opt/showcase-02.png" alt="Table View" width="45%" style="display: inline-block; vertical-align: top;">
 </p>
-<p align="center">
-  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Create a new shift plan.</span>
-  <span style="display: inline-block; width: 45%; text-align: center;">List view</span>
-</p>
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2%; margin-bottom: 0.5em;">
+  <div style="width: 45%; text-align: center;">
+    <img src="opt/showcase-01.png" alt="Create a new shift plan." width="100%" style="display: block; margin: 0 auto;" />
+    <div style="margin-top: 0.5em;">Create a new shift plan.</div>
+  </div>
+  <div style="width: 45%; text-align: center;">
+    <img src="opt/showcase-02.png" alt="List view" width="100%" style="display: block; margin: 0 auto;" />
+    <div style="margin-top: 0.5em;">List view</div>
+  </div>
+</div>
 
-<p align="center">
-  <img src="opt/showcase-03.png" alt="Admin Panel" width="45%" style="display: inline-block; vertical-align: top; margin-right: 2%;">
-  <img src="opt/showcase-04.png" alt="Statistics View" width="45%" style="display: inline-block; vertical-align: top;">
-</p>
-<p align="center">
-  <span style="display: inline-block; width: 45%; text-align: center; margin-right: 2%;">Table view.</span>
-  <span style="display: inline-block; width: 45%; text-align: center;">Edit shifts and shift types.</span>
-</p>
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2%; margin-bottom: 0.5em;">
+  <div style="width: 45%; text-align: center;">
+    <img src="opt/showcase-03.png" alt="Table view." width="100%" style="display: block; margin: 0 auto;" />
+    <div style="margin-top: 0.5em;">Table view.</div>
+  </div>
+  <div style="width: 45%; text-align: center;">
+    <img src="opt/showcase-04.png" alt="Edit shifts and shift types." width="100%" style="display: block; margin: 0 auto;" />
+    <div style="margin-top: 0.5em;">Edit shifts and shift types.</div>
+  </div>
+</div>
 
 ## Features
 
