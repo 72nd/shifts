@@ -14,6 +14,8 @@ The application was developed out of frustration that existing tools were either
 
 ## Showcase
 
+A full list of features can be found [below](#features).
+
 <table>
   <tr>
     <td align="center" width="50%">
@@ -37,6 +39,7 @@ The application was developed out of frustration that existing tools were either
   </tr>
 </table>
 
+
 ## Features
 
 - Written in Go, with SQLite used as the database backend. Deployment is straightforward, requiring just a single binary.
@@ -51,37 +54,106 @@ The application was developed out of frustration that existing tools were either
 - Shift schedules can be exported as CSV or PDF files. For example, this allows for a transition to a paper-based shift schedule during the event via the poster export feature.
 - The collaborative planning mode supports scenarios where a significantly larger number of people are interested in shifts and/or where organisers wish to retain control over the final shift allocation themselves. In this mode, any number of participants can ‘apply’ for a shift. The organisers then select the participants and lock the shift. After that, it can no longer be modified by non-admins.
 - Bilingualism: Shift schedules can be created in either a single language or in two languages (currently German and English).
-- A REST API and its documentation are available.
+- A REST API is available, with interactive Swagger/OpenAPI documentation and support for batch operations on shifts (creation, partial updates, and deletion). The documentation is accessible at `/swagger/index.html` once the server is running.
 - Light and dark modes are supported.
+- Built in documentation system for the help pages.
+- An optional **metrics** endpoint exposes both performance and business metrics in a Prometheus-compatible format, served on a dedicated port (configurable via `metrics_port` in `config.toml`).
 
-
-
-
-## Requirements
-
-- Go 1.16 or higher
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Sqlite3
 
 ## Installation
 
-1. Clone the repository:
+### Requirements
+
+- [Go 1.24](https://go.dev/dl/) or higher
+- SQLite3 development headers (required because the Go SQLite driver uses CGo)
+- The Swag CLI tool is also required to generate the API documentation. When building via the Makefile it is installed automatically; for a manual build see Option B below.
+
+### Option A — Using the Makefile (recommended)
+
+1. Install the SQLite development headers:
+   - **Debian / Ubuntu:** `sudo apt install libsqlite3-dev`
+   - **Fedora / RHEL:** `sudo dnf install sqlite-devel`
+   - **Arch Linux:** `sudo pacman -S sqlite`
+   - **macOS (Homebrew):** `brew install sqlite`
+   - **Windows:** headers are bundled with the driver; no separate installation is needed.
+
+2. Clone the repository:
    ```bash
    git clone https://github.com/72nd/shifts.git
    cd shifts
    ```
 
-2. Install dependencies:
+3. Create and adjust the configuration file (see [Configuration](#configuration) for all available options):
+   ```bash
+   cp config.template.toml config.toml
+   ```
+
+4. Build the application — Swag is installed automatically if missing:
+   ```bash
+   make install
+   ```
+
+5. Run the application:
+   ```bash
+   ./shifts
+   ```
+
+Run `make help` to see all available targets.
+
+### Option B — Manual
+
+1. Install the SQLite development headers (see platform list in Option A above).
+
+2. Install the Swag CLI tool:
+   ```bash
+   go install github.com/swaggo/swag/cmd/swag@latest
+   ```
+
+3. Clone the repository:
+   ```bash
+   git clone https://github.com/72nd/shifts.git
+   cd shifts
+   ```
+
+4. Install Go dependencies:
    ```bash
    go mod download
    ```
 
-3. Build and run the application:
+5. Generate the Swagger API documentation:
    ```bash
-   go run main.go
+   swag init -g cmd/shifts/main.go -o docs --parseDependency --parseInternal
    ```
 
-4. Access the application at `http://localhost:8080` (or your configured port)
+6. Create and adjust the configuration file (see [Configuration](#configuration) for all available options):
+   ```bash
+   cp config.template.toml config.toml
+   ```
+
+7. Build the binary:
+   ```bash
+   CGO_ENABLED=1 go build -o shifts cmd/shifts/main.go
+   ```
+
+8. Run the application:
+   ```bash
+   ./shifts
+   ```
+
+
+## Updating
+
+To update an existing installation to the latest release, run:
+
+```bash
+make all
+```
+
+This fetches the latest release tag, regenerates the Swagger docs, and recompiles the binary in one step. To update to the latest development branch instead:
+
+```bash
+make update MODE=dev && make install
+```
 
 
 ## Configuration
@@ -101,6 +173,10 @@ Available configuration options:
 - `port`: Server port (default: 8080)
 - `db_path`: Path to the SQLite database file (default: "data/shifts.db")
 - `log_level`: Logging level (default: "info")
+- `metrics_enabled`: Enable Prometheus metrics endpoint (default: false)
+- `metrics_port`: Port for the Prometheus metrics endpoint (default: 9090)
+- `default_view`: Default view for shift plans when the visitor has no `?view=` or saved preference (`"timetable"` or `"list"`) (default: "timetable")
+
 
 Example configuration:
 ```toml
@@ -113,40 +189,36 @@ db_path = "data/shifts.db"
 
 # Logging configuration
 log_level = "info"
+
+# Metrics configuration
+metrics_enabled = true
+metrics_port = 9090
+
+# Default view for shift plans when the visitor has no ?view= or saved preference ("timetable" or "list")
+default_view = "timetable"
 ```
 
 ## API Documentation
 
-### Requirements
-
-Install the swag CLI tool:
-
-```bash
-go install github.com/swaggo/swag/cmd/swag@latest
-```
-
-### Generating Documentation
-
-To generate the Swagger documentation, run from the project root:
+The Swagger documentation is generated automatically during every build (via `make install` or `make docs`). To regenerate it manually, run from the project root:
 
 ```bash
 swag init -g cmd/shifts/main.go -o docs --parseDependency --parseInternal
 ```
 
-If you encounter errors about not finding types, ensure:
-1. All handler files that reference `db.*` types import the `db` package
-2. The command is run from the project root directory
-3. All dependencies are installed: `go mod download`
-
-This will generate:
-- `swagger.json` - OpenAPI specification in JSON format
-- `swagger.yaml` - OpenAPI specification in YAML format
-- `docs.go` - Go code for serving the documentation
-
-### Accessing Documentation
-
-After generating the documentation and starting the server, you can access:
+This produces `docs/swagger.json`, `docs/swagger.yaml`, and `docs/docs.go`. Once the server is running, the documentation is available at:
 
 - Swagger UI: `http://localhost:8080/swagger/index.html`
 - OpenAPI JSON: `http://localhost:8080/swagger/doc.json`
 
+
+## Metrics
+
+When `metrics_enabled = true` is set in `config.toml`, the application exposes a Prometheus-compatible `/metrics` endpoint on a dedicated port (default: 9090). Four groups of metrics are collected:
+
+- **HTTP**: request count, latency histograms, and current in-flight requests — labelled by method, path, and status code.
+- **Database**: query count and duration per operation and table; errors categorised by type (lock contention, constraint violations, schema errors).
+- **Business**: counters for shift plans, shifts, and participant operations (joins, removals, and failures with failure reason).
+- **Exports & Authentication**: generation count, duration, and errors per export format; admin login attempt count and duration.
+
+The endpoint is designed to be scraped by a Prometheus instance and is fully compatible with standard dashboarding tools such as Grafana.
