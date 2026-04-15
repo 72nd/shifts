@@ -75,6 +75,29 @@ A full list of features can be found [below](#features).
 - **📈 Prometheus-compatible metrics endpoint:** An optional metrics endpoint exposes performance and business metrics in a Prometheus-compatible format on a configurable dedicated port (`metrics_port` in `config.toml`).
 
 
+## Installation
+
+Pre-built binaries are available on the [GitHub Releases](https://github.com/72nd/shifts/releases) page. Because the SQLite driver relies on CGo, cross-compilation is not straightforward, and only Linux builds for **amd64** and **arm64** are provided. For all other platforms — including macOS and Windows — the binary must be compiled locally as described in the [Build](#build) section below.
+
+To install a pre-built release, download the appropriate binary and make it executable.
+
+```bash
+chmod +x shifts
+```
+
+Then create a configuration file in your working directory (see [Configuration](#configuration)):
+
+```bash
+cp config.template.toml config.toml
+```
+
+Run the application:
+
+```bash
+./shifts
+```
+
+
 ## Build
 
 ### Requirements
