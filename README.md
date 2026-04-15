@@ -42,25 +42,40 @@ A full list of features can be found [below](#features).
 
 ## Features
 
-- **🚀 Single binary deployment:** Written in Go, with SQLite used as the database backend. Deployment is straightforward, requiring just a single binary.
-- **🔑 No login required for sign up:** Participants simply need the link to the shift schedule and can then sign up using a nickname of their choice. No login or email address is required. The aim was to minimise the hassle for event participants as much as possible.
-- **📅 Unlimited shift plans per instance:** No login is required to create shift schedules either. A single Shifts instance can manage any number of shift schedules.
-- **🛡️ Admin-only mode secured:** The administration mode is secured with an admin password, which is displayed once after the schedule has been created.
-- **📝 Flexible shift configuration with Markdown support:** Each shift schedule includes a description (Markdown is supported) as well as shift types and shifts. The number of people required is defined for each shift. An unlimited number of people per shift is supported.
-- **🔍 Powerful filter functions:** Filter functions
-- **👀 List and table (timetable) views:** Two different views of the shifts: one as a list and one as a table/timetable. The list view is particularly suitable for small screens (smartphones), whilst the table view offers a convenient overview of many shifts.
-- **🧩 Easy application for multiple shifts:** The app aims to make applying multiple layers as easy as possible.
-- **📊 Comprehensive statistics for organisers:** Organisers have access to comprehensive statistical functions.
-- **📤 Export to CSV or PDF:** Shift schedules can be exported as CSV or PDF files. For example, this allows for a transition to a paper-based shift schedule during the event via the poster export feature.
-- **🤝 Collaborative and controlled planning mode:** The collaborative planning mode supports scenarios where a significantly larger number of people are interested in shifts and/or where organisers wish to retain control over the final shift allocation themselves. In this mode, any number of participants can ‘apply’ for a shift. The organisers then select the participants and lock the shift. After that, it can no longer be modified by non-admins.
-- **🌐 Bilingual support:** Shift schedules can be created in either a single language or in two languages (currently German and English).
-- **🛠️ REST API with Swagger docs and batch operations:** A REST API is available, with interactive Swagger/OpenAPI documentation and support for batch operations on shifts (creation, partial updates, and deletion). The documentation is accessible at `/swagger/index.html` once the server is running.
-- **🌗 Light and dark mode:** Light and dark modes are supported.
-- **📚 Integrated documentation system:** Built in documentation system for the help pages.
-- **📈 Prometheus-compatible metrics endpoint:** An optional **metrics** endpoint exposes both performance and business metrics in a Prometheus-compatible format, served on a dedicated port (configurable via `metrics_port` in `config.toml`).
+### Deployment
+
+- **🚀 Single binary deployment:** Written in Go, with SQLite as the database backend. Deployment requires just a single binary — no external services or runtime dependencies.
+- **📅 Unlimited shift plans per instance:** A single Shifts instance manages any number of independent shift schedules. No login is required to create them.
+
+### Participant Experience
+
+- **🔑 No login required for sign up:** Participants need only the link to the shift schedule and can sign up using a nickname of their choice. No account, login, or email address is needed.
+- **🌐 Bilingual support:** Shift schedules can be created in a single language or in two languages simultaneously (currently German and English).
+- **👀 List and table (timetable) views:** Two complementary views are available: a list view well suited to small screens, and a table/timetable view that provides a convenient overview of many shifts at once.
+- **🌗 Light and dark mode:** Both light and dark modes are supported.
+
+### Shift Planning
+
+- **📝 Flexible shift configuration with Markdown support:** Each shift schedule comprises a description (Markdown supported), shift types, and individual shifts. The number of required participants is configurable per shift; an unlimited headcount is also supported.
+- **🤝 Collaborative and controlled planning mode:** Designed for scenarios where a significantly larger number of people are interested in shifts, or where organisers wish to retain control over the final allocation. Participants *apply* for shifts; organisers then confirm selections and lock the shift against further changes by non-admins.
+- **🧩 Easy application for multiple shifts:** The interface is designed to make signing up for several shifts as effortless as possible.
+
+### Organiser Tools
+
+- **🛡️ Admin-only mode:** The administration panel is secured with an admin password, which is displayed once immediately after the schedule has been created.
+- **🔍 Multi-dimensional filter:** Shifts can be filtered along four independent dimensions — shift type, day, occupancy status, and participant name — applied in combination. The occupancy status filter distinguishes five levels: *empty* (no participants), *critical* (fewer than 50 % of required slots filled), *not full* (at least one vacancy remaining), *full* (exactly at capacity), and *overbooked* (more participants than required slots). The participant search performs a case-insensitive substring match across all enrolled names. Active filters carry through to both the list and timetable views as well as to CSV and PDF exports.
+- **📊 Comprehensive statistics:** Organisers have access to detailed statistical functions covering shift coverage and participant distribution.
+- **📚 Integrated documentation system:** A built-in documentation system powers the application's help pages.
+- **📤 Export to CSV or PDF:** Shift schedules can be exported as CSV or PDF files. The PDF poster export, for instance, enables a transition to a paper-based schedule during the event itself.
 
 
-## Installation
+### Export & Integration
+
+- **🛠️ REST API with Swagger docs and batch operations:** A REST API is available with interactive Swagger/OpenAPI documentation and support for batch operations on shifts (creation, partial updates, and deletion). Documentation is accessible at `/swagger/index.html` once the server is running.
+- **📈 Prometheus-compatible metrics endpoint:** An optional metrics endpoint exposes performance and business metrics in a Prometheus-compatible format on a configurable dedicated port (`metrics_port` in `config.toml`).
+
+
+## Build
 
 ### Requirements
 
