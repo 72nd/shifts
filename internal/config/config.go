@@ -29,6 +29,14 @@ type Config struct {
 
 	// Default IANA time zone for new plans and start value for migrating existing plans
 	Timezone string `toml:"timezone"`
+
+	// Live updates via Server-Sent Events; nil (key missing) means enabled
+	RealtimeEnabled *bool `toml:"realtime_enabled"`
+}
+
+// RealtimeOn reports whether live updates are enabled (default true).
+func (c Config) RealtimeOn() bool {
+	return c.RealtimeEnabled == nil || *c.RealtimeEnabled
 }
 
 // DefaultConfig returns a configuration with default values

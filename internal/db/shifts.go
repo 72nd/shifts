@@ -100,7 +100,7 @@ func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 		WHERE s.type_id = ?
 		ORDER BY s.start_time, p.created_at
 	`
-	rows, err := db.Query(query, typeID)
+	rows, err := db.rdb.Query(query, typeID)
 	if err != nil {
 		db.logError("GetShiftsByType", err, typeID)
 		return nil, fmt.Errorf("failed to query shifts: %w", err)
@@ -123,7 +123,7 @@ func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
         WHERE st.plan_id = ?
         ORDER BY s.start_time, p.created_at
     `
-	rows, err := db.Query(query, planID)
+	rows, err := db.rdb.Query(query, planID)
 	if err != nil {
 		db.logError("GetShiftsByPlan", err, planID)
 		return nil, fmt.Errorf("failed to query shifts: %w", err)
@@ -340,7 +340,7 @@ func (db *DB) VerifyShiftBelongsToPlan(shiftID, planID int64) (bool, error) {
             WHERE s.id = ? AND t.plan_id = ?
         )
     `
-	err := db.QueryRow(query, shiftID, planID).Scan(&exists)
+	err := db.rdb.QueryRow(query, shiftID, planID).Scan(&exists)
 	if err != nil {
 		db.logError("VerifyShiftBelongsToPlan", err, shiftID, planID)
 		return false, fmt.Errorf("failed to verify shift ownership: %w", err)
@@ -398,7 +398,7 @@ func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
         FROM shifts
         WHERE id = ?
     `
-	err := db.QueryRow(query, shiftID).Scan(
+	err := db.rdb.QueryRow(query, shiftID).Scan(
 		&s.ID,
 		&s.TypeID,
 		&s.StartTime,

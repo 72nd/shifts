@@ -20,7 +20,7 @@ set -e
 # Default values
 MODE="${1:-web}"
 HOST="${2:-https://shifts.c3shoc.de}"
-USERS=258
+USERS=208
 SPAWN_RATE=10
 
 echo "═══════════════════════════════════════════════════════════"

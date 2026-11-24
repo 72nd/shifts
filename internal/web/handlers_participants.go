@@ -117,6 +117,7 @@ func (s *Server) handleAddParticipant(w http.ResponseWriter, r *http.Request) {
 
 	// Track successful join
 	participantJoinsTotal.WithLabelValues(plan.Token, "success").Inc()
+	s.notifyPlanChanged(plan.ID, scopeParticipants)
 
 	s.respondJSON(w, participant)
 }
@@ -222,6 +223,7 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 
 	// Track metrics
 	participantRemovalsTotal.WithLabelValues(plan.Token).Inc()
+	s.notifyPlanChanged(plan.ID, scopeParticipants)
 
 	s.respondNoContent(w)
 }

@@ -17,3 +17,6 @@ default_view = "timetable"
 
 # Default IANA time zone for new plans and start value when migrating existing plans (each plan stores its own zone)
 timezone = "Europe/Berlin"
+
+# Live updates via Server-Sent Events (GET /api/plans/{token}/events). false = endpoint returns 404.
+realtime_enabled = true

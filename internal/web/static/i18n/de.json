@@ -337,6 +337,15 @@
             "back_home": "Zur Startseite"
         }
     },
+    "realtime": {
+        "status_live": "Live – Änderungen erscheinen automatisch",
+        "status_connecting": "Verbinde …",
+        "status_offline": "Offline – Seite neu laden, um Änderungen zu sehen",
+        "shift_now_full": "Diese Schicht ist inzwischen voll.",
+        "shift_deleted": "Diese Schicht wurde gelöscht.",
+        "viewers_one": "1 Person sieht gerade zu",
+        "viewers_other": "{count} Personen sehen gerade zu"
+    },
     "error": {
         "not_found": {
             "title": "Seite nicht gefunden",

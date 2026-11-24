@@ -53,6 +53,7 @@ A full list of features can be found [below](#features).
 - **🌐 Bilingual support:** Shift schedules can be created in a single language or in two languages simultaneously (currently German and English).
 - **👀 List and table (timetable) views:** Two complementary views are available: a list view well suited to small screens, and a table/timetable view that provides a convenient overview of many shifts at once.
 - **🌗 Light and dark mode:** Both light and dark modes are supported.
+- **⚡ Live updates:** Changes by other people (sign-ups, shifts, types, settings, locks, deletion) appear in an open shift plan within about a second, without reloading. A status indicator shows the connection state and a viewer counter shows how many tabs of the plan are open. Changed shifts are briefly highlighted, open sign-up dialogs warn when a shift became full or was deleted, and the statistics page updates too. Can be switched off with `realtime_enabled` in `config.toml`.
 
 ### Shift Planning
 
@@ -218,6 +219,7 @@ Available configuration options:
 - `metrics_port`: Port for the Prometheus metrics endpoint (default: 9090)
 - `default_view`: Default view for shift plans when the visitor has no `?view=` or saved preference (`"timetable"` or `"list"`) (default: "timetable")
 - `timezone`: IANA time zone preselected when creating a shift plan. Existing plans are converted with this zone during the database migration to v0.6.0. Each plan stores its own zone afterwards, so this option does not change existing plans (default: "Europe/Berlin")
+- `realtime_enabled`: Enable live updates via Server-Sent Events at `GET /api/plans/{token}/events`. When `false`, the endpoint returns 404 and pages only show changes after a reload (default: true)
 
 
 Example configuration:
@@ -241,7 +243,19 @@ default_view = "timetable"
 
 # Default IANA time zone for new plans and for converting existing plans during migration
 timezone = "Europe/Berlin"
+
+# Live updates via Server-Sent Events (GET /api/plans/{token}/events). false = endpoint returns 404.
+realtime_enabled = true
 ```
+
+### Live Updates: Notes for Operators
+
+Live updates are sent over Server-Sent Events. Please check the following when you run Shifts behind a reverse proxy or in a multi-instance setup:
+
+- **Do not buffer the event stream.** The proxy must pass `text/event-stream` responses through without buffering, otherwise updates arrive late or not at all. Shifts already sends the `X-Accel-Buffering: no` header, which nginx honours. For nginx, also set `proxy_buffering off;` for the Shifts location, and set `proxy_read_timeout` to more than 30 seconds (the server sends a keep-alive ping every 25 seconds). Other proxies need the equivalent settings.
+- **Connection limit in browsers.** Over HTTP/1.1, browsers allow only six connections per domain. Each open shift plan tab holds one event stream, so many plan tabs on the same host can exhaust the limit. HTTP/2 avoids this.
+- **Single process.** Updates are distributed in memory. Run exactly one Shifts process per database. Several instances behind a load balancer do not see each other's changes.
+- **Switching off.** Set `realtime_enabled = false` in `config.toml` to disable the endpoint. The rest of the application keeps working; changes then appear only after a page reload.
 
 ## API Documentation
 
@@ -259,11 +273,12 @@ This produces `docs/swagger.json`, `docs/swagger.yaml`, and `docs/docs.go`. Once
 
 ## Metrics
 
-When `metrics_enabled = true` is set in `config.toml`, the application exposes a Prometheus-compatible `/metrics` endpoint on a dedicated port (default: 9090). Four groups of metrics are collected:
+When `metrics_enabled = true` is set in `config.toml`, the application exposes a Prometheus-compatible `/metrics` endpoint on a dedicated port (default: 9090). Five groups of metrics are collected:
 
 - **HTTP**: request count, latency histograms, and current in-flight requests — labelled by method, path, and status code.
 - **Database**: query count and duration per operation and table; errors categorised by type (lock contention, constraint violations, schema errors).
 - **Business**: counters for shift plans, shifts, and participant operations (joins, removals, and failures with failure reason).
 - **Exports & Authentication**: generation count, duration, and errors per export format; admin login attempt count and duration.
+- **Live updates**: open event streams (`shifts_realtime_connections`) and events sent (`shifts_realtime_events_total`).
 
 The endpoint is designed to be scraped by a Prometheus instance and is fully compatible with standard dashboarding tools such as Grafana.

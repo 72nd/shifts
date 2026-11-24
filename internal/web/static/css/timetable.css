@@ -681,3 +681,22 @@
   }
 }
 
+
+/* Participants of this shift just changed (realtime update); class is removed after 1.5 s */
+.shift-changed {
+  outline: 2px solid oklch(var(--p));
+  outline-offset: -2px;
+  animation: shift-changed-fade 1.5s ease-out forwards;
+}
+
+@keyframes shift-changed-fade {
+  to {
+    outline-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shift-changed {
+    animation: none;
+  }
+}

@@ -116,7 +116,7 @@ func (db *DB) GetShiftTypesByPlan(planID int64) ([]ShiftType, error) {
         WHERE st.plan_id = ?
         ORDER BY st.sort_order, s.start_time, p.created_at
     `
-	rows, err := db.Query(query, planID)
+	rows, err := db.rdb.Query(query, planID)
 	if err != nil {
 		db.logError("GetShiftTypesByPlan", err, planID)
 		return nil, fmt.Errorf("failed to query shift types: %w", err)
@@ -365,7 +365,7 @@ func (db *DB) ValidateShiftTypePassword(typeID int64, hashedPassword string) (bo
 	var storedHash sql.NullString
 	query := `SELECT password FROM shift_types WHERE id = ?`
 
-	err := db.QueryRow(query, typeID).Scan(&storedHash)
+	err := db.rdb.QueryRow(query, typeID).Scan(&storedHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil

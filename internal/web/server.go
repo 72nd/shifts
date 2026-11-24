@@ -35,10 +35,13 @@ type Server struct {
 	exportService *export.Service
 	defaultView   string // "list" or "timetable" — fallback for shift plan page view mode
 	defaultZone   string // IANA name of the default time zone for new plans
+
+	hub             *realtimeHub
+	realtimeEnabled bool
 }
 
 // NewServer creates a new server instance. defaultView must be "list" or "timetable".
-func NewServer(db *db.DB, logger *slog.Logger, defaultView, defaultZone string) (*Server, error) {
+func NewServer(db *db.DB, logger *slog.Logger, defaultView, defaultZone string, realtimeEnabled bool) (*Server, error) {
 	// Create export service
 	exportService := export.NewService(db)
 
@@ -60,6 +63,9 @@ func NewServer(db *db.DB, logger *slog.Logger, defaultView, defaultZone string) 
 		exportService: exportService,
 		defaultView:   defaultView,
 		defaultZone:   defaultZone,
+
+		hub:             newRealtimeHub(),
+		realtimeEnabled: realtimeEnabled,
 	}
 
 	// Parse templates
@@ -102,6 +108,8 @@ func (s *Server) setupRoutes() {
 	api := s.router.PathPrefix("/api").Subrouter()
 	// Apply CORS middleware only to API routes (needed for Swagger UI and external API clients)
 	api.Use(s.middleware.corsMiddleware)
+	// gzip runs inside the logging/metrics middleware (added on the root router); skips /events
+	api.Use(gzipMiddleware)
 	// Handle OPTIONS preflight requests for all API routes (catch-all)
 	api.PathPrefix("/").Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// CORS headers are already set by the middleware
@@ -116,6 +124,8 @@ func (s *Server) setupRoutes() {
 	api.HandleFunc("/plans/{token}/verify-admin", s.handleVerifyAdmin).Methods("POST")
 	api.HandleFunc("/plans/{token}/stats", s.handleGetShiftPlanStats).Methods("GET")
 	api.HandleFunc("/plans/{token}/export", s.middleware.adminMiddleware(s.handleExportPlan)).Methods("GET")
+
+	api.HandleFunc("/plans/{token}/events", s.handlePlanEvents).Methods("GET")
 
 	// Type routes
 	api.HandleFunc("/plans/{token}/types", s.handleGetShiftTypes).Methods("GET")

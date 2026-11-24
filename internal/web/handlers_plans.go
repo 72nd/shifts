@@ -112,6 +112,9 @@ func (s *Server) handleGetShiftPlan(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if s.notModified(w, r, plan.ID) {
+		return
+	}
 
 	// Convert to response DTO
 	response := ShiftPlanToResponse(plan)
@@ -222,6 +225,7 @@ func (s *Server) handleUpdateShiftTypeOrder(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeTypes)
 	s.respondOK(w)
 }
 
@@ -278,6 +282,8 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+
+	s.notifyPlanChanged(plan.ID, scopePlan)
 
 	// Convert to response DTO
 	response := ShiftPlanToResponse(updatedPlan)
@@ -465,6 +471,8 @@ func (s *Server) handleDeleteShiftPlan(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+
+	s.notifyPlanChanged(plan.ID, scopeDeleted)
 
 	// Track metrics
 	shiftPlansDeletedTotal.Inc()

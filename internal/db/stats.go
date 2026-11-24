@@ -93,7 +93,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 
 	// Get the plan to access the day boundary time and the time zone
 	var plan ShiftPlan
-	err = db.QueryRow(`
+	err = db.rdb.QueryRow(`
 		SELECT day_boundary_time, time_zone
 		FROM shift_plans
 		WHERE id = ?

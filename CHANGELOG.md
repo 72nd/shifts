@@ -90,3 +90,8 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Fix: Locked shifts in the timetable** Clicking a name in a locked shift no longer opens the removal dialog for visitors who are not logged in as admin.
 - **Fix: Admins on locked shifts** Admins can now remove participants from and add participants to locked shifts. Before, these actions failed with "admin permissions required" because the admin token was not sent.
 - **Fix: Timetable with larger browser font** Shift cards in the timetable now scale with the browser font size. Names are truncated with an ellipsis instead of overlapping other content, and the card header wraps.
+
+
+## Unreleased
+
+- **Feature: Live Updates** Changes by other people (sign-ups, shifts, shift types, plan settings, locks and plan deletion) appear in an open shift plan within about a second, without reloading. A status dot in the control bar shows Live, Connecting or Offline, and a counter shows how many tabs of the plan are open. Changed shifts are briefly highlighted, open sign-up dialogs warn when a shift became full or was deleted, and the statistics page updates too. Operators can switch this off with `realtime_enabled` in `config.toml`; reverse proxies must not buffer `text/event-stream`.

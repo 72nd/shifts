@@ -3,10 +3,17 @@
     <div class="modal-box">
         <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.remove_participant')"></h3>
         
+        <!-- Shift was deleted while the dialog is open -->
+        <div x-show="removeNotice" class="mt-4">
+            <div role="alert" class="alert alert-warning">
+                <span x-text="noticeText(removeNotice)"></span>
+            </div>
+        </div>
+
         <!-- Error Display -->
         {{ template "error-display" "removeModal" }}
 
-        <form method="dialog" @submit.prevent="removeModal.submit()">
+        <form method="dialog" @submit.prevent="!removeNotice && removeModal.submit()">
             <p class="py-4">
                 <span x-text="$t('shift_plans.view.confirm_remove_participant_1')"></span>
                 <span class="font-medium" x-text="removeModal.currentParticipant?.name"></span>
@@ -14,7 +21,7 @@
             </p>
             <div class="modal-action">
                 <button type="button" @click="removeModal.close()" class="btn" x-text="$t('common.cancel')"></button>
-                <button type="submit" class="btn btn-error" x-text="$t('common.remove')"></button>
+                <button type="submit" class="btn btn-error" :disabled="!!removeNotice" x-text="$t('common.remove')"></button>
             </div>
         </form>
     </div>

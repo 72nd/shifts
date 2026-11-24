@@ -24,6 +24,9 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if s.notModified(w, r, plan.ID) {
+		return
+	}
 
 	// Get shift types with their shifts
 	types, err := s.db.GetShiftTypesByPlan(plan.ID)
@@ -90,6 +93,8 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+
+	s.notifyPlanChanged(plan.ID, scopeTypes)
 
 	// Convert to response DTO
 	response := ShiftTypeToResponse(createdType)
@@ -159,6 +164,7 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeTypes)
 	s.respondOK(w)
 }
 
@@ -199,5 +205,6 @@ func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeTypes)
 	s.respondOK(w)
 }

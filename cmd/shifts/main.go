@@ -85,7 +85,7 @@ func main() {
 	defer database.Close()
 
 	// Create server
-	server, err := web.NewServer(database, logger, cfg.DefaultView, loc.String())
+	server, err := web.NewServer(database, logger, cfg.DefaultView, loc.String(), cfg.RealtimeOn())
 	if err != nil {
 		logger.Error("failed to create server", "error", err)
 		os.Exit(1)

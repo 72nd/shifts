@@ -1,11 +1,12 @@
 import { Modal } from './modal.js';
 
 export class JoinModal extends Modal {
-    constructor(planToken, onSuccess, adminToken = '') {
+    constructor(planToken, onSuccess, adminToken = '', onFull = null) {
         super('join_modal');
         this.planToken = planToken;
         this.adminToken = adminToken;
         this.onSuccess = onSuccess;
+        this.onFull = onFull; // called on 409 so the caller can refresh its data
         this.reset();
     }
 
@@ -77,6 +78,7 @@ export class JoinModal extends Modal {
                     AlpineI18n.t('shift_plans.view.error_shift_full_title'),
                     AlpineI18n.t('shift_plans.view.error_shift_full_message')
                 );
+                if (this.onFull) this.onFull();
                 return false;
             }
             

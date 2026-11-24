@@ -12,8 +12,15 @@ import (
 )
 
 // DB represents the database connection
+//
+// There are two pools on the same file. The embedded *sql.DB is the write pool
+// (one connection, every transaction starts BEGIN IMMEDIATE) and is also used for
+// migrations and anything that runs inside a write flow. rdb is a read-only pool
+// (WAL allows readers during a write) used by the pure read functions; each such
+// function is a single statement, i.e. one consistent snapshot.
 type DB struct {
 	*sql.DB
+	rdb    *sql.DB
 	logger *slog.Logger
 }
 
@@ -25,7 +32,7 @@ func New(dbPath string, logger *slog.Logger) (*DB, error) {
 	}
 
 	// Open database connection
-	sqlDB, err := sql.Open("sqlite3", dbPath)
+	sqlDB, err := sql.Open("sqlite3", "file:"+dbPath+"?_txlock=immediate")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
@@ -59,12 +66,32 @@ func New(dbPath string, logger *slog.Logger) (*DB, error) {
 		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
+	// Open the read pool only now: the file exists, is in WAL mode and has its schema.
+	rdb, err := sql.Open("sqlite3", "file:"+dbPath+"?mode=ro&_busy_timeout=5000&_query_only=1")
+	if err != nil {
+		sqlDB.Close()
+		return nil, fmt.Errorf("failed to open read-only database: %w", err)
+	}
+	rdb.SetMaxOpenConns(4)
+	rdb.SetMaxIdleConns(4)
+	rdb.SetConnMaxLifetime(0)
+	if err := rdb.Ping(); err != nil {
+		rdb.Close()
+		sqlDB.Close()
+		return nil, fmt.Errorf("failed to connect to read-only database: %w", err)
+	}
+	db.rdb = rdb
+
 	return db, nil
 }
 
-// Close closes the database connection
+// Close closes both connection pools
 func (db *DB) Close() error {
-	return db.DB.Close()
+	rerr := db.rdb.Close()
+	if err := db.DB.Close(); err != nil {
+		return err
+	}
+	return rerr
 }
 
 // transaction executes a function within a transaction
@@ -88,9 +115,10 @@ func (db *DB) transaction(fn func(*sql.Tx) error) error {
 	return nil
 }
 
-// transactionImmediate executes a function within a transaction with IMMEDIATE mode.
-// This acquires a write lock at the start of the transaction, preventing race conditions
-// in check-then-act scenarios like capacity checks.
+// transactionImmediate executes a function within a transaction. The write pool's DSN
+// has _txlock=immediate, so the write lock is taken at BEGIN, preventing race conditions
+// in check-then-act scenarios like capacity checks. (go-sqlite3 ignores the isolation
+// level below; it is kept only as documentation of intent.)
 func (db *DB) transactionImmediate(fn func(*sql.Tx) error) error {
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
 		Isolation: sql.LevelSerializable,

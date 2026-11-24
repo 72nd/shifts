@@ -101,6 +101,7 @@
                                                     @contextmenu="isAdmin ? handleTimetableShiftContextMenu(shift, $event) : null"
                                                     :class="{ 
                                                         'is-locked': shift.isLocked,
+                                                        'shift-changed': isRecentlyChanged(shift.id),
                                                         'has-collision': shiftHasCollision(shift.id),
                                                         'is-expanded': isTimetableShiftExpanded(shift.id),
                                                         'has-overflow': hasShiftOverflow(shift.id)

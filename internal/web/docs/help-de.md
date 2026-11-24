@@ -69,6 +69,18 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 ### Filtern
 
+### Live-Aktualisierung
+
+Änderungen anderer Personen erscheinen im geöffneten Schichtplan automatisch, ohne dass du die Seite neu laden musst. Das gilt für Ein- und Austragungen, neue, geänderte und gelöschte Schichten und Schichttypen, Änderungen an den Plan-Einstellungen, das Sperren von Schichten und das Löschen des Plans. Meist dauert es weniger als eine Sekunde, bis die Änderung sichtbar ist.
+
+- **Statusanzeige:** Ein kleiner Punkt in der Leiste des Schichtplans zeigt den Verbindungsstatus. »Live« bedeutet, dass Änderungen automatisch ankommen. »Verbinde …« zeigt, dass die Verbindung gerade aufgebaut wird. »Offline« bedeutet, dass die Verbindung abgebrochen ist. Die Seite versucht zwar, die Verbindung selbst wiederherzustellen. Gelingt das nicht, lädst du die Seite neu, um den aktuellen Stand zu sehen.
+- **Zähler:** Die Leiste zeigt außerdem, wie viele Personen den Plan gerade ansehen, etwa »3 Personen sehen gerade zu«. Gezählt werden die geöffneten Tabs dieses Plans. Personen werden dabei weder erkannt noch angezeigt.
+- **Geänderte Schichten:** Schichten, die sich gerade verändert haben, werden kurz hervorgehoben, damit du die Änderung schnell findest.
+- **Offene Dialoge:** Wenn du gerade eine Schicht ein- oder austragen möchtest und die Schicht inzwischen voll oder gelöscht ist, warnt dich der Dialog. Er bleibt geöffnet, du entscheidest also selbst, wie es weitergeht.
+- **Statistik:** Auch die Statistik aktualisiert sich live.
+
+Die Live-Aktualisierung kann von den Betreiber:innen der Instanz abgeschaltet werden. Dann siehst du Änderungen erst nach dem Neuladen der Seite.
+
 ## Für Admins
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.

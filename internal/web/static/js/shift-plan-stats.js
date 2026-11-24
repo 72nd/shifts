@@ -1,6 +1,7 @@
 import { formatDate, formatTime, parseDate, nowInZone } from './datetime.js';
 import { computeStats } from './stats/compute.js';
 import { planUrl } from './stats/links.js';
+import { PlanRealtime } from './realtime.js';
 
 const TABS = ['overview', 'gaps', 'people', 'history'];
 
@@ -15,6 +16,7 @@ document.addEventListener('alpine:init', () => {
         filter: { typeIds: [], days: [] },
         isLoading: true,
         error: null,
+        realtime: null,
 
         init() {
             const parts = window.location.pathname.split('/');
@@ -54,9 +56,16 @@ document.addEventListener('alpine:init', () => {
 
         // --- Loading and computing ---
 
-        async load() {
-            this.isLoading = true;
-            this.error = null;
+        /**
+         * Loads plan and types and recomputes the statistics.
+         * silent: reload in the background (realtime), keeps the page as it is
+         * (no spinner, no error replacing the content, tab/filter/scroll untouched).
+         */
+        async load(silent = false) {
+            if (!silent) {
+                this.isLoading = true;
+                this.error = null;
+            }
             try {
                 const headers = this.adminToken ? { 'X-Admin-Token': this.adminToken } : {};
                 const [planRes, typesRes] = await Promise.all([
@@ -67,12 +76,28 @@ document.addEventListener('alpine:init', () => {
                 this.plan = await planRes.json();
                 this.types = await typesRes.json();
                 this.recompute();
+                if (!this.realtime) this.startRealtime();
             } catch (e) {
                 console.error('stats: loading failed', e);
-                this.error = e.message || String(e);
+                if (!silent) this.error = e.message || String(e);
             } finally {
-                this.isLoading = false;
+                if (!silent) this.isLoading = false;
             }
+        },
+
+        /** Live updates: reload silently on changes; a deleted plan leaves the page. */
+        startRealtime() {
+            this.realtime = new PlanRealtime(this.token, {
+                onChange: (scope) => {
+                    if (scope === 'deleted') {
+                        this.realtime.stop();
+                        window.location.href = '/plan-deleted';
+                        return;
+                    }
+                    return this.load(true);
+                },
+            });
+            this.realtime.start();
         },
 
         recompute() {

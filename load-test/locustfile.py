@@ -7,6 +7,28 @@ Expected load scenario:
 - Additional 150 people viewing the frontend
 - One batch operation on shifts
 
+Default scenario (realtime plan, WP8): 100 SSE viewers (RealtimeViewer),
+100 joiners/leavers (ParticipantUser), 8 admins (AdminUser) = 208 users.
+Weights are configurable via environment variables (ratios, as Locust weights):
+    LT_WEIGHT_REALTIME   (default 100)  RealtimeViewer, open SSE stream + reload
+    LT_WEIGHT_PARTICIPANT(default 100)  ParticipantUser
+    LT_WEIGHT_VIEWER     (default 0)    legacy polling ViewerUser (set e.g. 150)
+Admins stay at a fixed count of 8. Run with --users 208 for the default mix.
+
+How to read the results (Statistics tab / CSV):
+- Join latency: row "/api/plans/[token]/shifts/[id]/participants [POST]",
+  look at the 95%ile column.
+- Reload latency: row "RELOAD types" (GET .../types after a change event,
+  with If-None-Match and gzip; 200 and 304 both count as success).
+- "EVENT->RELOAD done" is the delay from receiving a change event until the
+  reload finished (includes the random 0-400 ms jitter, so expect ~200 ms + reload).
+- "SSE connect" shows stream connects/reconnects; failures there mean dropped streams.
+- Threshold: p95 of join and of RELOAD types should be <= 300 ms. Only if it is
+  exceeded is the server-side response cache (plan section 4, WP8) needed.
+Example:
+    LT_WEIGHT_VIEWER=0 locust -f locustfile.py --host=http://localhost:8080 \
+        --users 208 --spawn-rate 10 --headless -t 5m
+
 Usage:
     locust -f locustfile.py --host=http://localhost:8080
 
@@ -20,12 +42,14 @@ For setup only (no load test):
 
 import argparse
 import json
+import os
 import random
 import string
 import sys
 import time
 import requests
 from datetime import datetime, timedelta, timezone
+import gevent
 from locust import HttpUser, TaskSet, task, between, events
 from locust.exception import StopUser
 
@@ -234,7 +258,7 @@ def on_test_start(environment, **kwargs):
     print("Expected load:")
     print("  - 8 admins (managing shifts, batch operations)")
     print("  - 100 participants (joining/leaving shifts)")
-    print("  - 150 viewers (viewing frontend)")
+    print("  - 100 realtime viewers (SSE + reload), 0 polling viewers by default")
     print("=" * 80)
 
 
@@ -575,6 +599,109 @@ class ViewerBehavior(TaskSet):
         )
 
 
+class RealtimeViewerBehavior(TaskSet):
+    """Holds an SSE stream open and reloads /types on every change event."""
+
+    def on_start(self):
+        waited = 0
+        while not SharedData.setup_complete and waited < 60:
+            time.sleep(1)
+            waited += 1
+        if not SharedData.setup_complete:
+            raise StopUser()
+        self.etag = None
+
+    def reload_types(self, event_ts):
+        """GET types like the real client: If-None-Match + gzip."""
+        headers = {"Accept-Encoding": "gzip"}
+        if self.etag:
+            headers["If-None-Match"] = self.etag
+        with self.client.get(
+            f"/api/plans/{SharedData.plan_token}/types",
+            headers=headers,
+            catch_response=True,
+            name="RELOAD types",
+        ) as resp:
+            if resp.status_code in (200, 304):
+                if resp.status_code == 200 and resp.headers.get("ETag"):
+                    self.etag = resp.headers["ETag"]
+                resp.success()
+            else:
+                resp.failure(f"reload failed: {resp.status_code}")
+        events.request.fire(
+            request_type="EVENT",
+            name="EVENT->RELOAD done",
+            response_time=(time.time() - event_ts) * 1000,
+            response_length=0,
+            exception=None,
+            context={},
+        )
+
+    def fire_connect(self, start, exc=None):
+        events.request.fire(
+            request_type="SSE",
+            name="SSE connect",
+            response_time=(time.time() - start) * 1000,
+            response_length=0,
+            exception=exc,
+            context={},
+        )
+
+    @task
+    def stream(self):
+        """One connection lifetime; Locust calls this again to reconnect."""
+        url = f"{SharedData.base_url}/api/plans/{SharedData.plan_token}/events"
+        start = time.time()
+        try:
+            # Plain requests session: the Locust client would wait for the full body.
+            # gevent monkey-patching (done by Locust) makes this cooperative.
+            resp = requests.get(
+                url,
+                stream=True,
+                headers={"Accept": "text/event-stream"},
+                timeout=(5, 90),  # server pings every 25 s
+            )
+            if resp.status_code != 200:
+                raise RuntimeError(f"status {resp.status_code}")
+        except Exception as e:
+            self.fire_connect(start, e)
+            gevent.sleep(random.uniform(1, 3))  # reconnect backoff
+            return
+        self.fire_connect(start)
+
+        event = None
+        try:
+            for raw in resp.iter_lines(decode_unicode=True):
+                if raw is None:
+                    continue
+                line = raw.strip()
+                if line.startswith(":"):  # ping comment
+                    continue
+                if line.startswith("event:"):
+                    event = line[6:].strip()
+                elif line.startswith("data:"):
+                    if event == "change":
+                        event_ts = time.time()
+                        gevent.sleep(random.uniform(0, 0.4))  # jitter
+                        self.reload_types(event_ts)
+                    elif event == "deleted":
+                        break
+                elif line == "":
+                    event = None
+        except Exception as e:
+            self.fire_connect(time.time(), e)  # stream dropped
+        finally:
+            resp.close()
+        gevent.sleep(random.uniform(1, 3))  # reconnect backoff
+
+
+class RealtimeViewer(HttpUser):
+    """Viewer with an open SSE stream (no wait_time: the stream blocks)."""
+    tasks = [RealtimeViewerBehavior]
+    wait_time = between(0, 0)
+    weight = int(os.environ.get("LT_WEIGHT_REALTIME", 100))
+
+
 class AdminUser(HttpUser):
     """Admin user with management capabilities."""
     tasks = [AdminBehavior]
@@ -586,14 +713,14 @@ class ParticipantUser(HttpUser):
     """Regular user who joins/leaves shifts."""
     tasks = [ParticipantBehavior]
     wait_time = between(1, 5)
-    weight = 500  # 100 participants
+    weight = int(os.environ.get("LT_WEIGHT_PARTICIPANT", 100))
 
 
 class ViewerUser(HttpUser):
     """User who only views the frontend."""
     tasks = [ViewerBehavior]
     wait_time = between(2, 5)
-    weight = 250  # 150 viewers
+    weight = int(os.environ.get("LT_WEIGHT_VIEWER", 0))  # legacy polling viewers, off by default
 
 
 # =============================================================================

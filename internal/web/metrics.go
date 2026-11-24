@@ -146,6 +146,23 @@ var (
 	)
 )
 
+// Realtime (SSE) metrics
+var (
+	realtimeConnections = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "shifts_realtime_connections",
+			Help: "Current number of open realtime (SSE) connections",
+		},
+	)
+
+	realtimeEventsTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "shifts_realtime_events_total",
+			Help: "Total number of realtime events sent to clients",
+		},
+	)
+)
+
 // responseWriter wraps http.ResponseWriter to capture the status code
 type responseWriter struct {
 	http.ResponseWriter
@@ -165,6 +182,18 @@ func newResponseWriter(w http.ResponseWriter) *responseWriter {
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+// Unwrap lets http.ResponseController reach the underlying writer (deadlines, flushing)
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
+// Flush forwards to the underlying writer if it supports flushing
+func (rw *responseWriter) Flush() {
+	if f, ok := rw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 // metricsMiddleware instruments HTTP requests with Prometheus metrics

@@ -324,7 +324,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
         FROM shift_plans
         WHERE token = ?
     `
-	err := db.QueryRow(query, token).Scan(
+	err := db.rdb.QueryRow(query, token).Scan(
 		&plan.ID,
 		&plan.Token,
 		&plan.AdminPassword,
@@ -450,7 +450,7 @@ func (db *DB) ValidateShiftPlanPassword(planID int64, hashedPassword string) (bo
 	var storedHash string
 	query := `SELECT admin_password FROM shift_plans WHERE id = ?`
 
-	err := db.QueryRow(query, planID).Scan(&storedHash)
+	err := db.rdb.QueryRow(query, planID).Scan(&storedHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil

@@ -151,7 +151,7 @@ func (db *DB) getParticipantsByShift(tx *sql.Tx, shiftID int64) ([]Participant, 
 	if tx != nil {
 		rows, err = tx.Query(query, shiftID)
 	} else {
-		rows, err = db.Query(query, shiftID)
+		rows, err = db.rdb.Query(query, shiftID)
 	}
 
 	if err != nil {

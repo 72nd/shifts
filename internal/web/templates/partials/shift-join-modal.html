@@ -1,8 +1,15 @@
 {{ define "shift-join-modal" }}
 <dialog id="join_modal" class="modal">
-    <form method="dialog" class="modal-box" @submit.prevent="joinModal.submit()">
+    <form method="dialog" class="modal-box" @submit.prevent="!joinNotice && joinModal.submit()">
         <h3 class="font-bold text-lg" x-text="$t('shift_plans.view.join_shift')"></h3>
         
+        <!-- Shift became full or was deleted while the dialog is open -->
+        <div x-show="joinNotice" class="mb-4">
+            <div role="alert" class="alert alert-warning">
+                <span x-text="noticeText(joinNotice)"></span>
+            </div>
+        </div>
+
         <!-- User-friendly Error Alert (ohne technische Details) -->
         <div x-show="joinModal.hasUserFriendlyError" class="mb-4">
             <div role="alert" class="alert alert-warning">
@@ -25,7 +32,7 @@
                     <span class="label-text" x-text="$t('shift_plans.view.enter_name')"></span>
                 </label>
                 <input type="text" x-model="joinModal.name" 
-                       @keyup.enter="joinModal.submit()"
+                       @keyup.enter="!joinNotice && joinModal.submit()"
                        class="input input-bordered w-full" 
                        :class="{ 'input-error': joinModal.errors.name }"
                        :placeholder="$t('shift_plans.view.name_placeholder')" />
@@ -36,7 +43,7 @@
         </div>
         <div class="modal-action">
             <button type="button" @click="joinModal.close()" class="btn" x-text="$t('common.cancel')"></button>
-            <button type="submit" class="btn btn-success" x-text="$t('shift_plans.view.join')"></button>
+            <button type="submit" class="btn btn-success" :disabled="!!joinNotice" x-text="$t('shift_plans.view.join')"></button>
         </div>
     </form>
     <form method="dialog" class="modal-backdrop">

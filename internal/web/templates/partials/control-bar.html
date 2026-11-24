@@ -82,7 +82,9 @@
                 </template>
             </div>
 
-            <!-- Right Side: View Mode Toggle -->
+            <!-- Right Side: Live status and view mode toggle -->
+            <div class="flex items-center gap-3 min-w-0">
+            {{ template "realtime-status" . }}
             <div class="join border border-base-content/20 rounded-box">
                 <button
                     class="join-item btn btn-xs text-xs"
@@ -109,14 +111,16 @@
                     <span x-text="$t('shift_plans.view.view_mode_timetable')"></span>
                 </button>
             </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Mobile Layout -->
 <div class="md:hidden flex flex-col gap-3">
-    <!-- View Mode Toggle (Mobile) -->
-    <div class="join w-full border border-base-content/20 rounded-box">
+    <!-- View Mode Toggle (Mobile) with live status -->
+    <div class="flex items-center gap-2">
+    <div class="join flex-1 min-w-0 border border-base-content/20 rounded-box">
         <button
             class="join-item btn btn-sm flex-1"
             :class="viewMode === 'list' ? 'btn-primary' : 'btn-ghost'"
@@ -141,6 +145,8 @@
             </svg>
             <span x-text="$t('shift_plans.view.view_mode_timetable')"></span>
         </button>
+    </div>
+    {{ template "realtime-status" . }}
     </div>
 
     <!-- Admin Menu (Mobile) -->
@@ -255,3 +261,25 @@
 </div>
 {{ end }}
 
+{{ define "realtime-status" }}
+<!-- Live connection status (dot) and viewer counter; hidden while realtime is disabled -->
+<div x-show="realtimeVisible" class="flex items-center gap-2 shrink-0 text-xs text-base-content/70">
+    <span role="status" class="flex items-center gap-1.5 min-w-0" :title="realtimeStatusText">
+        <span class="inline-block h-2.5 w-2.5 rounded-full shrink-0 border-2"
+            :class="{
+                'bg-success border-success': realtimeStatus === 'live',
+                'bg-warning border-warning': realtimeStatus === 'connecting',
+                'border-base-content/40': realtimeStatus === 'offline'
+            }" aria-hidden="true"></span>
+        <span class="sr-only xl:not-sr-only truncate max-w-[14rem]" x-text="realtimeStatusText"></span>
+    </span>
+    <span x-show="realtimeStatus === 'live' && viewers >= 1" class="flex items-center gap-1 whitespace-nowrap" :title="viewersText">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        <span class="sm:hidden" aria-hidden="true" x-text="viewers"></span>
+        <span class="sr-only sm:not-sr-only" x-text="viewersText"></span>
+    </span>
+</div>
+{{ end }}

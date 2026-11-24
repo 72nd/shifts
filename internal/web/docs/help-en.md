@@ -69,6 +69,18 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 ### Filtering
 
+### Live updates
+
+Changes made by other people appear automatically in the open shift plan, without you having to reload the page. This applies to sign-ups and removals, new, changed and deleted shifts and shift types, changes to the plan settings, locking shifts and deleting the plan. Changes usually show up in less than a second.
+
+- **Status indicator:** A small dot in the shift plan's control bar shows the connection status. "Live" means that changes arrive automatically. "Connecting …" means that the connection is being established. "Offline" means that the connection has dropped. The page tries to reconnect by itself; if that fails, reload the page to see the current state.
+- **Viewer counter:** The control bar also shows how many people are currently watching the plan, for example "3 people are watching". It counts the open tabs of this plan. People are neither identified nor shown.
+- **Changed shifts:** Shifts that have just changed are briefly highlighted, so you can spot the change quickly.
+- **Open dialogs:** If you are about to sign up for or remove yourself from a shift and that shift has meanwhile become full or been deleted, the dialog warns you. It stays open, so you decide how to proceed.
+- **Statistics:** The statistics page updates live as well.
+
+The operators of the instance can switch live updates off. In that case, you only see changes after reloading the page.
+
 ## For Admins
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.

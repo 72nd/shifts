@@ -16,6 +16,7 @@ import {
     formatTime as formatWallTime, formatDate as formatWallDate
 } from './datetime.js';
 import { parseBoundaryTime } from './timetable-view-layout.js';
+import { PlanRealtime } from './realtime.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -65,6 +66,28 @@ document.addEventListener('alpine:init', () => {
         // URL deep link state (read once on first load)
         urlFiltersPending: true,
         pendingUrlShiftId: null,
+
+        // Realtime state
+        realtime: null,
+        realtimeStatus: null, // null until the first status report, then live|connecting|offline
+        realtimeEverLive: false,
+        viewers: 0,
+        recentlyChanged: new Set(), // shift ids whose participants changed, highlighted for 1.5 s
+
+        get realtimeVisible() {
+            // Hidden when the endpoint is disabled (offline without ever having been live)
+            return this.realtimeStatus !== null && (this.realtimeStatus !== 'offline' || this.realtimeEverLive);
+        },
+
+        get realtimeStatusText() {
+            return this.realtimeStatus ? this.$t(`realtime.status_${this.realtimeStatus}`) : '';
+        },
+
+        get viewersText() {
+            return this.viewers === 1
+                ? this.$t('realtime.viewers_one')
+                : this.$t('realtime.viewers_other', { count: this.viewers });
+        },
 
         // Computed property für den Ladezustand
         get isReady() {
@@ -168,7 +191,7 @@ document.addEventListener('alpine:init', () => {
             this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, token, this.adminToken, this.handleShiftTypeSuccess.bind(this));
             this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, this.handleDeleteTypeSuccess.bind(this));
             this.deleteShiftModal = new DeleteShiftModal(token, this.adminToken, this.handleDeleteShiftSuccess.bind(this));
-            this.joinModal = new JoinModal(token, this.handleShiftUpdate.bind(this), this.adminToken);
+            this.joinModal = new JoinModal(token, this.handleShiftUpdate.bind(this), this.adminToken, () => this.refreshData('participants'));
             this.removeModal = new RemoveModal(token, this.handleShiftUpdate.bind(this), this.adminToken);
             this.adminModal = new AdminModal(token, this.handleAdminSuccess.bind(this));
             this.sortTypesModal = new SortTypesModal(
@@ -687,6 +710,143 @@ document.addEventListener('alpine:init', () => {
                 }));
         },
 
+        // Realtime: connect once after the first successful load
+        startRealtime(token) {
+            if (this.realtime) return;
+            this.realtime = new PlanRealtime(token, {
+                onChange: (scope) => this.handleRealtimeChange(scope),
+                onStatus: (status) => {
+                    this.realtimeStatus = status;
+                    if (status === 'live') this.realtimeEverLive = true;
+                },
+                onViewers: (count) => { this.viewers = count; }
+            });
+            this.realtime.start();
+            window.addEventListener('pagehide', () => this.realtime?.stop());
+            window.addEventListener('pageshow', (e) => { if (e.persisted) this.realtime?.start(); });
+        },
+
+        handleRealtimeChange(scope) {
+            if (scope === 'deleted') {
+                window.location.href = '/plan-deleted';
+                return;
+            }
+            return this.refreshData(scope);
+        },
+
+        /**
+         * Re-fetch only what changed and swap the data in place. Modals are not
+         * recreated; filters, scroll position and open dialogs stay as they are.
+         * scope 'plan' also reloads the plan itself, everything else only the types.
+         */
+        async refreshData(scope) {
+            const token = this.planToken;
+            const headers = {};
+            if (this.isAdmin && this.adminToken) {
+                headers['X-Admin-Token'] = this.adminToken;
+            }
+
+            let plan = null;
+            if (scope === 'plan') {
+                const response = await fetch(`/api/plans/${token}`, { headers });
+                if (!response.ok) throw new Error('Failed to load plan');
+                plan = await response.json();
+            }
+            const typesResponse = await fetch(`/api/plans/${token}/types`, { headers });
+            if (!typesResponse.ok) throw new Error('Failed to load shift types');
+            const types = await typesResponse.json();
+
+            const before = this.participantSignatures();
+
+            if (plan) {
+                this.plan = { ...plan, day_boundary_time: plan.day_boundary_time || '00:00' };
+                if (this.shiftTypeModal) this.shiftTypeModal.isMultilingual = this.plan.is_multilingual;
+            }
+            this.shiftTypes = types.map(type => ({
+                ...type,
+                shifts: type.shifts || [],
+                shiftsByDate: this.groupShiftsByDate(type.shifts || [])
+            }));
+            // Modals read shiftTypes when they are used; point the shift modal at the new array
+            if (this.shiftModal) this.shiftModal.shiftTypes = this.shiftTypes;
+
+            this.markChangedShifts(before);
+            this.rebindShiftDialogs();
+            this.detectCollisions();
+            this.$nextTick(() => this.detectAllShiftOverflows());
+        },
+
+        findShift(shiftId) {
+            for (const type of this.shiftTypes) {
+                const found = type.shifts?.find(s => s.id === shiftId);
+                if (found) return found;
+            }
+            return null;
+        },
+
+        // Map: shift id -> participant signature
+        participantSignatures() {
+            const map = new Map();
+            for (const type of this.shiftTypes) {
+                for (const shift of type.shifts || []) {
+                    map.set(shift.id, (shift.participants || []).map(p => `${p.id}:${p.name}`).sort().join('|'));
+                }
+            }
+            return map;
+        },
+
+        markChangedShifts(before) {
+            const changed = [];
+            for (const [id, signature] of this.participantSignatures()) {
+                if (before.has(id) && before.get(id) !== signature) changed.push(id);
+            }
+            if (changed.length === 0) return;
+            this.recentlyChanged = new Set([...this.recentlyChanged, ...changed]);
+            setTimeout(() => {
+                const next = new Set(this.recentlyChanged);
+                changed.forEach(id => next.delete(id));
+                this.recentlyChanged = next;
+            }, 1500);
+        },
+
+        isRecentlyChanged(shiftId) {
+            return this.recentlyChanged.has(shiftId);
+        },
+
+        // Open join/remove dialogs keep working on the current shift object
+        rebindShiftDialogs() {
+            for (const modal of [this.joinModal, this.removeModal]) {
+                const fresh = modal?.currentShift ? this.findShift(modal.currentShift.id) : null;
+                if (fresh) modal.currentShift = fresh;
+            }
+        },
+
+        /** 'deleted' | 'full' | null: why the shift of the open dialog can no longer be used. */
+        shiftDialogNotice(modal, checkFull) {
+            const current = modal?.currentShift;
+            if (!current) return null;
+            const shift = this.findShift(current.id);
+            if (!shift) return 'deleted';
+            if (checkFull && !this.plan?.collaborative_mode
+                && typeof shift.required === 'number' && shift.required !== -1
+                && (shift.participants?.length || 0) >= shift.required) {
+                return 'full';
+            }
+            return null;
+        },
+
+        get joinNotice() {
+            return this.shiftDialogNotice(this.joinModal, true);
+        },
+
+        get removeNotice() {
+            return this.shiftDialogNotice(this.removeModal, false);
+        },
+
+        noticeText(notice) {
+            return notice === 'deleted' ? this.$t('realtime.shift_deleted') : this.$t('realtime.shift_now_full');
+        },
+
         // Daten laden
         async loadPlan(token) {
             this.isLoading = true;
@@ -761,7 +921,8 @@ document.addEventListener('alpine:init', () => {
                 this.joinModal = new JoinModal(
                     this.plan.token,
                     this.handleShiftUpdate.bind(this),
-                    this.adminToken
+                    this.adminToken,
+                    () => this.refreshData('participants')
                 );
                 this.removeModal = new RemoveModal(
                     this.plan.token,
@@ -782,6 +943,8 @@ document.addEventListener('alpine:init', () => {
                     this.adminToken,
                     this.handleSettingsSuccess.bind(this)
                 );
+
+                this.startRealtime(token);
 
             } catch (error) {
                 console.error('Error loading plan:', error);

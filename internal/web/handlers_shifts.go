@@ -104,6 +104,7 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 
 	// Track metrics
 	shiftsCreatedTotal.WithLabelValues(plan.Token).Inc()
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 
 	// Convert to response DTO
 	response := ShiftToResponse(createdShift)
@@ -177,6 +178,7 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 	s.respondNoContent(w)
 }
 
@@ -223,6 +225,8 @@ func (s *Server) handleDeleteShift(w http.ResponseWriter, r *http.Request) {
 		))
 		return
 	}
+
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 
 	// Track metrics
 	shiftsDeletedTotal.WithLabelValues(plan.Token).Inc()
@@ -274,6 +278,7 @@ func (s *Server) handleLockShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 	s.respondNoContent(w)
 }
 
@@ -321,6 +326,7 @@ func (s *Server) handleUnlockShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 	s.respondNoContent(w)
 }
 
@@ -376,6 +382,7 @@ func (s *Server) handleBatchCreateShifts(w http.ResponseWriter, r *http.Request)
 
 	// Track metrics for successful creations
 	shiftsCreatedTotal.WithLabelValues(plan.Token).Add(float64(len(result.Success)))
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 
 	// Map response
 	response := BatchCreateResultToResponse(result)
@@ -432,6 +439,8 @@ func (s *Server) handleBatchUpdateShifts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	s.notifyPlanChanged(plan.ID, scopeShifts)
+
 	// Map response
 	response := BatchUpdateResultToResponse(result)
 	s.respondJSON(w, response)
@@ -486,6 +495,7 @@ func (s *Server) handleBatchDeleteShifts(w http.ResponseWriter, r *http.Request)
 
 	// Track metrics for successful deletions
 	shiftsDeletedTotal.WithLabelValues(plan.Token).Add(float64(len(result.Success)))
+	s.notifyPlanChanged(plan.ID, scopeShifts)
 
 	// Map response
 	response := BatchDeleteResultToResponse(result)
