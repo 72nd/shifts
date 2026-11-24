@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="248" fill="#4F46E5" />
+  <circle cx="256" cy="256" r="224" fill="#6366F1" />
+  
+  <!-- Clock/Calendar Design -->
+  <circle cx="256" cy="256" r="180" fill="white" stroke="#4F46E5" stroke-width="8"/>
+  
+  <!-- Clock Hands -->
+  <path d="M256 256 L256 136" stroke="#4F46E5" stroke-width="12" stroke-linecap="round"/>
+  <path d="M256 256 L346 256" stroke="#4F46E5" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Clock Center -->
+  <circle cx="256" cy="256" r="16" fill="#4F46E5"/>
+  
+  <!-- Calendar Marks (Hour Positions) -->
+  <circle cx="256" cy="136" r="10" fill="#4F46E5"/>
+  <circle cx="346" cy="256" r="10" fill="#4F46E5"/>
+  <circle cx="256" cy="376" r="10" fill="#4F46E5"/>
+  <circle cx="166" cy="256" r="10" fill="#4F46E5"/>
+  
+  <!-- Shift Blocks -->
+  <rect x="216" y="176" width="80" height="24" rx="8" fill="#4F46E5" opacity="0.7"/>
+  <rect x="296" y="216" width="60" height="24" rx="8" fill="#4F46E5" opacity="0.7"/>
+  <rect x="216" y="296" width="80" height="24" rx="8" fill="#4F46E5" opacity="0.7"/>
+  <rect x="156" y="256" width="60" height="24" rx="8" fill="#4F46E5" opacity="0.7"/>
+</svg>
