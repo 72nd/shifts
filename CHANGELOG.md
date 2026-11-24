@@ -68,7 +68,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Development: `make dist` target** The Makefile now includes a `dist` target that cross-compiles the application for Linux and Windows on both amd64 and arm64. Binaries are written to a `dist/` folder with names indicating the target platform and architecture (e.g. `shifts-linux-arm64`). `make clean` also removes the `dist/` folder.
 
 
-## v0.6.0
+## v0.6.0 – Time zones, migrations and new statistics
 
 - **Feature: Automatic database migrations** The database schema is now versioned and upgraded automatically on startup, so existing databases keep working across updates. Before the first migration of an existing database, a backup is written next to it (`<db_path>.<timestamp>.pre-migration.bak`). Databases from before v0.6.0 are recognised and brought up to date without data loss. A database migrated by a newer version is not opened by an older binary.
 - **Development: Migration files** The schema is defined by numbered SQL files in `internal/db/migrations/sqlite/` instead of inline `CREATE TABLE` statements. Rules for agents and contributors are in `.claude/rules/db-migrations.md`.
