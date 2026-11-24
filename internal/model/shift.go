@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 // =============================================================================
 // Shift Request DTOs
 // =============================================================================
@@ -11,8 +9,8 @@ import "time"
 type ShiftCreateRequest struct {
 	// ID of the shift type this shift belongs to
 	TypeID int64 `json:"type_id" example:"1" validate:"required,min=1"`
-	// Start time of the shift in RFC3339 format
-	StartTime time.Time `json:"start_time" example:"2024-12-20T09:00:00Z" validate:"required"`
+	// Start time of the shift as local time of the plan without offset (YYYY-MM-DDTHH:MM[:SS])
+	StartTime DateTime `json:"start_time" swaggertype:"string" example:"2024-12-20T09:00:00" validate:"required"`
 	// Duration of the shift in minutes
 	Duration int `json:"duration" example:"120" validate:"required,min=1"`
 	// Number of required participants (-1 for unlimited)
@@ -28,8 +26,8 @@ type ShiftCreateRequest struct {
 type ShiftUpdateRequest struct {
 	// ID of the shift type this shift belongs to
 	TypeID int64 `json:"type_id" example:"1" validate:"required,min=1"`
-	// Start time of the shift in RFC3339 format
-	StartTime time.Time `json:"start_time" example:"2024-12-20T09:00:00Z" validate:"required"`
+	// Start time of the shift as local time of the plan without offset (YYYY-MM-DDTHH:MM[:SS])
+	StartTime DateTime `json:"start_time" swaggertype:"string" example:"2024-12-20T09:00:00" validate:"required"`
 	// Duration of the shift in minutes
 	Duration int `json:"duration" example:"120" validate:"required,min=1"`
 	// Number of required participants (-1 for unlimited)
@@ -58,8 +56,8 @@ type BatchShiftUpdateItem struct {
 	ID int64 `json:"id" example:"42" validate:"required,min=1"`
 	// ID of the shift type this shift belongs to (optional, only set if you want to change it)
 	TypeID *int64 `json:"type_id,omitempty" example:"1"`
-	// Start time of the shift in RFC3339 format (optional, only set if you want to change it)
-	StartTime *string `json:"start_time,omitempty" example:"2024-12-20T09:00:00Z"`
+	// Start time of the shift as local time of the plan without offset (optional, only set if you want to change it)
+	StartTime *DateTime `json:"start_time,omitempty" swaggertype:"string" example:"2024-12-20T09:00:00"`
 	// Duration of the shift in minutes (optional, only set if you want to change it)
 	Duration *int `json:"duration,omitempty" example:"120"`
 	// Number of required participants, -1 for unlimited (optional, only set if you want to change it)
@@ -95,8 +93,8 @@ type ShiftResponse struct {
 	ID int64 `json:"id" example:"42"`
 	// ID of the shift type this shift belongs to
 	TypeID int64 `json:"type_id" example:"1"`
-	// Start time of the shift
-	StartTime time.Time `json:"start_time" example:"2024-12-20T09:00:00Z"`
+	// Start time of the shift as local time of the plan (no offset)
+	StartTime DateTime `json:"start_time" swaggertype:"string" example:"2024-12-20T09:00:00"`
 	// Duration of the shift in minutes
 	Duration int `json:"duration" example:"120"`
 	// Number of required participants (-1 for unlimited)

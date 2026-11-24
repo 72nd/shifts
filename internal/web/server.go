@@ -34,10 +34,11 @@ type Server struct {
 	router        *mux.Router
 	exportService *export.Service
 	defaultView   string // "list" or "timetable" — fallback for shift plan page view mode
+	defaultZone   string // IANA name of the default time zone for new plans
 }
 
 // NewServer creates a new server instance. defaultView must be "list" or "timetable".
-func NewServer(db *db.DB, logger *slog.Logger, defaultView string) (*Server, error) {
+func NewServer(db *db.DB, logger *slog.Logger, defaultView, defaultZone string) (*Server, error) {
 	// Create export service
 	exportService := export.NewService(db)
 
@@ -58,6 +59,7 @@ func NewServer(db *db.DB, logger *slog.Logger, defaultView string) (*Server, err
 		router:        mux.NewRouter(),
 		exportService: exportService,
 		defaultView:   defaultView,
+		defaultZone:   defaultZone,
 	}
 
 	// Parse templates

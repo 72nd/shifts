@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -25,6 +26,9 @@ type Config struct {
 
 	// UI: default shift plan view when URL and localStorage do not specify one ("list" or "timetable")
 	DefaultView string `toml:"default_view"`
+
+	// Default IANA time zone for new plans and start value for migrating existing plans
+	Timezone string `toml:"timezone"`
 }
 
 // DefaultConfig returns a configuration with default values
@@ -37,6 +41,7 @@ func DefaultConfig() Config {
 		MetricsEnabled: false,
 		MetricsPort:    9090,
 		DefaultView:    "timetable",
+		Timezone:       "Europe/Berlin",
 	}
 }
 
@@ -50,6 +55,18 @@ func (c *Config) NormalizeDefaultView() error {
 		return fmt.Errorf("invalid default_view %q: must be %q or %q", c.DefaultView, "list", "timetable")
 	}
 	return nil
+}
+
+// NormalizeTimezone sets Timezone to "Europe/Berlin" if empty and loads the zone.
+func (c *Config) NormalizeTimezone() (*time.Location, error) {
+	if c.Timezone == "" {
+		c.Timezone = "Europe/Berlin"
+	}
+	loc, err := time.LoadLocation(c.Timezone)
+	if err != nil {
+		return nil, fmt.Errorf("invalid timezone %q: %w", c.Timezone, err)
+	}
+	return loc, nil
 }
 
 // LoadConfig loads the configuration from a TOML file

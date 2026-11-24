@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	_ "time/tzdata"
 
 	"github.com/72nd/shifts/internal/config"
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 	"github.com/72nd/shifts/internal/web"
 )
 
@@ -47,6 +49,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	loc, err := cfg.NormalizeTimezone()
+	if err != nil {
+		logger.Error("invalid config", "error", err)
+		os.Exit(1)
+	}
+	model.SetDefaultLocation(loc)
+
 	// Update log level if specified in config
 	if cfg.LogLevel != "" {
 		var level slog.Level
@@ -58,6 +67,8 @@ func main() {
 			}))
 		}
 	}
+
+	logger.Info("default time zone", "timezone", loc.String())
 
 	// Ensure data directory exists
 	if err := os.MkdirAll(filepath.Dir(cfg.DBPath), 0755); err != nil {
@@ -74,7 +85,7 @@ func main() {
 	defer database.Close()
 
 	// Create server
-	server, err := web.NewServer(database, logger, cfg.DefaultView)
+	server, err := web.NewServer(database, logger, cfg.DefaultView, loc.String())
 	if err != nil {
 		logger.Error("failed to create server", "error", err)
 		os.Exit(1)

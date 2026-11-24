@@ -36,11 +36,11 @@ func (e *VacanciesExporter) Export(data *ExportData) ([]byte, error) {
 				// Only include shifts with vacancies (and Required > 0 to skip unlimited shifts)
 				if shift.Required > 0 && len(shift.Participants) < shift.Required {
 					needed := shift.Required - len(shift.Participants)
-					endTime := shift.StartTime.Add(time.Duration(shift.Duration) * time.Minute)
+					endTime := shift.StartTime.Time.Add(time.Duration(shift.Duration) * time.Minute)
 
 					vacantShift := VacantShift{
 						Title:     shiftType.TitleEN,
-						StartTime: shift.StartTime,
+						StartTime: shift.StartTime.Time,
 						EndTime:   endTime,
 						Needed:    needed,
 					}

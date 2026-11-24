@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/72nd/shifts/internal/model"
 	"github.com/72nd/shifts/internal/util"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/ast"
@@ -18,35 +19,46 @@ import (
 
 // ShiftPlan represents a complete shift planning schedule
 type ShiftPlan struct {
-	ID                int64     `json:"id"`
-	Token             string    `json:"token"`
-	StartDate         time.Time `json:"start_date"`
-	EndDate           time.Time `json:"end_date"`
-	CreatedAt         time.Time `json:"created_at"`
-	IsMultilingual    bool      `json:"is_multilingual"`
-	TitleDE           *string   `json:"title_de"`
-	TitleEN           string    `json:"title_en"`
-	DescriptionDE     *string   `json:"description_de"`
-	DescriptionEN     string    `json:"description_en"`
-	DescriptionDEHTML *string   `json:"description_de_html,omitempty"`
-	DescriptionENHTML *string   `json:"description_en_html,omitempty"`
-	AdminPassword     string    `json:"-"` // Never sent to client
-	DayBoundaryTime   string    `json:"day_boundary_time"`
-	CollaborativeMode bool      `json:"collaborative_mode"`
+	ID                int64      `json:"id"`
+	Token             string     `json:"token"`
+	StartDate         model.Date `json:"start_date"`
+	EndDate           model.Date `json:"end_date"`
+	CreatedAt         time.Time  `json:"created_at"`
+	IsMultilingual    bool       `json:"is_multilingual"`
+	TitleDE           *string    `json:"title_de"`
+	TitleEN           string     `json:"title_en"`
+	DescriptionDE     *string    `json:"description_de"`
+	DescriptionEN     string     `json:"description_en"`
+	DescriptionDEHTML *string    `json:"description_de_html,omitempty"`
+	DescriptionENHTML *string    `json:"description_en_html,omitempty"`
+	AdminPassword     string     `json:"-"` // Never sent to client
+	DayBoundaryTime   string     `json:"day_boundary_time"`
+	CollaborativeMode bool       `json:"collaborative_mode"`
+	TimeZone          string     `json:"time_zone"` // IANA name, fixed at creation
+}
+
+// Location returns the plan's time zone, falling back to the default zone if
+// the stored name cannot be loaded.
+func (p *ShiftPlan) Location() *time.Location {
+	if loc, err := time.LoadLocation(p.TimeZone); err == nil && p.TimeZone != "" {
+		return loc
+	}
+	return model.DefaultLocation()
 }
 
 // NewShiftPlan contains the data needed to create a new shift plan
 type NewShiftPlan struct {
-	TitleDE           *string   `json:"title_de"`
-	TitleEN           string    `json:"title_en" validate:"required" maxLength:"150"`
-	DescriptionDE     *string   `json:"description_de"`
-	DescriptionEN     string    `json:"description_en"`
-	StartDate         time.Time `json:"start_date"`
-	EndDate           time.Time `json:"end_date"`
-	IsMultilingual    bool      `json:"is_multilingual"`
-	Password          string    `json:"password" swaggerignore:"true"`
-	DayBoundaryTime   string    `json:"day_boundary_time"`
-	CollaborativeMode bool      `json:"collaborative_mode"`
+	TitleDE           *string    `json:"title_de"`
+	TitleEN           string     `json:"title_en" validate:"required" maxLength:"150"`
+	DescriptionDE     *string    `json:"description_de"`
+	DescriptionEN     string     `json:"description_en"`
+	StartDate         model.Date `json:"start_date" swaggertype:"string" example:"2024-12-20"`
+	EndDate           model.Date `json:"end_date" swaggertype:"string" example:"2024-12-22"`
+	IsMultilingual    bool       `json:"is_multilingual"`
+	Password          string     `json:"password" swaggerignore:"true"`
+	DayBoundaryTime   string     `json:"day_boundary_time"`
+	CollaborativeMode bool       `json:"collaborative_mode"`
+	TimeZone          string     `json:"time_zone"` // only used on create; empty = default zone
 }
 
 // generateToken generates a random token for shift plans
@@ -85,6 +97,13 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 	// 	return nil, fmt.Errorf("description_en is required")
 	// }
 
+	if plan.DayBoundaryTime == "" {
+		plan.DayBoundaryTime = "00:00"
+	}
+	if plan.TimeZone == "" {
+		plan.TimeZone = model.DefaultLocation().String()
+	}
+
 	// Generate token and password
 	token := generateToken()
 	password, err := util.PwdGenerator.Generate()
@@ -104,15 +123,15 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
             INSERT INTO shift_plans (
                 token, admin_password, start_date, end_date, created_at,
                 is_multilingual, title_de, title_en, description_de, description_en,
-                day_boundary_time, collaborative_mode
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                day_boundary_time, collaborative_mode, time_zone
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
 		res, err := tx.Exec(query,
 			token,
 			hashedPassword,
-			plan.StartDate.Format(time.RFC3339),
-			plan.EndDate.Format(time.RFC3339),
-			time.Now().Format(time.RFC3339),
+			plan.StartDate,
+			plan.EndDate,
+			time.Now().UTC().Format(time.RFC3339),
 			plan.IsMultilingual,
 			plan.TitleDE,
 			plan.TitleEN,
@@ -120,6 +139,7 @@ func (db *DB) CreateShiftPlan(plan NewShiftPlan) (*ShiftPlan, error) {
 			plan.DescriptionEN,
 			plan.DayBoundaryTime,
 			plan.CollaborativeMode,
+			plan.TimeZone,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert shift plan: %w", err)
@@ -197,15 +217,14 @@ func (db *DB) createExampleShifts(tx *sql.Tx, plan *ShiftPlan) error {
 	}
 
 	// Create shifts for two days
-	startDate := plan.StartDate
 	for day := 0; day < 2; day++ {
-		currentDate := startDate.AddDate(0, 0, day)
+		currentDate := plan.StartDate.AddDays(day)
 
 		// Define shifts for the day
 		shifts := []NewShift{
 			{
 				TypeID:    typeID,
-				StartTime: time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 8, 0, 0, 0, currentDate.Location()),
+				StartTime: currentDate.At(8, 0),
 				Duration:  120, // 2 hours
 				Required:  2,
 				CommentDE: "Frühstücksvorbereitung und Abwasch",
@@ -213,7 +232,7 @@ func (db *DB) createExampleShifts(tx *sql.Tx, plan *ShiftPlan) error {
 			},
 			{
 				TypeID:    typeID,
-				StartTime: time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 11, 30, 0, 0, currentDate.Location()),
+				StartTime: currentDate.At(11, 30),
 				Duration:  180, // 3 hours
 				Required:  3,
 				CommentDE: "Mittagessen vorbereiten und aufräumen",
@@ -221,7 +240,7 @@ func (db *DB) createExampleShifts(tx *sql.Tx, plan *ShiftPlan) error {
 			},
 			{
 				TypeID:    typeID,
-				StartTime: time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 17, 0, 0, 0, currentDate.Location()),
+				StartTime: currentDate.At(17, 0),
 				Duration:  180, // 3 hours
 				Required:  3,
 				CommentDE: "Abendessen vorbereiten und aufräumen",
@@ -229,7 +248,7 @@ func (db *DB) createExampleShifts(tx *sql.Tx, plan *ShiftPlan) error {
 			},
 			{
 				TypeID:    typeID,
-				StartTime: time.Date(currentDate.Year(), currentDate.Month(), currentDate.Day(), 20, 0, 0, 0, currentDate.Location()),
+				StartTime: currentDate.At(20, 0),
 				Duration:  90, // 1.5 hours
 				Required:  2,
 				CommentDE: "Küche aufräumen und vorbereiten für den nächsten Tag",
@@ -247,7 +266,7 @@ func (db *DB) createExampleShifts(tx *sql.Tx, plan *ShiftPlan) error {
 			`
 			if _, err := tx.Exec(query,
 				shift.TypeID,
-				shift.StartTime.Format(time.RFC3339),
+				shift.StartTime,
 				shift.Duration,
 				shift.Required,
 				shift.CommentDE,
@@ -296,12 +315,12 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 	}()
 
 	var plan ShiftPlan
-	var startDate, endDate, createdAt string
+	var createdAt string
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
                is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time, collaborative_mode
+               day_boundary_time, collaborative_mode, time_zone
         FROM shift_plans
         WHERE token = ?
     `
@@ -309,8 +328,8 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		&plan.ID,
 		&plan.Token,
 		&plan.AdminPassword,
-		&startDate,
-		&endDate,
+		&plan.StartDate,
+		&plan.EndDate,
 		&createdAt,
 		&plan.IsMultilingual,
 		&plan.TitleDE,
@@ -319,6 +338,7 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		&plan.DescriptionEN,
 		&plan.DayBoundaryTime,
 		&plan.CollaborativeMode,
+		&plan.TimeZone,
 	)
 
 	if err != nil {
@@ -330,10 +350,9 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		return nil, fmt.Errorf("failed to get shift plan: %w", err)
 	}
 
-	// Parse dates
-	plan.StartDate, _ = time.Parse(time.RFC3339, startDate)
-	plan.EndDate, _ = time.Parse(time.RFC3339, endDate)
-	plan.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
+		return nil, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
+	}
 
 	// Render markdown to HTML
 	if plan.DescriptionEN != "" {
@@ -351,12 +370,12 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 // getShiftPlanByID retrieves a shift plan by ID within a transaction
 func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 	var plan ShiftPlan
-	var startDate, endDate, createdAt string
+	var createdAt string
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
                is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time, collaborative_mode
+               day_boundary_time, collaborative_mode, time_zone
         FROM shift_plans
         WHERE id = ?
     `
@@ -364,8 +383,8 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 		&plan.ID,
 		&plan.Token,
 		&plan.AdminPassword,
-		&startDate,
-		&endDate,
+		&plan.StartDate,
+		&plan.EndDate,
 		&createdAt,
 		&plan.IsMultilingual,
 		&plan.TitleDE,
@@ -374,15 +393,15 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 		&plan.DescriptionEN,
 		&plan.DayBoundaryTime,
 		&plan.CollaborativeMode,
+		&plan.TimeZone,
 	)
 	if err != nil {
 		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
 	}
 
-	// Parse dates
-	plan.StartDate, _ = time.Parse(time.RFC3339, startDate)
-	plan.EndDate, _ = time.Parse(time.RFC3339, endDate)
-	plan.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
+		return plan, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
+	}
 
 	return plan, nil
 }
@@ -390,12 +409,12 @@ func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
 // getShiftPlanByToken retrieves a shift plan by token within a transaction
 func (db *DB) getShiftPlanByToken(tx *sql.Tx, token string) (ShiftPlan, error) {
 	var plan ShiftPlan
-	var startDate, endDate, createdAt string
+	var createdAt string
 
 	query := `
         SELECT id, token, admin_password, start_date, end_date, created_at,
                is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time, collaborative_mode
+               day_boundary_time, collaborative_mode, time_zone
         FROM shift_plans
         WHERE token = ?
     `
@@ -403,8 +422,8 @@ func (db *DB) getShiftPlanByToken(tx *sql.Tx, token string) (ShiftPlan, error) {
 		&plan.ID,
 		&plan.Token,
 		&plan.AdminPassword,
-		&startDate,
-		&endDate,
+		&plan.StartDate,
+		&plan.EndDate,
 		&createdAt,
 		&plan.IsMultilingual,
 		&plan.TitleDE,
@@ -413,15 +432,15 @@ func (db *DB) getShiftPlanByToken(tx *sql.Tx, token string) (ShiftPlan, error) {
 		&plan.DescriptionEN,
 		&plan.DayBoundaryTime,
 		&plan.CollaborativeMode,
+		&plan.TimeZone,
 	)
 	if err != nil {
 		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
 	}
 
-	// Parse dates
-	plan.StartDate, _ = time.Parse(time.RFC3339, startDate)
-	plan.EndDate, _ = time.Parse(time.RFC3339, endDate)
-	plan.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
+		return plan, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
+	}
 
 	return plan, nil
 }
@@ -477,8 +496,8 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
             WHERE token = ?
         `
 		res, err := tx.Exec(query,
-			plan.StartDate.Format(time.RFC3339),
-			plan.EndDate.Format(time.RFC3339),
+			plan.StartDate,
+			plan.EndDate,
 			plan.IsMultilingual,
 			plan.TitleDE,
 			plan.TitleEN,

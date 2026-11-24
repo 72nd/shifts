@@ -26,6 +26,7 @@ func ShiftPlanToResponse(plan *db.ShiftPlan) model.ShiftPlanResponse {
 		DescriptionENHTML: plan.DescriptionENHTML,
 		DayBoundaryTime:   plan.DayBoundaryTime,
 		CollaborativeMode: plan.CollaborativeMode,
+		TimeZone:          plan.TimeZone,
 	}
 }
 
@@ -42,6 +43,7 @@ func CreateShiftPlanRequestToNew(req *model.CreateShiftPlanRequest) db.NewShiftP
 		// Password is auto-generated in the database layer
 		DayBoundaryTime:   req.DayBoundaryTime,
 		CollaborativeMode: req.CollaborativeMode,
+		TimeZone:          req.TimeZone,
 	}
 }
 

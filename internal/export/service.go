@@ -118,7 +118,7 @@ func groupShiftsByDay(shifts []db.Shift, boundaryTime string, startDate time.Tim
 		// Sort shifts within the day by start time
 		dayShifts := shiftMap[day]
 		sort.Slice(dayShifts, func(i, j int) bool {
-			return dayShifts[i].StartTime.Before(dayShifts[j].StartTime)
+			return dayShifts[i].StartTime.Before(dayShifts[j].StartTime.Time)
 		})
 
 		result[i] = ShiftsByDay{
@@ -139,7 +139,7 @@ func (e *ExportData) SortShifts() error {
 		}
 
 		// Group shifts by day
-		shiftDays, err := groupShiftsByDay(t.Shifts, e.Plan.DayBoundaryTime, e.Plan.StartDate)
+		shiftDays, err := groupShiftsByDay(t.Shifts, e.Plan.DayBoundaryTime, e.Plan.StartDate.Time)
 		if err != nil {
 			return fmt.Errorf("failed to group shifts for type %d: %w", t.ID, err)
 		}

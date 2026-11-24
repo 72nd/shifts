@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"time"
+
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/model"
 )
@@ -33,8 +35,14 @@ func ValidateCreateShiftPlanRequest(p *model.CreateShiftPlanRequest) *Result {
 	if p.EndDate.IsZero() {
 		r.AddRequired("end_date", "End date")
 	}
-	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate) {
+	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate.Time) {
 		r.AddInvalid("end_date", "End date must be after start date")
+	}
+
+	if p.TimeZone != "" {
+		if _, err := time.LoadLocation(p.TimeZone); err != nil {
+			r.AddInvalid("time_zone", "Time zone must be an IANA name like Europe/Berlin")
+		}
 	}
 
 	return r
@@ -68,7 +76,7 @@ func ValidateNewShiftPlan(p *db.NewShiftPlan) *Result {
 	if p.EndDate.IsZero() {
 		r.AddRequired("end_date", "End date")
 	}
-	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate) {
+	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate.Time) {
 		r.AddInvalid("end_date", "End date must be after start date")
 	}
 

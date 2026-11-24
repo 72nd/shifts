@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 // =============================================================================
 // Stats Response DTOs
 // =============================================================================
@@ -65,7 +63,7 @@ type HelperStatsResponse struct {
 // @Description Detailed information about a single shift for statistics
 type ShiftDetailResponse struct {
 	// Date of the shift
-	Date time.Time `json:"date" example:"2024-12-20T00:00:00Z"`
+	Date Date `json:"date" swaggertype:"string" example:"2024-12-20"`
 	// ID of the shift type
 	TypeID int64 `json:"type_id" example:"1"`
 	// Name of the shift type
@@ -105,7 +103,7 @@ type TypeStatsResponse struct {
 // @Description Statistics for a single day
 type DailyStatsResponse struct {
 	// Date
-	Date time.Time `json:"date" example:"2024-12-20T00:00:00Z"`
+	Date Date `json:"date" swaggertype:"string" example:"2024-12-20"`
 	// Total number of shifts on this day
 	TotalShifts int `json:"total_shifts" example:"10"`
 	// Total required participants for this day

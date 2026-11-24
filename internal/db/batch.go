@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/72nd/shifts/internal/model"
 )
@@ -71,7 +70,7 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*model.BatchRe
 			`
 			res, err := tx.Exec(query,
 				shift.TypeID,
-				shift.StartTime.Format(time.RFC3339),
+				shift.StartTime,
 				shift.Duration,
 				shift.Required,
 				shift.CommentDE,
@@ -125,13 +124,13 @@ func (db *DB) CreateShiftsBatch(shifts []NewShift, planID int64) (*model.BatchRe
 // ShiftBatchUpdate represents an update operation for a single shift in a batch.
 // Fields are optional (use nil to skip updating that field).
 type ShiftBatchUpdate struct {
-	ID        int64   `json:"id"`
-	TypeID    *int64  `json:"type_id,omitempty"`
-	StartTime *string `json:"start_time,omitempty"` // RFC3339 format
-	Duration  *int    `json:"duration,omitempty"`
-	Required  *int    `json:"required,omitempty"`
-	CommentDE *string `json:"comment_de,omitempty"`
-	CommentEN *string `json:"comment_en,omitempty"`
+	ID        int64           `json:"id"`
+	TypeID    *int64          `json:"type_id,omitempty"`
+	StartTime *model.DateTime `json:"start_time,omitempty"`
+	Duration  *int            `json:"duration,omitempty"`
+	Required  *int            `json:"required,omitempty"`
+	CommentDE *string         `json:"comment_de,omitempty"`
+	CommentEN *string         `json:"comment_en,omitempty"`
 }
 
 // UpdateShiftsBatch updates multiple shifts in a single transaction.
@@ -384,7 +383,6 @@ func (db *DB) DeleteShiftsBatch(shiftIDs []int64, planID int64) (*model.BatchRes
 // getShiftByIDInTx retrieves a shift by ID within a transaction (without loading participants)
 func (db *DB) getShiftByIDInTx(tx *sql.Tx, id int64) (Shift, error) {
 	var s Shift
-	var startTime string
 
 	query := `
 		SELECT id, type_id, start_time, duration, required,
@@ -395,7 +393,7 @@ func (db *DB) getShiftByIDInTx(tx *sql.Tx, id int64) (Shift, error) {
 	err := tx.QueryRow(query, id).Scan(
 		&s.ID,
 		&s.TypeID,
-		&startTime,
+		&s.StartTime,
 		&s.Duration,
 		&s.Required,
 		&s.CommentDE,
@@ -405,8 +403,6 @@ func (db *DB) getShiftByIDInTx(tx *sql.Tx, id int64) (Shift, error) {
 	if err != nil {
 		return s, fmt.Errorf("failed to scan shift: %w", err)
 	}
-
-	s.StartTime, _ = time.Parse(time.RFC3339, startTime)
 
 	return s, nil
 }

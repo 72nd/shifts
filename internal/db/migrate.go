@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"log/slog"
 	"path"
 	"sort"
 	"strconv"
@@ -39,6 +40,24 @@ var legacyColumns = []legacyColumn{
 	{"shift_plans", "day_boundary_time", "TEXT NOT NULL DEFAULT '00:00'"},
 	{"shift_plans", "collaborative_mode", "BOOLEAN NOT NULL DEFAULT false"},
 	{"shifts", "is_locked", "BOOLEAN NOT NULL DEFAULT false"},
+}
+
+// goSteps holds migrations that need Go code in addition to (or instead of)
+// the SQL file. The step runs after the file's SQL in the same transaction.
+var goSteps = map[int]func(tx *sql.Tx, logger *slog.Logger) error{
+	2: migrateLocalTimes,
+}
+
+// hasStatements reports whether the SQL contains anything besides blank lines
+// and "--" comment lines.
+func hasStatements(sqlText string) bool {
+	for _, line := range strings.Split(sqlText, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "--") {
+			return true
+		}
+	}
+	return false
 }
 
 // loadMigrations reads and sorts the embedded migration files.
@@ -226,8 +245,15 @@ func (db *DB) baselineLegacy(initial migration) error {
 
 func (db *DB) applyMigration(m migration) error {
 	return db.transaction(func(tx *sql.Tx) error {
-		if _, err := tx.Exec(m.sql); err != nil {
-			return err
+		if hasStatements(m.sql) {
+			if _, err := tx.Exec(m.sql); err != nil {
+				return err
+			}
+		}
+		if step, ok := goSteps[m.version]; ok {
+			if err := step(tx, db.logger); err != nil {
+				return err
+			}
 		}
 		return recordMigration(tx, m)
 	})

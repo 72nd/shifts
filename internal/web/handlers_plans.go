@@ -18,8 +18,14 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	s.templates.render(w, "index.html", nil)
 }
 
+// newShiftPlanPageData is passed to new.html (wrapped as template "Data").
+type newShiftPlanPageData struct {
+	// DefaultTimeZone is the IANA name preselected for new plans.
+	DefaultTimeZone string
+}
+
 func (s *Server) handleNewShiftPlan(w http.ResponseWriter, r *http.Request) {
-	s.templates.render(w, "new.html", nil)
+	s.templates.render(w, "new.html", newShiftPlanPageData{DefaultTimeZone: s.defaultZone})
 }
 
 func (s *Server) handleShiftPlanSuccess(w http.ResponseWriter, r *http.Request) {

@@ -267,7 +267,7 @@ func ValidateBatchShiftUpdateRequest(req *model.BatchShiftUpdateRequest) *Result
 		}
 
 		// Validate StartTime is not empty (if provided)
-		if item.StartTime != nil && *item.StartTime == "" {
+		if item.StartTime != nil && item.StartTime.IsZero() {
 			r.Add(prefix+"start_time", CodeInvalidValue, "Start time cannot be empty")
 		}
 

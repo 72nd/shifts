@@ -3,7 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"time"
+
+	"github.com/72nd/shifts/internal/model"
 )
 
 // ShiftType represents a category of shifts
@@ -201,7 +202,10 @@ func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
 		if shiftID.Valid {
 			shift, shiftExists := shiftMap[shiftID.Int64]
 			if !shiftExists {
-				startTime, _ := time.Parse(time.RFC3339, shiftStartTime.String)
+				var startTime model.DateTime
+				if err := startTime.Scan(shiftStartTime.String); err != nil {
+					return nil, fmt.Errorf("shifts id %d: invalid start_time %q: %w", shiftID.Int64, shiftStartTime.String, err)
+				}
 				shift = &Shift{
 					ID:           shiftID.Int64,
 					TypeID:       typeID,
@@ -242,7 +246,10 @@ func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
 							}
 						}
 						if !participantExists {
-							createdAt, _ := time.Parse(time.RFC3339, participantCreatedAt.String)
+							createdAt, err := parseTimestamp("participants", participantID.Int64, "created_at", participantCreatedAt.String)
+							if err != nil {
+								return nil, err
+							}
 							st.Shifts[i].Participants = append(st.Shifts[i].Participants, Participant{
 								ID:        participantID.Int64,
 								ShiftID:   shiftID.Int64,

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/72nd/shifts/internal/model"
 )
 
 // Stats represents all statistics for a shift plan
@@ -40,11 +42,11 @@ type HelperStats struct {
 
 // ShiftDetail contains details about a single shift
 type ShiftDetail struct {
-	Date     time.Time `json:"date"`
-	TypeID   int64     `json:"type_id"`
-	TypeName string    `json:"type_name"`
-	Duration float64   `json:"duration"`
-	Status   string    `json:"status"` // "past", "current", "future"
+	Date     model.Date `json:"date"`
+	TypeID   int64      `json:"type_id"`
+	TypeName string     `json:"type_name"`
+	Duration float64    `json:"duration"`
+	Status   string     `json:"status"` // "past", "current", "future"
 }
 
 // TypeStats contains statistics for a shift type
@@ -63,14 +65,14 @@ type TypeStats struct {
 
 // DailyStats contains statistics for a single day
 type DailyStats struct {
-	Date          time.Time `json:"date"`
-	TotalShifts   int       `json:"total_shifts"`
-	TotalRequired int       `json:"total_required"`
-	TotalFilled   int       `json:"total_filled"`
-	TotalHours    float64   `json:"total_hours"`
-	FilledHours   float64   `json:"filled_hours"`
-	OpenPositions int       `json:"open_positions"`
-	PercentFilled int       `json:"percent_filled"`
+	Date          model.Date `json:"date"`
+	TotalShifts   int        `json:"total_shifts"`
+	TotalRequired int        `json:"total_required"`
+	TotalFilled   int        `json:"total_filled"`
+	TotalHours    float64    `json:"total_hours"`
+	FilledHours   float64    `json:"filled_hours"`
+	OpenPositions int        `json:"open_positions"`
+	PercentFilled int        `json:"percent_filled"`
 }
 
 // GetShiftPlanStats calculates all statistics for a shift plan
@@ -123,7 +125,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 		}
 
 		for _, shift := range t.Shifts {
-			startTime := shift.StartTime
+			startTime := shift.StartTime.Time
 			endTime := startTime.Add(time.Duration(shift.Duration) * time.Minute)
 			shiftHours := float64(shift.Duration) / 60
 			filledPositions := len(shift.Participants)
@@ -170,7 +172,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 			dailyStats, exists := dailyMap[dayKey]
 			if !exists {
 				dailyStats = &DailyStats{
-					Date: shiftDay,
+					Date: model.NewDate(shiftDay),
 				}
 				dailyMap[dayKey] = dailyStats
 			}
@@ -200,7 +202,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 					helperStats.FutureHours += shiftHours
 				}
 				helperStats.ShiftDetails = append(helperStats.ShiftDetails, ShiftDetail{
-					Date:     shiftDay,
+					Date:     model.NewDate(shiftDay),
 					TypeID:   t.ID,
 					TypeName: t.TitleEN,
 					Duration: shiftHours,
@@ -224,7 +226,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 		stats.DailyStats = append(stats.DailyStats, *dailyStats)
 	}
 	sort.Slice(stats.DailyStats, func(i, j int) bool {
-		return stats.DailyStats[i].Date.Before(stats.DailyStats[j].Date)
+		return stats.DailyStats[i].Date.Before(stats.DailyStats[j].Date.Time)
 	})
 
 	// Convert helper map to slice and sort by total hours

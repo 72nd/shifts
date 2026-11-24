@@ -17,16 +17,18 @@ type CreateShiftPlanRequest struct {
 	DescriptionDE *string `json:"description_de" example:"Beschreibung des Events"`
 	// Description in English (supports Markdown)
 	DescriptionEN string `json:"description_en" example:"Event description"`
-	// Start date of the plan
-	StartDate time.Time `json:"start_date" example:"2024-12-20T00:00:00Z" validate:"required"`
-	// End date of the plan
-	EndDate time.Time `json:"end_date" example:"2024-12-22T00:00:00Z" validate:"required"`
+	// Start date of the plan (YYYY-MM-DD)
+	StartDate Date `json:"start_date" swaggertype:"string" example:"2024-12-20" validate:"required"`
+	// End date of the plan (YYYY-MM-DD, inclusive)
+	EndDate Date `json:"end_date" swaggertype:"string" example:"2024-12-22" validate:"required"`
 	// Whether the plan supports multiple languages
 	IsMultilingual bool `json:"is_multilingual" example:"true"`
 	// Time when a new day starts (HH:MM format, e.g., "06:00" for 6 AM)
 	DayBoundaryTime string `json:"day_boundary_time" example:"00:00"`
 	// Whether participants can see each other's names
 	CollaborativeMode bool `json:"collaborative_mode" example:"false"`
+	// IANA time zone of the event (optional, empty = instance default). Cannot be changed later.
+	TimeZone string `json:"time_zone" example:"Europe/Berlin"`
 } // @name CreateShiftPlanRequest
 
 // ShiftPlanUpdateRequest represents the fields that can be updated on a shift plan
@@ -40,10 +42,10 @@ type ShiftPlanUpdateRequest struct {
 	DescriptionDE *string `json:"description_de" example:"Beschreibung des Events"`
 	// Description in English (supports Markdown)
 	DescriptionEN string `json:"description_en" example:"Event description"`
-	// Start date of the plan
-	StartDate time.Time `json:"start_date" example:"2024-12-20T00:00:00Z" validate:"required"`
-	// End date of the plan
-	EndDate time.Time `json:"end_date" example:"2024-12-22T00:00:00Z" validate:"required"`
+	// Start date of the plan (YYYY-MM-DD)
+	StartDate Date `json:"start_date" swaggertype:"string" example:"2024-12-20" validate:"required"`
+	// End date of the plan (YYYY-MM-DD, inclusive)
+	EndDate Date `json:"end_date" swaggertype:"string" example:"2024-12-22" validate:"required"`
 	// Whether the plan supports multiple languages
 	IsMultilingual bool `json:"is_multilingual" example:"true"`
 	// Time when a new day starts (HH:MM format, e.g., "06:00" for 6 AM)
@@ -70,10 +72,10 @@ type ShiftPlanResponse struct {
 	ID int64 `json:"id" example:"42"`
 	// Public token for accessing the plan
 	Token string `json:"token" example:"abc123def456"`
-	// Start date of the plan
-	StartDate time.Time `json:"start_date" example:"2024-12-20T00:00:00Z"`
-	// End date of the plan
-	EndDate time.Time `json:"end_date" example:"2024-12-22T00:00:00Z"`
+	// Start date of the plan (YYYY-MM-DD)
+	StartDate Date `json:"start_date" swaggertype:"string" example:"2024-12-20"`
+	// End date of the plan (YYYY-MM-DD, inclusive)
+	EndDate Date `json:"end_date" swaggertype:"string" example:"2024-12-22"`
 	// Timestamp when the plan was created
 	CreatedAt time.Time `json:"created_at" example:"2024-12-01T10:00:00Z"`
 	// Whether the plan supports multiple languages
@@ -94,6 +96,8 @@ type ShiftPlanResponse struct {
 	DayBoundaryTime string `json:"day_boundary_time" example:"00:00"`
 	// Whether participants can see each other's names
 	CollaborativeMode bool `json:"collaborative_mode" example:"false"`
+	// IANA time zone of the event
+	TimeZone string `json:"time_zone" example:"Europe/Berlin"`
 } // @name ShiftPlanResponse
 
 // CreateShiftPlanResponse represents the response after creating a shift plan

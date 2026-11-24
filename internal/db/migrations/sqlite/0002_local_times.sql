@@ -1,0 +1,5 @@
+-- Shift times become floating local times, plan dates become calendar dates,
+-- and shift_plans gets a time_zone column. All of this needs the configured
+-- default time zone and IANA conversion, so it is done by the Go step
+-- migrateLocalTimes in migrate_local_times.go (registered in goSteps in
+-- migrate.go). This file intentionally contains no SQL.

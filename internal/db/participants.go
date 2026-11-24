@@ -28,7 +28,7 @@ func (db *DB) AddParticipant(shiftID int64, name string) (*Participant, error) {
 	// Use IMMEDIATE transaction to acquire write lock at the start,
 	// preventing race conditions in the check-then-insert pattern
 	err := db.transactionImmediate(func(tx *sql.Tx) error {
-		createdAt := time.Now().Format(time.RFC3339)
+		createdAt := time.Now().UTC().Format(time.RFC3339)
 
 		// Atomic INSERT with all checks in a single query.
 		// This prevents TOCTOU race conditions by making the check and insert atomic.
@@ -167,8 +167,13 @@ func (db *DB) getParticipantsByShift(tx *sql.Tx, shiftID int64) ([]Participant, 
 		if err := rows.Scan(&p.ID, &p.ShiftID, &p.Name, &createdAt); err != nil {
 			return nil, fmt.Errorf("failed to scan participant: %w", err)
 		}
-		p.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+		if p.CreatedAt, err = parseTimestamp("participants", p.ID, "created_at", createdAt); err != nil {
+			return nil, err
+		}
 		participants = append(participants, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating participants: %w", err)
 	}
 
 	return participants, nil
@@ -194,6 +199,8 @@ func (db *DB) getParticipantByID(tx *sql.Tx, id int64) (Participant, error) {
 		return p, fmt.Errorf("failed to scan participant: %w", err)
 	}
 
-	p.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	if p.CreatedAt, err = parseTimestamp("participants", p.ID, "created_at", createdAt); err != nil {
+		return p, err
+	}
 	return p, nil
 }

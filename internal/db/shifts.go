@@ -4,31 +4,33 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/72nd/shifts/internal/model"
 )
 
 // Shift represents a single shift instance
 type Shift struct {
-	ID            int64         `json:"id"`
-	TypeID        int64         `json:"type_id"`
-	StartTime     time.Time     `json:"start_time"`
-	Duration      int           `json:"duration"` // in minutes
-	Required      int           `json:"required"`
-	CommentDE     string        `json:"comment_de"`
-	CommentEN     string        `json:"comment_en"`
-	CommentDEHTML *string       `json:"comment_de_html,omitempty"`
-	CommentENHTML *string       `json:"comment_en_html,omitempty"`
-	IsLocked      bool          `json:"is_locked"`
-	Participants  []Participant `json:"participants,omitempty"`
+	ID            int64          `json:"id"`
+	TypeID        int64          `json:"type_id"`
+	StartTime     model.DateTime `json:"start_time"`
+	Duration      int            `json:"duration"` // in minutes
+	Required      int            `json:"required"`
+	CommentDE     string         `json:"comment_de"`
+	CommentEN     string         `json:"comment_en"`
+	CommentDEHTML *string        `json:"comment_de_html,omitempty"`
+	CommentENHTML *string        `json:"comment_en_html,omitempty"`
+	IsLocked      bool           `json:"is_locked"`
+	Participants  []Participant  `json:"participants,omitempty"`
 }
 
 // NewShift contains the data needed to create a new shift
 type NewShift struct {
-	TypeID    int64     `json:"type_id"`
-	StartTime time.Time `json:"start_time"`
-	Duration  int       `json:"duration"`
-	Required  int       `json:"required"`
-	CommentDE string    `json:"comment_de"`
-	CommentEN string    `json:"comment_en"`
+	TypeID    int64          `json:"type_id"`
+	StartTime model.DateTime `json:"start_time" swaggertype:"string" example:"2024-12-20T09:00:00"`
+	Duration  int            `json:"duration"`
+	Required  int            `json:"required"`
+	CommentDE string         `json:"comment_de"`
+	CommentEN string         `json:"comment_en"`
 }
 
 // CreateShift creates a new shift
@@ -54,7 +56,7 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
         `
 		res, err := tx.Exec(query,
 			shift.TypeID,
-			shift.StartTime.Format(time.RFC3339),
+			shift.StartTime,
 			shift.Duration,
 			shift.Required,
 			shift.CommentDE,
@@ -140,7 +142,7 @@ func (db *DB) groupShiftsResult(rows *sql.Rows) ([]Shift, error) {
 		// Shift fields
 		var shiftID int64
 		var shiftTypeID int64
-		var shiftStartTime string
+		var shiftStartTime model.DateTime
 		var shiftDuration int
 		var shiftRequired int
 		var shiftCommentDE string
@@ -163,11 +165,10 @@ func (db *DB) groupShiftsResult(rows *sql.Rows) ([]Shift, error) {
 		// Get or create Shift
 		s, exists := shiftMap[shiftID]
 		if !exists {
-			startTime, _ := time.Parse(time.RFC3339, shiftStartTime)
 			s = &Shift{
 				ID:           shiftID,
 				TypeID:       shiftTypeID,
-				StartTime:    startTime,
+				StartTime:    shiftStartTime,
 				Duration:     shiftDuration,
 				Required:     shiftRequired,
 				CommentDE:    shiftCommentDE,
@@ -192,7 +193,10 @@ func (db *DB) groupShiftsResult(rows *sql.Rows) ([]Shift, error) {
 
 		// Handle participant if present
 		if participantID.Valid {
-			createdAt, _ := time.Parse(time.RFC3339, participantCreatedAt.String)
+			createdAt, err := parseTimestamp("participants", participantID.Int64, "created_at", participantCreatedAt.String)
+			if err != nil {
+				return nil, err
+			}
 			s.Participants = append(s.Participants, Participant{
 				ID:        participantID.Int64,
 				ShiftID:   shiftID,
@@ -232,7 +236,7 @@ func (db *DB) UpdateShift(id int64, shift Shift) error {
         WHERE id = ? AND type_id = ?
     `
 	result, err := db.Exec(query,
-		shift.StartTime.Format(time.RFC3339),
+		shift.StartTime,
 		shift.Duration,
 		shift.Required,
 		shift.CommentDE,
@@ -285,7 +289,6 @@ func (db *DB) DeleteShift(id int64) error {
 // getShiftByID retrieves a shift by ID within a transaction
 func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 	var s Shift
-	var startTime string
 
 	query := `
         SELECT id, type_id, start_time, duration, required,
@@ -296,7 +299,7 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 	err := tx.QueryRow(query, id).Scan(
 		&s.ID,
 		&s.TypeID,
-		&startTime,
+		&s.StartTime,
 		&s.Duration,
 		&s.Required,
 		&s.CommentDE,
@@ -306,8 +309,6 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 	if err != nil {
 		return s, fmt.Errorf("failed to scan shift: %w", err)
 	}
-
-	s.StartTime, _ = time.Parse(time.RFC3339, startTime)
 
 	// Load participants using the transaction
 	s.Participants, err = db.getParticipantsByShift(tx, s.ID)
@@ -390,7 +391,6 @@ func (db *DB) UnlockShift(shiftID int64) error {
 // GetShiftByID retrieves a shift by ID (public version for handlers)
 func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
 	var s Shift
-	var startTime string
 
 	query := `
         SELECT id, type_id, start_time, duration, required,
@@ -401,7 +401,7 @@ func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
 	err := db.QueryRow(query, shiftID).Scan(
 		&s.ID,
 		&s.TypeID,
-		&startTime,
+		&s.StartTime,
 		&s.Duration,
 		&s.Required,
 		&s.CommentDE,
@@ -415,8 +415,6 @@ func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
 		db.logError("GetShiftByID", err, shiftID)
 		return nil, fmt.Errorf("failed to get shift: %w", err)
 	}
-
-	s.StartTime, _ = time.Parse(time.RFC3339, startTime)
 
 	// Load participants
 	s.Participants, err = db.GetParticipantsByShift(s.ID)
