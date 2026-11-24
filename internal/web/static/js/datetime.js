@@ -196,6 +196,19 @@ export function formatDate(d, locale, options) {
  * @returns {Date}
  */
 export function nowInZone(timeZone) {
+  return instantInZone(new Date(), timeZone);
+}
+
+/**
+ * Converts a real instant (RFC3339 string such as created_at, or a Date) to the
+ * wall clock in an IANA time zone, as a floating Date. Invalid input yields null.
+ * @param {string|Date} instant
+ * @param {string} timeZone
+ * @returns {Date|null}
+ */
+export function instantInZone(instant, timeZone) {
+  const real = instant instanceof Date ? instant : new Date(instant);
+  if (isNaN(real.getTime())) return null;
   let fmt;
   try {
     fmt = new Intl.DateTimeFormat('en-CA', {
@@ -212,6 +225,6 @@ export function nowInZone(timeZone) {
     });
   }
   const p = {};
-  for (const part of fmt.formatToParts(new Date())) p[part.type] = part.value;
+  for (const part of fmt.formatToParts(real)) p[part.type] = part.value;
   return new Date(Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second));
 }

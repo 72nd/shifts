@@ -3,9 +3,11 @@ package db
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/72nd/shifts/internal/model"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Stats represents all statistics for a shift plan
@@ -75,6 +77,12 @@ type DailyStats struct {
 	PercentFilled int        `json:"percent_filled"`
 }
 
+// helperKey groups participants by their normalised name: Unicode NFC, trimmed,
+// runs of whitespace collapsed to one space, lower case.
+func helperKey(name string) string {
+	return strings.ToLower(strings.Join(strings.Fields(norm.NFC.String(name)), " "))
+}
+
 // GetShiftPlanStats calculates all statistics for a shift plan
 func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 	// Get all shift types with their shifts and participants
@@ -111,7 +119,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 	// Maps for aggregating data
 	helperMap := make(map[string]*HelperStats)
 	dailyMap := make(map[string]*DailyStats)
-	uniqueHelperNames := make(map[string]bool)
+	uniqueHelperKeys := make(map[string]bool)
 
 	// Process each type and its shifts
 	for _, t := range types {
@@ -127,18 +135,31 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 			shiftHours := float64(shift.Duration) / 60
 			filledPositions := len(shift.Participants)
 
+			// Unlimited shifts (Required == -1) have no demand: they do not count into
+			// required totals, open positions or percentages. Their participants' hours
+			// still count. Overfilled shifts are capped at Required for percentages.
+			required := shift.Required
+			filledCapped := filledPositions
+			if required < 0 {
+				required = 0
+				filledCapped = 0
+			} else if filledCapped > required {
+				filledCapped = required
+			}
+			openPositions := required - filledCapped
+
 			// Adjust the day based on the boundary time
 			shiftDay := shift.StartTime.LogicalDay(boundaryMinutes)
 			dayKey := shiftDay.String()
 
 			// Update overview stats
 			stats.Overview.TotalShifts++
-			stats.Overview.TotalRequired += shift.Required
-			stats.Overview.TotalFilled += filledPositions
-			stats.Overview.TotalHours += shiftHours * float64(shift.Required)
+			stats.Overview.TotalRequired += required
+			stats.Overview.TotalFilled += filledCapped
+			stats.Overview.TotalHours += shiftHours * float64(required)
 			stats.Overview.FilledHours += shiftHours * float64(filledPositions)
 
-			if filledPositions < shift.Required {
+			if openPositions > 0 {
 				stats.Overview.OpenShifts++
 			}
 
@@ -156,11 +177,11 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 
 			// Update type stats
 			typeStats.TotalShifts++
-			typeStats.TotalRequired += shift.Required
-			typeStats.TotalFilled += filledPositions
-			typeStats.TotalHours += shiftHours * float64(shift.Required)
+			typeStats.TotalRequired += required
+			typeStats.TotalFilled += filledCapped
+			typeStats.TotalHours += shiftHours * float64(required)
 			typeStats.FilledHours += shiftHours * float64(filledPositions)
-			typeStats.OpenPositions += shift.Required - filledPositions
+			typeStats.OpenPositions += openPositions
 
 			// Update daily stats
 			dailyStats, exists := dailyMap[dayKey]
@@ -171,22 +192,24 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 				dailyMap[dayKey] = dailyStats
 			}
 			dailyStats.TotalShifts++
-			dailyStats.TotalRequired += shift.Required
-			dailyStats.TotalFilled += filledPositions
-			dailyStats.TotalHours += shiftHours * float64(shift.Required)
+			dailyStats.TotalRequired += required
+			dailyStats.TotalFilled += filledCapped
+			dailyStats.TotalHours += shiftHours * float64(required)
 			dailyStats.FilledHours += shiftHours * float64(filledPositions)
-			dailyStats.OpenPositions += shift.Required - filledPositions
+			dailyStats.OpenPositions += openPositions
 
 			// Update helper stats
 			for _, p := range shift.Participants {
-				uniqueHelperNames[p.Name] = true
-				helperStats, exists := helperMap[p.Name]
+				key := helperKey(p.Name)
+				uniqueHelperKeys[key] = true
+				helperStats, exists := helperMap[key]
 				if !exists {
+					// Grouped by normalised name; the first spelling seen is displayed
 					helperStats = &HelperStats{
 						Name:         p.Name,
 						ShiftDetails: make([]ShiftDetail, 0),
 					}
-					helperMap[p.Name] = helperStats
+					helperMap[key] = helperStats
 				}
 				helperStats.TotalShifts++
 				helperStats.TotalHours += shiftHours
@@ -224,7 +247,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 	})
 
 	// Convert helper map to slice and sort by total hours
-	stats.Overview.UniqueHelpers = len(uniqueHelperNames)
+	stats.Overview.UniqueHelpers = len(uniqueHelperKeys)
 	if stats.Overview.UniqueHelpers > 0 {
 		stats.Overview.AvgHoursPerHelper = stats.Overview.FilledHours / float64(stats.Overview.UniqueHelpers)
 	}

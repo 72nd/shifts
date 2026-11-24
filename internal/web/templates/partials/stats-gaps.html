@@ -1,0 +1,105 @@
+{{ define "stats-gaps" }}
+<div class="space-y-6 min-w-0"
+     x-data="{
+        sortBy: 'time',
+        pick(list, within) {
+            const rows = list.filter(g => g.within24h === within);
+            if (this.sortBy === 'missing') rows.sort((a, b) => (b.open - a.open) || (a.start - b.start));
+            return rows;
+        },
+     }">
+
+    <!-- Empty states -->
+    <div x-show="model.totals.shifts === 0 && hasFilter" class="space-y-3">
+        <p x-text="$t('stats.empty_filtered')"></p>
+        <button type="button" class="btn btn-sm btn-outline min-h-11" @click="resetFilter()" x-text="$t('stats.filter_reset')"></button>
+    </div>
+    <p x-show="model.totals.shifts === 0 && !hasFilter" x-text="$t('stats.empty_shifts')"></p>
+    <p x-show="model.totals.shifts > 0 && model.gaps.length === 0" role="status" x-text="$t('stats.gaps_none')"></p>
+
+    <!-- Sort toggle -->
+    <div x-show="model.gaps.length > 0" class="flex flex-wrap items-center gap-2">
+        <span class="text-sm text-base-content/70" x-text="$t('stats.sort_by')"></span>
+        <div class="join" role="group" :aria-label="$t('stats.sort_by')">
+            <button type="button" class="btn btn-sm btn-ghost join-item min-h-11"
+                :class="{ 'btn-active': sortBy === 'time' }"
+                :aria-pressed="sortBy === 'time' ? 'true' : 'false'"
+                @click="sortBy = 'time'"
+                x-text="$t('stats.col_time')"></button>
+            <button type="button" class="btn btn-sm btn-ghost join-item min-h-11"
+                :class="{ 'btn-active': sortBy === 'missing' }"
+                :aria-pressed="sortBy === 'missing' ? 'true' : 'false'"
+                @click="sortBy = 'missing'"
+                x-text="$t('stats.gaps_missing')"></button>
+        </div>
+    </div>
+
+    <!-- Groups: next 24 hours, later -->
+    <template x-for="grp in [{ within: true, label: 'stats.gaps_next24' }, { within: false, label: 'stats.gaps_later' }]" :key="grp.label">
+        <section x-show="pick(model.gaps, grp.within).length > 0" class="space-y-2">
+            <h2 class="text-lg font-semibold"
+                x-text="$t(grp.label) + ' (' + number(pick(model.gaps, grp.within).length) + ')'"></h2>
+
+            <!-- Desktop: table -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="table table-sm">
+                    <caption class="sr-only" x-text="$t('stats.tab_gaps')"></caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" x-text="$t('stats.col_time')"></th>
+                            <th scope="col" x-text="$t('stats.filter_type')"></th>
+                            <th scope="col" class="text-right" x-text="$t('stats.col_filled')"></th>
+                            <th scope="col" class="text-right" x-text="$t('stats.gaps_missing')"></th>
+                            <th scope="col"><span class="sr-only" x-text="$t('stats.show_in_plan')"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="g in pick(model.gaps, grp.within)" :key="g.shiftId">
+                            <tr>
+                                <td class="whitespace-nowrap">
+                                    <span x-text="dayLabel(g.day) + ' ' + timeRange(g.start, g.end)"></span>
+                                    <span x-show="g.status === 'current'" class="badge badge-sm badge-info ml-1" x-text="$t('stats.status_current')"></span>
+                                    <span x-show="g.locked" class="inline-flex align-middle ml-1 text-info">{{ template "lock-icon" }}</span>
+                                </td>
+                                <td class="max-w-0 w-full">
+                                    <span class="block max-w-48 truncate" :title="t(g.typeTitle)" x-text="t(g.typeTitle)"></span>
+                                </td>
+                                <td class="text-right whitespace-nowrap" x-text="number(g.filled) + ' / ' + number(g.required)"></td>
+                                <td class="text-right whitespace-nowrap font-medium" x-text="number(g.open)"></td>
+                                <td class="text-right">
+                                    <a class="btn btn-sm btn-ghost min-h-11"
+                                        :href="planUrl({ type: g.typeId, day: g.day, status: 'open', shift: g.shiftId, view: 'list' })"
+                                        x-text="$t('stats.show_in_plan')"></a>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile: two-line rows -->
+            <ul class="md:hidden divide-y divide-base-300 border-y border-base-300">
+                <template x-for="g in pick(model.gaps, grp.within)" :key="g.shiftId">
+                    <li class="flex items-center gap-2 py-2 min-w-0">
+                        <div class="flex-1 min-w-0 space-y-0.5">
+                            <div class="flex flex-wrap items-center gap-x-2 font-medium">
+                                <span x-text="dayLabel(g.day) + ' ' + timeRange(g.start, g.end)"></span>
+                                <span x-show="g.status === 'current'" class="badge badge-sm badge-info" x-text="$t('stats.status_current')"></span>
+                                <span x-show="g.locked" class="inline-flex text-info">{{ template "lock-icon" }}</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm text-base-content/70 min-w-0">
+                                <span class="min-w-0 truncate" :title="t(g.typeTitle)" x-text="t(g.typeTitle)"></span>
+                                <span class="shrink-0 whitespace-nowrap" x-text="number(g.filled) + ' / ' + number(g.required)"></span>
+                                <span class="shrink-0 whitespace-nowrap font-medium text-base-content" x-text="$t('stats.gaps_missing') + ' ' + number(g.open)"></span>
+                            </div>
+                        </div>
+                        <a class="btn btn-sm btn-ghost min-h-11 shrink-0"
+                            :href="planUrl({ type: g.typeId, day: g.day, status: 'open', shift: g.shiftId, view: 'list' })"
+                            x-text="$t('stats.show_in_plan')"></a>
+                    </li>
+                </template>
+            </ul>
+        </section>
+    </template>
+</div>
+{{ end }}

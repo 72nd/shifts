@@ -90,7 +90,23 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 ### Statistiken
 
-![Beispiel einer Statistikansicht](/images/stats.png)
+Die Statistik öffnest du über »Statistik« in der Leiste des Schichtplans. Sie öffnet im selben Tab, mit »Zum Schichtplan« kommst du zurück. Alle Zahlen berechnet die Ansicht direkt im Browser aus den Plandaten.
+
+Die Statistik hat vier Tabs:
+
+- **Überblick**: Kennzahlen (Besetzungsgrad, offene Plätze, Personen, geplante und geleistete Stunden), die Besetzung pro Tag und pro Bereich als Balken sowie eine Heatmap über den Tag. Sie zeigt, wie viele Plätze zu welcher Stunde besetzt sind. Ein Klick auf einen Balken setzt den Filter auf diesen Tag bzw. Bereich, ein Klick auf eine Heatmap-Zelle öffnet den Schichtplan an dieser Stelle.
+- **Lücken**: alle offenen Plätze, zuerst die der nächsten 24 Stunden, danach die übrigen. Mit »Im Plan zeigen« springst du in den Schichtplan, gefiltert auf diese Schicht.
+- **Personen**: eine Tabelle aller Teilnehmenden mit Schichten, Stunden, Tagen, Bereichen, Nachtstunden und dem stärksten Tag. Die Spalten lassen sich sortieren, die Tabelle durchsuchen und auf Personen mit Warnungen oder mit nur einer Schicht eingrenzen. Eine Zeile aufklappen zeigt alle Schichten der Person und den Link »Im Plan zeigen«. Warnungen gibt es für:
+    - Überschneidung: zwei Schichten derselben Person überlappen sich.
+    - Ruhezeit: weniger als 8 Stunden zwischen dem Ende einer Schicht und dem Beginn der nächsten.
+    - Belastung: mehr als 10 Stunden an einem Tag.
+
+    Namen, die sich nur durch Groß- und Kleinschreibung, Leerzeichen oder Akzente unterscheiden, zählen als dieselbe Person. Ähnliche Namen, die sich in Satzzeichen oder Akzenten unterscheiden, bekommen einen Hinweis, dass sie vielleicht dieselbe Person sind. Als Admin kannst du die Tabelle als CSV-Datei herunterladen.
+- **Verlauf**: die Anmeldekurve über die Zeit, mit dem Bedarf als Linie. Wenn in den letzten 7 Tagen genug Anmeldungen eingegangen sind, zeigt die Kurve außerdem, wann der Plan bei diesem Tempo voll wäre. Darunter steht die Verteilung der Stunden auf die Personen und eine Reihe von Kurzfakten, etwa der längste Einsatz.
+
+Die Filter für Bereich und Tag gelten für alle Tabs. Sie stehen in der Adresse der Seite, du kannst eine gefilterte Ansicht also direkt teilen oder neu laden.
+
+Unbegrenzte Schichten zählen nicht zum Bedarf, nicht zu den offenen Plätzen und nicht zum Besetzungsgrad. Die Stunden ihrer Teilnehmenden zählen aber mit. Überbesetzte Schichten werden beim Besetzungsgrad höchstens mit 100 % gerechnet.
 
 ### Export
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.

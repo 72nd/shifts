@@ -1,0 +1,83 @@
+{{ define "stats-history" }}
+<div x-data="statsHistory" class="space-y-8" x-show="model">
+    <p x-show="model && !model.signups.points.length && !model.people.length" class="text-base-content/70"
+       x-text="$t('stats.empty_people')"></p>
+
+    <!-- Sign-up curve -->
+    <section x-show="model && model.signups.points.length" aria-labelledby="stats-signups-title">
+        <h2 id="stats-signups-title" class="text-lg font-semibold mb-2" x-text="$t('stats.signups_title')"></h2>
+        <template x-if="model && curve(model.signups)">
+            <div x-data="{ c: curve(model.signups) }" class="max-w-3xl">
+                <svg :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="xMidYMid meet" class="w-full h-auto"
+                     role="img"
+                     :aria-label="`${$t('stats.signups_title')}: ${c.summary.total} / ${c.summary.required}` + (model.signups.forecast ? '. ' + (model.signups.forecast.date ? $t('stats.forecast_full', { date: dateLabel(model.signups.forecast.date) }) : $t('stats.forecast_open', { n: model.signups.forecast.remainingAtStart })) : '')">
+                    <!-- axes -->
+                    <line :x1="c.left" :x2="c.right" :y1="c.baseY" :y2="c.baseY" class="stroke-base-content/30" stroke-width="1" />
+                    <line :x1="c.left" :x2="c.left" :y1="c.topY" :y2="c.baseY" class="stroke-base-content/30" stroke-width="1" />
+                    <text :x="c.left - 4" :y="c.baseY" text-anchor="end" dominant-baseline="middle" font-size="12" class="fill-base-content/70">0</text>
+                    <text :x="c.left - 4" :y="c.topY" text-anchor="end" dominant-baseline="middle" font-size="12" class="fill-base-content/70" x-text="c.yMax"></text>
+                    <!-- required total (solid thin line, labelled) -->
+                    <line :x1="c.left" :x2="c.right" :y1="c.requiredY" :y2="c.requiredY" class="stroke-base-content/50" stroke-width="1" />
+                    <text :x="c.right" :y="c.requiredY - 4" text-anchor="end" font-size="12" class="fill-base-content/70"
+                          x-text="`${$t('stats.signups_needed')}: ${c.required}`"></text>
+                    <!-- plan start marker (dotted vertical) -->
+                    <line x-show="c.planX !== null" :x1="c.planX" :x2="c.planX" :y1="c.topY" :y2="c.baseY"
+                          class="stroke-base-content/50" stroke-width="1" stroke-dasharray="1 3" />
+                    <!-- forecast (dashed) -->
+                    <path x-show="c.forecastPath" :d="c.forecastPath" fill="none" class="stroke-primary" stroke-width="2" stroke-dasharray="6 4" />
+                    <!-- actual sign-ups (solid) -->
+                    <path :d="c.path" fill="none" class="stroke-primary" stroke-width="2" stroke-linejoin="round" />
+                    <circle :cx="c.lastX" :cy="c.lastY" r="3" class="fill-primary" />
+                    <!-- time ticks -->
+                    <template x-for="tk in c.ticks" :key="tk.x">
+                        <text :x="tk.x" :y="c.baseY + 16" :text-anchor="tk.anchor" font-size="12" class="fill-base-content/70" x-text="dayLabel(tk.date)"></text>
+                    </template>
+                </svg>
+                <p class="text-sm text-base-content/70 mt-1" x-show="model.signups.forecast">
+                    <span x-show="model.signups.forecast && model.signups.forecast.date"
+                          x-text="model.signups.forecast && model.signups.forecast.date ? $t('stats.forecast_full', { date: dateLabel(model.signups.forecast.date) }) : ''"></span>
+                    <span x-show="model.signups.forecast && !model.signups.forecast.date"
+                          x-text="model.signups.forecast && !model.signups.forecast.date ? $t('stats.forecast_open', { n: model.signups.forecast.remainingAtStart }) : ''"></span>
+                </p>
+            </div>
+        </template>
+    </section>
+
+    <!-- Distribution of hours -->
+    <section x-show="model && model.people.length" aria-labelledby="stats-distribution-title">
+        <h2 id="stats-distribution-title" class="text-lg font-semibold mb-2" x-text="$t('stats.distribution_title')"></h2>
+        <ul class="max-w-xl space-y-1">
+            <template x-for="b in (model ? model.distribution.buckets : [])" :key="b.fromHours">
+                <li class="grid grid-cols-[4.5rem_1fr_2rem] items-center gap-2 text-sm">
+                    <span class="text-base-content/70 tabular-nums" x-text="$t('stats.hours_unit', { n: bucketLabel(b) })"></span>
+                    <span class="block h-4 rounded-sm bg-base-200" aria-hidden="true">
+                        <span class="block h-4 rounded-sm bg-primary" :style="`width:${barWidth(b, model.distribution.buckets)}%`"></span>
+                    </span>
+                    <span class="tabular-nums text-right" x-text="number(b.count)"></span>
+                </li>
+            </template>
+        </ul>
+        <p class="text-sm text-base-content/70 mt-2" x-show="model && model.distribution.top20SharePercent != null"
+           x-text="model && model.distribution.top20SharePercent != null ? $t('stats.distribution_top', { p: number(model.distribution.top20SharePercent) }) : ''"></p>
+    </section>
+
+    <!-- Quick facts -->
+    <section x-show="model && model.facts.length" aria-labelledby="stats-facts-title">
+        <h2 id="stats-facts-title" class="text-lg font-semibold mb-2" x-text="$t('stats.facts_title')"></h2>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
+            <template x-for="f in (model ? model.facts : [])" :key="f.id">
+                <div>
+                    <dt class="text-sm text-base-content/70" x-text="$t('stats.fact_' + f.id)"></dt>
+                    <dd class="font-medium flex flex-wrap gap-x-2">
+                        <span x-show="f.id === 'longest_shift' || f.id === 'night_owl'" x-text="$t('stats.hours_unit', { n: hours(f.value) })"></span>
+                        <span x-show="f.id === 'all_rounder' || f.id === 'peak_hour' || f.id === 'best_signup_day'" x-text="number(f.value)"></span>
+                        <span x-show="f.personName" class="font-normal text-base-content/70" x-text="f.personName"></span>
+                        <span x-show="f.day" class="font-normal text-base-content/70"
+                              x-text="f.day ? dayLabel(f.day) + (f.at ? ', ' + time(f.at) : '') : ''"></span>
+                    </dd>
+                </div>
+            </template>
+        </dl>
+    </section>
+</div>
+{{ end }}

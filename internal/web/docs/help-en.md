@@ -91,7 +91,23 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 ### Statistics
 
-![Example of a statistics view](/images/stats.png)
+You open the statistics via "Statistics" in the shift plan's control bar. They open in the same tab; "Back to shift plan" takes you back. The view calculates all figures itself in the browser from the plan data.
+
+The statistics have four tabs:
+
+- **Overview**: key figures (share filled, open spots, people, planned and done hours), staffing per day and per area as bars, and a heatmap across the day that shows how many spots are filled at each hour. Clicking a bar sets the filter to that day or area; clicking a heatmap cell opens the shift plan at that point.
+- **Gaps**: all open spots, the next 24 hours first, then the rest. "Show in plan" takes you to the shift plan, filtered to that shift.
+- **People**: a table of all participants with shifts, hours, days, areas, night hours and their busiest day. Columns can be sorted, the table can be searched and narrowed to people with warnings or with only one shift. Expanding a row shows all of the person's shifts and a "Show in plan" link. Warnings are given for:
+    - Overlap: two shifts of the same person overlap.
+    - Rest: less than 8 hours between the end of one shift and the start of the next.
+    - Load: more than 10 hours on one day.
+
+    Names that differ only in capitalisation, spaces or accents count as the same person. Similar names that differ in punctuation or accents get a hint that they may be the same person. Admins can download the table as a CSV file.
+- **History**: the sign-up curve over time, with the required spots as a line. If enough sign-ups came in during the last 7 days, the curve also shows when the plan would be full at this pace. Below it are the distribution of hours across people and a few quick facts, such as the longest shift.
+
+The area and day filters apply to all tabs. They are kept in the page address, so you can share a filtered view or reload it.
+
+Unlimited shifts do not count into demand, open spots or the share filled. The hours of their participants still count. Overfilled shifts are counted at most as 100 % filled.
 
 ### Export
 

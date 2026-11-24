@@ -1,504 +1,74 @@
 {{ template "base.html" . }}
 
 {{ define "content" }}
-<div x-data="shiftPlanStats" class="container mx-auto p-4 space-y-8">
-    <!-- Loading state -->
+<div x-data="shiftPlanStats" class="container mx-auto p-4 space-y-4">
+    <header class="space-y-1 min-w-0">
+        <a :href="backUrl()" class="link link-hover inline-flex items-center gap-1 min-h-11 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span x-text="$t('stats.back_to_plan')"></span>
+        </a>
+        <h1 class="text-2xl font-bold min-w-0">
+            <span class="block truncate" x-text="planTitle()" :title="planTitle()"></span>
+            <span class="block text-base font-normal text-base-content/70" x-text="$t('stats.title')"></span>
+        </h1>
+    </header>
+
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 pb-3 border-b border-base-300">
+        <div class="min-w-0">
+            <div role="tablist" class="tabs tabs-boxed grid grid-cols-4 w-full lg:w-auto" @keydown="tabKey($event)">
+                <template x-for="name in ['overview', 'gaps', 'people', 'history']" :key="name">
+                    <button type="button" role="tab" class="tab h-auto min-h-11 px-1 sm:px-4 gap-2 whitespace-nowrap"
+                        :id="'stats-tab-' + name"
+                        :aria-controls="'stats-panel-' + name"
+                        :aria-selected="tab === name ? 'true' : 'false'"
+                        :tabindex="tab === name ? 0 : -1"
+                        :class="{ 'tab-active': tab === name }"
+                        @click="setTab(name)">
+                        <span x-text="$t('stats.tab_' + name)"></span>
+                        <span x-show="model && name === 'gaps' && model.gaps.length" class="badge badge-sm hidden sm:inline-flex" x-text="model?.gaps.length"></span>
+                        <span x-show="model && name === 'people' && model.people.length" class="badge badge-sm hidden sm:inline-flex" x-text="model?.people.length"></span>
+                    </button>
+                </template>
+            </div>
+        </div>
+        <div x-show="plan && !error">
+            {{ template "stats-filters" . }}
+        </div>
+    </div>
+
     <div x-show="isLoading" class="flex justify-center items-center min-h-[50vh]">
         <span class="loading loading-spinner loading-lg"></span>
     </div>
 
-    <!-- Error state -->
-    <div x-show="error" class="p-4">
-        <div class="alert alert-error">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span x-text="error"></span>
-        </div>
+    <div x-show="!isLoading && error" role="alert" class="alert alert-error">
+        <span x-text="$t('stats.error_load')"></span>
+        <button type="button" class="btn btn-sm" @click="load()" x-text="$t('stats.reload')"></button>
     </div>
 
-    <!-- Content -->
-    <div x-show="!isLoading && !error && plan && stats" class="space-y-8">
-        <!-- Title -->
-        <div class="text-center">
-            <h1 class="text-4xl font-bold mb-2"><span x-text="plan?.title_en || ''"></span> – <span x-text="$t('stats.title')"></span></h1>
+    <template x-if="!isLoading && !error && model">
+        <div>
+            <section role="tabpanel" id="stats-panel-overview" aria-labelledby="stats-tab-overview" x-show="tab === 'overview'">
+                {{ template "stats-overview" . }}
+            </section>
+            <section role="tabpanel" id="stats-panel-gaps" aria-labelledby="stats-tab-gaps" x-show="tab === 'gaps'">
+                {{ template "stats-gaps" . }}
+            </section>
+            <section role="tabpanel" id="stats-panel-people" aria-labelledby="stats-tab-people" x-show="tab === 'people'">
+                {{ template "stats-people" . }}
+            </section>
+            <section role="tabpanel" id="stats-panel-history" aria-labelledby="stats-tab-history" x-show="tab === 'history'">
+                {{ template "stats-history" . }}
+            </section>
         </div>
-
-        <!-- Overview Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Total Shifts Card -->
-            <div class="stats shadow">
-                <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.total_shifts')"></div>
-                    <div class="stat-value">
-                        <span x-text="stats?.overview?.total_shifts || 0"></span>
-                        (<span x-text="stats?.overview?.open_shifts || 0"></span>)
-                    </div>
-                    <div class="stat-desc" x-text="$t('stats.open_shifts')"></div>
-                </div>
-            </div>
-
-            <!-- Helper Positions Card -->
-            <div class="stats shadow">
-                <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.helper_positions')"></div>
-                    <div class="stat-value">
-                        <span x-text="stats?.overview?.total_filled || 0"></span>/<span x-text="stats?.overview?.total_required || 0"></span>
-                    </div>
-                    <div class="stat-desc">
-                        <div class="w-full bg-base-content/10 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all duration-300"
-                                :class="{
-                                    'bg-success': ((stats?.overview?.total_filled || 0) / (stats?.overview?.total_required || 1) * 100) === 100,
-                                    'bg-error': ((stats?.overview?.total_filled || 0) / (stats?.overview?.total_required || 1) * 100) < 50,
-                                    'bg-warning': ((stats?.overview?.total_filled || 0) / (stats?.overview?.total_required || 1) * 100) >= 50 && ((stats?.overview?.total_filled || 0) / (stats?.overview?.total_required || 1) * 100) < 100
-                                }"
-                                :style="{ width: (((stats?.overview?.total_filled || 0) / (stats?.overview?.total_required || 1)) * 100) + '%' }">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Total Required Hours Card -->
-            <div class="stats shadow">
-                <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.total_hours')"></div>
-                    <div class="stat-value">
-                        <span x-text="formatHours(stats?.overview?.total_hours || 0)"></span>h
-                    </div>
-                    <div class="stat-desc" x-text="$t('stats.total_hours_desc')"></div>
-                </div>
-            </div>
-
-            <!-- Booked Hours Card -->
-            <div class="stats shadow">
-                <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.booked_hours')"></div>
-                    <div class="stat-value">
-                        <span x-text="formatHours(stats?.overview?.filled_hours || 0)"></span>h
-                    </div>
-                    <div class="stat-desc">
-                        <div class="w-full bg-base-content/10 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all duration-300"
-                                :class="{
-                                    'bg-success': ((stats?.overview?.filled_hours || 0) / (stats?.overview?.total_hours || 1) * 100) === 100,
-                                    'bg-error': ((stats?.overview?.filled_hours || 0) / (stats?.overview?.total_hours || 1) * 100) < 50,
-                                    'bg-warning': ((stats?.overview?.filled_hours || 0) / (stats?.overview?.total_hours || 1) * 100) >= 50 && ((stats?.overview?.filled_hours || 0) / (stats?.overview?.total_hours || 1) * 100) < 100
-                                }"
-                                :style="{ width: (((stats?.overview?.filled_hours || 0) / (stats?.overview?.total_hours || 1)) * 100) + '%' }">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Completed Hours Card -->
-            <div class="stats shadow">
-                <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.completed_hours')"></div>
-                    <div class="stat-value">
-                        <span x-text="formatHours(stats?.overview?.past_hours || 0)"></span>h
-                    </div>
-                    <div class="stat-desc">
-                        <div class="w-full bg-base-content/10 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all duration-300"
-                                :class="{
-                                    'bg-success': ((stats?.overview?.past_hours || 0) / (stats?.overview?.filled_hours || 1) * 100) === 100,
-                                    'bg-info': ((stats?.overview?.past_hours || 0) / (stats?.overview?.filled_hours || 1) * 100) < 100
-                                }"
-                                :style="{ width: (((stats?.overview?.past_hours || 0) / (stats?.overview?.filled_hours || 1)) * 100) + '%' }">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Average Hours Per Person Card -->
-            <div class="stats shadow">
-                <div class="stat">
-                    <div class="stat-title" x-text="$t('stats.avg_hours_per_person')"></div>
-                    <div class="stat-value">
-                        <span x-text="formatHours(stats?.overview?.avg_hours_per_helper || 0)"></span>h
-                    </div>
-                    <div class="stat-desc">
-                        <span x-text="stats?.overview?.unique_helpers || 0"></span>
-                        <span x-text="$t('stats.people')"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Helper Rankings -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body p-2.5 md:p-4">
-                <!-- Header with toggle button -->
-                <div class="flex items-center justify-between cursor-pointer mb-2" @click.stop="isHelperRankingsExpanded = !isHelperRankingsExpanded">
-                    <h2 class="card-title mb-0" x-text="$t('stats.helper_rankings')"></h2>
-                    <!-- Toggle Button -->
-                    <button @click.stop="isHelperRankingsExpanded = !isHelperRankingsExpanded" class="btn btn-ghost btn-xs p-0 h-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" 
-                             :class="{ 'rotate-180': isHelperRankingsExpanded }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Table Content (collapsible) -->
-                <div x-show="isHelperRankingsExpanded">
-                    <div class="overflow-x-auto">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th x-text="$t('stats.name')"></th>
-                                    <th x-text="$t('stats.shifts')"></th>
-                                    <th x-text="$t('stats.working_hours')"></th>
-                                    <th x-text="$t('stats.past_hours')"></th>
-                                    <th x-text="$t('stats.future_hours')"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="helper in stats?.helper_stats" :key="helper.name">
-                                    <tr>
-                                        <td x-text="helper.name"></td>
-                                        <td x-text="helper.total_shifts || 0"></td>
-                                        <td x-text="formatHours(helper.total_hours || 0) + 'h'"></td>
-                                        <td x-text="formatHours(helper.past_hours || 0) + 'h'"></td>
-                                        <td x-text="formatHours(helper.future_hours || 0) + 'h'"></td>
-                                    </tr>
-                                </template>
-                                <template x-if="!stats?.helper_stats?.length">
-                                    <tr>
-                                        <td colspan="5" class="text-center" x-text="$t('stats.no_shifts')"></td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <!-- Collapsed Preview (showing top entries) -->
-                <div x-show="!isHelperRankingsExpanded">
-                    <div class="overflow-x-auto">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th x-text="$t('stats.name')"></th>
-                                    <th x-text="$t('stats.shifts')"></th>
-                                    <th x-text="$t('stats.working_hours')"></th>
-                                    <th x-text="$t('stats.past_hours')"></th>
-                                    <th x-text="$t('stats.future_hours')"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(helper, index) in getVisibleHelperRankings()" :key="helper.name">
-                                    <tr>
-                                        <td x-text="helper.name"></td>
-                                        <td x-text="helper.total_shifts || 0"></td>
-                                        <td x-text="formatHours(helper.total_hours || 0) + 'h'"></td>
-                                        <td x-text="formatHours(helper.past_hours || 0) + 'h'"></td>
-                                        <td x-text="formatHours(helper.future_hours || 0) + 'h'"></td>
-                                    </tr>
-                                </template>
-                                <template x-if="stats?.helper_stats?.length > helperRankingsCollapsedLimit">
-                                    <tr>
-                                        <td colspan="5" class="text-center text-base-content/60 italic">
-                                            <span x-text="getHelperRankingsPreviewMessage()"></span>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <template x-if="!stats?.helper_stats?.length">
-                                    <tr>
-                                        <td colspan="5" class="text-center" x-text="$t('stats.no_shifts')"></td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Daily Participant Statistics -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title" x-text="$t('stats.daily_participant_statistics')"></h2>
-                
-                <!-- Participant Filter -->
-                <div class="form-control w-full max-w-xs mb-4">
-                    <label class="label">
-                        <span class="label-text" x-text="$t('stats.filter_participant')"></span>
-                        <button @click="selectedParticipantFilter = ''" 
-                                class="btn btn-ghost btn-xs"
-                                x-show="selectedParticipantFilter.trim()">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </label>
-                    <input type="text" 
-                           class="input input-bordered w-full" 
-                           :class="{ 'input-primary': selectedParticipantFilter.trim() }"
-                           x-model="selectedParticipantFilter"
-                           :placeholder="$t('stats.filter_participant_placeholder')" />
-                </div>
-                
-                <!-- Day Tables -->
-                <template x-for="dayStat in getFilteredDailyParticipantStats()" :key="dayStat.dayKey">
-                    <div class="mb-6">
-                        <!-- Day Header with Collapse Button -->
-                        <div class="flex items-center justify-between cursor-pointer mb-2" @click.stop="toggleDay(dayStat.dayKey)">
-                            <h3 class="text-lg font-semibold mb-0" x-text="formatDate(dayStat.date)"></h3>
-                            <button @click.stop="toggleDay(dayStat.dayKey)" class="btn btn-ghost btn-xs p-0 h-auto">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-200" 
-                                     :class="{ 'rotate-180': isDayExpanded(dayStat.dayKey) }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </button>
-                        </div>
-                        
-                        <!-- Day Table (collapsible) -->
-                        <div x-show="isDayExpanded(dayStat.dayKey)">
-                            <div class="overflow-x-auto">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'name')">
-                                                <div class="flex items-center gap-2">
-                                                    <span x-text="$t('stats.name')"></span>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'name')" />
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'shifts')">
-                                                <div class="flex items-center gap-2">
-                                                    <span x-text="$t('stats.shifts')"></span>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'shifts')" />
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'types')">
-                                                <div class="flex items-center gap-2">
-                                                    <span x-text="$t('stats.shift_types')"></span>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'types')" />
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                            <th class="cursor-pointer hover:bg-base-200" @click.stop="sortColumn(dayStat.dayKey, 'hours')">
-                                                <div class="flex items-center gap-2">
-                                                    <span x-text="$t('stats.total_hours')"></span>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getSortIcon(dayStat.dayKey, 'hours')" />
-                                                    </svg>
-                                                </div>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template x-for="participant in dayStat.participants" :key="participant.name">
-                                            <tr>
-                                                <td x-text="participant.name"></td>
-                                                <td x-text="participant.shiftCount"></td>
-                                                <td>
-                                                    <div class="flex flex-wrap gap-1">
-                                                        <template x-for="typeInfo in participant.shiftTypes" :key="typeInfo.typeName">
-                                                            <span class="badge badge-outline">
-                                                                <span x-text="typeInfo.typeName"></span>
-                                                                <span class="ml-1 font-semibold" x-text="'(' + typeInfo.count + ')'"></span>
-                                                            </span>
-                                                        </template>
-                                                    </div>
-                                                </td>
-                                                <td x-text="formatHours(participant.totalHours) + 'h'"></td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-                
-                <!-- Empty State -->
-                <template x-if="getFilteredDailyParticipantStats().length === 0">
-                    <div class="text-center py-8 text-base-content/60">
-                        <p x-text="$t('stats.no_daily_participant_data')"></p>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Helper Details -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title" x-text="$t('stats.helper_details')"></h2>
-                
-                <!-- Helper Selection -->
-                <div class="form-control w-full max-w-xs">
-                    <label class="label">
-                        <span class="label-text" x-text="$t('stats.select_helper')"></span>
-                    </label>
-                    <select class="select select-bordered" x-model="selectedHelper">
-                        <option value="" x-text="$t('stats.select_helper_placeholder')"></option>
-                        <template x-for="helper in stats?.helper_stats" :key="helper.name">
-                            <option :value="helper.name" x-text="helper.name"></option>
-                        </template>
-                    </select>
-                </div>
-
-                <!-- Selected Helper Stats -->
-                <template x-if="selectedHelper">
-                    <div class="space-y-4">
-                        <div class="stats shadow">
-                            <div class="stat">
-                                <div class="stat-title" x-text="$t('stats.total_shifts')"></div>
-                                <div class="stat-value" x-text="getSelectedHelperDetails()?.total_shifts || 0"></div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-title" x-text="$t('stats.working_hours')"></div>
-                                <div class="stat-value" x-text="formatHours(getSelectedHelperDetails()?.total_hours || 0) + 'h'"></div>
-                            </div>
-                        </div>
-
-                        <!-- Shift List -->
-                        <div class="overflow-x-auto">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th x-text="$t('stats.date')"></th>
-                                        <th x-text="$t('stats.type')"></th>
-                                        <th x-text="$t('stats.duration')"></th>
-                                        <th x-text="$t('stats.status')"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="shift in getSelectedHelperDetails()?.shift_details" :key="shift.date + shift.type_id">
-                                        <tr>
-                                            <td x-text="formatDate(shift.date)"></td>
-                                            <td x-text="shift.type_name"></td>
-                                            <td x-text="formatHours(shift.duration)"></td>
-                                            <td>
-                                                <span class="badge"
-                                                    :class="{
-                                                        'badge-success': shift.status === 'past',
-                                                        'badge-warning': shift.status === 'current',
-                                                        'badge-info': shift.status === 'future'
-                                                    }"
-                                                    x-text="$t('stats.status_' + shift.status)">
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        <!-- Type Statistics -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title" x-text="$t('stats.type_statistics')"></h2>
-                <div class="overflow-x-auto">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th x-text="$t('stats.type')"></th>
-                                <th x-text="$t('stats.total_shifts')"></th>
-                                <th x-text="$t('stats.helper_positions')"></th>
-                                <th x-text="$t('stats.working_hours')"></th>
-                                <th x-text="$t('stats.open_positions')"></th>
-                                <th x-text="$t('stats.filled_percentage')"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="type in stats?.type_stats" :key="type.id">
-                                <tr>
-                                    <td x-text="$locale() === 'de' ? type.title_de : type.title_en"></td>
-                                    <td x-text="type.total_shifts"></td>
-                                    <td>
-                                        <span x-text="type.total_filled"></span>/<span x-text="type.total_required"></span>
-                                    </td>
-                                    <td>
-                                        <span x-text="formatHours(type.filled_hours) + 'h'"></span>/<span x-text="formatHours(type.total_hours) + 'h'"></span>
-                                    </td>
-                                    <td x-text="type.open_positions"></td>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <progress class="progress w-20"
-                                                :class="{
-                                                    'progress-success': type.percent_filled === 100,
-                                                    'progress-error': type.percent_filled < 50,
-                                                    'progress-warning': type.percent_filled >= 50 && type.percent_filled < 100
-                                                }"
-                                                :value="type.percent_filled" max="100">
-                                            </progress>
-                                            <span x-text="type.percent_filled + '%'"></span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Daily Statistics -->
-        <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-                <h2 class="card-title" x-text="$t('stats.daily_statistics')"></h2>
-                <div class="overflow-x-auto">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th x-text="$t('stats.date')"></th>
-                                <th x-text="$t('stats.total_shifts')"></th>
-                                <th x-text="$t('stats.helper_positions')"></th>
-                                <th x-text="$t('stats.working_hours')"></th>
-                                <th x-text="$t('stats.open_positions')"></th>
-                                <th x-text="$t('stats.filled_percentage')"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="day in stats?.daily_stats" :key="day.date">
-                                <tr>
-                                    <td x-text="formatDate(day.date)"></td>
-                                    <td x-text="day.total_shifts"></td>
-                                    <td>
-                                        <span x-text="day.total_filled"></span>/<span x-text="day.total_required"></span>
-                                    </td>
-                                    <td>
-                                        <span x-text="formatHours(day.filled_hours) + 'h'"></span>/<span x-text="formatHours(day.total_hours) + 'h'"></span>
-                                    </td>
-                                    <td x-text="day.open_positions"></td>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <progress class="progress w-20"
-                                                :class="{
-                                                    'progress-success': day.percent_filled === 100,
-                                                    'progress-error': day.percent_filled < 50,
-                                                    'progress-warning': day.percent_filled >= 50 && day.percent_filled < 100
-                                                }"
-                                                :value="day.percent_filled" max="100">
-                                            </progress>
-                                            <span x-text="day.percent_filled + '%'"></span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+    </template>
 </div>
 {{ end }}
 
 {{ define "scripts" }}
+<script type="module" src="/static/js/stats/overview.js"></script>
+<script type="module" src="/static/js/stats/people.js"></script>
+<script type="module" src="/static/js/stats/history.js"></script>
 <script type="module" src="/static/js/shift-plan-stats.js"></script>
-{{ end }} 
+{{ end }}

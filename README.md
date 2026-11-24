@@ -65,7 +65,7 @@ A full list of features can be found [below](#features).
 
 - **🛡️ Admin-only mode:** The administration panel is secured with an admin password, which is displayed once immediately after the schedule has been created.
 - **🔍 Multi-dimensional filter:** Shifts can be filtered along four independent dimensions — shift type, day, occupancy status, and participant name — applied in combination. The occupancy status filter distinguishes five levels: *empty* (no participants), *critical* (fewer than 50 % of required slots filled), *not full* (at least one vacancy remaining), *full* (exactly at capacity), and *overbooked* (more participants than required slots). The participant search performs a case-insensitive substring match across all enrolled names. Active filters carry through to both the list and timetable views as well as to CSV and PDF exports.
-- **📊 Comprehensive statistics:** Organisers have access to detailed statistical functions covering shift coverage and participant distribution.
+- **📊 Statistics:** Four tabs for coverage (key figures, per day and area, staffing heatmap), open spots, a sortable people table with overlap, rest and load warnings (CSV export for admins), and the sign-up history with a forecast. Area and day filters apply to all tabs and are kept in the URL. Unlimited shifts do not count into demand.
 - **📚 Integrated documentation system:** A built-in documentation system powers the application's help pages.
 - **📤 Export to CSV or PDF:** Shift schedules can be exported as CSV or PDF files. The PDF poster export, for instance, enables a transition to a paper-based schedule during the event itself.
 

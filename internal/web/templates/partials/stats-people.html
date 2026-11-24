@@ -1,0 +1,209 @@
+{{ define "stats-people" }}
+<div x-data="statsPeople" class="space-y-3">
+    <template x-if="model.people.length === 0">
+        <div class="py-8 text-center space-y-3">
+            <p x-text="hasFilter ? $t('stats.empty_filtered') : $t('stats.empty_people')"></p>
+            <button type="button" class="btn btn-sm min-h-11" x-show="hasFilter" @click="resetFilter()" x-text="$t('stats.filter_reset')"></button>
+        </div>
+    </template>
+
+    <template x-if="model.people.length > 0">
+        <div class="space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <label class="input input-bordered flex items-center gap-2 min-h-11 flex-1 min-w-48">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input type="search" class="grow min-w-0" x-model="search" :placeholder="$t('stats.people_search')" :aria-label="$t('stats.people_search')">
+                </label>
+                <div class="join" role="group">
+                    <button type="button" class="join-item btn min-h-11" :class="{ 'btn-active btn-primary': quick === 'all' }" :aria-pressed="quick === 'all'" @click="quick = 'all'">
+                        <span x-text="$t('stats.people_all')"></span>
+                    </button>
+                    <button type="button" class="join-item btn min-h-11" :class="{ 'btn-active btn-primary': quick === 'warn' }" :aria-pressed="quick === 'warn'" @click="quick = 'warn'">
+                        <span x-text="$t('stats.people_warn')"></span>
+                        <span class="badge badge-sm" x-text="warnCount(model.people)"></span>
+                    </button>
+                    <button type="button" class="join-item btn min-h-11" :class="{ 'btn-active btn-primary': quick === 'single' }" :aria-pressed="quick === 'single'" @click="quick = 'single'">
+                        <span x-text="$t('stats.people_single')"></span>
+                        <span class="badge badge-sm" x-text="singleCount(model.people)"></span>
+                    </button>
+                </div>
+                <label class="flex items-center gap-2 md:hidden w-full">
+                    <span class="text-sm shrink-0" x-text="$t('stats.sort_by')"></span>
+                    <select class="select select-bordered min-h-11 grow min-w-0" :value="sortKey" @change="setSortKey($event.target.value)">
+                        <template x-for="c in cols" :key="c.key">
+                            <option :value="c.key" :selected="c.key === sortKey" x-text="$t('stats.' + c.label)"></option>
+                        </template>
+                    </select>
+                    <button type="button" class="btn btn-square min-h-11" :aria-label="$t(sortDesc ? 'stats.sort_asc' : 'stats.sort_desc')" :title="$t(sortDesc ? 'stats.sort_asc' : 'stats.sort_desc')" @click="sortDesc = !sortDesc">
+                        <span aria-hidden="true" x-text="sortDesc ? '↓' : '↑'"></span>
+                    </button>
+                </label>
+            </div>
+
+            <template x-if="rows(model.people).length === 0">
+                <div class="py-8 text-center space-y-3">
+                    <p x-text="$t('stats.empty_filtered')"></p>
+                    <button type="button" class="btn btn-sm min-h-11" @click="resetLocal()" x-text="$t('stats.filter_reset')"></button>
+                </div>
+            </template>
+
+            <div class="overflow-x-auto" x-show="rows(model.people).length > 0">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <template x-for="c in cols" :key="c.key">
+                                <th scope="col" :aria-sort="ariaSort(c.key)"
+                                    :class="{ 'hidden md:table-cell': c.wide, 'text-right': c.num }">
+                                    <button type="button" class="inline-flex items-center gap-1 min-h-11 font-semibold hover:underline"
+                                        :class="{ 'flex-row-reverse': c.num }" @click="sortBy(c.key)">
+                                        <span x-text="$t('stats.' + c.label)" :class="{ 'sr-only md:not-sr-only': c.key === 'warnings' }"></span>
+                                        <span aria-hidden="true" class="w-3" x-text="sortKey === c.key ? (sortDesc ? '↓' : '↑') : ''"></span>
+                                    </button>
+                                </th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <template x-for="p in rows(model.people)" :key="p.key">
+                        <tbody class="border-t border-base-300">
+                            <tr>
+                                <td class="p-0 max-w-48">
+                                    <button type="button" class="flex items-center gap-2 min-h-11 w-full px-3 text-left min-w-0"
+                                        :aria-expanded="isOpen(p.key) ? 'true' : 'false'"
+                                        :aria-controls="'stats-person-' + p.key.replace(/\s+/g, '-')"
+                                        :aria-label="$t('stats.expand_person', { name: p.name })"
+                                        :title="p.name"
+                                        @click="toggle(p.key)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none" :class="{ 'rotate-90': isOpen(p.key) }" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                        <span class="truncate font-medium" x-text="p.name"></span>
+                                    </button>
+                                </td>
+                                <td class="text-right" x-text="number(p.shifts)"></td>
+                                <td class="text-right" x-text="hours(p.minutes)"></td>
+                                <td class="text-right hidden md:table-cell" x-text="hours(p.doneMinutes)"></td>
+                                <td class="text-right hidden md:table-cell" x-text="number(p.days)"></td>
+                                <td class="text-right hidden md:table-cell" x-text="number(p.typeCount)"></td>
+                                <td class="text-right hidden md:table-cell" x-text="hours(p.nightMinutes)"></td>
+                                <td class="text-right hidden md:table-cell" x-text="hours(p.maxDayMinutes)"></td>
+                                <td>
+                                    <div class="flex flex-wrap items-center gap-1">
+                                        <template x-if="p.warnings.length > 0 && hasError(p)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-error md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" role="img" :aria-label="kinds(p).map(k => $t('stats.warn_' + k)).join(', ')">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </template>
+                                        <template x-if="p.warnings.length > 0 && !hasError(p)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" role="img" :aria-label="kinds(p).map(k => $t('stats.warn_' + k)).join(', ')">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                            </svg>
+                                        </template>
+                                        <template x-for="k in kinds(p)" :key="k">
+                                            <span class="badge badge-sm gap-1 hidden md:inline-flex whitespace-nowrap" :class="k === 'overlap' ? 'badge-error' : 'badge-warning'" x-text="$t('stats.warn_' + k)"></span>
+                                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr x-show="isOpen(p.key)" :id="'stats-person-' + p.key.replace(/\s+/g, '-')">
+                                <td colspan="9" class="bg-base-200/50 space-y-3">
+                                    <dl class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm md:hidden">
+                                        <template x-for="c in cols.filter(c => c.wide)" :key="c.key">
+                                            <div class="flex justify-between gap-2 min-w-0">
+                                                <dt class="text-base-content/70" x-text="$t('stats.' + c.label)"></dt>
+                                                <dd class="font-medium" x-text="c.key === 'days' || c.key === 'typeCount' ? number(p[c.key]) : hours(p[c.key])"></dd>
+                                            </div>
+                                        </template>
+                                    </dl>
+
+                                    <div>
+                                        <div class="overflow-x-auto" aria-hidden="true">
+                                            <div class="flex items-end gap-1 h-12 w-max">
+                                                <template x-for="col in timeline(p, model.heatmap.days)" :key="col.day">
+                                                    <div class="flex flex-col-reverse justify-start gap-px w-6 border-b border-base-content/30" :title="dayLabel(col.day)">
+                                                        <template x-for="seg in col.segments" :key="seg.id">
+                                                            <div class="w-full rounded-sm border border-primary"
+                                                                :class="{
+                                                                    'bg-primary': seg.status === 'past',
+                                                                    'bg-primary/40 border-dashed': seg.status === 'current',
+                                                                    'bg-base-100': seg.status === 'future'
+                                                                }"
+                                                                :style="seg.style"></div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <ul class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
+                                            <li class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm border border-primary bg-primary"></span><span x-text="$t('stats.status_past')"></span></li>
+                                            <li class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm border border-dashed border-primary bg-primary/40"></span><span x-text="$t('stats.status_current')"></span></li>
+                                            <li class="inline-flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm border border-primary bg-base-100"></span><span x-text="$t('stats.status_future')"></span></li>
+                                        </ul>
+                                    </div>
+
+                                    <ul class="space-y-1 text-sm">
+                                        <template x-for="it in p.items" :key="it.shiftId">
+                                            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+                                                <span class="font-medium" x-text="dayLabel(it.day)"></span>
+                                                <span x-text="timeRange(it.start, it.end)"></span>
+                                                <span class="truncate max-w-48" :title="t(it.typeTitle)" x-text="t(it.typeTitle)"></span>
+                                                <span class="badge badge-sm"
+                                                    :class="{ 'badge-ghost': it.status === 'past', 'badge-primary': it.status === 'current', 'badge-outline': it.status === 'future' }"
+                                                    x-text="$t('stats.status_' + it.status)"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+
+                                    <ul class="space-y-1 text-sm" x-show="p.warnings.length > 0">
+                                        <template x-for="(w, i) in p.warnings" :key="i">
+                                            <li class="flex items-start gap-2" :class="w.kind === 'overlap' ? 'text-error' : 'text-warning-content'">
+                                                <template x-if="w.kind === 'overlap'">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </template>
+                                                <template x-if="w.kind !== 'overlap'">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                                                    </svg>
+                                                </template>
+                                                <span class="text-base-content">
+                                                    <span x-text="$t('stats.warn_' + w.kind)"></span>
+                                                    <span class="text-base-content/70" x-text="'(' + $t('stats.hours_unit', { n: hours(w.minutes) }) + ')'"></span>
+                                                </span>
+                                            </li>
+                                        </template>
+                                    </ul>
+
+                                    <a :href="planUrl({ q: p.name, view: 'list' })" class="link link-primary inline-flex items-center min-h-11" x-text="$t('stats.show_in_plan')"></a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </template>
+                </table>
+            </div>
+
+            <ul class="space-y-1 text-sm" x-show="duplicates(model).length > 0">
+                <template x-for="d in duplicates(model)" :key="d.a + '|' + d.b">
+                    <li class="flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="min-w-0 break-words" x-text="$t('stats.duplicate_hint', { a: d.a, b: d.b })"></span>
+                    </li>
+                </template>
+            </ul>
+
+            <div x-show="isAdmin && rows(model.people).length > 0">
+                <button type="button" class="btn btn-sm min-h-11"
+                    @click="downloadCsv(rows(model.people),
+                        [$t('stats.col_name'), $t('stats.col_shifts'), $t('stats.col_hours'), $t('stats.col_done'), $t('stats.col_days'), $t('stats.col_types'), $t('stats.col_night'), $t('stats.col_max_day'), $t('stats.col_warning')],
+                        { overlap: $t('stats.warn_overlap'), rest: $t('stats.warn_rest'), dayload: $t('stats.warn_dayload') },
+                        token)"
+                    x-text="$t('stats.download_csv')"></button>
+            </div>
+        </div>
+    </template>
+</div>
+{{ end }}

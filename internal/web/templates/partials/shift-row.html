@@ -1,5 +1,5 @@
 {{ define "shift-row" }}
-<tbody x-data="{ isExpanded: false }" class="group">
+<tbody x-data="{ isExpanded: false }" class="group" :data-shift-id="shift.id">
     <!-- Main shift row -->
     <tr class="hover:bg-base-300/50 border-b border-base-content/20" 
         :class="{ 

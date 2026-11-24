@@ -1,0 +1,28 @@
+{{ define "stats-filters" }}
+<div class="flex flex-wrap items-end gap-x-3 gap-y-2">
+    <label class="flex flex-col gap-1 text-sm min-w-0">
+        <span x-text="$t('stats.filter_type')"></span>
+        <select class="select select-bordered select-sm h-11 min-h-11 max-w-48"
+            :class="{ 'select-primary': filter.typeIds.length }"
+            @change="setTypeFilter($event.target.value)">
+            <option value="" :selected="!filter.typeIds.length" x-text="$t('stats.filter_all')"></option>
+            <template x-for="ty in (model?.options.types || [])" :key="ty.typeId">
+                <option :value="ty.typeId" :selected="filter.typeIds.includes(ty.typeId)" x-text="t(ty.title)"></option>
+            </template>
+        </select>
+    </label>
+    <label class="flex flex-col gap-1 text-sm min-w-0">
+        <span x-text="$t('stats.filter_day')"></span>
+        <select class="select select-bordered select-sm h-11 min-h-11 max-w-48"
+            :class="{ 'select-primary': filter.days.length }"
+            @change="setDayFilter($event.target.value)">
+            <option value="" :selected="!filter.days.length" x-text="$t('stats.filter_all')"></option>
+            <template x-for="d in (model?.options.days || [])" :key="d">
+                <option :value="d" :selected="filter.days.includes(d)" x-text="dayLabel(d)"></option>
+            </template>
+        </select>
+    </label>
+    <button type="button" class="btn btn-ghost btn-sm min-h-11 underline" x-show="hasFilter" @click="resetFilter()"
+        x-text="$t('stats.filter_reset')"></button>
+</div>
+{{ end }}

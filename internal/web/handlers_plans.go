@@ -149,7 +149,7 @@ func (s *Server) handleShiftPlanStats(w http.ResponseWriter, r *http.Request) {
 
 // handleGetShiftPlanStats retrieves statistics for a shift plan
 // @Summary Get shift plan statistics
-// @Description Retrieves comprehensive statistics for a shift plan including overview, helper stats, type stats, and daily stats
+// @Description Summary of statistics for a shift plan (overview, helper stats, type stats, daily stats), meant for API clients. The web UI computes its statistics itself from the plan data and does not use this endpoint. Unlimited shifts (required -1) do not count into required totals or open positions; overfilled shifts are capped at required for percentages.
 // @Tags Plans
 // @Accept json
 // @Produce json

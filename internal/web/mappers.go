@@ -236,8 +236,9 @@ func BatchDeleteResultToResponse(result *model.BatchResult[int64]) model.BatchDe
 // ParticipantToResponse converts a db.Participant to a model.ParticipantResponse
 func ParticipantToResponse(participant *db.Participant) model.ParticipantResponse {
 	return model.ParticipantResponse{
-		ID:   participant.ID,
-		Name: participant.Name,
+		ID:        participant.ID,
+		Name:      participant.Name,
+		CreatedAt: participant.CreatedAt.UTC(),
 	}
 }
 

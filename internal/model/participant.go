@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 // =============================================================================
 // Participant Request DTOs
 // =============================================================================
@@ -22,4 +24,6 @@ type ParticipantResponse struct {
 	ID int64 `json:"id" example:"123"`
 	// Name of the participant
 	Name string `json:"name" example:"John Doe"`
+	// Time of sign-up (RFC3339, UTC)
+	CreatedAt time.Time `json:"created_at" example:"2024-12-01T10:00:00Z"`
 } // @name ParticipantResponse

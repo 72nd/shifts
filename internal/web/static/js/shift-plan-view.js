@@ -61,6 +61,10 @@ document.addEventListener('alpine:init', () => {
         // Collision detection state
         participantCollisions: {}, // Map: participant name -> array of colliding shift IDs
 
+        // URL deep link state (read once on first load)
+        urlFiltersPending: true,
+        pendingUrlShiftId: null,
+
         // Computed property für den Ladezustand
         get isReady() {
             return !this.isLoading && !this.error && this.plan;
@@ -149,6 +153,13 @@ document.addEventListener('alpine:init', () => {
 
             // Initialize managers
             this.filterManager = new FilterManager();
+
+            // Filters and target shift from the URL, read once; the URL is not written back
+            const urlParams = new URLSearchParams(window.location.search);
+            this.filterManager.applyUrlFilters(urlParams);
+            const shiftParam = urlParams.get('shift') || '';
+            this.pendingUrlShiftId = /^\d+$/.test(shiftParam) ? shiftParam : null;
+
             this.shiftModal = new ShiftModal(
                 this.plan.start_date,
                 this.shiftTypes,
@@ -668,6 +679,13 @@ document.addEventListener('alpine:init', () => {
                     shiftsByDate: this.groupShiftsByDate(type.shifts || [])
                 }));
 
+                // First load only: drop URL type ids that do not exist in this plan
+                if (this.urlFiltersPending) {
+                    const knownTypeIds = this.shiftTypes.map(t => t.id);
+                    this.filterManager.selectedTypes = this.filterManager.selectedTypes.filter(id => knownTypeIds.includes(id));
+                    this.urlFiltersPending = false;
+                }
+
                 // Detect collisions after loading shifts
                 this.detectCollisions();
 
@@ -742,7 +760,27 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.isLoading = false;
                 this.$nextTick(() => this.detectAllShiftOverflows());
+                if (this.pendingUrlShiftId && !this.error) {
+                    this.$nextTick(() => this.focusUrlShift());
+                }
             }
+        },
+
+        // Scroll to the shift from ?shift= and focus it; runs once after the first load
+        focusUrlShift() {
+            const id = this.pendingUrlShiftId;
+            this.pendingUrlShiftId = null;
+            if (!id) return;
+
+            // Timetable cells and list rows both carry data-shift-id; take the visible one.
+            const el = [...document.querySelectorAll(`[data-shift-id="${id}"]`)]
+                .find(e => e.getClientRects().length > 0);
+            if (!el) return;
+
+            if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            el.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+            el.focus({ preventScroll: true });
         },
 
         // Modal functions

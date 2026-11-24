@@ -1,0 +1,112 @@
+{{ define "stats-overview" }}
+<div x-data="statsOverview" class="space-y-6">
+    <!-- Empty states -->
+    <div x-show="model.totals.shifts === 0" class="py-8 text-center space-y-3">
+        <p x-text="hasFilter ? $t('stats.empty_filtered') : $t('stats.empty_shifts')"></p>
+        <button type="button" class="btn btn-primary min-h-11" x-show="hasFilter" @click="resetFilter()" x-text="$t('stats.filter_reset')"></button>
+        <a class="btn btn-primary min-h-11" x-show="!hasFilter" :href="backUrl()" x-text="$t('stats.no_shift_yet_action')"></a>
+    </div>
+
+    <div x-show="model.totals.shifts > 0" class="space-y-6">
+        <!-- KPIs -->
+        <dl class="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-4 border-y border-base-300 py-4">
+            <div class="min-w-0 col-span-2 lg:col-span-1">
+                <dt class="text-sm text-base-content/70" x-text="$t('stats.kpi_filled')"></dt>
+                <dd class="text-3xl font-bold tabular-nums"
+                    x-text="model.totals.percent === null ? '∞' : model.totals.percent + ' %'"></dd>
+                <dd><progress class="progress progress-primary w-full max-w-xs" :value="model.totals.percent ?? 0" max="100" aria-hidden="true"></progress></dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="text-sm text-base-content/70" x-text="$t('stats.kpi_open_slots')"></dt>
+                <dd class="text-3xl font-bold tabular-nums">
+                    <span x-text="number(model.totals.open)"></span>
+                    <span x-show="model.totals.unlimitedShifts > 0" class="text-base font-normal"
+                        :title="$t('stats.unlimited')" :aria-label="$t('stats.unlimited')">+ ∞</span>
+                </dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="text-sm text-base-content/70" x-text="$t('stats.kpi_people')"></dt>
+                <dd class="text-3xl font-bold tabular-nums" x-text="number(model.totals.people)"></dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="text-sm text-base-content/70" x-text="$t('stats.kpi_hours_planned')"></dt>
+                <dd class="text-3xl font-bold tabular-nums" x-text="hours(model.totals.plannedMinutes)"></dd>
+            </div>
+            <div class="min-w-0" x-show="model.totals.doneMinutes > 0">
+                <dt class="text-sm text-base-content/70" x-text="$t('stats.kpi_hours_done')"></dt>
+                <dd class="text-3xl font-bold tabular-nums" x-text="hours(model.totals.doneMinutes)"></dd>
+            </div>
+        </dl>
+
+        <!-- Bars -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section aria-labelledby="stats-by-day" class="min-w-0">
+                <h2 id="stats-by-day" class="font-semibold mb-1" x-text="$t('stats.by_day')"></h2>
+                <ul>
+                    <template x-for="row in dayRows" :key="row.key">
+                        <li>{{ template "stats-bar" . }}</li>
+                    </template>
+                </ul>
+            </section>
+            <section aria-labelledby="stats-by-type" class="min-w-0">
+                <h2 id="stats-by-type" class="font-semibold mb-1" x-text="$t('stats.by_type')"></h2>
+                <ul>
+                    <template x-for="row in typeRows" :key="row.key">
+                        <li>{{ template "stats-bar" . }}</li>
+                    </template>
+                </ul>
+            </section>
+        </div>
+
+        <!-- Heatmap -->
+        <section aria-labelledby="stats-heatmap" class="min-w-0">
+            <h2 id="stats-heatmap" class="font-semibold mb-2" x-text="$t('stats.heatmap_title')"></h2>
+            <div class="overflow-x-auto border border-base-300 rounded" tabindex="0" role="group" :aria-label="$t('stats.heatmap_title')">
+                <div class="min-w-max">
+                    <div class="flex">
+                        <div class="sticky left-0 z-10 bg-base-100 w-20 shrink-0"></div>
+                        <template x-for="h in model.heatmap.hours" :key="h">
+                            <div class="flex-1 min-w-11 text-center text-xs tabular-nums text-base-content/70 py-1" x-text="hourLabel(h)"></div>
+                        </template>
+                    </div>
+                    <template x-for="(day, di) in model.heatmap.days" :key="day">
+                        <div class="flex">
+                            <div class="sticky left-0 z-10 bg-base-100 w-20 shrink-0 px-2 flex items-center text-sm border-r border-base-300"
+                                x-text="dayLabel(day)"></div>
+                            <template x-for="(cell, hi) in model.heatmap.cells[di]" :key="hi">
+                                <div class="flex-1 min-w-11 h-11 p-px relative">
+                                    <template x-if="cell">
+                                        <a :href="cellUrl(day, cell)"
+                                            class="absolute inset-px rounded-sm flex items-center justify-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
+                                            :class="cellClass(cell)" :style="cellStyle(cell)"
+                                            :title="cellLabel(day, hi, cell)" :aria-label="cellLabel(day, hi, cell)">
+                                            <span x-show="cell.ratio === null" aria-hidden="true">∞</span>
+                                        </a>
+                                    </template>
+                                    <template x-if="!cell">
+                                        <div class="absolute inset-px rounded-sm bg-base-200"
+                                            :title="cellLabel(day, hi, cell)" role="img" :aria-label="cellLabel(day, hi, cell)"></div>
+                                    </template>
+                                    <template x-if="isNow(di, hi)">
+                                        <span class="absolute top-0 bottom-0 w-0.5 bg-base-content z-[1] pointer-events-none"
+                                            :style="`left: ${nowMark.frac * 100}%`" :title="$t('stats.now')" aria-hidden="true"></span>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <!-- Legend -->
+            <ul class="flex flex-wrap gap-x-4 gap-y-2 mt-2 text-sm">
+                <li class="flex items-center gap-2"><span class="inline-block w-5 h-5 rounded-sm border border-transparent" style="background-color: oklch(var(--p))"></span><span x-text="$t('stats.legend_full')"></span></li>
+                <li class="flex items-center gap-2"><span class="inline-block w-5 h-5 rounded-sm border border-transparent" style="background-color: oklch(var(--p) / 0.5)"></span><span x-text="$t('stats.legend_partial')"></span></li>
+                <li class="flex items-center gap-2"><span class="inline-block w-5 h-5 rounded-sm border-2 border-error" style="background-color: oklch(var(--p) / 0.25); background-image: repeating-linear-gradient(45deg, transparent 0 3px, oklch(var(--er) / 0.6) 3px 5px)"></span><span x-text="$t('stats.legend_low')"></span></li>
+                <li class="flex items-center gap-2"><span class="inline-block w-5 h-5 rounded-sm bg-base-200"></span><span x-text="$t('stats.heatmap_none')"></span></li>
+                <li class="flex items-center gap-2"><span class="inline-flex items-center justify-center w-5 h-5 rounded-sm border border-dashed border-base-content/40 bg-base-200 text-xs" aria-hidden="true">∞</span><span x-text="$t('stats.unlimited')"></span></li>
+                <li class="flex items-center gap-2" x-show="nowMark"><span class="inline-block w-0.5 h-5 bg-base-content"></span><span x-text="$t('stats.now')"></span></li>
+            </ul>
+        </section>
+    </div>
+</div>
+{{ end }}

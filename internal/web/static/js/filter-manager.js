@@ -1,10 +1,37 @@
-import { parseDateTime, dateKey, logicalDay } from './datetime.js';
+import { parseDateTime, parseDate, serializeDate, dateKey, logicalDay } from './datetime.js';
 import { parseBoundaryTime } from './timetable-view-layout.js';
+
+// URL value of ?status= mapped to a selectedStatus value; unknown values are ignored
+const URL_STATUS_VALUES = { open: 'not_full' };
 
 export class FilterManager {
     constructor(dayBoundary = '00:00') {
         this.setDayBoundary(dayBoundary);
         this.reset();
+    }
+
+    // Apply filters from URL params (type, day, status, q). Called once on load; invalid values are ignored.
+    applyUrlFilters(params) {
+        const typeIds = (params.get('type') || '')
+            .split(',')
+            .map(part => part.trim())
+            .filter(part => /^\d+$/.test(part))
+            .map(Number)
+            .filter(id => id > 0);
+        this.selectedTypes = [...new Set(typeIds)];
+
+        const day = params.get('day') || '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+            const date = parseDate(day);
+            // Reject impossible dates such as 2026-02-30 (they would roll over)
+            if (date && serializeDate(date) === day) this.selectedDay = day;
+        }
+
+        const status = URL_STATUS_VALUES[params.get('status')];
+        if (status) this.selectedStatus = status;
+
+        const query = (params.get('q') || '').trim();
+        if (query) this.searchQuery = query.slice(0, 100);
     }
 
     // Set the plan's daily boundary ("HH:MM") used for the day filter

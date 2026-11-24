@@ -1,0 +1,18 @@
+{{ define "stats-bar" }}
+{{/* One bar row. Expects `row` from the surrounding x-for (see statsOverview.barRow). */}}
+<button type="button"
+    class="w-full min-h-11 grid grid-cols-[minmax(0,6rem)_minmax(0,1fr)_4.5rem] sm:grid-cols-[minmax(0,9rem)_minmax(0,1fr)_5rem] items-center gap-2 px-2 rounded text-left hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+    :class="{ 'bg-base-200 font-semibold': row.selected }"
+    :aria-pressed="row.selected ? 'true' : 'false'"
+    :aria-label="row.label + ': ' + (row.percent === null ? '∞' : row.percent + ' %')"
+    @click="selectRow(row)">
+    <span class="truncate" :title="row.label" x-text="row.label"></span>
+    <progress class="progress w-full" :class="row.low ? 'progress-error' : 'progress-primary'"
+        :value="row.percent ?? 0" max="100" aria-hidden="true"></progress>
+    <span class="flex items-center justify-end gap-1 tabular-nums text-sm">
+        <span x-show="row.low" :title="$t('stats.legend_low')" aria-hidden="true">⚠</span>
+        <span x-show="row.full" aria-hidden="true">✓</span>
+        <span x-text="row.percent === null ? '∞' : row.percent + ' %'"></span>
+    </span>
+</button>
+{{ end }}
