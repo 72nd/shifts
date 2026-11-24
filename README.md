@@ -9,7 +9,7 @@ The Shifts shift planning web application enables the collaborative coordination
 The application was developed out of frustration that existing tools were either too complicated for participants to use (login, email, etc.) or simply could not handle more complex events with numerous shifts and shift types.
 
 > [!WARNING]
-> **LLM Disclaimer.** This tool is the result of an experiment designed to investigate the potential applications of Vibe Coding. The architecture was specified by humans. Nevertheless, it is likely that this code will contain the usual problems and errors associated with LLM coding agents. Use is therefore at your own risk, and you must carry out your own risk assessment. Apart from a freely chosen nickname, the tool does not store any user data.
+> **LLM Disclaimer.** This tool is the result of an experiment designed to investigate the potential applications of Vibe/Agentic Coding. The architecture was specified by humans. Nevertheless, it is likely that this code will contain the usual problems and errors associated with LLM coding agents. Use is therefore at your own risk, and you must carry out your own risk assessment. Apart from a freely chosen nickname, the tool does not store any user data.
 
 
 ## Showcase

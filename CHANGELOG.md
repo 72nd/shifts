@@ -64,7 +64,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Landing page rewritten for clarity** The start page was simplified and de-cluttered.
 - **Enhancement: README rewritten** The README has been completely revised to be clearer and more organized.
 - **Enhancement: Installation section added to README** Pre-built Linux binaries (amd64/arm64) are linked from GitHub Releases; all other platforms require a manual build due to CGo (SQLite).
-- enhancement: ältere changelog entries wurden in ihrer verständlichkeit verbessert.
+- Enhancement: Older changelog entries were improved for better clarity and understanding.
 - **Development: `make dist` target** The Makefile now includes a `dist` target that cross-compiles the application for Linux and Windows on both amd64 and arm64. Binaries are written to a `dist/` folder with names indicating the target platform and architecture (e.g. `shifts-linux-arm64`). `make clean` also removes the `dist/` folder.
 
 
