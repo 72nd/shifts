@@ -8,7 +8,7 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 
 - **KISS.** The feature set is essentially final. No speculative abstractions; code must stay quickly understandable for humans.
 - **Fixed stack:** Go, `gorilla/mux`, `go-sqlite3` (needs CGO), `bluemonday` for sanitising, `slog` for logging, config in `config.toml` (`config.template.toml` is the reference; `config.toml` is gitignored).
-- **Frontend:** Alpine.js stays in charge of rendering via HTML templating; JS models hold state and client/server communication. Tailwind + daisyUI. **No npm**, neither for development nor operation; third-party assets are vendored in `internal/web/static/vendor/`. Reusable UI pieces are Go `html/template` partials. Use semantic HTML elements or ARIA for accessibility.
+- **Frontend:** Alpine.js stays in charge of rendering via HTML templating; JS models hold state and client/server communication. Tailwind + daisyUI. **No npm**, neither for development nor operation; third-party assets are vendored in `internal/web/static/vendor/`. Reusable UI pieces are Go `html/template` partials. Use semantic HTML elements or ARIA for accessibility. UI rules are in `.claude/rules/ui.md`; plan new pages and larger components with the `ui-plan` skill first.
 - **i18n:** Alpine i18n plugin with flat JSON files `internal/web/static/i18n/{de,en}.json` (keep them flat). User-entered fields that need both languages (e.g. titles) must be filled in both.
 - **Language:** code, comments, log output, commit messages and the changelog are English. German UI text uses gender-neutral wording, otherwise a colon (`Teilnehmer:innen`), and addresses the user informally with "Du".
 
