@@ -1,13 +1,25 @@
 import { Modal } from './modal.js';
+import {
+    parseDate, parseDateTime, serializeDateTime, toInputValue, fromInputValue,
+    addMinutes, addDays, logicalDay, daysBetween, minutesOfDay,
+} from './datetime.js';
+
+// Minutes after midnight for an "HH:MM" boundary string; 0 if invalid.
+function boundaryToMinutes(boundary) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(boundary || '');
+    if (!m) return 0;
+    return Math.min(+m[1] * 60 + +m[2], 24 * 60 - 1);
+}
 
 export class ShiftModal extends Modal {
-    constructor(planStartDate, shiftTypes, planToken, adminToken, onSuccess) {
+    constructor(planStartDate, shiftTypes, planToken, adminToken, onSuccess, planDayBoundary = '00:00') {
         super('shift_modal');
         this.planStartDate = planStartDate;
         this.shiftTypes = shiftTypes;
         this.planToken = planToken;
         this.adminToken = adminToken;
         this.onSuccess = onSuccess;
+        this.planDayBoundary = boundaryToMinutes(planDayBoundary);
         this.reset();
     }
 
@@ -36,48 +48,35 @@ export class ShiftModal extends Modal {
 
         if (shift) {
             // Edit or duplicate mode
-            const startTime = new Date(shift.start_time);
-            
-            // Validate the date
-            if (isNaN(startTime.getTime())) {
+            const startTime = parseDateTime(shift.start_time);
+            if (!startTime) {
                 console.error('Invalid shift start_time:', shift.start_time);
                 this.setServerError('Invalid shift date format');
                 return;
             }
-            
-            startTime.setMinutes(startTime.getMinutes() - startTime.getTimezoneOffset());
-            
+
             this.type_id = type.id;
-            this.start_time = startTime.toISOString().slice(0, 16);
             this.duration = shift.duration;
             this.required = shift.required;
             this.isUnlimited = shift.required === -1;
             this.comment_de = shift.comment_de || '';
             this.comment_en = shift.comment_en || '';
-            this.relative_day = this.getRelativeDayFromDate(startTime);
 
-            if (isDuplicating) {
-                // For duplication, increment the start time by the duration
-                startTime.setMinutes(startTime.getMinutes() + shift.duration);
-                this.start_time = startTime.toISOString().slice(0, 16);
-                this.relative_day = this.getRelativeDayFromDate(startTime);
-            }
+            // For duplication, move the start time on by the duration
+            const start = isDuplicating ? addMinutes(startTime, shift.duration) : startTime;
+            this.start_time = toInputValue(start);
+            this.relative_day = this.getRelativeDayFromDate(start);
         } else {
-            // Create mode
-            const startDate = new Date(this.planStartDate);
-            
-            // Validate the plan start date
-            if (isNaN(startDate.getTime())) {
+            // Create mode: first plan day at 10:00
+            const planStart = parseDate(this.planStartDate);
+            if (!planStart) {
                 console.error('Invalid plan start date:', this.planStartDate);
                 this.setServerError('Invalid plan start date');
                 return;
             }
-            
-            startDate.setHours(10, 0, 0, 0);
-            startDate.setMinutes(startDate.getMinutes() - startDate.getTimezoneOffset());
-            
+
             this.type_id = type ? type.id : '';
-            this.start_time = startDate.toISOString().slice(0, 16);
+            this.start_time = toInputValue(addMinutes(planStart, 10 * 60));
         }
 
         this.open();
@@ -146,8 +145,8 @@ export class ShiftModal extends Modal {
 
     async updateShift(type) {
         // Validate the start time before sending
-        const startTime = new Date(this.start_time);
-        if (isNaN(startTime.getTime())) {
+        const startTime = fromInputValue(this.start_time);
+        if (!startTime) {
             console.error('Invalid start time for shift update:', this.start_time);
             this.setServerError('Invalid start time format');
             return false;
@@ -161,7 +160,7 @@ export class ShiftModal extends Modal {
                 'X-Admin-Token': this.adminToken
             },
             body: JSON.stringify({
-                start_time: startTime.toISOString(),
+                start_time: serializeDateTime(startTime),
                 duration: parseInt(this.duration),
                 required: this.isUnlimited ? -1 : parseInt(this.required),
                 comment_de: this.comment_de,
@@ -178,7 +177,7 @@ export class ShiftModal extends Modal {
             // Create updated shift object
             const updatedShift = {
                 ...this.currentShift,
-                start_time: new Date(this.start_time).toISOString(),
+                start_time: serializeDateTime(startTime),
                 duration: parseInt(this.duration),
                 required: this.isUnlimited ? -1 : parseInt(this.required),
                 comment_de: this.comment_de,
@@ -199,10 +198,10 @@ export class ShiftModal extends Modal {
 
     async createShifts(type) {
         const numShifts = parseInt(this.consecutive_shifts) || 1;
-        const baseStartTime = new Date(this.start_time);
-        
+        const baseStartTime = fromInputValue(this.start_time);
+
         // Validate the base start time
-        if (isNaN(baseStartTime.getTime())) {
+        if (!baseStartTime) {
             console.error('Invalid start time for shift creation:', this.start_time);
             this.setServerError('Invalid start time format');
             return false;
@@ -214,8 +213,7 @@ export class ShiftModal extends Modal {
         try {
             // Create all shifts in sequence
             for (let i = 0; i < numShifts; i++) {
-                const shiftStartTime = new Date(baseStartTime);
-                shiftStartTime.setMinutes(shiftStartTime.getMinutes() + (i * duration));
+                const shiftStartTime = addMinutes(baseStartTime, i * duration);
 
                 const url = `/api/plans/${this.planToken}/shifts`;
                 const options = {
@@ -226,7 +224,7 @@ export class ShiftModal extends Modal {
                     },
                     body: JSON.stringify({
                         type_id: type.id,
-                        start_time: shiftStartTime.toISOString(),
+                        start_time: serializeDateTime(shiftStartTime),
                         duration: duration,
                         required: this.isUnlimited ? -1 : parseInt(this.required),
                         comment_de: this.comment_de,
@@ -267,49 +265,29 @@ export class ShiftModal extends Modal {
     }
 
     getRelativeDayFromDate(date) {
-        // Validate dates before processing
-        const planStart = new Date(this.planStartDate);
-        
-        // Check for invalid dates
-        if (isNaN(planStart.getTime()) || isNaN(date.getTime())) {
+        const planStart = parseDate(this.planStartDate);
+        if (!planStart || !date) {
             console.warn('Invalid date detected in getRelativeDayFromDate:', {
                 planStartDate: this.planStartDate,
                 date: date
             });
             return 1; // Default to day 1
         }
-        
-        const timeDiff = date.getTime() - planStart.getTime();
-        return Math.floor(timeDiff / (1000 * 60 * 60 * 24)) + 1;
+        return daysBetween(planStart, logicalDay(date, this.planDayBoundary)) + 1;
     }
 
     updateStartTimeFromRelativeDay() {
-        // Validate dates before processing
-        const planStart = new Date(this.planStartDate);
-        const currentStartTime = new Date(this.start_time);
-        
-        // Check for invalid dates
-        if (isNaN(planStart.getTime())) {
+        const planStart = parseDate(this.planStartDate);
+        if (!planStart) {
             console.error('Invalid plan start date:', this.planStartDate);
             return; // Don't update if plan start date is invalid
         }
-        
-        if (isNaN(currentStartTime.getTime())) {
-            console.warn('Invalid current start time, using default time (09:00)');
-            // Use default time if current time is invalid
-            planStart.setDate(planStart.getDate() + (this.relative_day - 1));
-            planStart.setHours(9, 0, 0, 0); // Default to 9:00 AM
-            this.start_time = planStart.toISOString().slice(0, 16);
-            return;
-        }
-        
-        const hours = currentStartTime.getHours();
-        const minutes = currentStartTime.getMinutes();
 
-        planStart.setDate(planStart.getDate() + (this.relative_day - 1));
-        planStart.setHours(hours, minutes, 0, 0);
-        
-        this.start_time = planStart.toISOString().slice(0, 16);
+        const day = addDays(planStart, (parseInt(this.relative_day) || 1) - 1);
+        const current = fromInputValue(this.start_time);
+        // Keep the time of day; fall back to 09:00 if the field is empty or invalid
+        const minutes = current ? minutesOfDay(current) : 9 * 60;
+        this.start_time = toInputValue(addMinutes(day, minutes));
     }
 
     toggleUnlimited() {

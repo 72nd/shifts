@@ -27,16 +27,20 @@
   #value
 ]
 
+/// Parses "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM[:SS]" into a datetime. A trailing
+/// offset or "Z" is ignored: all values are wall-clock times at the event
+/// location, never converted.
 #let parse_iso_datetime(value) = {
-  let pattern = "(\d{4})-([01]\d)-([0-3]\d)T([0-2]\d):([0-5]\d):([0-5]\d)"
+  let pattern = "^(\d{4})-([01]\d)-([0-3]\d)(?:[T ]([0-2]\d):([0-5]\d)(?::([0-5]\d))?)?"
   let captures = value.match(regex(pattern)).captures
+  let part(i) = if captures.at(i) == none { 0 } else { int(captures.at(i)) }
   datetime(
     year: int(captures.at(0)),
     month: int(captures.at(1)),
     day: int(captures.at(2)),
-    hour: int(captures.at(3)),
-    minute: int(captures.at(4)),
-    second: int(captures.at(5)),
+    hour: part(3),
+    minute: part(4),
+    second: part(5),
   )
 }
 

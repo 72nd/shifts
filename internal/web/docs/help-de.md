@@ -74,9 +74,15 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
 ### Neuer Plan anlegen
+
+Beim Anlegen eines Plans wählst du die Zeitzone der Veranstaltung. Vorbelegt ist die Zeitzone der Instanz. Nach dem Anlegen lässt sie sich nicht mehr ändern.
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
 ### Schichttypen und Schichten anlegen und bearbeiten
+
+Alle Zeiten sind Ortszeit der Veranstaltung und werden auf allen Geräten gleich angezeigt.
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
 ### Einstellungen

@@ -38,11 +38,9 @@ export class SettingsModal extends Modal {
         this.description_en = plan.description_en || '';
         this.day_boundary_time = plan.day_boundary_time || '00:00';
         
-        // Format dates to YYYY-MM-DD for input fields
-        const startDate = new Date(plan.start_date);
-        const endDate = new Date(plan.end_date);
-        this.start_date = startDate.toISOString().split('T')[0];
-        this.end_date = endDate.toISOString().split('T')[0];
+        // Plan dates are plain YYYY-MM-DD strings, usable as input values as they are
+        this.start_date = plan.start_date || '';
+        this.end_date = plan.end_date || '';
 
         this.open();
     }
@@ -82,9 +80,8 @@ export class SettingsModal extends Modal {
 
         // Validate date range
         if (this.start_date && this.end_date) {
-            const start = new Date(this.start_date);
-            const end = new Date(this.end_date);
-            if (end < start) {
+            // YYYY-MM-DD strings compare correctly as strings
+            if (this.end_date < this.start_date) {
                 this.errors.end_date = AlpineI18n.t('shift_plans.new.error_end_date_before_start');
                 isValid = false;
             }
@@ -118,8 +115,8 @@ export class SettingsModal extends Modal {
                 title_en: this.title_en,
                 description_de: this.is_multilingual ? this.description_de : null,
                 description_en: this.description_en,
-                start_date: new Date(this.start_date).toISOString(),
-                end_date: new Date(this.end_date).toISOString(),
+                start_date: this.start_date,
+                end_date: this.end_date,
                 day_boundary_time: this.day_boundary_time
             })
         };

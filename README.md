@@ -58,6 +58,7 @@ A full list of features can be found [below](#features).
 
 - **📝 Flexible shift configuration with Markdown support:** Each shift schedule comprises a description (Markdown supported), shift types, and individual shifts. The number of required participants is configurable per shift; an unlimited headcount is also supported.
 - **🤝 Collaborative and controlled planning mode:** Designed for scenarios where a significantly larger number of people are interested in shifts, or where organisers wish to retain control over the final allocation. Participants *apply* for shifts; organisers then confirm selections and lock the shift against further changes by non-admins.
+- **🕒 Time zone per shift plan:** Each plan has its own time zone, chosen when the plan is created and fixed afterwards. Shift times are local times of the event and look the same on every device, regardless of the browser's time zone.
 - **🧩 Easy application for multiple shifts:** The interface is designed to make signing up for several shifts as effortless as possible.
 
 ### Organiser Tools
@@ -216,6 +217,7 @@ Available configuration options:
 - `metrics_enabled`: Enable Prometheus metrics endpoint (default: false)
 - `metrics_port`: Port for the Prometheus metrics endpoint (default: 9090)
 - `default_view`: Default view for shift plans when the visitor has no `?view=` or saved preference (`"timetable"` or `"list"`) (default: "timetable")
+- `timezone`: IANA time zone preselected when creating a shift plan. Existing plans are converted with this zone during the database migration to v0.6.0. Each plan stores its own zone afterwards, so this option does not change existing plans (default: "Europe/Berlin")
 
 
 Example configuration:
@@ -236,6 +238,9 @@ metrics_port = 9090
 
 # Default view for shift plans when the visitor has no ?view= or saved preference ("timetable" or "list")
 default_view = "timetable"
+
+# Default IANA time zone for new plans and for converting existing plans during migration
+timezone = "Europe/Berlin"
 ```
 
 ## API Documentation

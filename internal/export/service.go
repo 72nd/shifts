@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/72nd/shifts/internal/db"
+	"github.com/72nd/shifts/internal/model"
 )
 
 // Service handles the export functionality for shift plans
@@ -38,7 +39,7 @@ func (s *Service) GetExporter(format string) (Exporter, error) {
 
 // ShiftsByDay represents shifts grouped by their logical day
 type ShiftsByDay struct {
-	Date     time.Time  `json:"date"`
+	Date     model.Date `json:"date"`
 	DayCount int        `json:"day_count"`
 	Shifts   []db.Shift `json:"shifts"`
 }
@@ -60,7 +61,7 @@ type ExportData struct {
 // NewExportData creates a new ExportData instance and validates the input
 func NewExportData(plan *db.ShiftPlan, types []*db.ShiftType) (*ExportData, error) {
 	// Validate boundary time
-	if _, err := ParseTime(plan.DayBoundaryTime); err != nil {
+	if _, err := model.ParseBoundary(plan.DayBoundaryTime); err != nil {
 		return nil, NewError(ErrInvalidInput, fmt.Sprintf("invalid day boundary time in plan: %v", err), err)
 	}
 
@@ -81,18 +82,18 @@ func NewExportData(plan *db.ShiftPlan, types []*db.ShiftType) (*ExportData, erro
 	return &ExportData{
 		Plan:       plan,
 		ShiftTypes: typesWithDays,
-		ExportedAt: time.Now(),
+		ExportedAt: time.Now().In(plan.Location()),
 	}, nil
 }
 
 // groupShiftsByDay groups shifts by their logical day
-func groupShiftsByDay(shifts []db.Shift, boundaryTime string, startDate time.Time) ([]ShiftsByDay, error) {
+func groupShiftsByDay(shifts []db.Shift, boundaryTime string, startDate model.Date) ([]ShiftsByDay, error) {
 	if len(shifts) == 0 {
 		return []ShiftsByDay{}, nil
 	}
 
 	// Create a map of date -> shifts
-	shiftMap := make(map[time.Time][]db.Shift)
+	shiftMap := make(map[model.Date][]db.Shift)
 
 	// Group shifts by day
 	for _, shift := range shifts {
@@ -104,12 +105,12 @@ func groupShiftsByDay(shifts []db.Shift, boundaryTime string, startDate time.Tim
 	}
 
 	// Convert map to sorted slice
-	var days []time.Time
+	var days []model.Date
 	for day := range shiftMap {
 		days = append(days, day)
 	}
 	sort.Slice(days, func(i, j int) bool {
-		return days[i].Before(days[j])
+		return days[i].Before(days[j].Time)
 	})
 
 	// Create sorted result
@@ -123,7 +124,7 @@ func groupShiftsByDay(shifts []db.Shift, boundaryTime string, startDate time.Tim
 
 		result[i] = ShiftsByDay{
 			Date:     day,
-			DayCount: int(day.Sub(startDate).Hours()/24) + 1,
+			DayCount: int(day.Sub(startDate.Time).Hours()/24+0.5) + 1,
 			Shifts:   dayShifts,
 		}
 	}
@@ -139,7 +140,7 @@ func (e *ExportData) SortShifts() error {
 		}
 
 		// Group shifts by day
-		shiftDays, err := groupShiftsByDay(t.Shifts, e.Plan.DayBoundaryTime, e.Plan.StartDate.Time)
+		shiftDays, err := groupShiftsByDay(t.Shifts, e.Plan.DayBoundaryTime, e.Plan.StartDate)
 		if err != nil {
 			return fmt.Errorf("failed to group shifts for type %d: %w", t.ID, err)
 		}

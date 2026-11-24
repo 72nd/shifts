@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 // CSVExporter implements the Exporter interface for CSV format
@@ -61,8 +60,8 @@ func (e *CSVExporter) Export(data *ExportData) ([]byte, error) {
 					isLockedStr = "true"
 				}
 
-				// Format start time as RFC3339
-				startTimeStr := shift.StartTime.Format(time.RFC3339)
+				// Start time as local wall clock (model.DateTimeLayout, no offset)
+				startTimeStr := shift.StartTime.String()
 
 				// Write CSV row
 				row := []string{

@@ -11,6 +11,11 @@ import { SettingsModal } from './settings-modal.js';
 import { FilterManager } from './filter-manager.js';
 import { ExportModal } from './export-modal.js';
 import { buildTimetableModel } from './timetable-view-model.js';
+import {
+    parseDateTime, serializeDateTime, addMinutes as addWallMinutes, dateKey as toDateKey, logicalDay,
+    formatTime as formatWallTime, formatDate as formatWallDate
+} from './datetime.js';
+import { parseBoundaryTime } from './timetable-view-layout.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanView', () => ({
@@ -71,11 +76,13 @@ document.addEventListener('alpine:init', () => {
 
         // Computed property für verfügbare Tage
         get availableDays() {
+            this.filterManager.setDayBoundary(this.plan?.day_boundary_time);
             return this.filterManager.getAvailableDays(this.shiftTypes);
         },
 
         // Computed property für gefilterte Schichttypen
         get filteredShiftTypes() {
+            this.filterManager.setDayBoundary(this.plan?.day_boundary_time);
             return this.filterManager.filterShiftTypes(this.shiftTypes);
         },
 
@@ -147,7 +154,8 @@ document.addEventListener('alpine:init', () => {
                 this.shiftTypes,
                 token,
                 this.adminToken,
-                this.handleShiftsUpdate.bind(this)
+                this.handleShiftsUpdate.bind(this),
+                this.plan.day_boundary_time
             );
             this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, token, this.adminToken, this.handleShiftTypeSuccess.bind(this));
             this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, this.handleDeleteTypeSuccess.bind(this));
@@ -602,39 +610,15 @@ document.addEventListener('alpine:init', () => {
             const groups = {};
 
             // Sortiere Schichten nach Startzeit
-            shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+            // Floating ISO strings without offset sort lexicographically
+            shifts.sort((a, b) => a.start_time.localeCompare(b.start_time));
 
-            // Gruppiere nach Datum unter Berücksichtigung der Tagesgrenze
+            // Group by logical day (times before the day boundary belong to the previous day)
+            const boundaryMinutes = parseBoundaryTime(this.plan?.day_boundary_time || '00:00');
             shifts.forEach(shift => {
-                const shiftDate = new Date(shift.start_time);
-                const [boundaryHours, boundaryMinutes] = (this.plan?.day_boundary_time || '00:00').split(':').map(Number);
-                
-                const shiftHours = shiftDate.getHours();
-                const shiftMinutes = shiftDate.getMinutes();
-                const shiftTotalMinutes = shiftHours * 60 + shiftMinutes;
-                const boundaryTotalMinutes = boundaryHours * 60 + boundaryMinutes;
-
-                let dateKey;
-                if (shiftTotalMinutes < boundaryTotalMinutes) {
-                    // Wenn die Schicht zwischen 00:00 und der Tagesgrenze liegt
-                    const year = shiftDate.getFullYear();
-                    const month = String(shiftDate.getMonth() + 1).padStart(2, '0');
-                    const day = String(shiftDate.getDate()).padStart(2, '0');
-                    
-                    // Berechne den vorherigen Tag
-                    const prevDate = new Date(shiftDate);
-                    prevDate.setDate(prevDate.getDate() - 1);
-                    const prevYear = prevDate.getFullYear();
-                    const prevMonth = String(prevDate.getMonth() + 1).padStart(2, '0');
-                    const prevDay = String(prevDate.getDate()).padStart(2, '0');
-                    dateKey = `${prevYear}-${prevMonth}-${prevDay}`;
-                } else {
-                    // Wenn die Schicht nach der Tagesgrenze liegt
-                    const year = shiftDate.getFullYear();
-                    const month = String(shiftDate.getMonth() + 1).padStart(2, '0');
-                    const day = String(shiftDate.getDate()).padStart(2, '0');
-                    dateKey = `${year}-${month}-${day}`;
-                }
+                const start = parseDateTime(shift.start_time);
+                if (!start) return;
+                const dateKey = toDateKey(logicalDay(start, boundaryMinutes));
 
                 if (!groups[dateKey]) {
                     groups[dateKey] = [];
@@ -696,7 +680,8 @@ document.addEventListener('alpine:init', () => {
                     this.shiftTypes,
                     this.plan.token,
                     this.adminToken,
-                    this.handleShiftsUpdate.bind(this)
+                    this.handleShiftsUpdate.bind(this),
+                    this.plan.day_boundary_time
                 );
                 this.shiftTypeModal = new ShiftTypeModal(
                     this.plan.is_multilingual,
@@ -774,65 +759,25 @@ document.addEventListener('alpine:init', () => {
         // Formatierungshelfer mit Null-Checks
         formatDate(dateStr) {
             if (!dateStr) return '';
-            try {
-                const date = new Date(dateStr);
-                if (isNaN(date.getTime())) return '';
+            const formatted = formatWallDate(dateStr, this.$locale(), {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
 
-                const options = {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                };
-
-                // Use the current language from Alpine store
-                const locale = this.$locale() === 'de' ? 'de-DE' : 'en-US';
-                const formatted = date.toLocaleDateString(locale, options);
-
-                // For German: Capitalize first letter
-                if (this.$locale() === 'de') {
-                    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-                }
-                return formatted;
-            } catch (error) {
-                console.error('Error formatting date:', error);
-                return '';
+            // For German: Capitalize first letter
+            if (formatted && this.$locale() === 'de') {
+                return formatted.charAt(0).toUpperCase() + formatted.slice(1);
             }
+            return formatted;
         },
 
         formatTime(dateStr, duration) {
-            if (!dateStr) return '';
-            try {
-                const startDate = new Date(dateStr);
-                if (isNaN(startDate.getTime())) return '';
-
-                // Format start time in 24h format
-                const startTime = startDate.toLocaleTimeString(
-                    this.$locale() === 'de' ? 'de-DE' : 'en-GB',
-                    {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    }
-                );
-
-                // Calculate end time
-                const endDate = new Date(startDate.getTime());
-                endDate.setMinutes(endDate.getMinutes() + duration);
-                const endTime = endDate.toLocaleTimeString(
-                    this.$locale() === 'de' ? 'de-DE' : 'en-GB',
-                    {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    }
-                );
-
-                return `${startTime} – ${endTime}`;
-            } catch (error) {
-                console.error('Error formatting time:', error);
-                return '';
-            }
+            const start = parseDateTime(dateStr);
+            if (!start) return '';
+            const end = addWallMinutes(start, duration || 0);
+            return `${formatWallTime(start, this.$locale())} – ${formatWallTime(end, this.$locale())}`;
         },
 
         formatDuration(minutes) {
@@ -847,20 +792,16 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        // time: API string "YYYY-MM-DDTHH:MM:SS" or floating Date
         formatTimeOnly(time) {
-            return new Date(time).toLocaleTimeString(
-                this.$locale() === 'de' ? 'de-DE' : 'en-GB',
-                { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false 
-                }
-            );
+            const date = time instanceof Date ? time : parseDateTime(time);
+            return date ? formatWallTime(date, this.$locale()) : '';
         },
 
+        // Returns the API string moved by the given minutes
         addMinutes(time, minutes) {
-            const date = new Date(time);
-            return new Date(date.getTime() + minutes * 60000).toISOString();
+            const date = parseDateTime(time);
+            return date ? serializeDateTime(addWallMinutes(date, minutes)) : '';
         },
 
         // Helper for radial progress styling
@@ -912,17 +853,9 @@ document.addEventListener('alpine:init', () => {
                 return false;
             }
 
-            const date1 = new Date(shift1.start_time);
-            const date2 = new Date(shift2.start_time);
-
-            // Check if shifts are on the same day
-            const date1Str = `${date1.getFullYear()}-${String(date1.getMonth() + 1).padStart(2, '0')}-${String(date1.getDate()).padStart(2, '0')}`;
-            const date2Str = `${date2.getFullYear()}-${String(date2.getMonth() + 1).padStart(2, '0')}-${String(date2.getDate()).padStart(2, '0')}`;
-            
-            // If shifts are on different days, they cannot overlap
-            if (date1Str !== date2Str) {
-                return false;
-            }
+            const date1 = parseDateTime(shift1.start_time);
+            const date2 = parseDateTime(shift2.start_time);
+            if (!date1 || !date2) return false;
 
             const start1 = date1.getTime();
             const end1 = start1 + (shift1.duration || 0) * 60000; // duration in minutes, convert to ms
@@ -1082,7 +1015,8 @@ document.addEventListener('alpine:init', () => {
                 this.shiftTypes,
                 this.plan.token,
                 this.adminToken,
-                this.handleShiftsUpdate.bind(this)
+                this.handleShiftsUpdate.bind(this),
+                this.plan.day_boundary_time
             );
             this.shiftTypeModal = new ShiftTypeModal(
                 this.plan.is_multilingual,
@@ -1247,7 +1181,8 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 // Sort shifts by start time
-                type.shifts.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+                type.// Floating ISO strings without offset sort lexicographically
+            shifts.sort((a, b) => a.start_time.localeCompare(b.start_time));
             });
 
             touchedTypeIndices.forEach(typeIndex => {
@@ -1311,7 +1246,8 @@ document.addEventListener('alpine:init', () => {
                 this.shiftTypes,
                 this.plan.token,
                 this.adminToken,
-                this.handleShiftsUpdate.bind(this)
+                this.handleShiftsUpdate.bind(this),
+                this.plan.day_boundary_time
             );
             this.shiftTypeModal = new ShiftTypeModal(
                 this.plan.is_multilingual,

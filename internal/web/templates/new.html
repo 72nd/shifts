@@ -19,13 +19,26 @@
         descriptionEN: '',
         startDate: '',
         endDate: '',
-        
+        timeZone: '{{ .Data.DefaultTimeZone }}',
+        timeZones: [],
+
+        init() {
+            let zones;
+            try {
+                zones = Intl.supportedValuesOf('timeZone');
+            } catch (e) {
+                zones = ['Europe/Berlin', 'Europe/London', 'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo', 'Australia/Sydney'];
+            }
+            zones = zones.slice();
+            // UTC is not part of supportedValuesOf in all browsers
+            if (!zones.includes('UTC')) zones.push('UTC');
+            if (this.timeZone && !zones.includes(this.timeZone)) zones.push(this.timeZone);
+            this.timeZones = zones.sort();
+        },
+
         async submit() {
             try {
-                // Parse dates to RFC3339 format
-                const start = new Date(this.startDate);
-                const end = new Date(this.endDate);
-                
+                // Plan dates are plain YYYY-MM-DD strings, sent as they are
                 const response = await fetch('/api/plans', {
                     method: 'POST',
                     headers: {
@@ -36,8 +49,10 @@
                         title_en: this.titleEN,
                         description_de: this.isMultilingual ? this.descriptionDE : null,
                         description_en: this.descriptionEN,
-                        start_date: start.toISOString(),
-                        end_date: end.toISOString(),
+                        start_date: this.startDate,
+                        end_date: this.endDate,
+                        day_boundary_time: '00:00',
+                        time_zone: this.timeZone,
                         is_multilingual: this.isMultilingual
                     })
                 });
@@ -118,6 +133,21 @@
                 </label>
                 <input type="date" x-model="endDate" class="input input-bordered" required />
             </div>
+        </div>
+
+        <!-- Time zone -->
+        <div class="form-control">
+            <label class="label" for="plan_time_zone">
+                <span class="label-text" x-text="$t('shift_plans.new.time_zone')">Time zone</span>
+            </label>
+            <select id="plan_time_zone" x-model="timeZone" class="select select-bordered w-full" aria-describedby="plan_time_zone_help" required>
+                <template x-for="zone in timeZones" :key="zone">
+                    <option :value="zone" x-text="zone" :selected="zone === timeZone"></option>
+                </template>
+            </select>
+            <label class="label" for="plan_time_zone">
+                <span id="plan_time_zone_help" class="label-text-alt opacity-60 whitespace-normal" x-text="$t('shift_plans.new.time_zone_help')"></span>
+            </label>
         </div>
 
         <div class="form-control mt-6">

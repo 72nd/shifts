@@ -18,6 +18,7 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 - All data structures live in `internal/model`; DB types are never exposed through the API.
 - DB errors are typed sentinel errors in `internal/db/errors.go`, not string matching. All DB operations run in a transaction.
 - Schema changes only via a new numbered file in `internal/db/migrations/sqlite/` (never edit existing ones, no inline `CREATE TABLE`); rules in `.claude/rules/db-migrations.md`.
+- Dates and times: floating local event time, see `.claude/rules/datetime.md`.
 - Validation is centralised in `internal/validation`. Shared HTTP handler logic belongs in `internal/web/helpers.go`.
 - API is documented with swag annotations on handlers.
 - `prj/`: project notes and data (`todo.md` backlog, `testdata/` example imports, `archive/` old notes).

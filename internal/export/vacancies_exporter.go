@@ -2,8 +2,11 @@ package export
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
+
+	"github.com/72nd/shifts/internal/model"
 )
 
 // VacanciesExporter implements the Exporter interface for text format showing vacant positions
@@ -27,7 +30,7 @@ func (e *VacanciesExporter) Export(data *ExportData) ([]byte, error) {
 	}
 
 	// Map of date -> list of vacant shifts
-	vacanciesByDay := make(map[time.Time][]VacantShift)
+	vacanciesByDay := make(map[model.Date][]VacantShift)
 
 	// Iterate through all shift types and their days
 	for _, shiftType := range data.ShiftTypes {
@@ -52,18 +55,12 @@ func (e *VacanciesExporter) Export(data *ExportData) ([]byte, error) {
 	}
 
 	// Sort days
-	var days []time.Time
+	var days []model.Date
 	for day := range vacanciesByDay {
 		days = append(days, day)
 	}
 	// Sort days chronologically
-	for i := 0; i < len(days); i++ {
-		for j := i + 1; j < len(days); j++ {
-			if days[i].After(days[j]) {
-				days[i], days[j] = days[j], days[i]
-			}
-		}
-	}
+	sort.Slice(days, func(i, j int) bool { return days[i].Before(days[j].Time) })
 
 	// If no vacancies, return a message
 	if len(days) == 0 {
@@ -79,13 +76,7 @@ func (e *VacanciesExporter) Export(data *ExportData) ([]byte, error) {
 
 		// Get shifts for this day and sort by start time
 		shifts := vacanciesByDay[day]
-		for i := 0; i < len(shifts); i++ {
-			for j := i + 1; j < len(shifts); j++ {
-				if shifts[i].StartTime.After(shifts[j].StartTime) {
-					shifts[i], shifts[j] = shifts[j], shifts[i]
-				}
-			}
-		}
+		sort.Slice(shifts, func(i, j int) bool { return shifts[i].StartTime.Before(shifts[j].StartTime) })
 
 		// Format each shift
 		for _, shift := range shifts {

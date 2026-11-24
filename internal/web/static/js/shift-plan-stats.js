@@ -1,3 +1,8 @@
+import {
+    parseDate, parseDateTime, addMinutes, logicalDay, serializeDate,
+    formatDate as formatFloatingDate, nowInZone
+} from './datetime.js';
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanStats', () => ({
         // State
@@ -74,11 +79,29 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
+        // Current wall clock in the plan's time zone (floating Date)
+        nowInPlanZone() {
+            return nowInZone(this.plan?.time_zone);
+        },
+
+        // Daily boundary of the plan in minutes after midnight ("HH:MM")
+        getBoundaryMinutes() {
+            const m = /^(\d{1,2}):(\d{2})/.exec(this.plan?.day_boundary_time || '');
+            return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+        },
+
+        // Start and end of a shift as floating Dates, or null if unparsable
+        getShiftSpan(shift) {
+            const startTime = parseDateTime(shift.start_time);
+            if (!startTime) return null;
+            return { startTime, endTime: addMinutes(startTime, shift.duration) };
+        },
+
         // Computed properties for statistics
         getTotalStats() {
             if (!this.shiftTypes) return null;
             
-            const now = new Date();
+            const now = this.nowInPlanZone();
             const stats = {
                 totalShifts: 0,
                 totalRequired: 0,
@@ -96,8 +119,9 @@ document.addEventListener('alpine:init', () => {
                 if (!type.shifts) return;
                 
                 type.shifts.forEach(shift => {
-                    const startTime = new Date(shift.start_time);
-                    const endTime = new Date(startTime.getTime() + shift.duration * 60000);
+                    const span = this.getShiftSpan(shift);
+                    if (!span) return;
+                    const { startTime, endTime } = span;
                     const shiftHours = shift.duration / 60;
                     const filledPositions = shift.participants?.length || 0;
                     
@@ -141,12 +165,13 @@ document.addEventListener('alpine:init', () => {
             if (!this.shiftTypes) return [];
             
             const helperStats = new Map();
-            const now = new Date();
+            const now = this.nowInPlanZone();
             
             this.shiftTypes.forEach(type => {
                 type.shifts?.forEach(shift => {
-                    const startTime = new Date(shift.start_time);
-                    const endTime = new Date(startTime.getTime() + shift.duration * 60000);
+                    const span = this.getShiftSpan(shift);
+                    if (!span) return;
+                    const { startTime, endTime } = span;
                     const shiftHours = shift.duration / 60;
                     
                     shift.participants?.forEach(participant => {
@@ -237,7 +262,9 @@ document.addEventListener('alpine:init', () => {
             
             this.shiftTypes.forEach(type => {
                 type.shifts?.forEach(shift => {
-                    const date = new Date(shift.start_time).toISOString().split('T')[0];
+                    const start = parseDateTime(shift.start_time);
+                    if (!start) return;
+                    const date = serializeDate(logicalDay(start, this.getBoundaryMinutes()));
                     
                     const stats = dayStats.get(date) || {
                         date,
@@ -275,7 +302,7 @@ document.addEventListener('alpine:init', () => {
         
         // Formatting helpers
         formatDate(date) {
-            return new Date(date).toLocaleDateString(this.$locale() === 'de' ? 'de-DE' : 'en-US', {
+            return formatFloatingDate(date, this.$locale(), {
                 weekday: 'short',
                 year: 'numeric',
                 month: 'short',
@@ -310,9 +337,10 @@ document.addEventListener('alpine:init', () => {
             // Process each helper's shift details
             this.stats.helper_stats.forEach(helper => {
                 helper.shift_details?.forEach(shiftDetail => {
-                    // Format date as YYYY-MM-DD for grouping
-                    const shiftDate = new Date(shiftDetail.date);
-                    const dayKey = shiftDate.toISOString().split('T')[0];
+                    // Server sends the logical day as YYYY-MM-DD
+                    const shiftDate = parseDate(shiftDetail.date);
+                    if (!shiftDate) return;
+                    const dayKey = serializeDate(shiftDate);
                     
                     // Get or create day entry
                     let dayStats = dailyMap.get(dayKey);

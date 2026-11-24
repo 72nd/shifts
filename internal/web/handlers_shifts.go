@@ -1,12 +1,29 @@
 package web
 
 import (
+	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/model"
 	"github.com/72nd/shifts/internal/validation"
 )
+
+// parseJSONTimes is like parseJSON but returns the reason to the client if a
+// date or time field is malformed (e.g. carries an offset or "Z"), so the user
+// gets a readable 400 instead of a generic "Invalid request body".
+func (s *Server) parseJSONTimes(w http.ResponseWriter, r *http.Request, target interface{}) bool {
+	if err := json.NewDecoder(r.Body).Decode(target); err != nil {
+		msg := "Invalid request body"
+		if strings.Contains(err.Error(), "invalid date") {
+			msg = "Invalid request body: " + err.Error() + " (times are local to the plan and must not carry an offset or Z; reload the page if it is outdated)"
+		}
+		s.RespondWithError(w, NewAppError(ErrInvalidInput, msg, http.StatusBadRequest, err))
+		return false
+	}
+	return true
+}
 
 // handleCreateShift creates a new shift
 // @Summary Create shift
@@ -26,7 +43,7 @@ import (
 // @Router /plans/{token}/shifts [post]
 func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 	var shift db.NewShift
-	if !s.parseJSON(w, r, &shift) {
+	if !s.parseJSONTimes(w, r, &shift) {
 		return
 	}
 
@@ -37,7 +54,7 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate and sanitize input (including plan date range check)
-	if result := validation.ValidateNewShiftWithPlanDates(&shift, plan.StartDate.Time, plan.EndDate.Time); result.HasErrors() {
+	if result := validation.ValidateNewShiftWithPlanDates(&shift, plan.StartDate, plan.EndDate, plan.DayBoundaryTime); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -129,12 +146,12 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 
 	// Parse and validate input
 	var req model.ShiftUpdateRequest
-	if !s.parseJSON(w, r, &req) {
+	if !s.parseJSONTimes(w, r, &req) {
 		return
 	}
 
 	// Validate including plan date range check
-	if result := validation.ValidateShiftUpdateWithPlanDates(&req, plan.StartDate.Time, plan.EndDate.Time); result.HasErrors() {
+	if result := validation.ValidateShiftUpdateWithPlanDates(&req, plan.StartDate, plan.EndDate, plan.DayBoundaryTime); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -332,12 +349,12 @@ func (s *Server) handleBatchCreateShifts(w http.ResponseWriter, r *http.Request)
 
 	// Parse request
 	var req model.BatchShiftCreateRequest
-	if !s.parseJSON(w, r, &req) {
+	if !s.parseJSONTimes(w, r, &req) {
 		return
 	}
 
 	// Validate request (including plan date range check)
-	if result := validation.ValidateBatchShiftCreateRequestWithPlanDates(&req, plan.StartDate.Time, plan.EndDate.Time); result.HasErrors() {
+	if result := validation.ValidateBatchShiftCreateRequestWithPlanDates(&req, plan.StartDate, plan.EndDate, plan.DayBoundaryTime); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -390,12 +407,12 @@ func (s *Server) handleBatchUpdateShifts(w http.ResponseWriter, r *http.Request)
 
 	// Parse request
 	var req model.BatchShiftUpdateRequest
-	if !s.parseJSON(w, r, &req) {
+	if !s.parseJSONTimes(w, r, &req) {
 		return
 	}
 
-	// Validate request
-	if result := validation.ValidateBatchShiftUpdateRequest(&req); result.HasErrors() {
+	// Validate request (including plan date range check for items with start_time)
+	if result := validation.ValidateBatchShiftUpdateRequestWithPlanDates(&req, plan.StartDate, plan.EndDate, plan.DayBoundaryTime); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -445,7 +462,7 @@ func (s *Server) handleBatchDeleteShifts(w http.ResponseWriter, r *http.Request)
 
 	// Parse request
 	var req model.BatchShiftDeleteRequest
-	if !s.parseJSON(w, r, &req) {
+	if !s.parseJSONTimes(w, r, &req) {
 		return
 	}
 

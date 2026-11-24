@@ -1,8 +1,6 @@
 package validation
 
 import (
-	"time"
-
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/model"
 )
@@ -40,32 +38,11 @@ func ValidateNewShift(s *db.NewShift) *Result {
 }
 
 // ValidateNewShiftWithPlanDates validates a NewShift struct for creation,
-// including validation that the shift falls within the plan's date range.
-func ValidateNewShiftWithPlanDates(s *db.NewShift, planStartDate, planEndDate time.Time) *Result {
-	// First run the standard validation
+// including validation that the shift's logical day (see day boundary) lies
+// within the plan's date range (both ends inclusive).
+func ValidateNewShiftWithPlanDates(s *db.NewShift, planStart, planEnd model.Date, boundary string) *Result {
 	r := ValidateNewShift(s)
-
-	// Additional validation: check if shift falls within plan date range
-	if !s.StartTime.IsZero() && !planStartDate.IsZero() && !planEndDate.IsZero() {
-		// Calculate shift end time
-		shiftEndTime := s.StartTime.Add(time.Duration(s.Duration) * time.Minute)
-
-		// Check if shift starts before plan starts
-		if s.StartTime.Before(planStartDate) {
-			r.AddInvalid("start_time", "Shift start time is before the plan's start date")
-		}
-
-		// Check if shift starts after plan ends
-		if s.StartTime.After(planEndDate) {
-			r.AddInvalid("start_time", "Shift start time is after the plan's end date")
-		}
-
-		// Check if shift ends after plan ends
-		if shiftEndTime.After(planEndDate) {
-			r.AddInvalid("duration", "Shift extends beyond the plan's end date")
-		}
-	}
-
+	checkShiftInPlan(r, "start_time", s.StartTime, planStart, planEnd, boundary)
 	return r
 }
 
@@ -101,33 +78,30 @@ func ValidateShiftUpdate(s *model.ShiftUpdateRequest) *Result {
 }
 
 // ValidateShiftUpdateWithPlanDates validates a shift update request,
-// including validation that the shift falls within the plan's date range.
-func ValidateShiftUpdateWithPlanDates(s *model.ShiftUpdateRequest, planStartDate, planEndDate time.Time) *Result {
-	// First run the standard validation
+// including validation that the shift's logical day (see day boundary) lies
+// within the plan's date range (both ends inclusive).
+func ValidateShiftUpdateWithPlanDates(s *model.ShiftUpdateRequest, planStart, planEnd model.Date, boundary string) *Result {
 	r := ValidateShiftUpdate(s)
-
-	// Additional validation: check if shift falls within plan date range
-	if !s.StartTime.IsZero() && !planStartDate.IsZero() && !planEndDate.IsZero() {
-		// Calculate shift end time
-		shiftEndTime := s.StartTime.Add(time.Duration(s.Duration) * time.Minute)
-
-		// Check if shift starts before plan starts
-		if s.StartTime.Before(planStartDate) {
-			r.AddInvalid("start_time", "Shift start time is before the plan's start date")
-		}
-
-		// Check if shift starts after plan ends
-		if s.StartTime.After(planEndDate) {
-			r.AddInvalid("start_time", "Shift start time is after the plan's end date")
-		}
-
-		// Check if shift ends after plan ends
-		if shiftEndTime.After(planEndDate) {
-			r.AddInvalid("duration", "Shift extends beyond the plan's end date")
-		}
-	}
-
+	checkShiftInPlan(r, "start_time", s.StartTime, planStart, planEnd, boundary)
 	return r
+}
+
+// checkShiftInPlan adds an error to r if the logical day of start (start time
+// with the day boundary applied) lies outside [planStart, planEnd]. Zero values
+// are skipped (reported as required elsewhere). A shift that ends after the
+// plan's last day is fine (night shift on the last day).
+func checkShiftInPlan(r *Result, field string, start model.DateTime, planStart, planEnd model.Date, boundary string) {
+	if start.IsZero() || planStart.IsZero() || planEnd.IsZero() {
+		return
+	}
+	// The boundary was validated when the plan was saved; fall back to 0 if not.
+	boundaryMinutes, _ := model.ParseBoundary(boundary)
+	day := start.LogicalDay(boundaryMinutes)
+	if day.Before(planStart.Time) {
+		r.Add(field, CodeInvalidValue, "Shift start time is before the plan's start date")
+	} else if day.After(planEnd.Time) {
+		r.Add(field, CodeInvalidValue, "Shift start time is after the plan's end date")
+	}
 }
 
 // ValidateParticipantName validates and sanitizes a participant name.
@@ -190,7 +164,7 @@ func ValidateBatchShiftCreateRequest(req *model.BatchShiftCreateRequest) *Result
 
 // ValidateBatchShiftCreateRequestWithPlanDates validates a batch shift create request,
 // including validation that all shifts fall within the plan's date range.
-func ValidateBatchShiftCreateRequestWithPlanDates(req *model.BatchShiftCreateRequest, planStartDate, planEndDate time.Time) *Result {
+func ValidateBatchShiftCreateRequestWithPlanDates(req *model.BatchShiftCreateRequest, planStart, planEnd model.Date, boundary string) *Result {
 	r := NewResult()
 
 	// Check array is not empty
@@ -220,7 +194,7 @@ func ValidateBatchShiftCreateRequestWithPlanDates(req *model.BatchShiftCreateReq
 		}
 
 		// Validate with plan date range
-		itemResult := ValidateNewShiftWithPlanDates(&newShift, planStartDate, planEndDate)
+		itemResult := ValidateNewShiftWithPlanDates(&newShift, planStart, planEnd, boundary)
 
 		// Merge errors with index prefix
 		if itemResult.HasErrors() {
@@ -292,6 +266,21 @@ func ValidateBatchShiftUpdateRequest(req *model.BatchShiftUpdateRequest) *Result
 		}
 	}
 
+	return r
+}
+
+// ValidateBatchShiftUpdateRequestWithPlanDates validates a batch shift update
+// request and checks, for every item that sets start_time, that the logical day
+// lies within the plan's date range. The check needs only the start time (not
+// the duration), so no existing shift has to be loaded.
+func ValidateBatchShiftUpdateRequestWithPlanDates(req *model.BatchShiftUpdateRequest, planStart, planEnd model.Date, boundary string) *Result {
+	r := ValidateBatchShiftUpdateRequest(req)
+	for i := range req.Shifts {
+		item := &req.Shifts[i]
+		if item.StartTime != nil {
+			checkShiftInPlan(r, "shifts["+itoa(i)+"].start_time", *item.StartTime, planStart, planEnd, boundary)
+		}
+	}
 	return r
 }
 

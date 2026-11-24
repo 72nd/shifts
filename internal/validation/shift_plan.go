@@ -36,11 +36,12 @@ func ValidateCreateShiftPlanRequest(p *model.CreateShiftPlanRequest) *Result {
 		r.AddRequired("end_date", "End date")
 	}
 	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate.Time) {
-		r.AddInvalid("end_date", "End date must be after start date")
+		r.AddInvalid("end_date", "End date must not be before start date")
 	}
+	validateDayBoundary(&p.DayBoundaryTime, r)
 
 	if p.TimeZone != "" {
-		if _, err := time.LoadLocation(p.TimeZone); err != nil {
+		if _, err := time.LoadLocation(p.TimeZone); err != nil || p.TimeZone == "Local" {
 			r.AddInvalid("time_zone", "Time zone must be an IANA name like Europe/Berlin")
 		}
 	}
@@ -77,8 +78,9 @@ func ValidateNewShiftPlan(p *db.NewShiftPlan) *Result {
 		r.AddRequired("end_date", "End date")
 	}
 	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate.Time) {
-		r.AddInvalid("end_date", "End date must be after start date")
+		r.AddInvalid("end_date", "End date must not be before start date")
 	}
+	validateDayBoundary(&p.DayBoundaryTime, r)
 
 	return r
 }
@@ -103,5 +105,29 @@ func ValidateShiftPlanUpdate(p *model.ShiftPlanUpdateRequest) *Result {
 		*p.DescriptionDE = ValidateOptional(*p.DescriptionDE)
 	}
 
+	// Dates validation
+	if p.StartDate.IsZero() {
+		r.AddRequired("start_date", "Start date")
+	}
+	if p.EndDate.IsZero() {
+		r.AddRequired("end_date", "End date")
+	}
+	if !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.Before(p.StartDate.Time) {
+		r.AddInvalid("end_date", "End date must not be before start date")
+	}
+	validateDayBoundary(&p.DayBoundaryTime, r)
+
 	return r
+}
+
+// validateDayBoundary checks that the day boundary is "HH:MM" and replaces an
+// empty value with "00:00" so that it gets stored.
+func validateDayBoundary(boundary *string, r *Result) {
+	if _, err := model.ParseBoundary(*boundary); err != nil {
+		r.AddInvalid("day_boundary_time", "Day boundary time must be in the format HH:MM")
+		return
+	}
+	if *boundary == "" {
+		*boundary = "00:00"
+	}
 }

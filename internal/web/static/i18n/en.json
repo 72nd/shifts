@@ -123,9 +123,12 @@
             "description": "Description",
             "start_date": "Start Date",
             "end_date": "End Date",
+            "time_zone": "Time zone",
+            "time_zone_help": "All shift times use this time zone. It cannot be changed later.",
             "password": "Administrator Password",
             "password_hint": "Required for administrative changes",
             "create_button": "Create Shift Plan",
+            "error_end_date_before_start": "The end date must not be before the start date",
             "error_creating": "Error creating shift plan"
         },
         "success": {

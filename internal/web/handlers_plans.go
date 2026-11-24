@@ -58,7 +58,7 @@ func (s *Server) handleShiftPlanSuccess(w http.ResponseWriter, r *http.Request) 
 // @Router /plans [post]
 func (s *Server) handleCreateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	var req model.CreateShiftPlanRequest
-	if !s.parseJSON(w, r, &req) {
+	if !s.parseJSONTimes(w, r, &req) {
 		return
 	}
 
@@ -254,7 +254,7 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 
 	// Parse request body
 	var req model.ShiftPlanUpdateRequest
-	if !s.parseJSON(w, r, &req) {
+	if !s.parseJSONTimes(w, r, &req) {
 		return
 	}
 

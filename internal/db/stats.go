@@ -83,27 +83,24 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 		return nil, fmt.Errorf("failed to get shift types: %w", err)
 	}
 
-	// Get the plan to access the day boundary time
+	// Get the plan to access the day boundary time and the time zone
 	var plan ShiftPlan
 	err = db.QueryRow(`
-		SELECT day_boundary_time
+		SELECT day_boundary_time, time_zone
 		FROM shift_plans
 		WHERE id = ?
-	`, planID).Scan(&plan.DayBoundaryTime)
+	`, planID).Scan(&plan.DayBoundaryTime, &plan.TimeZone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get plan: %w", err)
 	}
 
-	// Parse the day boundary time
-	boundaryHour, boundaryMinute := 0, 0
-	if plan.DayBoundaryTime != "" {
-		_, err := fmt.Sscanf(plan.DayBoundaryTime, "%d:%d", &boundaryHour, &boundaryMinute)
-		if err != nil {
-			return nil, fmt.Errorf("invalid day boundary time format: %w", err)
-		}
+	boundaryMinutes, err := model.ParseBoundary(plan.DayBoundaryTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid day boundary time format: %w", err)
 	}
 
-	now := time.Now()
+	// Shift times are local to the plan, so "now" is the wall clock in the plan's zone
+	now := model.NowIn(plan.Location()).Time
 	stats := &Stats{
 		Overview:    StatsOverview{},
 		HelperStats: make([]HelperStats, 0),
@@ -131,11 +128,8 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 			filledPositions := len(shift.Participants)
 
 			// Adjust the day based on the boundary time
-			shiftDay := startTime
-			if startTime.Hour() < boundaryHour || (startTime.Hour() == boundaryHour && startTime.Minute() < boundaryMinute) {
-				shiftDay = startTime.AddDate(0, 0, -1)
-			}
-			dayKey := shiftDay.Format("2006-01-02")
+			shiftDay := shift.StartTime.LogicalDay(boundaryMinutes)
+			dayKey := shiftDay.String()
 
 			// Update overview stats
 			stats.Overview.TotalShifts++
@@ -172,7 +166,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 			dailyStats, exists := dailyMap[dayKey]
 			if !exists {
 				dailyStats = &DailyStats{
-					Date: model.NewDate(shiftDay),
+					Date: shiftDay,
 				}
 				dailyMap[dayKey] = dailyStats
 			}
@@ -202,7 +196,7 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 					helperStats.FutureHours += shiftHours
 				}
 				helperStats.ShiftDetails = append(helperStats.ShiftDetails, ShiftDetail{
-					Date:     model.NewDate(shiftDay),
+					Date:     shiftDay,
 					TypeID:   t.ID,
 					TypeName: t.TitleEN,
 					Duration: shiftHours,

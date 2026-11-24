@@ -123,9 +123,12 @@
             "description": "Beschreibung",
             "start_date": "Startdatum",
             "end_date": "Enddatum",
+            "time_zone": "Zeitzone",
+            "time_zone_help": "Alle Schichtzeiten gelten in dieser Zeitzone. Sie kann später nicht geändert werden.",
             "password": "Administrator-Passwort",
             "password_hint": "Wird für administrative Änderungen benötigt",
             "create_button": "Schichtplan erstellen",
+            "error_end_date_before_start": "Das Enddatum darf nicht vor dem Startdatum liegen",
             "error_creating": "Fehler beim Erstellen des Schichtplans"
         },
         "success": {

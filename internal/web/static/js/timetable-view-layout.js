@@ -1,7 +1,9 @@
+import { minutesOfDay, logicalDay, dateKey } from './datetime.js';
+
 const MINUTES_PER_DAY = 24 * 60;
 
 function toMinutes(date) {
-    return date.getHours() * 60 + date.getMinutes();
+    return minutesOfDay(date);
 }
 
 function pad(value) {
@@ -19,32 +21,24 @@ export function parseBoundaryTime(boundary = '00:00') {
     return total;
 }
 
+// date: floating Date (wall clock in UTC fields, see datetime.js)
 export function resolveDayContext(date, boundaryMinutes) {
-    const dateClone = new Date(date.getTime());
-    const minutes = toMinutes(dateClone);
-
-    if (minutes < boundaryMinutes) {
-        dateClone.setDate(dateClone.getDate() - 1);
-    }
+    const minutes = toMinutes(date);
+    const normalizedDate = logicalDay(date, boundaryMinutes);
 
     const offsetMinutes = minutes < boundaryMinutes
         ? minutes + (MINUTES_PER_DAY - boundaryMinutes)
         : minutes - boundaryMinutes;
 
-    const normalizedDate = new Date(dateClone.getFullYear(), dateClone.getMonth(), dateClone.getDate());
-
     return {
-        dateKey: formatDateKey(normalizedDate),
+        dateKey: dateKey(normalizedDate),
         offsetMinutes,
         normalizedDate
     };
 }
 
 export function formatDateKey(date) {
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    return `${year}-${month}-${day}`;
+    return dateKey(date);
 }
 
 export function clampToDay(minutes) {

@@ -24,8 +24,23 @@ The schema is defined **only** by the numbered files in `internal/db/migrations/
 ## SQLite pitfalls
 
 - `ALTER TABLE ... ADD COLUMN` with `NOT NULL` needs a `DEFAULT`.
-- Dropping or changing a column needs the table rebuild pattern (create new table, copy, drop old, rename). `PRAGMA foreign_keys` cannot be switched inside a transaction, so such a migration needs a Go step in `migrate.go` instead of a plain SQL file. Add that mechanism only when first needed.
-- Times are stored as RFC3339 `TEXT`.
+- Dropping or changing a column needs the table rebuild pattern (create new table, copy, drop old, rename). `PRAGMA foreign_keys` cannot be switched inside a transaction, so such a migration needs a Go step (see below) instead of a plain SQL file.
+- Shift times, plan dates and their formats are defined in `.claude/rules/datetime.md`. Timestamps like `created_at` are RFC3339 UTC. Do not write new time formats by hand.
+
+## Go steps
+
+When a migration needs Go code (for example time zone conversion or a table rebuild), register a function in the `goSteps` map in `migrate.go`, keyed by the migration version:
+
+```go
+var goSteps = map[int]func(tx *sql.Tx, logger *slog.Logger) error{
+    2: migrateLocalTimes,
+}
+```
+
+- The runner executes the file's SQL first (skipped if the file has no statements besides comments), then the Go step, both in the same transaction. A failing step rolls back the whole migration.
+- The step is called for its version even if the file contains only a comment. Such a file is the pattern for a Go-only migration: `0002_local_times.sql` holds just a comment that points to `migrate_local_times.go`.
+- Write the step defensively: check whether a column exists before adding it, and skip rows already in the new format, so it can be re-run safely.
+- Log the number of rewritten rows and fail with the table, row ID and value on unreadable data. Do not skip silently.
 
 ## PostgreSQL later
 

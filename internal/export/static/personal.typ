@@ -12,7 +12,7 @@
 #show: template.with(
   title: "Anna's shifts",
   plan_name: "BeSTival 2025",
-  exported_at: "2025-05-01T00:00:00Z"
+  exported_at: "2025-05-01T00:00:00+02:00"
 )
 
 = Day 1 -- Freitag, 10.05.2025

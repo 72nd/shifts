@@ -73,7 +73,7 @@ func (f *ExportFilter) filterShiftDays(shiftDays []ShiftsByDay) []ShiftsByDay {
 	for _, day := range shiftDays {
 		// Apply day filter
 		if f.Day != "" {
-			dayStr := day.Date.Format("2006-01-02")
+			dayStr := day.Date.String()
 			if dayStr != f.Day {
 				continue
 			}

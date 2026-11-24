@@ -1,6 +1,21 @@
+import { parseDateTime, dateKey, logicalDay } from './datetime.js';
+import { parseBoundaryTime } from './timetable-view-layout.js';
+
 export class FilterManager {
-    constructor() {
+    constructor(dayBoundary = '00:00') {
+        this.setDayBoundary(dayBoundary);
         this.reset();
+    }
+
+    // Set the plan's daily boundary ("HH:MM") used for the day filter
+    setDayBoundary(boundary) {
+        this.dayBoundaryMinutes = parseBoundaryTime(boundary || '00:00');
+    }
+
+    // Logical day key ("YYYY-MM-DD") of a shift, same as the list grouping; '' if invalid
+    getShiftDayKey(shift) {
+        const start = parseDateTime(shift.start_time);
+        return start ? dateKey(logicalDay(start, this.dayBoundaryMinutes)) : '';
     }
 
     reset() {
@@ -75,8 +90,7 @@ export class FilterManager {
         return shifts.filter(shift => {
             // Day filter
             if (this.selectedDay) {
-                const shiftDate = new Date(shift.start_time).toISOString().split('T')[0];
-                if (shiftDate !== this.selectedDay) return false;
+                if (this.getShiftDayKey(shift) !== this.selectedDay) return false;
             }
 
             // Status filter
@@ -120,8 +134,8 @@ export class FilterManager {
         const days = new Set();
         shiftTypes.forEach(type => {
             type.shifts.forEach(shift => {
-                const date = new Date(shift.start_time);
-                days.add(date.toISOString().split('T')[0]);
+                const key = this.getShiftDayKey(shift);
+                if (key) days.add(key);
             });
         });
         return [...days].sort();

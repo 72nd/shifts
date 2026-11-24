@@ -7,6 +7,7 @@ import {
     parseBoundaryTime,
     resolveDayContext
 } from './timetable-view-layout.js';
+import { parseDateTime, parseDate, addMinutes, daysBetween, logicalDay } from './datetime.js';
 
 function getLocalizedValue({ de, en }, isMultilingual, locale) {
     if (!isMultilingual) {
@@ -24,10 +25,10 @@ function formatTimeRange(date, durationMinutes, locale) {
     }
 
     const safeDuration = Number.isFinite(durationMinutes) ? durationMinutes : 0;
-    const endDate = new Date(date.getTime());
-    endDate.setMinutes(endDate.getMinutes() + safeDuration);
+    const endDate = addMinutes(date, safeDuration);
 
     const formatter = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+        timeZone: 'UTC',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false
@@ -41,6 +42,7 @@ function formatDisplayDate(date, locale, startDate = null) {
         return '';
     }
     const formatted = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-US', {
+        timeZone: 'UTC',
         weekday: 'long',
         month: 'long',
         day: 'numeric'
@@ -48,23 +50,14 @@ function formatDisplayDate(date, locale, startDate = null) {
     
     // Calculate day count if startDate is provided
     if (startDate) {
-        const start = new Date(startDate);
-        if (!isNaN(start.getTime())) {
-            // Set both dates to midnight for accurate day calculation
-            const dateMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            const startMidnight = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-            
-            // Calculate difference in days
-            const diffTime = dateMidnight.getTime() - startMidnight.getTime();
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            
+        const start = parseDate(startDate);
+        if (start) {
             // Day count: start date is Day 1, day before is Day 0, etc.
-            const dayCount = diffDays + 1;
-            
+            const dayCount = daysBetween(start, logicalDay(date, 0)) + 1;
             return `${formatted} (${dayCount})`;
         }
     }
-    
+
     return formatted;
 }
 
@@ -107,7 +100,7 @@ function normalizeShift({
         endMinutes: Math.max(endMinutes, startMinutes + 5),
         durationMinutes,
         startTime: shift.start_time,
-        displayTime: formatTimeRange(new Date(shift.start_time), durationMinutes, locale),
+        displayTime: formatTimeRange(parseDateTime(shift.start_time), durationMinutes, locale),
         participants,
         participantsCount: participants.length,
         required,
@@ -161,8 +154,8 @@ export function buildTimetableModel({
         }
 
         type.shifts.forEach(shift => {
-            const startDate = new Date(shift.start_time);
-            if (Number.isNaN(startDate.getTime())) {
+            const startDate = parseDateTime(shift.start_time);
+            if (!startDate) {
                 return;
             }
 
