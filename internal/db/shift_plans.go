@@ -49,25 +49,6 @@ type NewShiftPlan struct {
 	CollaborativeMode bool      `json:"collaborative_mode"`
 }
 
-var shiftPlanSchema = `
-    CREATE TABLE IF NOT EXISTS shift_plans (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        token TEXT UNIQUE NOT NULL,
-        admin_password TEXT NOT NULL,
-        start_date TEXT NOT NULL,
-        end_date TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        is_multilingual BOOLEAN NOT NULL DEFAULT true,
-        title_de TEXT,
-        title_en TEXT NOT NULL,
-        description_de TEXT,
-        description_en TEXT,
-        day_boundary_time TEXT NOT NULL DEFAULT '00:00',
-        collaborative_mode BOOLEAN NOT NULL DEFAULT false
-    );
-    CREATE INDEX IF NOT EXISTS idx_shift_plans_token ON shift_plans(token);
-`
-
 // generateToken generates a random token for shift plans
 func generateToken() string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

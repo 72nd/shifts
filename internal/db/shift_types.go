@@ -35,23 +35,6 @@ type NewShiftType struct {
 	LocationEN    string  `json:"location_en"`
 }
 
-var shiftTypeSchema = `
-    CREATE TABLE IF NOT EXISTS shift_types (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        plan_id INTEGER NOT NULL,
-        password TEXT,
-        sort_order INTEGER NOT NULL,
-        title_de TEXT NOT NULL,
-        title_en TEXT NOT NULL,
-        description_de TEXT,
-        description_en TEXT,
-        location_de TEXT,
-        location_en TEXT,
-        FOREIGN KEY (plan_id) REFERENCES shift_plans(id) ON DELETE CASCADE
-    );
-    CREATE INDEX IF NOT EXISTS idx_shift_types_plan_id ON shift_types(plan_id);
-`
-
 // CreateShiftType creates a new shift type
 func (db *DB) CreateShiftType(st NewShiftType) (*ShiftType, error) {
 	var result ShiftType

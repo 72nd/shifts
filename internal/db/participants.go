@@ -14,17 +14,6 @@ type Participant struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-var participantSchema = `
-    CREATE TABLE IF NOT EXISTS participants (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shift_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE CASCADE
-    );
-    CREATE INDEX IF NOT EXISTS idx_participants_shift_id ON participants(shift_id);
-`
-
 // AddParticipant adds a participant to a shift.
 // This uses an atomic INSERT with capacity check to prevent race conditions
 // where two users could simultaneously take the last available spot.

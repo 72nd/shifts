@@ -20,6 +20,9 @@ var (
 	// ErrNoPermission is returned when the operation is not allowed for the given resource
 	ErrNoPermission = errors.New("no permission for this resource")
 
+	// ErrSchemaTooNew is returned when the database was migrated by a newer version of the software
+	ErrSchemaTooNew = errors.New("database schema is newer than this version of the software")
+
 	// ErrInvalidRequired is returned when the required field has an invalid value
 	ErrInvalidRequired = errors.New("required participants must be either -1 for unlimited or a positive number")
 )

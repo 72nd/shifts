@@ -193,6 +193,8 @@ This fetches the latest release tag, regenerates the Swagger docs, and recompile
 make update MODE=dev && make install
 ```
 
+The database schema is upgraded automatically on startup. Before the first migration on an existing database, Shifts writes a backup next to it (`<db_path>.<timestamp>.pre-migration.bak`). A database that was migrated by a newer version is not opened by an older binary; restore the backup to go back.
+
 
 ## Configuration
 

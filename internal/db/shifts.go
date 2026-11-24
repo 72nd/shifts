@@ -31,21 +31,6 @@ type NewShift struct {
 	CommentEN string    `json:"comment_en"`
 }
 
-var shiftSchema = `
-    CREATE TABLE IF NOT EXISTS shifts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type_id INTEGER NOT NULL,
-        start_time TEXT NOT NULL,
-        duration INTEGER NOT NULL,
-        required INTEGER NOT NULL,
-        comment_de TEXT,
-        comment_en TEXT,
-        is_locked BOOLEAN NOT NULL DEFAULT false,
-        FOREIGN KEY (type_id) REFERENCES shift_types(id) ON DELETE CASCADE
-    );
-    CREATE INDEX IF NOT EXISTS idx_shifts_type_id ON shifts(type_id);
-`
-
 // CreateShift creates a new shift
 func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 	start := time.Now()

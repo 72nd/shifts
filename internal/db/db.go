@@ -53,34 +53,13 @@ func New(dbPath string, logger *slog.Logger) (*DB, error) {
 		logger: logger,
 	}
 
-	// Initialize schema
-	if err := db.initSchema(); err != nil {
+	// Bring the schema up to date (see migrate.go)
+	if err := db.migrate(dbPath); err != nil {
 		sqlDB.Close()
-		return nil, fmt.Errorf("failed to initialize schema: %w", err)
+		return nil, fmt.Errorf("failed to migrate database schema: %w", err)
 	}
 
 	return db, nil
-}
-
-// initSchema initializes the database schema
-func (db *DB) initSchema() error {
-	// Combine all schemas in the correct order (respecting foreign key constraints)
-	schemas := []string{
-		shiftPlanSchema,   // No dependencies
-		shiftTypeSchema,   // Depends on shift_plans
-		shiftSchema,       // Depends on shift_types
-		participantSchema, // Depends on shifts
-	}
-
-	// Execute all schemas in a transaction
-	return db.transaction(func(tx *sql.Tx) error {
-		for _, schema := range schemas {
-			if _, err := tx.Exec(schema); err != nil {
-				return fmt.Errorf("failed to execute schema: %w", err)
-			}
-		}
-		return nil
-	})
 }
 
 // Close closes the database connection
