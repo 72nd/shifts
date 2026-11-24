@@ -38,13 +38,21 @@ update:
 		git checkout $$LATEST_TAG; \
 	fi
 
-## tools: Install the Swag CLI tool if not already present
+## tools: Install the Swag CLI in the version from go.mod, built with the current Go toolchain
+# swag parses the standard library with the go/parser it was built with, so a
+# binary built by an older Go fails on newer stdlib syntax. Reinstall whenever
+# the swag version or the Go version of the binary differs.
 tools:
-	@if [ ! -x "$(SWAG)" ]; then \
-		echo "Installing swag..."; \
-		go install github.com/swaggo/swag/cmd/swag@latest; \
+	@WANT_SWAG=$$(go list -m -f '{{.Version}}' github.com/swaggo/swag); \
+	WANT_GO=$$(go env GOVERSION); \
+	HAVE=$$( [ -x "$(SWAG)" ] && go version -m "$(SWAG)" 2>/dev/null ); \
+	HAVE_GO=$$(echo "$$HAVE" | head -1 | awk '{print $$2}'); \
+	HAVE_SWAG=$$(echo "$$HAVE" | awk '$$1=="mod" && $$2=="github.com/swaggo/swag" {print $$3}'); \
+	if [ "$$HAVE_SWAG" != "$$WANT_SWAG" ] || [ "$$HAVE_GO" != "$$WANT_GO" ]; then \
+		echo "Installing swag $$WANT_SWAG with $$WANT_GO..."; \
+		go install github.com/swaggo/swag/cmd/swag@$$WANT_SWAG; \
 	else \
-		echo "swag already installed"; \
+		echo "swag $$HAVE_SWAG ($$HAVE_GO) already installed"; \
 	fi
 
 ## docs: Generate Swagger API documentation (runs tools first)
