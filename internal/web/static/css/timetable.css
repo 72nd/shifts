@@ -14,6 +14,7 @@
 /* Unified timetable - one continuous table */
 .timetable-unified {
   --timetable-day-nav-height: 40px; /* Height of day navigation bar */
+  --timetable-slot-height: 1rem; /* One 15 min slot; single source of truth, scales with the font size */
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto 1fr;
@@ -131,7 +132,7 @@
 
 /* Individual time slot */
 .timetable-time-slot {
-  height: var(--timetable-slot-height, 16px);
+  height: var(--timetable-slot-height);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -232,7 +233,7 @@
 /* Column body - contains shifts; grid lines via CSS (avoids 96 DOM nodes per column) */
 .timetable-column-body {
   position: relative;
-  height: calc(96 * var(--timetable-slot-height, 16px)); /* 24h * 4 slots/h */
+  height: calc(96 * var(--timetable-slot-height)); /* 24h * 4 slots/h */
   min-height: 0;
   background-image:
     repeating-linear-gradient(
@@ -240,18 +241,18 @@
       oklch(var(--bc) / 0.1) 0,
       oklch(var(--bc) / 0.1) 1px,
       transparent 1px,
-      transparent calc(4 * var(--timetable-slot-height, 16px))
+      transparent calc(4 * var(--timetable-slot-height))
     ),
     repeating-linear-gradient(
       to bottom,
       oklch(var(--bc) / 0.05) 0,
       oklch(var(--bc) / 0.05) 1px,
       transparent 1px,
-      transparent var(--timetable-slot-height, 16px)
+      transparent var(--timetable-slot-height)
     );
   background-size:
-    100% calc(4 * var(--timetable-slot-height, 16px)),
-    100% var(--timetable-slot-height, 16px);
+    100% calc(4 * var(--timetable-slot-height)),
+    100% var(--timetable-slot-height);
 }
 
 /* Empty column placeholder */
@@ -335,6 +336,28 @@
   border-color: oklch(var(--in));
 }
 
+/* Real overlap for at least one participant (theme token, works in light and dark) */
+.timetable-shift.has-collision {
+  border-style: solid;
+  border-color: oklch(var(--wa));
+  background: color-mix(in oklch, oklch(var(--wa)) 12%, oklch(var(--b1)));
+}
+
+.timetable-shift.has-collision:hover {
+  border-color: oklch(var(--wa));
+}
+
+/* Locked keeps its info border colour */
+.timetable-shift.is-locked.has-collision,
+.timetable-shift.is-locked.has-collision:hover {
+  border-color: oklch(var(--in));
+}
+
+.timetable-shift-participant.has-collision {
+  outline: 1px solid oklch(var(--wa));
+  outline-offset: -1px;
+}
+
 /* Admin actions - inline in header */
 .timetable-shift-admin-actions {
   display: none;
@@ -378,6 +401,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.375rem;
+  flex-wrap: wrap;
+  min-width: 0;
   font-size: 0.7rem;
   font-weight: 600;
   line-height: 1.2;
@@ -391,6 +416,8 @@
 
 .timetable-shift-header-actions {
   display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
   align-items: center;
   gap: 0.25rem;
 }
@@ -415,6 +442,7 @@
   font-size: 0.7rem;
   line-height: 1.2;
   min-height: 1rem;
+  min-width: 0;
   flex-shrink: 0;
 }
 
@@ -429,10 +457,20 @@
   border-radius: 0.25rem;
   color: oklch(var(--bc) / 0.8);
   white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border: 1px solid oklch(var(--bc) / 0.1);
   display: inline-flex;
   align-items: center;
   gap: 0.125rem;
+}
+
+.timetable-shift-participant > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timetable-shift-participant.has-remove {
@@ -607,8 +645,8 @@
   }
 
   /* Reduce slot height on mobile for better overview */
-  .timetable-day-body {
-    --timetable-slot-height: 12px;
+  .timetable-unified {
+    --timetable-slot-height: 0.75rem;
   }
 }
 

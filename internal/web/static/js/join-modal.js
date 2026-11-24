@@ -1,9 +1,10 @@
 import { Modal } from './modal.js';
 
 export class JoinModal extends Modal {
-    constructor(planToken, onSuccess) {
+    constructor(planToken, onSuccess, adminToken = '') {
         super('join_modal');
         this.planToken = planToken;
+        this.adminToken = adminToken;
         this.onSuccess = onSuccess;
         this.reset();
     }
@@ -59,7 +60,10 @@ export class JoinModal extends Modal {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: this.name.trim() })
         };
-        
+        if (this.adminToken) {
+            options.headers['X-Admin-Token'] = this.adminToken;
+        }
+
         const errorMessage = AlpineI18n.t('shift_plans.view.error_joining');
         
         // Verwende die sendRequest-Methode aus der Modal-Klasse, aber ohne automatische Fehlerbehandlung

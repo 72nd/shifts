@@ -85,3 +85,8 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Sign-up time in the API** Participants in `GET /api/plans/{token}/types` include `created_at` (RFC3339, UTC).
 - **Fix: Statistics with unlimited and overfilled shifts** Unlimited shifts no longer count as −1 required spots, and overfilled shifts no longer push the filled percentage above 100 %, in the web UI and in `GET /api/plans/{token}/stats`. Names that differ only in case or spaces count as one person.
 - **Development: Pinned swag version** `make tools` installs the swag CLI in the version from `go.mod` and reinstalls it when it was built with another Go version, which previously made `make docs` fail on newer Go.
+- **Fix: Dark mode toggle** Clicking the sun/moon icon itself now switches the theme. Before, only a click on the ring around the icon worked, because the icon click toggled the theme twice.
+- **Fix: Collision warning only on conflicting shifts** The orange warning icon is now shown only on the sign-ups that actually overlap, not on every shift of a person with a collision. Shifts with overlaps are also highlighted in the list and timetable views.
+- **Fix: Locked shifts in the timetable** Clicking a name in a locked shift no longer opens the removal dialog for visitors who are not logged in as admin.
+- **Fix: Admins on locked shifts** Admins can now remove participants from and add participants to locked shifts. Before, these actions failed with "admin permissions required" because the admin token was not sent.
+- **Fix: Timetable with larger browser font** Shift cards in the timetable now scale with the browser font size. Names are truncated with an ellipsis instead of overlapping other content, and the card header wraps.

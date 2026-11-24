@@ -1,9 +1,10 @@
 import { Modal } from './modal.js';
 
 export class RemoveModal extends Modal {
-    constructor(planToken, onSuccess) {
+    constructor(planToken, onSuccess, adminToken = '') {
         super('remove_modal');
         this.planToken = planToken;
+        this.adminToken = adminToken;
         this.onSuccess = onSuccess;
         this.reset();
     }
@@ -27,6 +28,9 @@ export class RemoveModal extends Modal {
         const options = {
             method: 'DELETE'
         };
+        if (this.adminToken) {
+            options.headers = { 'X-Admin-Token': this.adminToken };
+        }
         
         const errorMessage = AlpineI18n.t('shift_plans.view.error_removing');
         

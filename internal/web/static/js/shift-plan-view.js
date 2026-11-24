@@ -52,7 +52,8 @@ document.addEventListener('alpine:init', () => {
         // View state
         viewMode: 'timetable',
         planToken: '',
-        timetableSlotHeight: 16,
+        timetableLayoutObserver: null, // ResizeObserver: font size / width changes
+        timetableSlotPx: 0, // resolved slot height in px (from CSS --timetable-slot-height)
         expandedTimetableShifts: {},
         shiftOverflowState: {},
         activeDayKey: null,
@@ -72,10 +73,6 @@ document.addEventListener('alpine:init', () => {
 
         get isTimetableView() {
             return this.viewMode === 'timetable';
-        },
-
-        get timetableMinuteHeight() {
-            return this.timetableSlotHeight / 15;
         },
 
         // Computed property für verfügbare Tage
@@ -171,8 +168,8 @@ document.addEventListener('alpine:init', () => {
             this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, token, this.adminToken, this.handleShiftTypeSuccess.bind(this));
             this.deleteTypeModal = new DeleteTypeModal(token, this.adminToken, this.handleDeleteTypeSuccess.bind(this));
             this.deleteShiftModal = new DeleteShiftModal(token, this.adminToken, this.handleDeleteShiftSuccess.bind(this));
-            this.joinModal = new JoinModal(token, this.handleShiftUpdate.bind(this));
-            this.removeModal = new RemoveModal(token, this.handleShiftUpdate.bind(this));
+            this.joinModal = new JoinModal(token, this.handleShiftUpdate.bind(this), this.adminToken);
+            this.removeModal = new RemoveModal(token, this.handleShiftUpdate.bind(this), this.adminToken);
             this.adminModal = new AdminModal(token, this.handleAdminSuccess.bind(this));
             this.sortTypesModal = new SortTypesModal(
                 token,
@@ -267,9 +264,10 @@ document.addEventListener('alpine:init', () => {
 
         getTimetableShiftStyle(shift) {
             if (!shift) return {};
-            const minuteHeight = this.timetableMinuteHeight;
-            const top = Math.max(0, (shift.startMinutes || 0) * minuteHeight);
-            const height = Math.max(this.timetableSlotHeight, (shift.durationMinutes || this.timetableSlotHeight) * minuteHeight);
+            // Sizes follow the CSS variable (rem based), so they scale with the browser font size
+            const slot = 'var(--timetable-slot-height)';
+            const top = `calc(${Math.max(0, shift.startMinutes || 0)} * ${slot} / 15)`;
+            const height = `max(${slot}, calc(${shift.durationMinutes || 15} * ${slot} / 15))`;
             const laneCount = Math.max(shift.laneCount || 1, 1);
             const laneIndex = Math.min(shift.laneIndex || 0, laneCount - 1);
             const widthPercent = 100 / laneCount;
@@ -277,8 +275,8 @@ document.addEventListener('alpine:init', () => {
             const horizontalPadding = laneCount > 1 ? 6 : 4;
 
             return {
-                top: `${top}px`,
-                height: `${height}px`,
+                top,
+                height,
                 left: `calc(${leftPercent}% + 2px)`,
                 width: `calc(${widthPercent}% - ${horizontalPadding}px)`,
                 '--shift-color': shift.typeColor || 'oklch(var(--p))'
@@ -304,6 +302,45 @@ document.addEventListener('alpine:init', () => {
             return Boolean(this.shiftOverflowState?.[shiftId]);
         },
 
+        /** Resolve --timetable-slot-height (rem or px) to pixels. */
+        readTimetableSlotPx() {
+            const container = this.$refs.timetableContainer;
+            if (!container) return 0;
+            const raw = getComputedStyle(container).getPropertyValue('--timetable-slot-height').trim();
+            const value = parseFloat(raw) || 0;
+            if (raw.endsWith('rem')) {
+                return value * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+            }
+            return value;
+        },
+
+        /**
+         * Re-detect card overflow when the slot height (browser font size) or the
+         * container width changes; `resize` does not fire for font size changes.
+         */
+        observeTimetableLayout() {
+            this.$nextTick(() => {
+                const container = this.$refs.timetableContainer;
+                if (!container || typeof ResizeObserver === 'undefined') return;
+                if (this.timetableLayoutObserver) this.timetableLayoutObserver.disconnect();
+                this.timetableSlotPx = this.readTimetableSlotPx();
+                let lastWidth = container.clientWidth;
+                this.timetableLayoutObserver = new ResizeObserver(() => {
+                    const slotPx = this.readTimetableSlotPx();
+                    const width = container.clientWidth;
+                    // Only react to real changes: overflow state changes never resize these
+                    if (slotPx === this.timetableSlotPx && width === lastWidth) return;
+                    this.timetableSlotPx = slotPx;
+                    lastWidth = width;
+                    this.detectAllShiftOverflows();
+                });
+                this.timetableLayoutObserver.observe(container);
+                // The slot element resizes with the font size even if the container (max-height) does not
+                const slotEl = container.querySelector('.timetable-time-slot');
+                if (slotEl) this.timetableLayoutObserver.observe(slotEl);
+            });
+        },
+
         /** One RAF pass over all timetable shift cells — single reactivity update (performance). */
         detectAllShiftOverflows() {
             requestAnimationFrame(() => {
@@ -323,7 +360,10 @@ document.addEventListener('alpine:init', () => {
                     const availableHeight = containerHeight - paddingTop - paddingBottom;
                     newState[shiftId] = contentHeight > (availableHeight - 3);
                 });
-                this.shiftOverflowState = newState;
+                const old = this.shiftOverflowState || {};
+                const keys = Object.keys(newState);
+                const same = keys.length === Object.keys(old).length && keys.every(k => old[k] === newState[k]);
+                if (!same) this.shiftOverflowState = newState;
             });
         },
 
@@ -611,7 +651,8 @@ document.addEventListener('alpine:init', () => {
             }
             
             if (!actualShift) return;
-            
+            if (actualShift.is_locked && !this.isAdmin) return;
+
             // Open remove modal
             this.openRemoveModal(actualShift, participant);
         },
@@ -719,11 +760,13 @@ document.addEventListener('alpine:init', () => {
                 );
                 this.joinModal = new JoinModal(
                     this.plan.token,
-                    this.handleShiftUpdate.bind(this)
+                    this.handleShiftUpdate.bind(this),
+                    this.adminToken
                 );
                 this.removeModal = new RemoveModal(
                     this.plan.token,
-                    this.handleShiftUpdate.bind(this)
+                    this.handleShiftUpdate.bind(this),
+                    this.adminToken
                 );
                 this.adminModal = new AdminModal(
                     this.plan.token,
@@ -791,6 +834,7 @@ document.addEventListener('alpine:init', () => {
 
         openRemoveModal(shift, participant) {
             if (!shift || !participant) return;
+            if (shift.is_locked && !this.isAdmin) return;
             this.removeModal.openWith(shift, participant);
         },
 
@@ -959,17 +1003,23 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        hasCollision(participantName) {
+        // True only if this participant collides in this specific shift
+        hasCollision(participantName, shiftId) {
             if (!participantName) return false;
-            return Array.isArray(this.participantCollisions[participantName]) && 
-                   this.participantCollisions[participantName].length > 0;
+            const list = this.participantCollisions[participantName];
+            return Array.isArray(list) && list.includes(shiftId);
+        },
+
+        // True if any participant has an overlap in this shift
+        shiftHasCollision(shiftId) {
+            return Object.values(this.participantCollisions).some(
+                list => Array.isArray(list) && list.includes(shiftId)
+            );
         },
 
         getCollidingShifts(participantName) {
-            if (!this.hasCollision(participantName)) {
-                return [];
-            }
-            return this.participantCollisions[participantName] || [];
+            const list = this.participantCollisions[participantName];
+            return Array.isArray(list) ? list : [];
         },
 
         // Helper for shift type progress calculation and styling
@@ -1087,6 +1137,8 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken,
                 this.filterManager
             );
+            if (this.joinModal) this.joinModal.adminToken = token;
+            if (this.removeModal) this.removeModal.adminToken = token;
 
             // Reload data to get admin-only fields
             this.loadPlan(this.plan.token);
@@ -1104,6 +1156,8 @@ document.addEventListener('alpine:init', () => {
 
             this.isAdmin = false;
             this.adminToken = '';
+            if (this.joinModal) this.joinModal.adminToken = '';
+            if (this.removeModal) this.removeModal.adminToken = '';
 
             // Remove admin token from localStorage
             localStorage.removeItem(`admin_token_${this.plan.token}`);

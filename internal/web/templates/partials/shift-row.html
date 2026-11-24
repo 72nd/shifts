@@ -5,7 +5,10 @@
         :class="{ 
             'border-b-0': isExpanded || index === dateGroup.shifts.length - 1,
             'cursor-pointer': plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en,
-            'border-l-4 border-l-info': shift.is_locked
+            'border-l-4': shift.is_locked || shiftHasCollision(shift.id),
+            'border-l-info': shift.is_locked,
+            'border-l-warning': !shift.is_locked && shiftHasCollision(shift.id),
+            'bg-warning/10': shiftHasCollision(shift.id)
         }"
         @click="(plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) && (isExpanded = !isExpanded)">
         <td class="align-middle px-2 md:px-4 py-1 md:py-2">
@@ -78,15 +81,18 @@
             <div class="space-y-1 md:space-y-2">
                 <div class="flex flex-wrap gap-0.5 md:gap-1.5">
                     <template x-for="participant in shift.participants || []" :key="participant.id">
-                        <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-xs md:text-sm transition-colors border border-base-content/20">
+                        <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-xs md:text-sm transition-colors border"
+                             :class="hasCollision(participant.name, shift.id) ? 'border-warning' : 'border-base-content/20'">
                             <span x-text="participant.name" class="font-medium"></span>
                             <!-- Collision warning icon -->
-                            <svg x-show="hasCollision(participant.name)"
+                            <svg x-show="hasCollision(participant.name, shift.id)"
                                  xmlns="http://www.w3.org/2000/svg"
                                  class="h-2.5 w-2.5 md:h-3 md:w-3 text-warning flex-shrink-0"
                                  fill="none"
                                  viewBox="0 0 24 24"
                                  stroke="currentColor"
+                                 role="img"
+                                 :aria-label="$t('shift_plans.view.participant_collision')"
                                  :title="$t('shift_plans.view.participant_collision')">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>

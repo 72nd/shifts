@@ -19,9 +19,8 @@
 
         <template x-if="timetableModel.hasAnyShifts">
             <div class="timetable-unified" 
-                 :style="`--timetable-slot-height: ${timetableSlotHeight}px`"
                  x-ref="timetableContainer"
-                 x-init="initTimetableActiveDay()"
+                 x-init="initTimetableActiveDay(); observeTimetableLayout()"
                  @scroll="handleTimetableScroll()">
                 <!-- Day navigation bar (top, spans full width) -->
                 <div class="timetable-day-navigation"
@@ -101,7 +100,8 @@
                                                     @click="hasShiftOverflow(shift.id) ? toggleTimetableShift(shift.id) : null"
                                                     @contextmenu="isAdmin ? handleTimetableShiftContextMenu(shift, $event) : null"
                                                     :class="{ 
-                                                        'is-locked': shift.isLocked, 
+                                                        'is-locked': shift.isLocked,
+                                                        'has-collision': shiftHasCollision(shift.id),
                                                         'is-expanded': isTimetableShiftExpanded(shift.id),
                                                         'has-overflow': hasShiftOverflow(shift.id)
                                                     }">
@@ -166,11 +166,14 @@
                                                             </template>
                                                             <template x-for="participant in shift.participants" :key="participant.id">
                                                                 <span class="timetable-shift-participant" 
-                                                                    :class="{ 'has-remove': !shift.isLocked || isAdmin }"
-                                                                    @click.stop="handleTimetableParticipantRemove(shift, participant, $event)">
+                                                                    :title="participant.name"
+                                                                    :class="{ 'has-remove': !shift.isLocked || isAdmin, 'has-collision': hasCollision(participant.name, shift.id) }"
+                                                                    @click.stop="(!shift.isLocked || isAdmin) && handleTimetableParticipantRemove(shift, participant, $event)">
                                                                     <span x-text="participant.name"></span>
                                                                     <!-- Collision warning icon -->
-                                                                    <svg x-show="hasCollision(participant.name)"
+                                                                    <svg x-show="hasCollision(participant.name, shift.id)"
+                                                                         role="img"
+                                                                         :aria-label="$t('shift_plans.view.participant_collision')"
                                                                          xmlns="http://www.w3.org/2000/svg"
                                                                          class="h-3 w-3 ml-1 inline-block text-warning flex-shrink-0"
                                                                          fill="none"
