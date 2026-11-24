@@ -19,7 +19,8 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 - DB errors are typed sentinel errors in `internal/db/errors.go`, not string matching. All DB operations run in a transaction.
 - Validation is centralised in `internal/validation`. Shared HTTP handler logic belongs in `internal/web/helpers.go`.
 - API is documented with swag annotations on handlers.
-- In-app help is Markdown in `internal/web/docs/help-{de,en}.md` (change both languages together); see `DOCUMENTATION_SYSTEM.md`. When adding user-visible features, update the feature list in `README.md` too.
+- `prj/`: project notes and data (`todo.md` backlog, `testdata/` example imports, `archive/` old notes).
+- In-app help is Markdown in `internal/web/docs/help-{de,en}.md` (change both languages together); see `prj/archive/DOCUMENTATION_SYSTEM.md`. When adding user-visible features, update the feature list in `README.md` too.
 
 ## Commands
 

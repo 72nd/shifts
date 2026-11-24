@@ -1,0 +1,60 @@
+Shift Type,Start Datetime,Duration in Minutes,Required Participants,Comment DE,Comment EN,Person 1,Person 2,Person 3,Person 4,Person 5
+Welcome Team,2025-07-26 07:00,180,3,Früher Aufbau - Willkommensstand vorbereiten,Early setup - prepare welcome desk,Shadow,,
+Welcome Team,2025-07-26 08:00,240,4,Haupteingang - Besucher begrüßen und Bändchen ausgeben,Main entrance - greet visitors and distribute wristbands,Amira,Zain,Sarah,Omar
+Welcome Team,2025-07-26 12:00,240,4,Haupteingang - Willkommensschicht,Main entrance - welcome shift,Layla,,
+Welcome Team,2025-07-26 16:00,240,4,Nachmittag - Besucherbetreuung,Afternoon - visitor support,,,
+Welcome Team,2025-07-26 20:00,300,4,Abendschicht - Späte Besucher begrüßen,Evening shift - greet late visitors,,,
+Welcome Team,2025-07-27 08:00,240,3,Einlass Sonntag - ruhigerer Tag,Sunday entrance - quieter day,Malik,Yasmin,
+Welcome Team,2025-07-27 12:00,240,3,Mittagsschicht Sonntag,Sunday midday shift,,,
+Welcome Team,2025-07-27 16:00,180,3,Letzte Schicht - Gelände räumen helfen,Final shift - help clear venue,,,
+Welcome Team,2025-07-26 10:00,120,3,Parkplatz-Koordination und Wegweiser,Parking coordination and directions,Shadow,Pixel,
+Welcome Team,2025-07-27 20:00,120,4,Abschlussrunde - Danke sagen,Final round - say thanks,Amira,Malik,Shadow,
+Welcome Team,2025-07-26 22:00,180,2,Nachtschicht Campingplatz - Ansprechpartner,Evening shift camping - contact person,,
+Welcome Team,2025-07-27 06:00,120,2,Frühe Morgenrunde - Frühaufsteher begrüßen,Early morning round - greet early risers,Shadow,
+Food Service,2025-07-26 07:00,120,3,Frühaufbau Küche und Warenlieferung,Early kitchen setup and delivery,Nadia,Samira,
+Food Service,2025-07-26 09:00,180,5,Frühstücksvorbereitung und Aufbau,Breakfast preparation and setup,Nadia,Samira,Mia,Karim,Sophie
+Food Service,2025-07-26 12:00,240,6,Mittagszeit - Hochbetrieb erwartet,Lunch time - high activity expected,Laura,David,Nina,,
+Food Service,2025-07-26 16:00,240,6,Nachmittagsschicht mit Kaffee und Kuchen,Afternoon shift with coffee and cake,Hannah,,
+Food Service,2025-07-26 20:00,240,5,Abendessen und Snacks,Dinner and snacks,Tariq,Amira,,
+Food Service,2025-07-26 23:00,120,3,Mitternachtssnacks - Spätschicht,Midnight snacks - late shift,,,
+Food Service,2025-07-27 09:00,180,5,Frühstücksservice Sonntag,Sunday breakfast service,Mia,Karim,Sophie,,
+Food Service,2025-07-27 12:00,240,5,Mittagessen Sonntag - Abbau vorbereiten,Sunday lunch - prepare teardown,Nadia,Samira,,
+Food Service,2025-07-27 16:00,180,4,Finale Schicht - Resteverwertung,Final shift - use remaining supplies,,,
+Food Service,2025-07-26 10:30,90,4,Getränkestand Samstag Vormittag,Beverage stand Saturday morning,Laura,David,,
+Food Service,2025-07-27 10:30,90,4,Getränkestand Sonntag Vormittag,Beverage stand Sunday morning,,,
+Food Service,2025-07-26 18:00,120,5,Grillstation Abendprogramm,BBQ station evening program,Tariq,Sophie,,
+Info Desk,2025-07-26 08:30,240,2,Festival-Infos und Orientierung geben,Provide festival info and orientation,Clara,Echo
+Info Desk,2025-07-26 12:30,240,2,Besucherfragen beantworten - English skills helpful,Answer visitor questions - English skills helpful,Yasmin,,
+Info Desk,2025-07-26 16:30,240,2,Nachmittag-Info - Lost & Found,Afternoon info - Lost & Found,Tim,Lena
+Info Desk,2025-07-26 20:30,210,2,Abend-Info und Notfallkontakte,Evening info and emergency contacts,Sarah,,
+Info Desk,2025-07-27 09:00,240,2,Sonntag Morgen - Programm erklären,Sunday morning - explain program,Malik,Clara
+Info Desk,2025-07-27 13:00,240,2,Nachmittag Info - Hinweise zum Abbau,Afternoon info - teardown information,,,
+Info Desk,2025-07-27 17:00,120,1,Letzte Info-Schicht,Final info shift,
+Info Desk,2025-07-26 10:00,120,2,Extra Infopunkt Campingplatz,Extra info point at campsite,Echo,,
+Info Desk,2025-07-26 15:00,90,1,Mobile Info - Gelände-Rundgang,Mobile info - venue walkabout,Tim
+Info Desk,2025-07-27 11:00,120,2,Familienbereich Info-Stand,Family area info stand,,
+Stage Crew,2025-07-26 06:00,240,2,Früher Bühnenaufbau,Early stage construction,Phoenix,Raven
+Stage Crew,2025-07-26 07:00,300,3,Bühnenaufbau und Techniktest,Stage setup and tech check,Phoenix,Raven,Kevin
+Stage Crew,2025-07-26 12:00,120,2,Soundcheck Band A und B,Soundcheck bands A and B,Raven,Kevin
+Stage Crew,2025-07-26 14:00,180,3,Live-Technik Nachmittag-Acts,Live tech for afternoon acts,Phoenix,Raven,Sabrina
+Stage Crew,2025-07-26 17:00,240,3,Hauptkonzerte - volle Besetzung nötig,Main concerts - full crew needed,Phoenix,Raven,Kevin
+Stage Crew,2025-07-26 21:00,180,2,Spätprogramm und Abbau Teil 1,Late program and teardown part 1,Sabrina,,
+Stage Crew,2025-07-27 08:00,240,2,Sonntag Aufbau und Vorbereitung,Sunday setup and preparation,Phoenix,Raven
+Stage Crew,2025-07-27 12:00,240,3,Sonntag Acts - durchgehend,Sunday acts - continuous,Phoenix,,
+Stage Crew,2025-07-27 16:00,240,3,Finale Acts und Komplettabbau,Final acts and complete teardown,Kevin,,
+Stage Crew,2025-07-26 10:00,120,2,Kleinbühne Setup,Small stage setup,,
+Stage Crew,2025-07-26 13:30,150,2,Kleinbühne Soundchecks,Small stage soundchecks,Sabrina,,
+Stage Crew,2025-07-26 16:00,240,2,Kleinbühne Live-Acts,Small stage live acts,Sabrina,Kevin
+Stage Crew,2025-07-27 10:00,180,2,Kleinbühne Sonntag,Small stage Sunday,,
+Stage Crew,2025-07-27 20:00,120,2,Finale Technik-Demontage,Final technical dismantling,,
+Cleanup,2025-07-26 09:00,120,0,Morgenreinigung Hauptgelände,Morning cleanup main area,Storm,,
+Cleanup,2025-07-26 10:00,120,0,Zwischenreinigung Geländetoiletten,Interim cleaning of venue toilets,Marie,Blaze
+Cleanup,2025-07-26 14:00,120,0,Müll leeren und Sauberkeit prüfen,Empty trash and check cleanliness,,
+Cleanup,2025-07-26 18:00,120,0,Hauptreinigung vor Abendprogramm,Main cleaning before evening program,Marie,Blaze,Storm,Lisa
+Cleanup,2025-07-26 22:00,90,0,Spätreinigung,Late night cleaning,,
+Cleanup,2025-07-27 09:00,90,0,Frühe Sonntagsreinigung,Early Sunday cleanup,,
+Cleanup,2025-07-27 10:00,120,0,Sonntagsreinigung,Sunday cleaning,Storm,,
+Cleanup,2025-07-27 14:00,120,0,Nachmittagsreinigung,Afternoon cleaning,,,
+Cleanup,2025-07-27 18:00,180,0,Schlussreinigung und Abschlusskontrolle - alle helfen mit!,Final cleanup and inspection - everyone helps!,Marie,Blaze,Storm,Lisa,Hannah
+Cleanup,2025-07-26 12:00,90,0,Mittagsreinigung Essensbereich,Lunch cleanup food area,,,
+Cleanup,2025-07-27 12:00,90,0,Mittagsreinigung Sonntag,Lunch cleanup Sunday,Marie,,
