@@ -338,13 +338,13 @@
         }
     },
     "realtime": {
-        "status_live": "Live – changes appear automatically",
+        "status_live": "Live",
         "status_connecting": "Connecting …",
-        "status_offline": "Offline – reload the page to see changes",
+        "status_offline": "Offline – reload",
         "shift_now_full": "This shift is now full.",
         "shift_deleted": "This shift has been deleted.",
-        "viewers_one": "1 person is watching",
-        "viewers_other": "{count} people are watching"
+        "viewers_one": "1 watching",
+        "viewers_other": "{count} watching"
     },
     "error": {
         "not_found": {
