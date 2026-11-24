@@ -33,7 +33,7 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 
 - `docs/` (Swagger output, gitignored and generated): never edit by hand; change handler annotations and run `make docs`.
 - `v1/`: legacy implementation, reference only.
-- `data/`, `local/`, `config.toml`, `SECRET.txt`, `12w-deploy.md`: private runtime data, secrets and deployment notes. Do not read or print them.
+- `data/`, `local/`, `SECRET.txt`, `12w-deploy.md`: private runtime data, secrets and deployment notes. Do not read or print them.
 - `opt/`: design assets and notes. `opt/specStory.md` is a ~400 KB chat log; do not read it.
 
 ## Releases
