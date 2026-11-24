@@ -40,3 +40,5 @@ SECRET.txt
 
 # Generated swagger documentation
 docs/
+# local tailwind standalone binary
+opt/tailwindcss-*
