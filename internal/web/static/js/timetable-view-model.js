@@ -1,8 +1,10 @@
 import {
     MINUTES_PER_DAY,
     assignOverlapLanes,
+    buildDaySegments,
     clampToDay,
     createHourScale,
+    formatClock,
     generateTypeColor,
     parseBoundaryTime,
     resolveDayContext
@@ -126,10 +128,45 @@ function normalizeShift({
     return result;
 }
 
+/**
+ * Splits one day into drawn segments (see buildDaySegments) and distributes the
+ * shifts and columns over them. Shifts get `segmentTop`, their start in minutes
+ * relative to their segment, which is what the template positions them by.
+ */
+function buildDaySegmentsForDay(dateKey, columns, boundaryMinutes, expandedGaps) {
+    const intervals = [];
+    columns.forEach(column => column.shifts.forEach(shift => {
+        intervals.push({ start: shift.startMinutes, end: shift.endMinutes });
+    }));
+
+    const segments = buildDaySegments(intervals, { dateKey, expandedGaps }).map(segment => {
+        const from = formatClock(segment.start, boundaryMinutes);
+        const to = formatClock(segment.end, boundaryMinutes);
+        if (segment.kind === 'gap') {
+            return { ...segment, from, to, hours: Math.round((segment.end - segment.start) / 60) };
+        }
+        return {
+            ...segment,
+            slots: createHourScale(15, segment.start, segment.end, boundaryMinutes),
+            slotCount: (segment.end - segment.start) / 15,
+            columns: columns.map(column => {
+                const shifts = column.shifts.filter(shift =>
+                    shift.startMinutes >= segment.start && shift.startMinutes < segment.end);
+                shifts.forEach(shift => { shift.segmentTop = shift.startMinutes - segment.start; });
+                return { ...column, shifts };
+            })
+        };
+    });
+    const firstVisible = segments.find(segment => segment.kind === 'visible');
+    if (firstVisible) firstVisible.isFirstVisible = true;
+    return segments;
+}
+
 export function buildTimetableModel({
     shiftTypes = [],
     plan = {},
-    locale = 'en'
+    locale = 'en',
+    expandedGaps = {}
 }) {
     const boundaryMinutes = parseBoundaryTime(plan.day_boundary_time || '00:00');
     const isMultilingual = Boolean(plan.is_multilingual);
@@ -211,12 +248,17 @@ export function buildTimetableModel({
                 };
             });
 
+            const segments = buildDaySegmentsForDay(dayEntry.dateKey, columns, boundaryMinutes, expandedGaps);
             return {
                 dateKey: dayEntry.dateKey,
                 dateLabel: formatDisplayDate(dayEntry.date, locale, plan.start_date),
                 date: dayEntry.date,
                 columns,
-                hasShifts: columns.some(column => column.hasShifts)
+                hasShifts: columns.some(column => column.hasShifts),
+                segments,
+                // Exact height of the day (placeholder size for content-visibility)
+                visibleSlots: segments.reduce((sum, segment) => sum + (segment.slotCount || 0), 0),
+                gapCount: segments.filter(segment => segment.kind === 'gap').length
             };
         })
         .filter(day => day.hasShifts);
@@ -242,7 +284,6 @@ export function buildTimetableModel({
         allColumns,
         normalizedTypes, // Export normalized types for header
         hasAnyShifts: allColumns.some(col => col.hasShifts),
-        timeScale: createHourScale(15),
         meta: {
             boundaryMinutes,
             slotMinutes: 15,

@@ -65,10 +65,33 @@
                     <div class="timetable-time-grid">
                         <template x-for="day in timetableModel.days" :key="`day-time-${day.dateKey}`">
                             <div class="timetable-time-day-section">
-                                <template x-for="(slot, index) in timetableModel.timeScale" :key="`time-${day.dateKey}-${slot.minute}`">
-                                    <div class="timetable-time-slot" 
-                                        :class="{ 'is-hour': slot.isHour, 'is-day-start': slot.minute === 0 && index === 0 }">
-                                        <span x-show="slot.isHour" x-text="slot.label"></span>
+                                <template x-for="segment in day.segments" :key="`time-${day.dateKey}-${segment.key}`">
+                                    <div>
+                                        <template x-if="segment.kind === 'visible'">
+                                            <div>
+                                                <template x-for="(slot, index) in segment.slots" :key="`slot-${slot.minute}`">
+                                                    <div class="timetable-time-slot"
+                                                        :class="{ 'is-hour': slot.isHour, 'is-day-start': slot.minute === 0 }">
+                                                        <span x-show="slot.isHour" x-text="slot.label"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <!-- Empty stretch: pointer shortcut only, the button in the columns is the accessible one -->
+                                        <template x-if="segment.kind === 'gap'">
+                                            <div class="timetable-gap timetable-gap-rail" aria-hidden="true"
+                                                :class="{ 'is-expanded': segment.expanded }"
+                                                :title="segment.expanded ? $t('shift_plans.view.timetable_gap_hide', { from: segment.from, to: segment.to }) : $t('shift_plans.view.timetable_gap_show', { from: segment.from, to: segment.to })"
+                                                @click="toggleTimetableGap(segment.key)">
+                                                <svg x-show="!segment.expanded" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                                </svg>
+                                                <svg x-show="segment.expanded" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7l4 4 4-4m0 10l-4-4-4 4" />
+                                                </svg>
+                                                <span x-show="!segment.expanded" x-text="$t('shift_plans.view.timetable_gap_short', { hours: segment.hours })"></span>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                             </div>
@@ -81,14 +104,36 @@
                     <!-- Days vertically stacked -->
                     <template x-for="day in timetableModel.days" :key="`day-section-${day.dateKey}`">
                         <div class="timetable-day-section"
-                             :data-day-key="day.dateKey">
-                            <!-- Columns grid for this day -->
+                             :data-day-key="day.dateKey"
+                             :style="`contain-intrinsic-size: auto calc(${day.visibleSlots} * var(--timetable-slot-height) + ${day.gapCount} * var(--timetable-gap-height))`">
+                          <template x-for="segment in day.segments" :key="`seg-${day.dateKey}-${segment.key}`">
+                           <div>
+                            <!-- Empty stretch of the day, collapsed to a band (or the button to collapse it again) -->
+                            <template x-if="segment.kind === 'gap'">
+                                <button type="button" class="timetable-gap"
+                                    :class="{ 'is-expanded': segment.expanded }"
+                                    :aria-expanded="segment.expanded ? 'true' : 'false'"
+                                    :aria-label="segment.expanded ? $t('shift_plans.view.timetable_gap_hide', { from: segment.from, to: segment.to }) : $t('shift_plans.view.timetable_gap_show', { from: segment.from, to: segment.to })"
+                                    @click="toggleTimetableGap(segment.key)">
+                                    <svg x-show="!segment.expanded" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                    </svg>
+                                    <svg x-show="segment.expanded" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7l4 4 4-4m0 10l-4-4-4 4" />
+                                    </svg>
+                                    <span class="timetable-gap-label"
+                                        x-text="segment.expanded ? $t('shift_plans.view.timetable_gap_hide', { from: segment.from, to: segment.to }) : $t('shift_plans.view.timetable_gap', { hours: segment.hours, from: segment.from, to: segment.to })"></span>
+                                </button>
+                            </template>
+                            <!-- Columns grid for this part of the day -->
+                            <template x-if="segment.kind === 'visible'">
                             <div class="timetable-columns"
                                 :style="`grid-template-columns: repeat(${day.columns.length}, minmax(200px, 1fr))`">
-                                <template x-for="column in day.columns" :key="`col-${day.dateKey}-${column.typeId}`">
+                                <template x-for="column in segment.columns" :key="`col-${day.dateKey}-${segment.key}-${column.typeId}`">
                                     <div class="timetable-column">
-                                        <div class="timetable-column-body">
-                                            <template x-if="column.shifts.length === 0">
+                                        <div class="timetable-column-body"
+                                            :style="`--segment-slots: ${segment.slotCount}`">
+                                            <template x-if="!column.hasShifts && segment.isFirstVisible">
                                                 <div class="timetable-column-empty" x-text="$t('shift_plans.view.timetable_empty_column')"></div>
                                             </template>
 
@@ -248,6 +293,9 @@
                                     </div>
                                 </template>
                             </div>
+                            </template>
+                           </div>
+                          </template>
                         </div>
                     </template>
                 </div>

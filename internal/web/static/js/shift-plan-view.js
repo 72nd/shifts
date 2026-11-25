@@ -58,6 +58,7 @@ document.addEventListener('alpine:init', () => {
         expandedTimetableShifts: {},
         shiftOverflowState: {},
         activeDayKey: null,
+        expandedTimetableGaps: {}, // collapsed empty stretches the user opened: { 'dateKey|start-end': true }
         scrollTimeout: null,
 
         // Collision detection state
@@ -114,7 +115,8 @@ document.addEventListener('alpine:init', () => {
             return buildTimetableModel({
                 shiftTypes: this.filteredShiftTypes || [],
                 plan: this.plan || {},
-                locale: this.$locale()
+                locale: this.$locale(),
+                expandedGaps: this.expandedTimetableGaps
             });
         },
 
@@ -285,11 +287,25 @@ document.addEventListener('alpine:init', () => {
             return day.columns.reduce((acc, column) => acc + (column.shifts?.length || 0), 0);
         },
 
+        /** Collapse or expand an empty stretch of a day (the band in the timetable). */
+        toggleTimetableGap(key) {
+            if (!key) return;
+            const next = { ...this.expandedTimetableGaps };
+            if (next[key]) {
+                delete next[key];
+            } else {
+                next[key] = true;
+            }
+            this.expandedTimetableGaps = next;
+            this.$nextTick(() => this.detectAllShiftOverflows());
+        },
+
         getTimetableShiftStyle(shift) {
             if (!shift) return {};
             // Sizes follow the CSS variable (rem based), so they scale with the browser font size
             const slot = 'var(--timetable-slot-height)';
-            const top = `calc(${Math.max(0, shift.startMinutes || 0)} * ${slot} / 15)`;
+            // segmentTop: start relative to the visible segment (empty stretches are collapsed)
+            const top = `calc(${Math.max(0, shift.segmentTop ?? shift.startMinutes ?? 0)} * ${slot} / 15)`;
             const height = `max(${slot}, calc(${shift.durationMinutes || 15} * ${slot} / 15))`;
             const laneCount = Math.max(shift.laneCount || 1, 1);
             const laneIndex = Math.min(shift.laneIndex || 0, laneCount - 1);

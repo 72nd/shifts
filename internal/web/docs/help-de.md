@@ -68,6 +68,10 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
+### Zeittafel
+
+In der Zeittafel werden leere Abschnitte eines Tages (vier Stunden oder mehr ohne Schicht) zu einem gestrichelten Band wie "5 Std. ohne Schichten (01:00–06:00)" zusammengeklappt. Ein Klick auf das Band zeigt die leere Zeit, ein weiterer Klick blendet sie wieder aus. Überall sonst ist die Zeit maßstabsgetreu. Aktive Filter zählen mit: Wenn Du auf einen Bereich filterst, sind mehr Abschnitte leer und werden zusammengeklappt.
+
 ### Filtern
 
 ### Live-Aktualisierung

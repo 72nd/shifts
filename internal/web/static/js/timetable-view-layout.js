@@ -77,17 +77,85 @@ export function assignOverlapLanes(shifts) {
     return laneCount;
 }
 
-export function createHourScale(slotMinutes = 15) {
+/** Wall-clock label "HH:MM" for a minute offset from the day boundary (offset 1440 is the next boundary). */
+export function formatClock(offsetMinutes, boundaryMinutes = 0) {
+    const clock = (offsetMinutes + boundaryMinutes) % MINUTES_PER_DAY;
+    return `${pad(Math.floor(clock / 60))}:${pad(clock % 60)}`;
+}
+
+/** 15 min slots of [startMinutes, endMinutes), labelled with wall-clock hours (offset + day boundary). */
+export function createHourScale(slotMinutes = 15, startMinutes = 0, endMinutes = MINUTES_PER_DAY, boundaryMinutes = 0) {
     const slots = [];
-    for (let minute = 0; minute < MINUTES_PER_DAY; minute += slotMinutes) {
-        const isHour = minute % 60 === 0;
+    for (let minute = startMinutes; minute < endMinutes; minute += slotMinutes) {
+        const clock = (minute + boundaryMinutes) % MINUTES_PER_DAY;
+        const isHour = clock % 60 === 0;
         slots.push({
             minute,
             isHour,
-            label: isHour ? `${pad(Math.floor(minute / 60))}:00` : ''
+            label: isHour ? `${pad(clock / 60)}:00` : ''
         });
     }
     return slots;
+}
+
+// Collapsing of empty stretches of a day (timetable)
+export const GAP_MIN_COLLAPSE_MINUTES = 120; // collapse only if at least this much empty time is hidden
+export const GAP_CONTEXT_MINUTES = 30; // empty time kept next to a shift (rounded to full hours)
+
+/**
+ * Splits a day (0..1440 minutes after the day boundary) into segments.
+ * `visible` segments are drawn to scale. `gap` segments are empty stretches of
+ * at least GAP_MIN_COLLAPSE_MINUTES between or around shifts, drawn as a thin band.
+ * An expanded gap stays a band (to collapse it again) followed by its full-size time range.
+ * Shifts never lie inside a gap, so every shift sits in exactly one visible segment.
+ *
+ * @param {{start: number, end: number}[]} intervals shift intervals of the whole day (all types)
+ * @param {{dateKey: string, expandedGaps?: Object<string, boolean>}} options
+ * @returns {{kind: 'visible'|'gap', key: string, start: number, end: number, expanded?: boolean}[]}
+ */
+export function buildDaySegments(intervals, { dateKey, expandedGaps = {} }) {
+    const sorted = [...intervals].sort((a, b) => a.start - b.start);
+    const occupied = [];
+    sorted.forEach(interval => {
+        const last = occupied[occupied.length - 1];
+        if (last && interval.start <= last.end) {
+            last.end = Math.max(last.end, interval.end);
+        } else {
+            occupied.push({ start: interval.start, end: interval.end });
+        }
+    });
+
+    // Empty stretches between the occupied ones, shrunk to whole hours around the context
+    const gaps = [];
+    let cursor = 0;
+    const addGap = (from, to) => {
+        const start = from === 0 ? 0 : Math.ceil((from + GAP_CONTEXT_MINUTES) / 60) * 60;
+        const end = to === MINUTES_PER_DAY ? MINUTES_PER_DAY : Math.floor((to - GAP_CONTEXT_MINUTES) / 60) * 60;
+        if (end - start >= GAP_MIN_COLLAPSE_MINUTES) gaps.push({ start, end });
+    };
+    occupied.forEach(block => {
+        addGap(cursor, block.start);
+        cursor = block.end;
+    });
+    addGap(cursor, MINUTES_PER_DAY);
+
+    const segments = [];
+    let visibleFrom = 0;
+    const pushVisible = (to) => {
+        if (to > visibleFrom) {
+            segments.push({ kind: 'visible', key: `v${visibleFrom}`, start: visibleFrom, end: to });
+        }
+    };
+    gaps.forEach(gap => {
+        const key = `${dateKey}|${gap.start}-${gap.end}`;
+        const expanded = Boolean(expandedGaps[key]);
+        pushVisible(gap.start);
+        segments.push({ kind: 'gap', key, start: gap.start, end: gap.end, expanded });
+        // Collapsed: skip the range. Expanded: the range joins the next visible segment.
+        visibleFrom = expanded ? gap.start : gap.end;
+    });
+    pushVisible(MINUTES_PER_DAY);
+    return segments;
 }
 
 export function generateTypeColor(seed) {

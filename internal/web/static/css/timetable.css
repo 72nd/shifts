@@ -15,6 +15,7 @@
 .timetable-unified {
   --timetable-day-nav-height: 40px; /* Height of day navigation bar */
   --timetable-slot-height: 1rem; /* One 15 min slot; single source of truth, scales with the font size */
+  --timetable-gap-height: max(calc(3 * var(--timetable-slot-height)), 2.75rem); /* Band for a collapsed empty stretch (44 px touch target) */
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto 1fr;
@@ -175,7 +176,7 @@
   flex-direction: column;
   border-bottom: 3px solid oklch(var(--p) / 0.4);
   content-visibility: auto;
-  contain-intrinsic-size: auto 1000px;
+  contain-intrinsic-size: auto 1000px; /* exact height is set inline per day */
 }
 
 .timetable-day-section:last-child {
@@ -233,7 +234,7 @@
 /* Column body - contains shifts; grid lines via CSS (avoids 96 DOM nodes per column) */
 .timetable-column-body {
   position: relative;
-  height: calc(96 * var(--timetable-slot-height)); /* 24h * 4 slots/h */
+  height: calc(var(--segment-slots) * var(--timetable-slot-height)); /* slots of this visible part of the day */
   min-height: 0;
   background-image:
     repeating-linear-gradient(
@@ -253,6 +254,47 @@
   background-size:
     100% calc(4 * var(--timetable-slot-height)),
     100% var(--timetable-slot-height);
+}
+
+/* Collapsed empty stretch of a day: same height in the time rail and the columns */
+.timetable-gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: var(--timetable-gap-height);
+  box-sizing: border-box;
+  padding: 0 0.5rem;
+  background: oklch(var(--b2) / 0.6);
+  border-top: 1px dashed oklch(var(--bc) / 0.35);
+  border-bottom: 1px dashed oklch(var(--bc) / 0.35);
+  color: oklch(var(--bc) / 0.7);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.timetable-gap:hover {
+  background: oklch(var(--b2));
+  color: oklch(var(--bc));
+}
+
+.timetable-gap:focus-visible {
+  outline: 2px solid oklch(var(--p));
+  outline-offset: -2px;
+}
+
+.timetable-gap-label {
+  min-width: 0;
+  text-align: center;
+}
+
+.timetable-gap-rail {
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  font-size: 0.65rem;
+  line-height: 1.1;
 }
 
 /* Empty column placeholder */

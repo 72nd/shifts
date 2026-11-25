@@ -68,6 +68,10 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
+### Timetable view
+
+In the timetable, empty stretches of a day (four hours or more without a shift) are collapsed to a dashed band such as "5 h without shifts (01:00–06:00)". Click the band to show the empty time, and click it again to hide it. Time is drawn to scale everywhere else. Active filters count: if you filter to one area, more stretches are empty and collapse.
+
 ### Filtering
 
 ### Live updates

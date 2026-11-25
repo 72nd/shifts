@@ -51,7 +51,7 @@ A full list of features can be found [below](#features).
 
 - **🔑 No login required for sign up:** Participants need only the link to the shift schedule and can sign up using a nickname of their choice. No account, login, or email address is needed.
 - **🌐 Bilingual support:** Shift schedules can be created in a single language or in two languages simultaneously (currently German and English).
-- **👀 List and table (timetable) views:** Two complementary views are available: a list view well suited to small screens, and a table/timetable view that provides a convenient overview of many shifts at once.
+- **👀 List and table (timetable) views:** Two complementary views are available: a list view well suited to small screens, and a table/timetable view that provides a convenient overview of many shifts at once. Empty stretches of four hours or more within a day are collapsed to a thin band (click to show), so there is less scrolling.
 - **🌗 Light and dark mode:** Both light and dark modes are supported.
 - **⚡ Live updates:** Changes by other people (sign-ups, shifts, types, settings, locks, deletion) appear in an open shift plan within about a second, without reloading. A status indicator shows the connection state and a viewer counter shows how many tabs of the plan are open. Changed shifts are briefly highlighted, open sign-up dialogs warn when a shift became full or was deleted, and the statistics page updates too. Can be switched off with `realtime_enabled` in `config.toml`.
 
