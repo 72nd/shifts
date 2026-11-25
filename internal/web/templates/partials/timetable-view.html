@@ -170,6 +170,11 @@
                                                                     :title="participant.name"
                                                                     :class="{ 'has-remove': !shift.isLocked || isAdmin, 'has-collision': hasCollision(participant.name, shift.id) }"
                                                                     @click.stop="(!shift.isLocked || isAdmin) && handleTimetableParticipantRemove(shift, participant, $event)">
+                                                                    <svg x-show="planHasStatuses && participant.status === 'assigned'" role="img"
+                                                                         :aria-label="$t('shift_plans.view.status_assigned')" :title="$t('shift_plans.view.status_assigned')"
+                                                                         xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 inline-block text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                                    </svg>
                                                                     <span x-text="participant.name"></span>
                                                                     <!-- Collision warning icon -->
                                                                     <svg x-show="hasCollision(participant.name, shift.id)"
@@ -190,6 +195,21 @@
                                                                             d="M6 18L18 6M6 6l12 12" />
                                                                     </svg>
                                                                 </span>
+                                                            </template>
+                                                            <!-- Declined participations (only on request) -->
+                                                            <template x-if="filterManager.showDeclined">
+                                                                <template x-for="participant in shift.declinedParticipants" :key="participant.id">
+                                                                    <span class="timetable-shift-participant opacity-70"
+                                                                        :class="{ 'has-remove': isAdmin }"
+                                                                        :title="$t('shift_plans.view.status_declined')"
+                                                                        @click.stop="isAdmin && handleTimetableParticipantRemove(shift, participant, $event)">
+                                                                        <svg role="img" :aria-label="$t('shift_plans.view.status_declined')" xmlns="http://www.w3.org/2000/svg"
+                                                                             class="h-3 w-3 mr-1 inline-block flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                                        </svg>
+                                                                        <span class="line-through" x-text="participant.name"></span>
+                                                                    </span>
+                                                                </template>
                                                             </template>
                                                         </div>
                                                         <div class="timetable-shift-comment" x-show="shift.comment">

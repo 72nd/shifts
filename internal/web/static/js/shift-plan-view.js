@@ -762,11 +762,7 @@ document.addEventListener('alpine:init', () => {
                 this.plan = { ...plan, day_boundary_time: plan.day_boundary_time || '00:00' };
                 if (this.shiftTypeModal) this.shiftTypeModal.isMultilingual = this.plan.is_multilingual;
             }
-            this.shiftTypes = types.map(type => ({
-                ...type,
-                shifts: type.shifts || [],
-                shiftsByDate: this.groupShiftsByDate(type.shifts || [])
-            }));
+            this.shiftTypes = this.prepareTypes(types);
             // Modals read shiftTypes when they are used; point the shift modal at the new array
             if (this.shiftModal) this.shiftModal.shiftTypes = this.shiftTypes;
 
@@ -782,6 +778,53 @@ document.addEventListener('alpine:init', () => {
                 if (found) return found;
             }
             return null;
+        },
+
+        /**
+         * Prepares API types for the view. Declined participations are moved out of
+         * shift.participants into shift.declinedParticipants, so everything that counts
+         * or lists participants (occupancy, filters, collisions, timetable) sees only the ones
+         * that occupy a place. Declined ones are shown on request (filterManager.showDeclined).
+         */
+        prepareTypes(types) {
+            return types.map(type => {
+                const shifts = (type.shifts || []).map(shift => {
+                    const all = shift.participants || [];
+                    const declinedParticipants = all.filter(p => p.status === 'declined');
+                    return declinedParticipants.length
+                        ? { ...shift, participants: all.filter(p => p.status !== 'declined'), declinedParticipants }
+                        : { ...shift, declinedParticipants: [] };
+                });
+                return { ...type, shifts, shiftsByDate: this.groupShiftsByDate(shifts) };
+            });
+        },
+
+        /** Label of a person field or of a choice option in the current language. */
+        fieldLabel(f) {
+            const de = window.AlpineI18n?.locale !== 'en';
+            return (de ? f.label_de : f.label_en) || f.label_en || f.label_de || '';
+        },
+
+        /** Options of the plan's experience field (empty if none is set). */
+        experienceOptions() {
+            const field = (this.plan?.fields || []).find(f => f.id === this.plan.experience_field_id);
+            return field ? field.options : [];
+        },
+
+        optionLabel(o) {
+            const de = window.AlpineI18n?.locale !== 'en';
+            return (de ? o.de : o.en) || o.en || o.de || '';
+        },
+
+        /** Whether any participation has a status other than signed up (status icons appear only then). */
+        get planHasStatuses() {
+            return this.shiftTypes.some(t => t.shifts.some(s =>
+                (s.declinedParticipants?.length || 0) > 0 || (s.participants || []).some(p => p.status === 'assigned')));
+        },
+
+        /** Whether declined participations are loaded at all (the filter switch appears only then). */
+        get hasDeclined() {
+            return this.shiftTypes.some(t => t.shifts.some(s => (s.declinedParticipants?.length || 0) > 0));
         },
 
         // Map: shift id -> participant signature
@@ -874,11 +917,7 @@ document.addEventListener('alpine:init', () => {
                 const types = await typesResponse.json();
 
                 // Update shift types with their shifts
-                this.shiftTypes = types.map(type => ({
-                    ...type,
-                    shifts: type.shifts || [],
-                    shiftsByDate: this.groupShiftsByDate(type.shifts || [])
-                }));
+                this.shiftTypes = this.prepareTypes(types);
 
                 // First load only: drop URL type ids that do not exist in this plan
                 if (this.urlFiltersPending) {
@@ -992,7 +1031,7 @@ document.addEventListener('alpine:init', () => {
         // Modal functions
         openJoinModal(shift) {
             if (!shift) return;
-            this.joinModal.openWith(shift);
+            this.joinModal.openWith(shift, this.plan);
         },
 
         openRemoveModal(shift, participant) {
@@ -1471,11 +1510,7 @@ document.addEventListener('alpine:init', () => {
                 })
                 .then(types => {
                     // Update types with their shifts
-                    this.shiftTypes = types.map(type => ({
-                        ...type,
-                        shifts: type.shifts || [],
-                        shiftsByDate: this.groupShiftsByDate(type.shifts || [])
-                    }));
+                    this.shiftTypes = this.prepareTypes(types);
 
                     // Recalculate collisions after reloading types
                     this.detectCollisions();

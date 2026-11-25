@@ -41,6 +41,9 @@ export class RemoveModal extends Modal {
             this.currentShift.participants = this.currentShift.participants.filter(
                 p => p.id !== this.currentParticipant.id
             );
+            this.currentShift.declinedParticipants = (this.currentShift.declinedParticipants || []).filter(
+                p => p.id !== this.currentParticipant.id
+            );
 
             this.close();
             

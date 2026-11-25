@@ -38,6 +38,11 @@ export class ShiftModal extends Modal {
         this.consecutive_shifts = 1;
         this.relative_day = 1;
         this.isUnlimited = false;
+        // Coordination overrides; empty = as the shift type (only editable for an existing shift)
+        this.load_factor = '';
+        this.popularity = '';
+        this.exp_min_count = '';
+        this.exp_min_level = '';
     }
 
     openWith(shift = null, type = null, isDuplicating = false) {
@@ -61,6 +66,12 @@ export class ShiftModal extends Modal {
             this.isUnlimited = shift.required === -1;
             this.comment_de = shift.comment_de || '';
             this.comment_en = shift.comment_en || '';
+            if (!isDuplicating) {
+                this.load_factor = shift.load_factor != null ? String(shift.load_factor) : '';
+                this.popularity = shift.popularity || '';
+                this.exp_min_count = shift.exp_min_count != null ? String(shift.exp_min_count) : '';
+                this.exp_min_level = shift.exp_min_level || '';
+            }
 
             // For duplication, move the start time on by the duration
             const start = isDuplicating ? addMinutes(startTime, shift.duration) : startTime;
@@ -143,6 +154,28 @@ export class ShiftModal extends Modal {
         return false;
     }
 
+    /** The four coordination overrides as the API wants them (null = as the type). */
+    overridesPayload() {
+        const factor = String(this.load_factor).trim().replace(',', '.');
+        const count = String(this.exp_min_count).trim();
+        return {
+            load_factor: factor === '' ? null : Number(factor),
+            popularity: this.popularity || null,
+            exp_min_count: count === '' ? null : parseInt(count),
+            exp_min_level: this.exp_min_level || null
+        };
+    }
+
+    /** Short text for the collapsed section: the overrides that are set. */
+    coordSummary() {
+        const o = this.overridesPayload();
+        const parts = [];
+        if (o.load_factor !== null) parts.push(`${AlpineI18n.t('coord.load_factor')} ${o.load_factor}`);
+        if (o.popularity) parts.push(AlpineI18n.t(`coord.popularity_${o.popularity}`));
+        if (o.exp_min_count !== null) parts.push(AlpineI18n.t('coord.exp_need'));
+        return parts.join(', ');
+    }
+
     async updateShift(type) {
         // Validate the start time before sending
         const startTime = fromInputValue(this.start_time);
@@ -165,7 +198,8 @@ export class ShiftModal extends Modal {
                 required: this.isUnlimited ? -1 : parseInt(this.required),
                 comment_de: this.comment_de,
                 comment_en: this.comment_en,
-                type_id: type.id
+                type_id: type.id,
+                ...this.overridesPayload()
             })
         };
         
@@ -182,7 +216,8 @@ export class ShiftModal extends Modal {
                 required: this.isUnlimited ? -1 : parseInt(this.required),
                 comment_de: this.comment_de,
                 comment_en: this.comment_en,
-                type_id: type.id
+                type_id: type.id,
+                ...this.overridesPayload()
             };
 
             // Notify about successful update

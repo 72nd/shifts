@@ -13,6 +13,8 @@ export class SettingsModal extends Modal {
         super.clearError();
         this.is_multilingual = false;
         this.collaborative_mode = false;
+        this.hide_declined = true; // shown as "hide not selected sign-ups"; the API stores show_declined
+        this.coordination = {}; // coordination settings of the plan, sent back unchanged
         this.title_de = '';
         this.title_en = '';
         this.description_de = '';
@@ -32,6 +34,14 @@ export class SettingsModal extends Modal {
         // Fill form with current plan data
         this.is_multilingual = plan.is_multilingual;
         this.collaborative_mode = plan.collaborative_mode || false;
+        this.hide_declined = !plan.show_declined;
+        this.coordination = {
+            experience_field_id: plan.experience_field_id ?? null,
+            attendance_mode: plan.attendance_mode || 'off',
+            default_target_minutes: plan.default_target_minutes ?? null,
+            min_rest_minutes: plan.min_rest_minutes ?? null,
+            max_day_minutes: plan.max_day_minutes ?? null
+        };
         this.title_de = plan.title_de || '';
         this.title_en = plan.title_en || '';
         this.description_de = plan.description_de || '';
@@ -117,7 +127,9 @@ export class SettingsModal extends Modal {
                 description_en: this.description_en,
                 start_date: this.start_date,
                 end_date: this.end_date,
-                day_boundary_time: this.day_boundary_time
+                day_boundary_time: this.day_boundary_time,
+                ...this.coordination,
+                show_declined: !this.hide_declined
             })
         };
         

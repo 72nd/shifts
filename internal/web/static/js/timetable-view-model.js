@@ -70,6 +70,7 @@ function normalizeShift({
     collaborativeMode
 }) {
     const participants = Array.isArray(shift.participants) ? shift.participants : [];
+    const declinedParticipants = Array.isArray(shift.declinedParticipants) ? shift.declinedParticipants : [];
     const required = typeof shift.required === 'number' ? shift.required : 0;
     const durationMinutes = clampToDay(Number(shift.duration) || 0);
     const startMinutes = clampToDay(offsetMinutes);
@@ -102,6 +103,7 @@ function normalizeShift({
         startTime: shift.start_time,
         displayTime: formatTimeRange(parseDateTime(shift.start_time), durationMinutes, locale),
         participants,
+        declinedParticipants,
         participantsCount: participants.length,
         required,
         unlimited: required === -1,

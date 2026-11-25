@@ -7,6 +7,8 @@ const URL_STATUS_VALUES = { open: 'not_full' };
 export class FilterManager {
     constructor(dayBoundary = '00:00') {
         this.setDayBoundary(dayBoundary);
+        // View setting, not a filter: show declined participations (only offered if there are any)
+        this.showDeclined = false;
         this.reset();
     }
 

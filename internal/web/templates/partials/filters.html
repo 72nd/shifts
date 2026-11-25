@@ -152,6 +152,10 @@
                        :placeholder="$t('shift_plans.view.filter.search_placeholder')" />
             </div>
         </div>
+        <label class="flex items-center gap-2 min-h-11 cursor-pointer mt-1" x-show="hasDeclined">
+            <input type="checkbox" class="checkbox checkbox-sm" x-model="filterManager.showDeclined" />
+            <span x-text="$t('shift_plans.view.show_declined')"></span>
+        </label>
     </div>
     
     <!-- Active Filters Summary (shown when collapsed) -->

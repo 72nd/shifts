@@ -84,6 +84,10 @@
                     <template x-for="participant in shift.participants || []" :key="participant.id">
                         <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-xs md:text-sm transition-colors border"
                              :class="hasCollision(participant.name, shift.id) ? 'border-warning' : 'border-base-content/20'">
+                            <span x-show="planHasStatuses && participant.status === 'assigned'" role="img" class="inline-flex text-success"
+                                  :aria-label="$t('shift_plans.view.status_assigned')" :title="$t('shift_plans.view.status_assigned')">
+                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            </span>
                             <span x-text="participant.name" class="font-medium"></span>
                             <!-- Collision warning icon -->
                             <svg x-show="hasCollision(participant.name, shift.id)"
@@ -106,6 +110,25 @@
                                 </svg>
                             </button>
                         </div>
+                    </template>
+                    <!-- Declined participations (only on request); only the admin can remove them -->
+                    <template x-if="filterManager.showDeclined">
+                        <template x-for="participant in shift.declinedParticipants || []" :key="participant.id">
+                            <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 rounded-lg text-xs md:text-sm border border-dashed border-base-content/30 opacity-70">
+                                <span role="img" class="inline-flex" :aria-label="$t('shift_plans.view.status_declined')" :title="$t('shift_plans.view.status_declined')">
+                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                </span>
+                                <span x-text="participant.name" class="line-through"></span>
+                                <button @click.stop="openRemoveModal(shift, participant)"
+                                        x-show="isAdmin"
+                                        class="inline-flex items-center justify-center h-3.5 w-3.5 md:h-4 md:w-4 rounded hover:bg-base-content/10 text-base-content/70 hover:text-error transition-colors"
+                                        :aria-label="$t('shift_plans.view.remove_participant')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 md:h-3 md:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </template>
                     </template>
                 </div>
             </div>

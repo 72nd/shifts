@@ -18,6 +18,11 @@ export class ShiftTypeModal extends Modal {
         this.description_en = '';
         this.location_de = '';
         this.location_en = '';
+        // Coordination settings (see the "Coordination" section of the dialog)
+        this.load_factor = '1';
+        this.popularity = 'auto';
+        this.exp_min_count = 0;
+        this.exp_min_level = '';
         this.clearError();
     }
 
@@ -33,6 +38,10 @@ export class ShiftTypeModal extends Modal {
             this.description_en = type.description_en || '';
             this.location_de = type.location_de || '';
             this.location_en = type.location_en || '';
+            this.load_factor = String(type.load_factor ?? 1);
+            this.popularity = type.popularity || 'auto';
+            this.exp_min_count = type.exp_min_count || 0;
+            this.exp_min_level = type.exp_min_level || '';
         }
 
         this.open();
@@ -64,7 +73,28 @@ export class ShiftTypeModal extends Modal {
         }
         // Beschreibung und Ort sind jetzt optional
 
+        const factor = this.parsedLoadFactor();
+        if (!(factor >= 0.1 && factor <= 5)) {
+            this.errors.load_factor = AlpineI18n.t('coord.error_load_factor');
+            isValid = false;
+        }
+
         return isValid;
+    }
+
+    /** Load factor as a number (comma or point), NaN if not a number. */
+    parsedLoadFactor() {
+        return Number(String(this.load_factor).trim().replace(',', '.'));
+    }
+
+    /** Short text for the collapsed section: only what differs from the defaults. */
+    coordSummary() {
+        const parts = [];
+        const factor = this.parsedLoadFactor();
+        if (factor !== 1 && !Number.isNaN(factor)) parts.push(`${AlpineI18n.t('coord.load_factor')} ${factor}`);
+        if (this.popularity !== 'auto') parts.push(AlpineI18n.t(`coord.popularity_${this.popularity}`));
+        if (Number(this.exp_min_count) > 0) parts.push(AlpineI18n.t('coord.exp_need'));
+        return parts.join(', ');
     }
 
     async submit() {
@@ -87,7 +117,11 @@ export class ShiftTypeModal extends Modal {
                     description_de: this.description_de,
                     description_en: this.description_en,
                     location_de: this.location_de,
-                    location_en: this.location_en
+                    location_en: this.location_en,
+                    load_factor: this.parsedLoadFactor(),
+                    popularity: this.popularity,
+                    exp_min_count: Number(this.exp_min_count) || 0,
+                    exp_min_level: this.exp_min_level || ''
                 })
             };
 
@@ -109,7 +143,11 @@ export class ShiftTypeModal extends Modal {
                 description_de: this.description_de,
                 description_en: this.description_en,
                 location_de: this.location_de,
-                location_en: this.location_en
+                location_en: this.location_en,
+                load_factor: this.parsedLoadFactor(),
+                popularity: this.popularity,
+                exp_min_count: Number(this.exp_min_count) || 0,
+                exp_min_level: this.exp_min_level || null
             } : data;
 
             this.close();

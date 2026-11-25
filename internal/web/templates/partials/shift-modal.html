@@ -124,6 +124,45 @@
                 </div>
             </div>
 
+            <!-- Coordination overrides (collapsed, only for an existing shift) -->
+            <details class="mt-3 border-t border-base-content/20 pt-2" x-show="shiftModal.currentShift">
+                <summary class="min-h-11 flex flex-wrap items-center gap-x-2 cursor-pointer font-medium">
+                    <span x-text="$t('coord.section')"></span>
+                    <span class="text-sm font-normal text-base-content/70" x-text="shiftModal.coordSummary()"></span>
+                </summary>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    <div class="form-control">
+                        <label class="label py-1"><span class="label-text font-medium" x-text="$t('coord.load_factor')"></span></label>
+                        <input type="text" inputmode="decimal" x-model="shiftModal.load_factor" class="input input-bordered input-sm w-full"
+                               :placeholder="$t('coord.inherit_type', { value: shiftModal.currentShiftType?.load_factor ?? 1 })" />
+                    </div>
+                    <div class="form-control">
+                        <label class="label py-1"><span class="label-text font-medium" x-text="$t('coord.popularity')"></span></label>
+                        <select x-model="shiftModal.popularity" class="select select-bordered select-sm w-full">
+                            <option value="" x-text="$t('coord.inherit_type', { value: $t('coord.popularity_' + (shiftModal.currentShiftType?.popularity || 'auto')) })"></option>
+                            <option value="auto" x-text="$t('coord.popularity_auto')"></option>
+                            <option value="popular" x-text="$t('coord.popularity_popular')"></option>
+                            <option value="normal" x-text="$t('coord.popularity_normal')"></option>
+                        </select>
+                    </div>
+                    <div class="form-control sm:col-span-2" x-show="experienceOptions().length">
+                        <label class="label py-1"><span class="label-text font-medium" x-text="$t('coord.exp_need')"></span></label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span x-text="$t('coord.exp_need_min', { count: '' }).trim()"></span>
+                            <input type="number" min="0" x-model="shiftModal.exp_min_count" class="input input-bordered input-sm w-24"
+                                   :aria-label="$t('coord.exp_need')"
+                                   :placeholder="$t('coord.inherit_type', { value: shiftModal.currentShiftType?.exp_min_count ?? 0 })" />
+                            <select x-model="shiftModal.exp_min_level" class="select select-bordered select-sm min-w-0 flex-1" :aria-label="$t('coord.exp_need')">
+                                <option value="" x-text="$t('coord.field_unset')"></option>
+                                <template x-for="o in experienceOptions()" :key="o.id">
+                                    <option :value="o.id" :selected="shiftModal.exp_min_level === o.id" x-text="optionLabel(o)"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
             <!-- Footer: Batch Creation + Actions -->
             <div class="flex items-center justify-between mt-6 pt-4 border-t border-base-content/20">
                 <!-- Batch Creation Modifier -->

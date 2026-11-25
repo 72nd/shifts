@@ -26,12 +26,14 @@
         <!-- Technical Error Display -->
         {{ template "error-display" "joinModal" }}
         
-        <div class="py-4">
+        <!-- Step 1: name -->
+        <div class="py-4" x-show="joinModal.step === 1">
             <div class="form-control w-full">
                 <label class="label">
                     <span class="label-text" x-text="$t('shift_plans.view.enter_name')"></span>
                 </label>
                 <input type="text" x-model="joinModal.name" 
+                       @change="joinModal.lookup()"
                        @keyup.enter="!joinNotice && joinModal.submit()"
                        class="input input-bordered w-full" 
                        :class="{ 'input-error': joinModal.errors.name }"
@@ -40,9 +42,56 @@
                     <span class="label-text-alt text-error" x-text="joinModal.errors.name"></span>
                 </label>
             </div>
+            <button type="button" class="link link-hover text-sm min-h-11 mt-1"
+                    x-show="joinModal.asksDetails && joinModal.known?.exists"
+                    @click="joinModal.showDetails()" x-text="$t('shift_plans.view.join_edit_details')"></button>
+        </div>
+
+        <!-- Step 2: details the plan asks for -->
+        <div class="py-4 space-y-3" x-show="joinModal.step === 2">
+            <h4 class="font-medium" x-text="$t('shift_plans.view.join_your_details')"></h4>
+            <template x-for="f in joinModal.participantFields" :key="f.id">
+                <div>
+                    <label class="flex flex-col gap-1" x-show="f.kind === 'choice'">
+                        <span class="text-sm"><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
+                        <select class="select select-bordered w-full" x-model="joinModal.values[f.id]">
+                            <option value="" x-text="$t('shift_plans.view.join_choose')"></option>
+                            <template x-for="o in f.options" :key="o.id">
+                                <option :value="o.id" x-text="optionLabel(o)"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <label class="flex flex-col gap-1" x-show="f.kind === 'number'">
+                        <span class="text-sm"><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
+                        <input type="number" step="0.1" class="input input-bordered w-full" x-model.number="joinModal.values[f.id]">
+                    </label>
+                    <label class="flex items-center gap-2 min-h-11 cursor-pointer" x-show="f.kind === 'boolean'">
+                        <input type="checkbox" class="checkbox checkbox-sm" x-model="joinModal.values[f.id]">
+                        <span><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
+                    </label>
+                    <label class="flex flex-col gap-1" x-show="f.kind === 'text'">
+                        <span class="text-sm"><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
+                        <input type="text" maxlength="200" class="input input-bordered w-full" x-model="joinModal.values[f.id]" autocomplete="off">
+                    </label>
+                </div>
+            </template>
+            <template x-if="joinModal.asksAttendance">
+                <div class="space-y-3">
+                    <label class="flex flex-col gap-1">
+                        <span class="text-sm" x-text="$t('coord.present_from')"></span>
+                        <input type="datetime-local" class="input input-bordered w-full" x-model="joinModal.from">
+                    </label>
+                    <label class="flex flex-col gap-1">
+                        <span class="text-sm" x-text="$t('coord.present_until')"></span>
+                        <input type="datetime-local" class="input input-bordered w-full" x-model="joinModal.until">
+                    </label>
+                </div>
+            </template>
+            <p class="text-sm text-error" x-show="joinModal.errors.details" x-text="joinModal.errors.details"></p>
         </div>
         <div class="modal-action">
-            <button type="button" @click="joinModal.close()" class="btn" x-text="$t('common.cancel')"></button>
+            <button type="button" @click="joinModal.close()" class="btn" x-show="joinModal.step === 1" x-text="$t('common.cancel')"></button>
+            <button type="button" @click="joinModal.backToName()" class="btn" x-show="joinModal.step === 2" x-text="$t('coord.back')"></button>
             <button type="submit" class="btn btn-success" :disabled="!!joinNotice" x-text="$t('shift_plans.view.join')"></button>
         </div>
     </form>

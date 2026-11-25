@@ -1,4 +1,5 @@
 import { Modal } from './modal.js';
+import { fromInputValue, serializeDateTime } from './datetime.js';
 
 export class JoinModal extends Modal {
     constructor(planToken, onSuccess, adminToken = '', onFull = null) {
@@ -14,13 +15,99 @@ export class JoinModal extends Modal {
         super.clearError();
         this.errors = {}; // Field-level validation errors
         this.currentShift = null;
+        this.plan = null;
         this.name = localStorage.getItem('last_participant_name') || '';
+        // Step 2 ("Your details"): only for plans that ask participants for person fields or attendance
+        this.step = 1;
+        this.known = null; // answer of the people lookup for the entered name
+        this.knownName = '';
+        this.from = '';
+        this.until = '';
+        this.values = {};
     }
 
-    openWith(shift) {
+    openWith(shift, plan) {
         this.reset();
         this.currentShift = shift;
+        this.plan = plan;
         this.open();
+        this.lookup();
+    }
+
+    /** Person fields a participant fills in. */
+    get participantFields() {
+        return (this.plan?.fields || []).filter(f => f.editable_by === 'participant');
+    }
+
+    get asksAttendance() {
+        return this.plan?.attendance_mode === 'participant';
+    }
+
+    /** Whether the plan asks for any details at all (otherwise joining is one step as always). */
+    get asksDetails() {
+        return this.participantFields.length > 0 || this.asksAttendance;
+    }
+
+    /** Whether the person was found and has everything the plan requires. */
+    get isComplete() {
+        return !!this.known?.exists && this.missingRequired(this.known.values || {}).length === 0;
+    }
+
+    missingRequired(values) {
+        return this.participantFields.filter(f => f.required && (values[f.id] === undefined || values[f.id] === null || values[f.id] === ''));
+    }
+
+    /** Looks up what the person entered earlier (only for plans that ask for details). */
+    async lookup() {
+        const name = this.name.trim();
+        if (!this.asksDetails || !name || name === this.knownName) return;
+        this.knownName = name;
+        try {
+            const response = await fetch(`/api/plans/${this.planToken}/people/lookup?name=${encodeURIComponent(name)}`);
+            this.known = response.ok ? await response.json() : null;
+        } catch (e) {
+            this.known = null;
+        }
+    }
+
+    /** Opens step 2, filled with what is known about the person. */
+    showDetails() {
+        const known = this.known?.exists ? this.known : null;
+        this.values = { ...(known?.values || {}) };
+        this.from = known?.available_from ? known.available_from.slice(0, 16) : '';
+        this.until = known?.available_until ? known.available_until.slice(0, 16) : '';
+        this.step = 2;
+    }
+
+    backToName() {
+        this.step = 1;
+    }
+
+    /** Request part "person" from step 2 (null if nothing was entered). */
+    personPayload() {
+        if (this.step !== 2) return null;
+        const values = {};
+        for (const f of this.participantFields) {
+            const v = this.values[f.id];
+            if (v === undefined || v === null || v === '') continue;
+            values[f.id] = f.kind === 'number' ? Number(v) : v;
+        }
+        const person = { values };
+        if (this.asksAttendance) {
+            if (this.from) person.available_from = serializeDateTime(fromInputValue(this.from));
+            if (this.until) person.available_until = serializeDateTime(fromInputValue(this.until));
+        }
+        return person;
+    }
+
+    validateDetails() {
+        this.errors = {};
+        const missing = this.missingRequired(this.values);
+        if (missing.length) this.errors.details = AlpineI18n.t('shift_plans.view.error_details_required');
+        if (this.from && this.until && this.until < this.from) {
+            this.errors.details = AlpineI18n.t('shift_plans.view.error_attendance_order');
+        }
+        return !this.errors.details;
     }
 
     validate() {
@@ -51,15 +138,31 @@ export class JoinModal extends Modal {
     async submit() {
         // Bei Validierungsfehlern zeigen wir nur die Feldfehlermeldungen an
         // und aktivieren nicht das Error-Display
-        if (!this.validate()) {
+        if (this.step === 1 && !this.validate()) {
             return false;
         }
+
+        if (this.asksDetails) {
+            if (this.step === 1) {
+                await this.lookup();
+                // Known people with complete details join in one step; everybody else enters details first
+                if (!this.isComplete) {
+                    this.showDetails();
+                    return false;
+                }
+            } else if (!this.validateDetails()) {
+                return false;
+            }
+        }
+
+        const person = this.personPayload();
+        const body = person ? { name: this.name.trim(), person } : { name: this.name.trim() };
 
         const url = `/api/plans/${this.planToken}/shifts/${this.currentShift.id}/participants`;
         const options = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: this.name.trim() })
+            body: JSON.stringify(body)
         };
         if (this.adminToken) {
             options.headers['X-Admin-Token'] = this.adminToken;
@@ -72,8 +175,17 @@ export class JoinModal extends Modal {
         
         // Fehlerbehandlung
         if (data === null) {
-            // Spezielle Behandlung für 409 Conflict (Schicht voll)
+            // Spezielle Behandlung für 409 Conflict: bereits abgelehnt oder Schicht voll
             if (status === 409) {
+                const text = response ? await response.clone().text() : '';
+                if (text.startsWith('participant_declined')) {
+                    this.setUserFriendlyError(
+                        AlpineI18n.t('shift_plans.view.error_joining'),
+                        AlpineI18n.t('shift_plans.view.join_declined')
+                    );
+                    if (this.onFull) this.onFull();
+                    return false;
+                }
                 this.setUserFriendlyError(
                     AlpineI18n.t('shift_plans.view.error_shift_full_title'),
                     AlpineI18n.t('shift_plans.view.error_shift_full_message')
@@ -88,7 +200,7 @@ export class JoinModal extends Modal {
                     url,
                     method: options.method,
                     headers: options.headers,
-                    body: { name: this.name.trim() },
+                    body,
                     timestamp: new Date().toISOString()
                 };
                 await this.handleResponseError(response, errorMessage, requestInfo);
