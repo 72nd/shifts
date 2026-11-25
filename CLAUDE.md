@@ -21,6 +21,7 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 - Dates and times: floating local event time, see `.claude/rules/datetime.md`.
 - Validation is centralised in `internal/validation`. Shared HTTP handler logic belongs in `internal/web/helpers.go`.
 - API is documented with swag annotations on handlers.
+- `scripts/scenarios/`: creates test plans on a running instance via the API (`./scenario.py NAME --start DATE`), see its README.
 - `prj/`: project notes and data (`todo.md` backlog, `testdata/` example imports, `archive/` old notes).
 - In-app help is Markdown in `internal/web/docs/help-{de,en}.md` (change both languages together); see `prj/archive/DOCUMENTATION_SYSTEM.md`. When adding user-visible features, update the feature list in `README.md` too.
 

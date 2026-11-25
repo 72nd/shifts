@@ -1,0 +1,832 @@
+{
+ "name": "summer-festival",
+ "summary": "Two-day volunteer festival: 6 shift types, 54 shifts, 138 sign-ups, one locked shift, a required experience field, a very popular Bar type.",
+ "weekday": 5,
+ "plan": {
+  "title_de": "Summer Sound Festival {{year}}",
+  "title_en": "Summer Sound Festival {{year}}",
+  "description_de": "Willkommen beim Freiwilligen-Koordinationssystem des Summer Sound Festivals! Dieses zweitägige Community-Musikfestival bringt lokale und internationale Künstler für ein unvergessliches Wochenende voller Musik, Essen und Gemeinschaftsgeist zusammen.\n\n**Veranstaltungsübersicht:** \n\n- **Datum:** {{dates_de}}\n- **Ort:** Gemeindepark, Hauptbühnenbereich\n- **Erwartete Besucher:** 3.000+ pro Tag\n- **Helfer-Teams:** 5 spezialisierte Teams\n\n**Wichtige Informationen für alle Freiwilligen:**\n\n- Bitte 15 Minuten vor Schichtbeginn erscheinen\n- Check-in am Helfer-Zelt (neben dem Haupteingang)\n- Ihr erhaltet ein Helfer-Armband und T-Shirt\n- Kostenloses Essen und Getränke in der Helfer-Lounge während eurer Schicht\n- Parkausweise beim Check-in erhältlich\n\n**Kontakt:**\n\n- Freiwilligen-Koordination: volunteers@summersound.festival\n- Notfall-Hotline: +49 123 456 7890\n- Signal-Gruppe: Link beim Check-in beitreten\n\nDanke, dass ihr dieses Festival möglich macht! 🎵",
+  "description_en": "Welcome to the Summer Sound Festival volunteer coordination system! This two-day community music festival brings together local and international artists for an unforgettable weekend of music, food, and community spirit.\n\n**Event Overview:**\n\n* **Date:** {{dates_en}}\n* **Location:** Community Park, Main Stage Area\n* **Expected Visitors:** 3,000+ per day\n* **Volunteer Teams:** 5 specialized teams (Welcome Team, Food Service, Info Desk, Stage Crew, Cleanup)\n\n**Important Information for All Volunteers:**\n\n- Please arrive 15 minutes before your shift starts\n- Check in at the Volunteer Tent (next to main entrance)\n- You'll receive a volunteer wristband and t-shirt\n- Free food and drinks at the volunteer lounge during your shift\n- Parking passes available at check-in\n\n**Contact:**\n\n- Volunteer Coordinator: volunteers@summersound.festival\n- Emergency Hotline: +49 123 456 7890\n- Signal Group: Join via link at check-in\n\nThank you for making this festival possible! 🎵",
+  "days": 2,
+  "is_multilingual": true,
+  "collaborative_mode": true,
+  "day_boundary_time": "00:00",
+  "time_zone": "Europe/Berlin"
+ },
+ "fields": [
+  {
+   "label_de": "Erfahrungsstufe",
+   "label_en": "Experience",
+   "kind": "number",
+   "options": [],
+   "editable_by": "participant",
+   "required": true
+  }
+ ],
+ "people": [
+  {
+   "name": "Tobias",
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 3
+   }
+  }
+ ],
+ "types": [
+  {
+   "title_de": "Willkommens-Team",
+   "title_en": "Welcome Team",
+   "description_de": "Seid das erste freundliche Gesicht, das Besucher sehen! Das Willkommens-Team schafft eine warme, einladende Atmosphäre vom Moment der Ankunft an. Eure Rolle dreht sich darum, alle willkommen zu heißen und ihnen zu helfen, ihr Festival-Erlebnis richtig zu starten.\n\n**Aufgaben:**\n\n- Besucher am Haupteingang herzlich begrüßen\n- Armbänder und Willkommenspakete ausgeben\n- Erste Wegbeschreibungen und Orientierung geben\n- Bei Parkplatzkoordination und Wegweisung helfen\n- Grundlegende Fragen zum Festival beantworten\n- Besucher mit besonderen Bedürfnissen oder Barrierefreiheitsanforderungen unterstützen\n- Als freundlicher Ansprechpartner während des Tages verfügbar sein\n\n**Anforderungen:**\n\n- Freundliche, kontaktfreudige Persönlichkeit\n- Ausgezeichnete Kommunikationsfähigkeiten\n- Geduld und Enthusiasmus\n- Fähigkeit, längere Zeit zu stehen\n- Komfortabel in einer geschäftigen Umgebung zu arbeiten\n- Mehrsprachigkeit hilfreich, aber nicht erforderlich\n\n**Mitzubringen:** Bequeme Schuhe, wettergerechte Kleidung, ein großes Lächeln!",
+   "description_en": "Be the first friendly face visitors see! The Welcome Team creates a warm, inviting atmosphere from the moment people arrive. Your role is all about making everyone feel at home and helping them start their festival experience on the right note.\n\n**Duties:**\n\n- Greet visitors warmly at the main entrance\n- Distribute wristbands and welcome packages\n- Provide initial directions and orientation\n- Help with parking coordination and wayfinding\n- Answer basic questions about the festival\n- Assist visitors with special needs or accessibility requirements\n- Be available as a friendly contact point throughout the day\n\n**Requirements:**\n\n- Friendly, outgoing personality\n- Excellent communication skills\n- Patience and enthusiasm\n- Ability to stand for extended periods\n- Comfortable working in a busy environment\n- Multilingual skills helpful but not required\n\n**What to bring:** Comfortable shoes, weather-appropriate clothing, a big smile!",
+   "location_de": "Eingang",
+   "location_en": "Entrance",
+   "load_factor": 1,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "07:00",
+     "duration": 60,
+     "required": 3,
+     "comment_de": "Früher Aufbau - Willkommensstand vorbereiten\n\n\n\nHier noch mehr Text.",
+     "comment_en": "Early setup - prepare welcome desk",
+     "locked": false,
+     "participants": [
+      "Robbie"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "08:00",
+     "duration": 240,
+     "required": 4,
+     "comment_de": "Haupteingang - Besucher begrüßen und Bändchen ausgeben",
+     "comment_en": "Main entrance - greet _visitors_ and distribute wristbands",
+     "locked": true,
+     "participants": [
+      "Mike",
+      "Tom",
+      "Yusuf",
+      "Anna"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "12:00",
+     "duration": 240,
+     "required": 5,
+     "comment_de": "Haupteingang - Willkommensschicht",
+     "comment_en": "Main entrance - welcome shift",
+     "locked": false,
+     "participants": [
+      "Lisa",
+      "Paul"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "16:00",
+     "duration": 240,
+     "required": 4,
+     "comment_de": "Nachmittag - Besucherbetreuung",
+     "comment_en": "Afternoon - visitor support",
+     "locked": false,
+     "participants": [
+      "Torben",
+      "Tobias"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "20:00",
+     "duration": 300,
+     "required": 4,
+     "comment_de": "Abendschicht - Späte Besucher begrüßen",
+     "comment_en": "Evening shift - greet late visitors",
+     "locked": false,
+     "participants": [
+      "Ayesha"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "08:00",
+     "duration": 240,
+     "required": 3,
+     "comment_de": "Einlass Sonntag - ruhigerer Tag",
+     "comment_en": "Sunday entrance - quieter day",
+     "locked": false,
+     "participants": [
+      "Peter",
+      "Julia",
+      "Karim"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "12:00",
+     "duration": 240,
+     "required": 3,
+     "comment_de": "Mittagsschicht Sonntag",
+     "comment_en": "Sunday midday shift",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 1,
+     "time": "16:00",
+     "duration": 180,
+     "required": 3,
+     "comment_de": "Letzte Schicht - Gelände räumen helfen",
+     "comment_en": "Final shift - help clear venue",
+     "locked": false,
+     "participants": [
+      "Farid"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "20:00",
+     "duration": 120,
+     "required": 4,
+     "comment_de": "Abschlussrunde - Danke sagen",
+     "comment_en": "Final round - say thanks",
+     "locked": false,
+     "participants": [
+      "Anna",
+      "Peter",
+      "Robbie"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "22:00",
+     "duration": 120,
+     "required": 2,
+     "comment_de": "Nachtschicht Campingplatz - Ansprechpartner",
+     "comment_en": "Evening shift camping - contact person",
+     "locked": false,
+     "participants": []
+    }
+   ]
+  },
+  {
+   "title_de": "Gastronomie",
+   "title_en": "Food Service",
+   "description_de": "Werdet Teil unseres kulinarischen Teams und haltet Festivalbesucher und Helfer satt und zufrieden! Arbeitet in unseren Food-Ständen und serviert alles vom Frühstück bis zu Mitternachtssnacks.\n\n**Aufgaben:**\n\n- Speisen und Getränke vorbereiten und servieren\n- Sauberkeits- und Hygienestandards einhalten\n- Bar- und Kartenzahlungen abwickeln\n- Vorräte bei Bedarf auffüllen\n- Beim Auf- und Abbau der Food-Stände helfen\n- Allergeninformationen korrekt kommunizieren\n\n**Anforderungen:**\n\n- Bewusstsein für Lebensmittelhygiene\n- Freundliche Kundenservice-Fähigkeiten\n- Fähigkeit, in schnellem Tempo zu arbeiten\n- Teamplayer-Einstellung\n- Vorherige Gastronomieerfahrung hilfreich, aber nicht erforderlich\n\n**Vorteile:** Alle Gastronomie-Helfer dürfen übrig gebliebenes Essen am Ende ihrer Schicht mit nach Hause nehmen!\n\n**Mitzubringen:** Geschlossene Schuhe, Schürze wird gestellt, ggf. Haargummi",
+   "description_en": "**Food Service Team**\n\nJoin our culinary crew to keep festival visitors and volunteers well-fed and happy! Work in our food stands serving everything from breakfast to late-night snacks.\n\n**Duties:**\n\n- Prepare and serve food and beverages\n- Maintain cleanliness and hygiene standards\n- Handle cash and card payments\n- Restock supplies as needed\n- Assist with food stand setup and teardown\n- Ensure allergen information is correctly communicated\n\n**Requirements:**\n\n- Food handling hygiene awareness\n- Friendly customer service skills\n- Ability to work in a fast-paced environment\n- Team player attitude\n- Previous gastronomy experience helpful but not required\n\n**Benefits:** All food service volunteers get to take home leftover food at the end of their shift!\n\n**What to bring:** Closed-toe shoes, apron provided, hair tie if needed",
+   "location_de": "Küche",
+   "location_en": "Kitchen",
+   "load_factor": 1,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "07:00",
+     "duration": 120,
+     "required": 3,
+     "comment_de": "Frühaufbau Küche und Warenlieferung",
+     "comment_en": "Early kitchen setup and delivery",
+     "locked": false,
+     "participants": [
+      "Emma",
+      "Leo",
+      "Axel"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "09:00",
+     "duration": 180,
+     "required": 5,
+     "comment_de": "Frühstücksvorbereitung und Aufbau",
+     "comment_en": "Breakfast preparation and setup. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,",
+     "locked": false,
+     "participants": [
+      "Nadia",
+      "Samira",
+      "Mia",
+      "Karim",
+      "Sophie",
+      "Bea"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "12:00",
+     "duration": 240,
+     "required": 6,
+     "comment_de": "Mittagszeit - Hochbetrieb erwartet",
+     "comment_en": "Lunch time - **high** activity expected. So be prepared.",
+     "locked": false,
+     "participants": [
+      "Laura",
+      "David",
+      "Nina"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "16:00",
+     "duration": 240,
+     "required": 6,
+     "comment_de": "Nachmittagsschicht mit Kaffee und Kuchen",
+     "comment_en": "Afternoon shift with coffee and cake",
+     "locked": false,
+     "participants": [
+      "Hannah"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "20:00",
+     "duration": 240,
+     "required": 5,
+     "comment_de": "Abendessen und Snacks",
+     "comment_en": "Dinner and snacks",
+     "locked": false,
+     "participants": [
+      "Tariq",
+      "Amira"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "00:00",
+     "duration": 120,
+     "required": 3,
+     "comment_de": "Mitternachtssnacks - Spätschicht",
+     "comment_en": "Midnight snacks - late shift",
+     "locked": false,
+     "participants": [
+      "Axel"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "09:00",
+     "duration": 180,
+     "required": 5,
+     "comment_de": "Frühstücksservice Sonntag",
+     "comment_en": "Sunday breakfast service.",
+     "locked": false,
+     "participants": [
+      "Bea",
+      "Theo"
+     ]
+    }
+   ]
+  },
+  {
+   "title_de": "Bar",
+   "title_en": "Bar",
+   "description_de": "Hinter dem Tresen ist die Stimmung am besten – und die Plätze sind heiß begehrt!\n\n**Aufgaben:**\n\n- Getränke ausschenken und kassieren\n- Tresen sauber halten und Nachschub holen\n- Pfandbecher zurücknehmen\n\n**Hinweis:** Auf Wunsch von vielen Helfer:innen gibt es nur wenige Schichten. Die Koordination verteilt die Plätze fair.",
+   "description_en": "The mood is best behind the counter – and the spots are in high demand!\n\n**Duties:**\n\n- Serve drinks and handle payments\n- Keep the counter clean and fetch supplies\n- Take back deposit cups\n\n**Note:** There are only a few shifts, and many volunteers want one. The coordination team distributes the spots fairly.",
+   "location_de": "Hauptbar",
+   "location_en": "Main Bar",
+   "load_factor": 1,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "18:00",
+     "duration": 240,
+     "required": 4,
+     "comment_de": "Samstag Abend - Tresen",
+     "comment_en": "Saturday evening - bar",
+     "locked": false,
+     "participants": [
+      "Tariq",
+      "Hannah",
+      "Emma",
+      "Leo",
+      "Mia",
+      "Jonas",
+      "Lena",
+      "Max",
+      "Clara",
+      "Ben"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "22:00",
+     "duration": 240,
+     "required": 4,
+     "comment_de": "Samstag Nacht - Tresen bis zum Ende der Party",
+     "comment_en": "Saturday night - bar until the end of the party",
+     "locked": false,
+     "participants": [
+      "Emma",
+      "Leo",
+      "Mia",
+      "Sophie",
+      "Jonas",
+      "Lena",
+      "Ida",
+      "Finn",
+      "Zoe",
+      "Omar",
+      "Amira",
+      "Kira"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "14:00",
+     "duration": 240,
+     "required": 3,
+     "comment_de": "Sonntag Nachmittag - Tresen",
+     "comment_en": "Sunday afternoon - bar",
+     "locked": false,
+     "participants": [
+      "Max",
+      "Clara",
+      "Elif",
+      "Nadia",
+      "Samira",
+      "Bea",
+      "Finn"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "18:00",
+     "duration": 240,
+     "required": 4,
+     "comment_de": "Sonntag Abend - Tresen, letzte Runde",
+     "comment_en": "Sunday evening - bar, last call",
+     "locked": false,
+     "participants": [
+      "Sophie",
+      "Ida",
+      "Zoe",
+      "Omar",
+      "Elif",
+      "Laura",
+      "David",
+      "Ravi",
+      "Kira"
+     ]
+    }
+   ]
+  },
+  {
+   "title_de": "Infotheke",
+   "title_en": "Information Desk",
+   "description_de": "Seid das freundliche Gesicht des Festivals! Als Infotheken-Helfer seid ihr die erste Anlaufstelle für Besucher mit Fragen, Anliegen oder die einfach eine Wegbeschreibung brauchen.",
+   "description_en": "Be the friendly face of the festival! As an info desk volunteer, you're the first point of contact for visitors with questions, concerns, or who simply need directions.",
+   "location_de": "Infopoint",
+   "location_en": "Info-Point",
+   "load_factor": 1,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "10:00",
+     "duration": 60,
+     "required": 3,
+     "comment_de": "API Test",
+     "comment_en": "API Test Shift.",
+     "locked": false,
+     "participants": [
+      "Theo",
+      "Bea",
+      "Torben",
+      "Axel"
+     ]
+    }
+   ]
+  },
+  {
+   "title_de": "Bühnentechnik",
+   "title_en": "Stage Crew",
+   "description_de": "Für technikbegeisterte Helfer! Erweckt die Musik zum Leben, indem ihr unser professionelles Ton- und Lichtteam unterstützt.\n\n**Aufgaben:**\n\n- Beim Bühnenauf- und -abbau helfen\n- Unter Aufsicht bei Soundchecks unterstützen\n- Kabelführung und Gerätepositionierung managen\n- Künstler während Umbauten unterstützen\n- Equipment während Auftritten überwachen\n- Bei Lichtanpassungen helfen\n- Schweres Heben kann erforderlich sein\n\n**Anforderungen:**\n\n- Interesse an Audio-/Lichttechnik\n- Körperliche Fitness (Heben bis 25kg)\n- Aufmerksamkeit für Details und Sicherheitsbewusstsein\n- Fähigkeit, technische Anweisungen präzise zu befolgen\n- Vorherige Bühnenerfahrung bevorzugt, aber nicht erforderlich\n- Arbeit in der Höhe sollte kein Problem sein (für manche Aufgaben)\n- Zuverlässig und pünktlich\n\n**Vorteile:** Tolle Lernmöglichkeit, beste Sicht auf die Auftritte, und ihr arbeitet mit professionellem Equipment!\n\n**Mitzubringen:** Robuste geschlossene Schuhe (Sicherheitsschuhe bevorzugt), Arbeitshandschuhe, komplett schwarze Kleidung empfohlen",
+   "description_en": "**Stage Crew & Technical Team**\n\nFor the tech-savvy volunteers! Help bring the music to life by supporting our professional sound and lighting crew.\n\n**Duties:**\n\n- Assist with stage setup and teardown\n- Help with soundchecks under supervision\n- Manage cable routing and equipment placement\n- Support artists during changeovers\n- Monitor equipment during performances\n- Assist with lighting adjustments\n- Heavy lifting may be required\n\n**Requirements:**\n\n- Interest in audio/lighting technology\n- Physical fitness (lifting up to 25kg)\n- Attention to detail and safety-consciousness\n- Ability to follow technical instructions precisely\n- Previous stage experience preferred but not required\n- Must be comfortable working at heights (for some tasks)\n- Reliable and punctual\n\n**Perks:** Great learning opportunity, best view of the performances, and you'll work with professional gear!\n\n**What to bring:** Sturdy closed-toe shoes (steel-toe preferred), work gloves, all-black clothing recommended",
+   "location_de": "Hauptbühne",
+   "location_en": "Main Stage",
+   "load_factor": 1,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "10:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Bea"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "11:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "12:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "13:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "14:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "15:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "16:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "17:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "18:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "19:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "20:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "21:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "22:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 0,
+     "time": "23:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 1,
+     "time": "00:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": []
+    },
+    {
+     "day": 1,
+     "time": "01:00",
+     "duration": 60,
+     "required": 4,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Bea"
+     ]
+    }
+   ]
+  },
+  {
+   "title_de": "Putzen",
+   "title_en": "Cleanup",
+   "description_de": "Helft uns, ein sauberes und nachhaltiges Festival zu gestalten! Dieses flexible Team hält das Gelände für alle angenehm und stellt sicher, dass wir keine Spuren hinterlassen.\n\n**Aufgaben:**\n\n- Müll- und Recyclingtonnen regelmäßig leeren\n- Toilettenanlagen reinigen und pflegen\n- Müll auf dem Festivalgelände aufsammeln\n- Abfall nach Recycling-Richtlinien sortieren\n- Beim Abschluss-Cleanup helfen\n- Beim Abbau von Equipment und Dekoration unterstützen\n- Nachhaltigkeitsinitiativen fördern\n\n**Anforderungen:**\n\n- Keine besonderen Fähigkeiten erforderlich - nur eine hilfsbereite Einstellung!\n- Körperliche Fähigkeit, ausgiebig zu laufen und Müllsäcke zu heben\n- Bewusstsein für Hygiene und Sicherheit\n- Umweltbewusste Einstellung geschätzt\n- Flexible und unkomplizierte Persönlichkeit\n\n**Besonderer Hinweis:** Diese Schichten haben keine Teilnehmerbegrenzung - je mehr Helfer, desto sauberer das Festival! Perfekt für diejenigen, die flexible Verpflichtungen wünschen oder mit Freunden zusammen helfen möchten.\n\n**Mitzubringen:** Wettergerechte Arbeitskleidung, die schmutzig werden darf, Handschuhe werden gestellt",
+   "description_en": "Help us maintain a clean and sustainable festival! This flexible team keeps the venue pleasant for everyone and ensures we leave no trace.\n\n**Duties:**\n\n- Empty trash and recycling bins regularly\n- Clean and maintain toilet facilities\n- Pick up litter around the festival grounds\n- Sort waste according to recycling guidelines\n- Assist with end-of-event cleanup\n- Help with equipment and decoration removal\n- Support sustainability initiatives\n\n**Requirements:**\n\n- No special skills required - just a helpful attitude!\n- Physical ability to walk extensively and lift trash bags\n- Awareness of hygiene and safety\n- Environmentally conscious mindset appreciated\n- Flexible and easygoing personality\n\n**Special Note:** These shifts have no participant limit - the more helpers, the cleaner the festival! Perfect for those who want flexible commitment or want to help alongside friends.\n\n**What to bring:** Weather-appropriate work clothes that can get dirty, gloves provided",
+   "location_de": "Haupttresen",
+   "location_en": "Main Baar",
+   "load_factor": 1,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "10:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Vera",
+      "Greta",
+      "Hugo"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "11:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Vera",
+      "Greta",
+      "Hugo",
+      "Ines"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "12:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Greta",
+      "Hugo",
+      "Ines",
+      "Jakob"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "13:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Hugo",
+      "Ines",
+      "Jakob",
+      "Mike",
+      "Kaja"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "14:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Ines",
+      "Jakob",
+      "Mike",
+      "Kaja",
+      "Lukas"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "15:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Jakob",
+      "Kaja",
+      "Lukas",
+      "Marta"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "16:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Kaja",
+      "Lukas",
+      "Marta",
+      "Nils"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "17:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Lukas",
+      "Marta",
+      "Nils",
+      "Olivia"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "18:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Marta",
+      "Nils",
+      "Olivia",
+      "Pavel"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "19:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Olivia",
+      "Pavel",
+      "Rosa"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "20:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Olivia",
+      "Pavel",
+      "Rosa",
+      "Sven"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "21:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Pavel",
+      "Rosa",
+      "Sven",
+      "Tilda"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "22:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Rosa",
+      "Sven",
+      "Tilda",
+      "Uwe"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "23:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Sven",
+      "Tilda",
+      "Uwe"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "00:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Tobias",
+      "Tilda",
+      "Uwe"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "01:00",
+     "duration": 60,
+     "required": 5,
+     "comment_de": "",
+     "comment_en": "",
+     "locked": false,
+     "participants": [
+      "Uwe"
+     ]
+    }
+   ]
+  }
+ ]
+}
