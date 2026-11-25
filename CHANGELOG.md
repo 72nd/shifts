@@ -113,7 +113,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Development: Test scenarios** `scripts/scenarios/scenario.py` creates a complete test plan (shift types, shifts, sign-ups, people, person fields) on a running instance via the API, e.g. `./scenario.py summer-festival --start 2026-07-18`. It prints the plan URL and the admin password; `--dry-run` sends nothing. The scenario `summer-festival` is built for trying the coordination; more scenarios are JSON files in `scripts/scenarios/definitions/`.
 
 
-## v0.9.0
+## v0.9.0 – Statistics recap and timetable
 
 - **Feature: Statistics recap** The new tab "Recap" on the statistics page shows totals (people, hours, shifts, sign-ups), converts the hours into days around the clock and working days, and lists highlights with names: most shifts, most days, longest shift, early bird, most night hours, most areas, dream team (most shifts together), first sign-up, shift filled fastest, last-minute sign-ups and busiest sign-up day. "Copy as text" copies everything for a thank-you, a speech or a post. The quick facts moved here from "History".
 - **Enhancement: Heatmap by area** The heatmap "Staffing across the day" on the statistics overview has the tabs "By days | By areas" below its heading. With "By areas" each row is a shift type and one day is shown at a time, changed with ‹ ›; the choice is kept in the URL (`rows=types`). In both modes every hour cell shows the highest number of places missing at the same time (e.g. "−2").
