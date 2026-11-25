@@ -33,14 +33,14 @@ type Server struct {
 	middleware    *middlewareManager
 	router        *mux.Router
 	exportService *export.Service
-	defaultView   string // "list" or "timetable" — fallback for shift plan page view mode
+	defaultView   string // "list", "chrono" or "timetable" — fallback for shift plan page view mode
 	defaultZone   string // IANA name of the default time zone for new plans
 
 	hub             *realtimeHub
 	realtimeEnabled bool
 }
 
-// NewServer creates a new server instance. defaultView must be "list" or "timetable".
+// NewServer creates a new server instance. defaultView must be "list", "chrono" or "timetable".
 func NewServer(db *db.DB, logger *slog.Logger, defaultView, defaultZone string, realtimeEnabled bool) (*Server, error) {
 	// Create export service
 	exportService := export.NewService(db)

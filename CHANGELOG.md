@@ -122,7 +122,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Empty time collapsed in the timetable** Stretches of a day without any shift (four hours or more, also before the first and after the last shift) are collapsed to a dashed band such as "5 h without shifts (01:00–06:00)". A click on the band shows the time, another click hides it again. The time rail now shows the real clock time when a day boundary other than 00:00 is set.
 
 
-## v0.10.0
+## v0.10.0 – Coordination refinement
 
 - **Feature: Coordination switch per plan** Coordination is switched on or off in the plan settings with "Use coordination". New plans start with it off. When it is off, the coordination link and sections are hidden and sign-up no longer asks for person fields or attendance. Switching it off keeps all stored data.
 - **Feature: Areas table in coordination setup** The tab "Setup" (formerly "Fields & rules") has a table "Areas" with load factor, popularity and experience need for every shift type. Each row saves on its own. Single shifts can still deviate in the shift dialog.
@@ -131,3 +131,5 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Feature: Experience level in lists and people tab** The experience level is shown for every candidate and in the person column, which can be sorted by experience. The People tab sets the level inline per row. The level is global per person, not per area.
 - **Enhancement: Underlined tabs** The tabs of the coordination and statistics pages are underlined and sized to their labels instead of full-width buttons.
 - **Development: Migration 0004 adds the coordination switch** New column `shift_plans.coordination_enabled` (default off). Plans that already hold coordination data are switched on by the migration. Before the first pending migration of an existing database, an automatic backup is written next to it (`<db_path>.<timestamp>.pre-migration.bak`).
+- **Feature: Chronological view** A third view "Chronological" lists all shifts of all areas in one sequence by start time, with one table and a sticky heading per day. Every row has the same controls as in the grouped list and a column for the shift type. Select it with the view switcher, `?view=chrono` or `default_view = "chrono"` in `config.toml`.
+- **Enhancement: View switcher as dropdown** The view switcher is a dropdown that shows the current view and lists all views. It is one partial for desktop and phone and stays narrow in the control bar, also for admins.

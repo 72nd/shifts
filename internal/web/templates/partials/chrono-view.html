@@ -1,0 +1,46 @@
+{{ define "chrono-view" }}
+<!-- Chronological view: all shifts of all types in one sequence, one table per day.
+     Rows are the shared shift-row partial with the type column switched on. -->
+<template x-if="isChronoView">
+    <div>
+        <template x-if="chronoDays.length === 0">
+            <div class="card card-bordered border-base-content/10 shadow">
+                <div class="card-body p-4 flex-row flex-wrap items-center gap-3 text-sm text-base-content/70">
+                    <span x-text="$t('shift_plans.view.chrono_empty')"></span>
+                    <button type="button" class="btn btn-sm min-h-11"
+                        x-show="filterManager.hasActiveFilters()"
+                        @click="filterManager.clearFilters()"
+                        x-text="$t('shift_plans.view.filter.clear')"></button>
+                </div>
+            </div>
+        </template>
+
+        <template x-for="dateGroup in chronoDays" :key="dateGroup.date">
+            <section class="mb-4">
+                <h3 class="sticky top-0 z-10 bg-base-100 flex items-center gap-2 py-1 text-base font-medium">
+                    <span x-text="formatDate(dateGroup.date)"></span>
+                    <span class="flex-1 border-t-2 border-base-content/30"></span>
+                </h3>
+                <table class="table table-xs w-full">
+                    <thead>
+                        <tr>
+                            <th class="w-16 md:w-48 px-2 md:px-4" x-text="$t('shift_plans.view.time')"></th>
+                            <th class="hidden md:table-cell w-40" x-text="$t('shift_plans.view.chrono_column_type')"></th>
+                            <th class="w-16 hidden md:table-cell" x-text="$t('shift_plans.view.duration')"></th>
+                            <th class="w-12 md:w-14 text-center px-1 md:px-2">Status</th>
+                            <th class="px-2 md:px-4" x-text="$t('shift_plans.view.participants')"></th>
+                            <th class="w-10 md:w-12 px-1 md:px-2"></th>
+                        </tr>
+                    </thead>
+                    <!-- Each shift gets its own tbody. The one-element loop provides `type` for the shared row. -->
+                    <template x-for="(shift, index) in dateGroup.shifts" :key="shift.id">
+                        <template x-for="type in [typeOfShift(shift)]" :key="type.id">
+                            {{ template "shift-row" true }}
+                        </template>
+                    </template>
+                </table>
+            </section>
+        </template>
+    </div>
+</template>
+{{ end }}

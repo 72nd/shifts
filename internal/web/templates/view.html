@@ -95,11 +95,14 @@
             </div>
 
             <!-- Shift Types -->
-            <div x-show="!isTimetableView" style="display: contents;">
+            <div x-show="viewMode === 'list'" style="display: contents;">
                 <template x-for="type in filteredShiftTypes" :key="type.id">
                     {{ template "shift-type-card" . }}
                 </template>
             </div>
+
+            <!-- Chronological View -->
+            {{ template "chrono-view" . }}
 
             <!-- Timetable View -->
             {{ template "timetable-view" . }}

@@ -68,6 +68,14 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
+### Views
+
+Use the "View" menu above the plan to change between three views.
+
+- **Grouped list:** Shifts are grouped by shift type, then by day.
+- **Chronological:** All shifts of all types are listed one below the other by start time, with a heading for each day. The shift type is shown in every row. Signing up, leaving and the admin actions work as in the grouped list.
+- **Timetable:** All shifts drawn to scale in a grid.
+
 ### Timetable view
 
 In the timetable, empty stretches of a day (four hours or more without a shift) are collapsed to a dashed band such as "5 h without shifts (01:00–06:00)". Click the band to show the empty time, and click it again to hide it. Time is drawn to scale everywhere else. Active filters count: if you filter to one area, more stretches are empty and collapse.

@@ -53,14 +53,14 @@ func DefaultConfig() Config {
 	}
 }
 
-// NormalizeDefaultView sets DefaultView to "timetable" if empty and validates it is "list" or "timetable".
+// NormalizeDefaultView sets DefaultView to "timetable" if empty and validates it is "list", "chrono" or "timetable".
 func (c *Config) NormalizeDefaultView() error {
 	if c.DefaultView == "" {
 		c.DefaultView = "timetable"
 		return nil
 	}
-	if c.DefaultView != "list" && c.DefaultView != "timetable" {
-		return fmt.Errorf("invalid default_view %q: must be %q or %q", c.DefaultView, "list", "timetable")
+	if c.DefaultView != "list" && c.DefaultView != "chrono" && c.DefaultView != "timetable" {
+		return fmt.Errorf("invalid default_view %q: must be %q, %q or %q", c.DefaultView, "list", "chrono", "timetable")
 	}
 	return nil
 }

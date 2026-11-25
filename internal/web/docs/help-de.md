@@ -68,6 +68,14 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
+### Ansichten
+
+Über das Auswahlmenü „Ansicht“ über dem Plan wechselst Du zwischen drei Ansichten.
+
+- **Gruppierte Liste:** Die Schichten stehen je Schichttyp zusammen, darunter nach Tag.
+- **Chronologisch:** Alle Schichten aller Typen stehen nach Startzeit sortiert untereinander, mit einem Tageskopf je Tag. Der Schichttyp steht in jeder Zeile. Eintragen, Austragen und die Admin-Aktionen funktionieren wie in der Gruppierten Liste.
+- **Zeittafel:** Alle Schichten maßstabsgetreu als Raster.
+
 ### Zeittafel
 
 In der Zeittafel werden leere Abschnitte eines Tages (vier Stunden oder mehr ohne Schicht) zu einem gestrichelten Band wie "5 Std. ohne Schichten (01:00–06:00)" zusammengeklappt. Ein Klick auf das Band zeigt die leere Zeit, ein weiterer Klick blendet sie wieder aus. Überall sonst ist die Zeit maßstabsgetreu. Aktive Filter zählen mit: Wenn Du auf einen Bereich filterst, sind mehr Abschnitte leer und werden zusammengeklappt.

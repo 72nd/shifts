@@ -1,3 +1,4 @@
+{{/* Pass true to add the shift type column (chronological view); the grouped list passes nothing. */}}
 {{ define "shift-row" }}
 <tbody x-data="{ isExpanded: false }" class="group" :data-shift-id="shift.id">
     <!-- Main shift row -->
@@ -59,6 +60,10 @@
                 </div>
             </div>
         </td>
+        {{ if . }}
+        <td class="hidden md:table-cell align-middle max-w-40 truncate"
+            :title="typeTitle(type)" x-text="typeTitle(type)"></td>
+        {{ end }}
         <td class="whitespace-nowrap hidden md:table-cell align-middle"
             x-text="formatDuration(shift.duration)">
         </td>
@@ -80,6 +85,9 @@
         </td>
         <td class="py-1 md:py-2 px-2 md:px-4 align-middle">
             <div class="space-y-1 md:space-y-2">
+                {{ if . }}
+                <div class="md:hidden text-xs text-base-content/70 truncate" :title="typeTitle(type)" x-text="typeTitle(type)"></div>
+                {{ end }}
                 <div class="flex flex-wrap gap-0.5 md:gap-1.5">
                     <template x-for="participant in shift.participants || []" :key="participant.id">
                         <div class="inline-flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 bg-base-200 hover:bg-base-300 rounded-lg text-xs md:text-sm transition-colors border"
@@ -287,7 +295,7 @@
     <tr x-show="isExpanded && ((plan.is_multilingual ? (shift.comment_de || shift.comment_en) : shift.comment_en) || shift.is_locked)"
         class="border-base-content/20 border-b border-base-content/20"
         :class="{ 'border-b-0': index === dateGroup.shifts.length - 1 }">
-        <td colspan="5" class="px-2 md:px-4 py-2 text-xs md:text-sm text-base-content/80">
+        <td colspan="{{ if . }}6{{ else }}5{{ end }}" class="px-2 md:px-4 py-2 text-xs md:text-sm text-base-content/80">
             <div class="flex items-start gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 flex-shrink-0 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />

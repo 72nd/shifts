@@ -51,7 +51,7 @@ A full list of features can be found [below](#features).
 
 - **🔑 No login required for sign up:** Participants need only the link to the shift schedule and can sign up using a nickname of their choice. No account, login, or email address is needed.
 - **🌐 Bilingual support:** Shift schedules can be created in a single language or in two languages simultaneously (currently German and English).
-- **👀 List and table (timetable) views:** Two complementary views are available: a list view well suited to small screens, and a table/timetable view that provides a convenient overview of many shifts at once. Empty stretches of four hours or more within a day are collapsed to a thin band (click to show), so there is less scrolling.
+- **👀 List, chronological and table (timetable) views:** Three complementary views are available: a grouped list well suited to small screens, a chronological list that shows all shifts of all areas in order of time, and a table/timetable view that provides a convenient overview of many shifts at once. Empty stretches of four hours or more within a day are collapsed to a thin band (click to show), so there is less scrolling.
 - **🌗 Light and dark mode:** Both light and dark modes are supported.
 - **⚡ Live updates:** Changes by other people (sign-ups, shifts, types, settings, locks, deletion) appear in an open shift plan within about a second, without reloading. A status indicator shows the connection state and a viewer counter shows how many tabs of the plan are open. Changed shifts are briefly highlighted, open sign-up dialogs warn when a shift became full or was deleted, and the statistics page updates too. Can be switched off with `realtime_enabled` in `config.toml`.
 
@@ -218,7 +218,7 @@ Available configuration options:
 - `log_level`: Logging level (default: "info")
 - `metrics_enabled`: Enable Prometheus metrics endpoint (default: false)
 - `metrics_port`: Port for the Prometheus metrics endpoint (default: 9090)
-- `default_view`: Default view for shift plans when the visitor has no `?view=` or saved preference (`"timetable"` or `"list"`) (default: "timetable")
+- `default_view`: Default view for shift plans when the visitor has no `?view=` or saved preference (`"timetable"`, `"chrono"` or `"list"`) (default: "timetable")
 - `timezone`: IANA time zone preselected when creating a shift plan. Existing plans are converted with this zone during the database migration to v0.6.0. Each plan stores its own zone afterwards, so this option does not change existing plans (default: "Europe/Berlin")
 - `realtime_enabled`: Enable live updates via Server-Sent Events at `GET /api/plans/{token}/events`. When `false`, the endpoint returns 404 and pages only show changes after a reload (default: true)
 

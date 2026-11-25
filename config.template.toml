@@ -12,7 +12,7 @@ log_level = "info"
 metrics_enabled = true
 metrics_port = 9090
 
-# Default view for shift plans when the visitor has no ?view= or saved preference ("timetable" or "list")
+# Default view for shift plans when the visitor has no ?view= or saved preference ("timetable", "chrono" or "list")
 default_view = "timetable"
 
 # Default IANA time zone for new plans and start value when migrating existing plans (each plan stores its own zone)

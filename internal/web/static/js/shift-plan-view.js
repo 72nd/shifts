@@ -99,6 +99,61 @@ document.addEventListener('alpine:init', () => {
             return this.viewMode === 'timetable';
         },
 
+        get isChronoView() {
+            return this.viewMode === 'chrono';
+        },
+
+        /** Views offered by the switcher; labels shown only for the active one. */
+        viewModes: [
+            { id: 'list', labelKey: 'shift_plans.view.view_mode_list', icon: 'M4 6h16M4 12h16M4 18h16' },
+            { id: 'chrono', labelKey: 'shift_plans.view.view_mode_chrono', icon: 'M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12' },
+            { id: 'timetable', labelKey: 'shift_plans.view.view_mode_timetable', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+        ],
+
+        isValidViewMode(mode) {
+            return this.viewModes.some(v => v.id === mode);
+        },
+
+        /**
+         * All filtered shifts of all types in one chronological sequence, grouped by logical day.
+         * Same shape as type.shiftsByDate ({ date, shifts }), so shift-row can render it unchanged.
+         * Equal start times keep the order of the shift types.
+         */
+        get chronoDays() {
+            const boundaryMinutes = parseBoundaryTime(this.plan?.day_boundary_time || '00:00');
+            const entries = [];
+            (this.filteredShiftTypes || []).forEach(type => {
+                (type.shifts || []).forEach(shift => entries.push({ shift, order: type.sort_order ?? 0 }));
+            });
+            // Floating ISO strings without offset sort lexicographically
+            entries.sort((a, b) => a.shift.start_time.localeCompare(b.shift.start_time) || a.order - b.order);
+
+            const days = [];
+            entries.forEach(({ shift }) => {
+                const start = parseDateTime(shift.start_time);
+                if (!start) return;
+                const date = toDateKey(logicalDay(start, boundaryMinutes));
+                let day = days[days.length - 1];
+                if (!day || day.date !== date) {
+                    day = { date, shifts: [] };
+                    days.push(day);
+                }
+                day.shifts.push(shift);
+            });
+            return days;
+        },
+
+        /** Title of a shift type in the current language. */
+        typeTitle(type) {
+            if (!type) return '';
+            return this.plan?.is_multilingual && this.$locale() === 'de' ? type.title_de : type.title_en;
+        },
+
+        /** The (unfiltered) shift type a shift belongs to. */
+        typeOfShift(shift) {
+            return this.shiftTypes.find(t => t.id === shift.type_id);
+        },
+
         // Computed property für verfügbare Tage
         get availableDays() {
             this.filterManager.setDayBoundary(this.plan?.day_boundary_time);
@@ -219,7 +274,7 @@ document.addEventListener('alpine:init', () => {
             // Resolve the server-configured default from the rendered attribute
             const el = document.querySelector('[data-default-view]');
             const raw = el?.dataset?.defaultView;
-            const configDefault = raw === 'list' || raw === 'timetable' ? raw : 'timetable';
+            const configDefault = this.isValidViewMode(raw) ? raw : 'timetable';
 
             // Cache-busting: if the server default changed since the preference was saved,
             // discard the saved preference so the new default takes effect.
@@ -230,14 +285,14 @@ document.addEventListener('alpine:init', () => {
                 localStorage.setItem(storedDefaultKey, configDefault);
             }
 
-            if (requested === 'list' || requested === 'timetable') {
+            if (this.isValidViewMode(requested)) {
                 this.viewMode = requested;
                 localStorage.setItem(`shift_view_mode_${token}`, requested);
                 return;
             }
 
             const stored = localStorage.getItem(`shift_view_mode_${token}`);
-            if (stored === 'list' || stored === 'timetable') {
+            if (this.isValidViewMode(stored)) {
                 this.viewMode = stored;
                 this.syncViewModeQuery(stored);
                 return;
@@ -259,7 +314,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         setViewMode(mode) {
-            if (mode !== 'list' && mode !== 'timetable') return;
+            if (!this.isValidViewMode(mode)) return;
             if (this.viewMode === mode) return;
             this.viewMode = mode;
             if (this.planToken) {
