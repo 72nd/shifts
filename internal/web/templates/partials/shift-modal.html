@@ -125,10 +125,13 @@
             </div>
 
             <!-- Coordination overrides (collapsed, only for an existing shift) -->
-            <details class="mt-3 border-t border-base-content/20 pt-2" x-show="shiftModal.currentShift">
+            <details class="group mt-3 border-t border-base-content/20 pt-2" x-show="shiftModal.currentShift && plan.coordination_enabled">
                 <summary class="min-h-11 flex flex-wrap items-center gap-x-2 cursor-pointer font-medium">
                     <span x-text="$t('coord.section')"></span>
-                    <span class="text-sm font-normal text-base-content/70" x-text="shiftModal.coordSummary()"></span>
+                    <span class="text-sm font-normal text-base-content/60" x-text="shiftModal.coordSummary()"></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-auto shrink-0 transition-transform group-open:rotate-180 motion-reduce:transition-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
                 </summary>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     <div class="form-control">
@@ -164,7 +167,7 @@
             </details>
 
             <!-- Footer: Batch Creation + Actions -->
-            <div class="flex items-center justify-between mt-6 pt-4 border-t border-base-content/20">
+            <div class="flex items-center justify-between mt-6">
                 <!-- Batch Creation Modifier -->
                 <div x-show="!shiftModal.currentShift" class="flex items-center gap-4">
                     <div>

@@ -2,17 +2,17 @@
 {{/* Tab bar of a page. Expects the Alpine scope to provide: tabs (names), tab, tabPrefix,
      tabLabel(name), tabCount(name), setTab(name) and tabKey(event). Panels use the ids
      "<tabPrefix>-panel-<name>" and aria-labelledby "<tabPrefix>-tab-<name>". */}}
-<div role="tablist" class="tabs tabs-boxed grid grid-flow-col auto-cols-fr w-full lg:w-auto" @keydown="tabKey($event)">
+<div role="tablist" class="tabs tabs-bordered w-full flex-nowrap overflow-x-auto" @keydown="tabKey($event)">
     <template x-for="name in tabs" :key="name">
-        <button type="button" role="tab" class="tab h-auto min-h-11 px-1 sm:px-4 gap-2 whitespace-nowrap"
+        <button type="button" role="tab" class="tab h-auto min-h-11 px-1 sm:px-4 gap-2 whitespace-nowrap shrink-0"
             :id="tabPrefix + '-tab-' + name"
             :aria-controls="tabPrefix + '-panel-' + name"
             :aria-selected="tab === name ? 'true' : 'false'"
             :tabindex="tab === name ? 0 : -1"
-            :class="{ 'tab-active': tab === name }"
+            :class="{ 'tab-active border-primary font-medium': tab === name }"
             @click="setTab(name)">
             <span x-text="tabLabel(name)"></span>
-            <span x-show="tabCount(name) > 0" class="badge badge-sm hidden sm:inline-flex" x-text="tabCount(name)"></span>
+            <span x-show="tabCount(name) > 0" class="hidden sm:inline text-base-content/60 tabular-nums" x-text="tabCount(name)"></span>
         </button>
     </template>
 </div>

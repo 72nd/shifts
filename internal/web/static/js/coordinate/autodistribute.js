@@ -16,6 +16,9 @@ import { evaluate, rankCandidates } from './rank.js';
  *           places that stay free; movable = names who could only be added by rebooking
  * @property {number[]} skipped  unlimited shifts (nothing to distribute)
  * @property {Map<string, {name:string, hoursBefore:number, hoursAfter:number, loadBefore:number, loadAfter:number}>} personDelta
+ * @property {Array<{shiftId:number, name:string, neededIn:number}>} impacts
+ *           assignments that were made although the person is needed in the concurrent shift neededIn
+ *           (which still lacks experienced people after the run)
  * @property {{assigned:number, declined:number, free:number}} summary
  */
 
@@ -38,6 +41,7 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
 
   let current = model;
   const ops = [];
+  const impacts = [];
   const unfilled = [];
   const closed = new Set();
 
@@ -58,7 +62,10 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
 
   for (;;) {
     // The most constrained open shift: fewest eligible people per free place; earlier start wins a tie.
+    // Shifts with an open experience need and a qualified eligible person go first (scarcest first),
+    // so that a qualified person is not used up elsewhere (prj/coordination-refinement-plan.md, 4.3).
     let best = null;
+    let bestExp = null;
     for (const sel of selected) {
       if (closed.has(sel.id)) continue;
       const cs = current.shifts.get(sel.id);
@@ -75,7 +82,16 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
       }
       const ratio = count / cs.open;
       if (!best || ratio < best.ratio) best = { id: sel.id, ratio };
+      if (cs.expNeed.count > 0 && !cs.expNeed.met) {
+        let qualified = 0;
+        for (const key of eligible.get(sel.id)) if (current.persons.get(key).level >= cs.expNeed.level) qualified++;
+        if (qualified > 0) {
+          const expRatio = qualified / (cs.expNeed.count - cs.expNeed.have);
+          if (!bestExp || expRatio < bestExp.ratio) bestExp = { id: sel.id, ratio: expRatio };
+        }
+      }
     }
+    if (bestExp) best = bestExp;
     if (!best) break;
 
     const pick = rankCandidates(current, best.id, source).ranked
@@ -87,6 +103,7 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
     }
     const op = { shift_id: best.id, name: current.persons.get(pick.key).name, status: 'assigned' };
     ops.push(op);
+    if (pick.impacts.length) impacts.push({ shiftId: best.id, name: op.name, neededIn: pick.impacts[0].params.shiftId });
     current = applyOpsLocally(current, [op]);
 
     // Only this person's state changed: refresh their eligibility in all open shifts.
@@ -113,6 +130,11 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
   }
 
   const final = applyOpsLocally(model, ops.filter(o => o.status !== 'declined'));
+  // Only report impacts that still hold at the end (the other shift lacks experienced people)
+  const remainingImpacts = impacts.filter(i => {
+    const need = final.shifts.get(i.neededIn)?.expNeed;
+    return need && need.count > 0 && !need.met;
+  });
   const personDelta = new Map();
   for (const op of ops) {
     if (op.status !== 'assigned') continue;
@@ -135,6 +157,7 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
     unfilled,
     skipped,
     personDelta,
+    impacts: remainingImpacts,
     summary: {
       assigned: ops.filter(o => o.status === 'assigned').length,
       declined: ops.filter(o => o.status === 'declined').length,

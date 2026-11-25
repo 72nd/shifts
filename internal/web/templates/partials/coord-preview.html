@@ -37,6 +37,18 @@
                 </template>
             </ul>
 
+            <div class="space-y-1" x-show="impacts(preview.result).length">
+                <h3 class="font-medium" x-text="$t('coord.preview_impacts')"></h3>
+                <ul class="text-sm space-y-1">
+                    <template x-for="i in impacts(preview.result)" :key="i.id">
+                        <li class="flex items-start gap-1">
+                            {{ template "coord-icon-warning" }}
+                            <span x-text="$t('coord.preview_impact_line', { name: i.name, shift: shortLabel(model.shifts.get(i.neededIn)) })"></span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
             <ul class="text-sm space-y-1" x-show="deltas(preview.result).length">
                 <template x-for="d in deltas(preview.result)" :key="d.name">
                     <li x-text="$t('coord.person_change', { name: d.name, before: number(d.hoursBefore), after: number(d.hoursAfter) })"></li>

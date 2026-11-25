@@ -1,39 +1,67 @@
 {{ define "coord-filters" }}
-<div class="flex flex-wrap items-end gap-x-3 gap-y-2">
-    <label class="flex flex-col gap-1 text-sm min-w-0">
-        <span x-text="$t('coord.filter_type')"></span>
-        <select class="select select-bordered select-sm h-11 min-h-11 max-w-40"
-            :class="{ 'select-primary': filter.typeIds.length }"
-            @change="setFilter({ typeIds: $event.target.value ? [Number($event.target.value)] : [] })">
-            <option value="" :selected="!filter.typeIds.length" x-text="$t('coord.filter_all')"></option>
-            <template x-for="ty in types" :key="ty.id">
-                <option :value="ty.id" :selected="filter.typeIds.includes(ty.id)" x-text="typeTitle(ty)"></option>
+{{/* Tool row of the distribute tab: filters (no visible labels), view switcher (from lg) and auto-distribution. */}}
+<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <select class="select select-bordered select-sm h-11 min-h-11 max-w-40" :aria-label="$t('coord.filter_type')"
+        :class="{ 'select-primary': filter.typeIds.length }"
+        @change="setFilter({ typeIds: $event.target.value ? [Number($event.target.value)] : [] })">
+        <option value="" :selected="!filter.typeIds.length" x-text="$t('coord.filter_all_types')"></option>
+        <template x-for="ty in types" :key="ty.id">
+            <option :value="ty.id" :selected="filter.typeIds.includes(ty.id)" x-text="typeTitle(ty)"></option>
+        </template>
+    </select>
+    <select x-show="activeView === 'list'" class="select select-bordered select-sm h-11 min-h-11 max-w-40" :aria-label="$t('coord.filter_day')"
+        :class="{ 'select-primary': filter.days.length }"
+        @change="setFilter({ days: $event.target.value ? [$event.target.value] : [] })">
+        <option value="" :selected="!filter.days.length" x-text="$t('coord.filter_all_days')"></option>
+        <template x-for="d in dayOptions" :key="d">
+            <option :value="d" :selected="filter.days.includes(d)" x-text="dayLabel(d)"></option>
+        </template>
+    </select>
+    <select class="select select-bordered select-sm h-11 min-h-11 max-w-40" :aria-label="$t('coord.filter_status')"
+        :class="{ 'select-primary': filter.status }"
+        @change="setFilter({ status: $event.target.value })">
+        <option value="" :selected="!filter.status" x-text="$t('coord.filter_any_status')"></option>
+        <template x-for="st in ['overbooked', 'open', 'full', 'experience']" :key="st">
+            <option :value="st" :selected="filter.status === st" x-text="$t('coord.status_' + st)"></option>
+        </template>
+    </select>
+    <!-- Time views: the day filter becomes previous/next day -->
+    <div x-show="activeView !== 'list'" class="flex items-center gap-1">
+        <button type="button" class="btn btn-sm min-h-11 min-w-11" :disabled="!hasPrevDay" :aria-label="$t('coord.day_prev')"
+            @click="shiftTimelineDay(-1)"><span aria-hidden="true">‹</span></button>
+        <span class="min-w-24 text-center font-medium" aria-live="polite" x-text="currentTimelineDay ? dayLabel(currentTimelineDay) : ''"></span>
+        <button type="button" class="btn btn-sm min-h-11 min-w-11" :disabled="!hasNextDay" :aria-label="$t('coord.day_next')"
+            @click="shiftTimelineDay(1)"><span aria-hidden="true">›</span></button>
+    </div>
+    <!-- People view: sort (the matrix replaces the person column) and "only free" -->
+    <label x-show="activeView === 'people'" class="flex items-center gap-2 text-sm">
+        <span class="shrink-0" x-text="$t('coord.people_sort')"></span>
+        <select class="select select-bordered select-sm h-11 min-h-11" x-model="personSort">
+            <option value="load" x-text="$t('coord.sort_load')"></option>
+            <template x-if="model.experience.field">
+                <option value="experience" x-text="$t('coord.sort_experience')"></option>
             </template>
+            <option value="under_target" x-text="$t('coord.sort_under_target')"></option>
+            <option value="declined" x-text="$t('coord.sort_declined')"></option>
+            <option value="name" x-text="$t('coord.sort_name')"></option>
         </select>
     </label>
-    <label class="flex flex-col gap-1 text-sm min-w-0">
-        <span x-text="$t('coord.filter_day')"></span>
-        <select class="select select-bordered select-sm h-11 min-h-11 max-w-40"
-            :class="{ 'select-primary': filter.days.length }"
-            @change="setFilter({ days: $event.target.value ? [$event.target.value] : [] })">
-            <option value="" :selected="!filter.days.length" x-text="$t('coord.filter_all')"></option>
-            <template x-for="d in dayOptions" :key="d">
-                <option :value="d" :selected="filter.days.includes(d)" x-text="dayLabel(d)"></option>
-            </template>
-        </select>
-    </label>
-    <label class="flex flex-col gap-1 text-sm min-w-0">
-        <span x-text="$t('coord.filter_status')"></span>
-        <select class="select select-bordered select-sm h-11 min-h-11 max-w-40"
-            :class="{ 'select-primary': filter.status }"
-            @change="setFilter({ status: $event.target.value })">
-            <option value="" :selected="!filter.status" x-text="$t('coord.filter_all')"></option>
-            <template x-for="st in ['overbooked', 'open', 'full', 'experience']" :key="st">
-                <option :value="st" :selected="filter.status === st" x-text="$t('coord.status_' + st)"></option>
-            </template>
-        </select>
+    <label x-show="activeView === 'people'" class="flex items-center gap-2 min-h-11 text-sm" :class="selectedShift ? 'cursor-pointer' : 'opacity-60'"
+        :title="selectedShift ? '' : $t('coord.only_free_disabled')">
+        <input type="checkbox" class="checkbox checkbox-sm" x-model="onlyFree" :disabled="!selectedShift">
+        <span x-text="$t('coord.only_free')"></span>
     </label>
     <button type="button" class="btn btn-ghost btn-sm min-h-11 underline" x-show="hasFilter" @click="resetFilter()"
         x-text="$t('coord.filter_reset')"></button>
+
+    <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+        <div class="join hidden lg:inline-flex" role="group" :aria-label="$t('coord.view')">
+            <template x-for="v in ['list', 'timeline', 'people']" :key="v">
+                <button type="button" class="btn btn-sm join-item min-h-11" :class="{ 'btn-active': activeView === v }"
+                    :aria-pressed="activeView === v ? 'true' : 'false'" @click="setView(v)" x-text="$t('coord.view_' + v)"></button>
+            </template>
+        </div>
+        <button type="button" class="btn btn-sm min-h-11" @click="$dispatch('coord-auto')" x-text="$t('coord.auto')"></button>
+    </div>
 </div>
 {{ end }}

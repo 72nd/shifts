@@ -20,8 +20,22 @@
         <a :href="backUrl()" class="btn btn-sm" x-text="$t('coord.back_to_plan')"></a>
     </div>
 
-    <div x-show="isAdmin" class="pb-3 border-b border-base-300">
+    <div x-show="isAdmin && !coordinationOff">
         {{ template "page-tabs" . }}
+    </div>
+
+    <div x-show="isAdmin && !isLoading && !error && plan && coordinationOff" role="alert" class="alert alert-info">
+        <div class="min-w-0 space-y-1">
+            <span class="block" x-text="$t('coord.disabled_notice')"></span>
+            <span class="block text-sm text-error" x-show="actionError" x-text="actionError"></span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a :href="backUrl()" class="btn btn-sm btn-ghost min-h-11" x-text="$t('coord.back_to_plan')"></a>
+            <button type="button" class="btn btn-sm btn-primary min-h-11" :disabled="busy" @click="enableCoordination()">
+                <span class="loading loading-spinner loading-xs" x-show="pendingKey === 'enable'"></span>
+                <span x-text="$t('coord.enable')"></span>
+            </button>
+        </div>
     </div>
 
     <div x-show="isLoading && !denied" class="flex justify-center items-center min-h-[50vh]">
@@ -33,7 +47,7 @@
         <button type="button" class="btn btn-sm" @click="load()" x-text="$t('coord.reload')"></button>
     </div>
 
-    <template x-if="isAdmin && !isLoading && !error && model">
+    <template x-if="isAdmin && !isLoading && !error && model && !coordinationOff">
         <div>
             <section role="tabpanel" id="coord-panel-distribute" aria-labelledby="coord-tab-distribute" x-show="tab === 'distribute'">
                 {{ template "coord-distribute" . }}
@@ -47,7 +61,7 @@
         </div>
     </template>
 
-    <template x-if="isAdmin && model">
+    <template x-if="isAdmin && model && !coordinationOff">
         <div>
             {{ template "coord-move-modal" . }}
             {{ template "coord-auto-modal" . }}

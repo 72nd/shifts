@@ -37,6 +37,17 @@
                 </label>
             </div>
 
+            <!-- Coordination -->
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-4 py-0">
+                    <input type="checkbox" x-model="settingsModal.coordination_enabled" class="checkbox checkbox-sm" />
+                    <span class="label-text" x-text="$t('shift_plans.settings.coordination')"></span>
+                </label>
+                <label class="label py-0">
+                    <span class="label-text-alt opacity-60" x-text="$t('shift_plans.settings.coordination_help')"></span>
+                </label>
+            </div>
+
             <!-- Title Fields -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <template x-if="settingsModal.is_multilingual">

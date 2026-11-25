@@ -258,6 +258,11 @@ func (s *Server) handleRemoveParticipant(w http.ResponseWriter, r *http.Request)
 // account). It returns the input for AddParticipant (nil if there is nothing to store), or writes
 // a 400 response and returns false.
 func (s *Server) preparePersonInput(w http.ResponseWriter, plan *db.ShiftPlan, name string, in *model.PersonInput) (*db.PersonInput, bool) {
+	// Without coordination the person fields are not asked: sent data is ignored, nothing is required.
+	if !plan.CoordinationEnabled {
+		return nil, true
+	}
+
 	r := validation.NewResult()
 	var result *db.PersonInput
 

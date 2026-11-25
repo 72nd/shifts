@@ -36,6 +36,7 @@ func ShiftPlanToResponse(plan *db.ShiftPlan) model.ShiftPlanResponse {
 		MinRestMinutes:       plan.MinRestMinutes,
 		MaxDayMinutes:        plan.MaxDayMinutes,
 		ShowDeclined:         plan.ShowDeclined,
+		CoordinationEnabled:  plan.CoordinationEnabled,
 		Fields:               PlanFieldsToResponse(plan.Fields),
 	}
 }
@@ -117,22 +118,23 @@ func CreateShiftPlanRequestToNew(req *model.CreateShiftPlanRequest) db.NewShiftP
 // they are left unchanged.
 func UpdateShiftPlanRequestToNew(req *model.ShiftPlanUpdateRequest) db.NewShiftPlan {
 	return db.NewShiftPlan{
-		KeepCoordination:  req.AttendanceMode == "",
-		ExperienceFieldID: req.ExperienceFieldID,
-		AttendanceMode:    req.AttendanceMode,
-		DefaultTargetMin:  req.DefaultTargetMinutes,
-		MinRestMinutes:    req.MinRestMinutes,
-		MaxDayMinutes:     req.MaxDayMinutes,
-		ShowDeclined:      req.ShowDeclined,
-		TitleDE:           req.TitleDE,
-		TitleEN:           req.TitleEN,
-		DescriptionDE:     req.DescriptionDE,
-		DescriptionEN:     req.DescriptionEN,
-		StartDate:         req.StartDate,
-		EndDate:           req.EndDate,
-		IsMultilingual:    req.IsMultilingual,
-		DayBoundaryTime:   req.DayBoundaryTime,
-		CollaborativeMode: req.CollaborativeMode,
+		KeepCoordination:    req.AttendanceMode == "",
+		ExperienceFieldID:   req.ExperienceFieldID,
+		AttendanceMode:      req.AttendanceMode,
+		DefaultTargetMin:    req.DefaultTargetMinutes,
+		MinRestMinutes:      req.MinRestMinutes,
+		MaxDayMinutes:       req.MaxDayMinutes,
+		ShowDeclined:        req.ShowDeclined,
+		CoordinationEnabled: req.CoordinationEnabled,
+		TitleDE:             req.TitleDE,
+		TitleEN:             req.TitleEN,
+		DescriptionDE:       req.DescriptionDE,
+		DescriptionEN:       req.DescriptionEN,
+		StartDate:           req.StartDate,
+		EndDate:             req.EndDate,
+		IsMultilingual:      req.IsMultilingual,
+		DayBoundaryTime:     req.DayBoundaryTime,
+		CollaborativeMode:   req.CollaborativeMode,
 		// Note: Password is not included in updates
 	}
 }

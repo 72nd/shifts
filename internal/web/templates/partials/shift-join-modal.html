@@ -42,9 +42,10 @@
                     <span class="label-text-alt text-error" x-text="joinModal.errors.name"></span>
                 </label>
             </div>
-            <button type="button" class="link link-hover text-sm min-h-11 mt-1"
-                    x-show="joinModal.asksDetails && joinModal.known?.exists"
-                    @click="joinModal.showDetails()" x-text="$t('shift_plans.view.join_edit_details')"></button>
+            <div class="flex flex-wrap items-center gap-x-2 text-sm" x-show="joinModal.asksDetails && joinModal.hasKnownDetails">
+                <span class="min-w-0 break-words" x-text="$t('shift_plans.view.join_details_summary', { summary: joinModal.knownSummary })"></span>
+                <button type="button" class="btn btn-ghost btn-sm min-h-11" @click="joinModal.showDetails()" x-text="$t('shift_plans.view.join_change_details')"></button>
+            </div>
         </div>
 
         <!-- Step 2: details the plan asks for -->
@@ -52,39 +53,65 @@
             <h4 class="font-medium" x-text="$t('shift_plans.view.join_your_details')"></h4>
             <template x-for="f in joinModal.participantFields" :key="f.id">
                 <div>
-                    <label class="flex flex-col gap-1" x-show="f.kind === 'choice'">
-                        <span class="text-sm"><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
-                        <select class="select select-bordered w-full" x-model="joinModal.values[f.id]">
+                    <fieldset class="flex flex-col gap-1 min-w-0" x-show="f.kind === 'choice' && joinModal.isSegmented(f)">
+                        <legend class="text-sm mb-1"><span x-text="joinModal.label(f)"></span><span x-show="f.required" aria-hidden="true"> *</span></legend>
+                        <div class="join flex-wrap">
+                            <template x-for="o in f.options" :key="o.id">
+                                <input type="radio" class="join-item btn btn-sm min-h-11" :name="'join_field_' + f.id" :value="o.id"
+                                       :aria-label="joinModal.optionText(o)" :aria-required="f.required ? 'true' : null"
+                                       x-model="joinModal.values[f.id]">
+                            </template>
+                        </div>
+                    </fieldset>
+                    <label class="flex flex-col gap-1" x-show="f.kind === 'choice' && !joinModal.isSegmented(f)">
+                        <span class="text-sm"><span x-text="joinModal.label(f)"></span><span x-show="f.required" aria-hidden="true"> *</span></span>
+                        <select class="select select-bordered w-full h-11" :aria-required="f.required ? 'true' : null" x-model="joinModal.values[f.id]">
                             <option value="" x-text="$t('shift_plans.view.join_choose')"></option>
                             <template x-for="o in f.options" :key="o.id">
-                                <option :value="o.id" x-text="optionLabel(o)"></option>
+                                <option :value="o.id" x-text="joinModal.optionText(o)"></option>
                             </template>
                         </select>
                     </label>
-                    <label class="flex flex-col gap-1" x-show="f.kind === 'number'">
-                        <span class="text-sm"><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
-                        <input type="number" step="0.1" class="input input-bordered w-full" x-model.number="joinModal.values[f.id]">
+                    <label class="flex flex-col gap-1 sm:max-w-40" x-show="f.kind === 'number'">
+                        <span class="text-sm"><span x-text="joinModal.label(f)"></span><span x-show="f.required" aria-hidden="true"> *</span></span>
+                        <input type="number" step="0.1" class="input input-bordered w-full h-11" :aria-required="f.required ? 'true' : null" x-model.number="joinModal.values[f.id]">
                     </label>
                     <label class="flex items-center gap-2 min-h-11 cursor-pointer" x-show="f.kind === 'boolean'">
-                        <input type="checkbox" class="checkbox checkbox-sm" x-model="joinModal.values[f.id]">
-                        <span><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
+                        <input type="checkbox" class="checkbox checkbox-sm" :aria-required="f.required ? 'true' : null" x-model="joinModal.values[f.id]">
+                        <span><span x-text="joinModal.label(f)"></span><span x-show="f.required" aria-hidden="true"> *</span></span>
                     </label>
                     <label class="flex flex-col gap-1" x-show="f.kind === 'text'">
-                        <span class="text-sm"><span x-text="fieldLabel(f)"></span><span x-show="f.required"> *</span></span>
-                        <input type="text" maxlength="200" class="input input-bordered w-full" x-model="joinModal.values[f.id]" autocomplete="off">
+                        <span class="text-sm"><span x-text="joinModal.label(f)"></span><span x-show="f.required" aria-hidden="true"> *</span></span>
+                        <input type="text" maxlength="200" class="input input-bordered w-full h-11" :aria-required="f.required ? 'true' : null" x-model="joinModal.values[f.id]" autocomplete="off">
                     </label>
                 </div>
             </template>
             <template x-if="joinModal.asksAttendance">
                 <div class="space-y-3">
-                    <label class="flex flex-col gap-1">
-                        <span class="text-sm" x-text="$t('coord.present_from')"></span>
-                        <input type="datetime-local" class="input input-bordered w-full" x-model="joinModal.from">
-                    </label>
-                    <label class="flex flex-col gap-1">
-                        <span class="text-sm" x-text="$t('coord.present_until')"></span>
-                        <input type="datetime-local" class="input input-bordered w-full" x-model="joinModal.until">
-                    </label>
+                    <fieldset class="min-w-0">
+                        <legend class="text-sm mb-1" x-text="$t('coord.present_from')"></legend>
+                        <div class="flex gap-2">
+                            <select class="select select-bordered h-11 min-w-0 flex-1" :aria-label="$t('shift_plans.view.date')" x-model="joinModal.fromDay">
+                                <option value="" x-text="$t('coord.field_unset')"></option>
+                                <template x-for="d in joinModal.dayOptions" :key="d">
+                                    <option :value="d" x-text="joinModal.dayLabel(d)"></option>
+                                </template>
+                            </select>
+                            <input type="time" class="input input-bordered h-11 w-32 shrink-0" :aria-label="$t('shift_plans.view.time')" x-model="joinModal.fromTime" :disabled="!joinModal.fromDay">
+                        </div>
+                    </fieldset>
+                    <fieldset class="min-w-0">
+                        <legend class="text-sm mb-1" x-text="$t('coord.present_until')"></legend>
+                        <div class="flex gap-2">
+                            <select class="select select-bordered h-11 min-w-0 flex-1" :aria-label="$t('shift_plans.view.date')" x-model="joinModal.untilDay">
+                                <option value="" x-text="$t('coord.field_unset')"></option>
+                                <template x-for="d in joinModal.dayOptions" :key="d">
+                                    <option :value="d" x-text="joinModal.dayLabel(d)"></option>
+                                </template>
+                            </select>
+                            <input type="time" class="input input-bordered h-11 w-32 shrink-0" :aria-label="$t('shift_plans.view.time')" x-model="joinModal.untilTime" :disabled="!joinModal.untilDay">
+                        </div>
+                    </fieldset>
                 </div>
             </template>
             <p class="text-sm text-error" x-show="joinModal.errors.details" x-text="joinModal.errors.details"></p>

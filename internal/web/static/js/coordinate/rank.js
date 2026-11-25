@@ -19,6 +19,10 @@ const DEFAULT_ADJACENT_MIN = 60;
  * @property {Array<{id:string, params:Object}>} reasons  why the person stands where they stand
  * @property {Array<{id:string, params:Object}>} warnings soft rule violations (rest, day, over_target)
  * @property {number[]} alsoInterested  other shifts at the same time with an open wish of this person
+ * @property {number} level       experience level of the person (-1 = none)
+ * @property {Array<{id:'needed_elsewhere', params:{shiftId:number}}>} impacts
+ *           soft hint, not a warning (autodistribute still may pick the person): the person is
+ *           indispensable for the open experience need of a concurrent shift (earliest one)
  *
  * @typedef {Object} Unavailable
  * @property {string} key
@@ -30,7 +34,7 @@ const DEFAULT_ADJACENT_MIN = 60;
  */
 
 /** Whether two shifts overlap in time. */
-function overlaps(a, b) {
+export function overlaps(a, b) {
   return a.start < b.end && b.start < a.end;
 }
 
@@ -51,7 +55,7 @@ function softWarnings(model, person, cs) {
 }
 
 /** Hard rules for the person and the shift: the first one that applies, or null. */
-function hardRule(model, person, cs) {
+export function hardRule(model, person, cs) {
   const overlapping = person.items.filter(s => s.id !== cs.id && overlaps(s, cs));
   if (overlapping.length) {
     const from = overlapping[0];
@@ -73,6 +77,50 @@ function hardRule(model, person, cs) {
   const { from, until } = person.attendance;
   if ((from && cs.start < from) || (until && cs.end > until)) return { reason: 'absent', params: {} };
   return null;
+}
+
+/**
+ * Shifts that overlap the given one in time (itself excluded), sorted by start, then type sort order.
+ * Unlimited shifts are included.
+ * @param {import('./model.js').CoordModel} model
+ * @param {number} shiftId
+ * @returns {import('./model.js').CoordShift[]}
+ */
+export function concurrentShifts(model, shiftId) {
+  const cs = model.shifts.get(shiftId);
+  if (!cs) return [];
+  const result = [];
+  for (const other of model.shifts.values()) {
+    if (other.id !== cs.id && overlaps(other, cs)) result.push(other);
+  }
+  return result.sort((a, b) => a.start - b.start
+    || (a.type.sort_order ?? 0) - (b.type.sort_order ?? 0) || a.id - b.id);
+}
+
+/**
+ * Bottlenecks among the shifts concurrent to cs: for every limited concurrent shift S' with an open
+ * experience need, the people who could still cover it (level, no Einsatz or decline there, hard rules
+ * ok). Only shifts whose need cannot be met without one of these people are returned (pool.size <= missing),
+ * in start order. Soft rules are ignored on purpose (optimistic estimate).
+ * Computed once per ranking, not per candidate.
+ * @returns {Array<{shiftId:number, pool:Set<string>}>}
+ */
+export function bottlenecks(model, cs) {
+  const result = [];
+  for (const other of concurrentShifts(model, cs.id)) {
+    if (other.unlimited || other.expNeed.count === 0 || other.expNeed.met) continue;
+    const missing = other.expNeed.count - other.expNeed.have;
+    const pool = new Set();
+    for (const person of model.persons.values()) {
+      if (person.level < other.expNeed.level) continue;
+      if (other.assigned.includes(person.key) || other.declined.includes(person.key)) continue;
+      if (hardRule(model, person, other)) continue;
+      pool.add(person.key);
+      if (pool.size > missing) break;
+    }
+    if (pool.size <= missing) result.push({ shiftId: other.id, pool });
+  }
+  return result;
 }
 
 /** Relative load: share of the target if there is one, else the absolute load. */
@@ -97,6 +145,7 @@ function sortKeys(model, cs, person, interested, adjacent) {
   const experienced = needsExperience && person.level >= cs.expNeed.level;
   return [
     needsExperience ? (experienced ? 0 : 1) : 0,
+    0, // concurrent bottleneck (impacts), filled in by the caller
     0, // soft violations, filled in by the caller
     cs.popular ? person.popularReceived : 0,
     cs.popular ? -(person.wishesDeclined + person.assignedUnwished) : 0,
@@ -116,10 +165,11 @@ function compareKeys(a, b) {
 
 /**
  * Evaluates one person for one shift.
+ * @param {Array<{shiftId:number, pool:Set<string>}>} [bottle]  result of bottlenecks(); without it no impacts
  * @returns {null | {unavailable: Unavailable} | {candidate: Candidate & {keys:number[], lot:number}}}
  *   null = the person is not a candidate for this source (no Einsatz and no interest, or already assigned)
  */
-export function evaluate(model, cs, person, source) {
+export function evaluate(model, cs, person, source, bottle = []) {
   if (cs.assigned.includes(person.key)) return null;
   const interested = cs.wishes.includes(person.key);
   const declined = cs.declined.includes(person.key);
@@ -135,7 +185,12 @@ export function evaluate(model, cs, person, source) {
   const warnings = softWarnings(model, person, cs);
   const adjacent = adjoins(model, person, cs);
   const keys = sortKeys(model, cs, person, interested, adjacent);
-  keys[1] = warnings.length;
+  // Own experience need comes first (Q3): no impact if the person covers it here.
+  const coversOwn = needsExperience && person.level >= cs.expNeed.level;
+  const hit = coversOwn ? null : bottle.find(b => b.pool.has(person.key));
+  const impacts = hit ? [{ id: 'needed_elsewhere', params: { shiftId: hit.shiftId } }] : [];
+  keys[1] = impacts.length ? 1 : 0;
+  keys[2] = warnings.length;
 
   const reasons = [];
   if (needsExperience && person.level >= cs.expNeed.level) reasons.push({ id: 'experience', params: {} });
@@ -165,6 +220,8 @@ export function evaluate(model, cs, person, source) {
       declined,
       reasons,
       warnings,
+      impacts,
+      level: person.level,
       alsoInterested,
       keys,
       lot: model.ctx.lottery.get(person.key) ?? 0,
@@ -187,8 +244,9 @@ export function rankCandidates(model, shiftId, source) {
 
   const ranked = [];
   const unavailable = [];
+  const bottle = bottlenecks(model, cs);
   for (const person of model.persons.values()) {
-    const ev = evaluate(model, cs, person, source);
+    const ev = evaluate(model, cs, person, source, bottle);
     if (!ev) continue;
     if (ev.unavailable) unavailable.push(ev.unavailable);
     else ranked.push(ev.candidate);

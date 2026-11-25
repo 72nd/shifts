@@ -120,15 +120,38 @@ def build(api, sc, start):
 
     # Required person fields would block the sign-ups below, so they are created
     # optional and switched to required at the end (like in a plan that grew over time).
-    field_ids = []
+    # A choice value is the index of its option in the scenario, the API wants the option id.
+    field_ids, field_options, experience_id, levels = [], [], None, []
     for f in sc["fields"]:
         body = {k: f[k] for k in ("label_de", "label_en", "kind", "options", "editable_by")}
-        field_ids.append(api.call("POST", f"{base}/fields", {**body, "required": False}, admin=True)["id"])
+        created_field = api.call("POST", f"{base}/fields", {**body, "required": False}, admin=True)
+        field_ids.append(created_field["id"])
+        # (a dry run answers without options, so make some up)
+        field_options.append(created_field.get("options") or [{**o, "id": f"opt{i}"} for i, o in enumerate(f["options"])])
+        if f.get("experience"):  # its options (lowest level first) are the levels of the exp_min_level settings
+            experience_id, levels = created_field["id"], field_options[-1]
+
+    # Coordination settings of the plan: switch on, experience field, attendance and limits
+    coord = sc["coordination"]
+    api.call("PUT", base, {
+        "title_de": fill(plan["title_de"]), "title_en": fill(plan["title_en"]),
+        "description_de": fill(plan["description_de"]), "description_en": fill(plan["description_en"]),
+        "start_date": str(start), "end_date": str(end),
+        "is_multilingual": plan["is_multilingual"], "collaborative_mode": plan["collaborative_mode"],
+        "day_boundary_time": plan["day_boundary_time"],
+        "coordination_enabled": True, "experience_field_id": experience_id,
+        **{k: coord[k] for k in ("attendance_mode", "default_target_minutes", "min_rest_minutes",
+                                 "max_day_minutes", "show_declined")},
+    }, admin=True)
+
+    def level_id(index):
+        return None if index is None else levels[index]["id"]
 
     shifts = []  # (shift id, scenario shift)
     for t in sc["types"]:
         type_body = {k: t[k] for k in ("title_de", "title_en", "description_de", "description_en",
                                        "location_de", "location_en", "load_factor", "popularity", "exp_min_count")}
+        type_body["exp_min_level"] = level_id(t.get("exp_min_level")) or ""
         type_id = api.call("POST", f"{base}/types", type_body, admin=True)["id"]
         for i in range(0, len(t["shifts"]), 100):  # the batch endpoint takes at most 100
             chunk = t["shifts"][i:i + 100]
@@ -139,22 +162,45 @@ def build(api, sc, start):
             if result.get("failed") or len(result["created"]) != len(chunk):
                 sys.exit(f"Batch create of '{t['title_en']}' failed: {result.get('failed')}")
             shifts += [(c["id"], s) for c, s in zip(result["created"], chunk)]
+            # The batch endpoint ignores per-shift overrides of the type's coordination settings,
+            # so shifts with overrides are updated one by one.
+            for c, s in zip(result["created"], chunk):
+                overrides = {k: s[k] for k in ("load_factor", "popularity", "exp_min_count") if k in s}
+                if "exp_min_level" in s:
+                    overrides["exp_min_level"] = level_id(s["exp_min_level"])
+                if overrides:
+                    api.call("PUT", f"{base}/shifts/{c['id']}", {
+                        "type_id": type_id, "start_time": stamp(s["day"], s["time"]), "duration": s["duration"],
+                        "required": s["required"], "comment_de": s["comment_de"], "comment_en": s["comment_en"],
+                        **overrides}, admin=True)
 
     for shift_id, s in shifts:
         for name in s["participants"]:
             api.call("POST", f"{base}/shifts/{shift_id}/participants", {"name": name})
 
+    # People: attendance, target and field values (some people have no record, so their fields are missing)
     for p in sc["people"]:
-        values = {str(field_ids[int(k)]): v for k, v in p["values"].items()}
+        values = {}
+        for k, v in p["values"].items():
+            index = int(k)
+            values[str(field_ids[index])] = field_options[index][v]["id"] if sc["fields"][index]["kind"] == "choice" else v
         api.call("PUT", f"{base}/people", {
-            "name": p["name"], "available_from": None, "available_until": None,
+            "name": p["name"],
+            "available_from": stamp(**p["available_from"]) if p.get("available_from") else None,
+            "available_until": stamp(**p["available_until"]) if p.get("available_until") else None,
             "target_minutes": p["target_minutes"], "prefers_long_days": p["prefers_long_days"], "values": values,
         }, admin=True)
 
-    for field_id, f in zip(field_ids, sc["fields"]):
+    # Assignments made by the organisers (status "assigned"), e.g. to meet a shift's experience need
+    ops = [{"shift_id": shift_id, "name": name, "status": "assigned"}
+           for shift_id, s in shifts for name in s.get("assigned", [])]
+    if ops:
+        api.call("POST", f"{base}/coordination/apply", {"ops": ops, "lock": []}, admin=True)
+
+    for field_id, options, f in zip(field_ids, field_options, sc["fields"]):
         if f["required"]:
-            body = {k: f[k] for k in ("label_de", "label_en", "kind", "options", "editable_by", "required")}
-            api.call("PUT", f"{base}/fields/{field_id}", body, admin=True)
+            body = {k: f[k] for k in ("label_de", "label_en", "kind", "editable_by", "required")}
+            api.call("PUT", f"{base}/fields/{field_id}", {**body, "options": options}, admin=True)  # options keep their ids
 
     for shift_id, s in shifts:
         if s["locked"]:

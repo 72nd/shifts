@@ -26,6 +26,7 @@
 
                 <fieldset class="space-y-2" x-show="form.kind === 'choice'">
                     <legend class="text-sm" x-text="$t('coord.field_options')"></legend>
+                    <p class="text-sm text-base-content/70" x-text="$t('coord.levels_hint')"></p>
                     <ol class="space-y-2 max-h-64 overflow-y-auto pr-1">
                         <template x-for="(o, i) in form.options" :key="i">
                             <li class="flex flex-wrap items-center gap-2">

@@ -1,6 +1,6 @@
 {
  "name": "summer-festival",
- "summary": "Two-day volunteer festival: 6 shift types, 54 shifts, 138 sign-ups, one locked shift, a required experience field, a very popular Bar type.",
+ "summary": "Two-day volunteer festival built to test the coordination: 7 shift types, 59 shifts, 154 sign-ups, a required select field 'Experience' (New/Experienced/Pro, set for ~60% of the people), attendance and targets, Bar and Stage Tech need one experienced person, two bottleneck windows (d0 22:00 and d1 20:00), one with plenty of experienced people (d1 14:00), shifts across midnight and the 04:00 day boundary.",
  "weekday": 5,
  "plan": {
   "title_de": "Summer Sound Festival {{year}}",
@@ -10,26 +10,430 @@
   "days": 2,
   "is_multilingual": true,
   "collaborative_mode": true,
-  "day_boundary_time": "00:00",
+  "day_boundary_time": "04:00",
   "time_zone": "Europe/Berlin"
  },
  "fields": [
   {
-   "label_de": "Erfahrungsstufe",
+   "label_de": "Erfahrung",
    "label_en": "Experience",
-   "kind": "number",
-   "options": [],
+   "kind": "choice",
+   "options": [
+    {
+     "de": "Neu",
+     "en": "New"
+    },
+    {
+     "de": "Erfahren",
+     "en": "Experienced"
+    },
+    {
+     "de": "Profi",
+     "en": "Pro"
+    }
+   ],
    "editable_by": "participant",
-   "required": true
+   "required": true,
+   "experience": true
   }
  ],
  "people": [
   {
-   "name": "Tobias",
+   "name": "Robbie",
+   "available_from": null,
+   "available_until": null,
    "target_minutes": null,
    "prefers_long_days": false,
    "values": {
-    "0": 3
+    "0": 0
+   }
+  },
+  {
+   "name": "Mike",
+   "available_from": null,
+   "available_until": {
+    "day": 0,
+    "time": "18:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Tom",
+   "available_from": null,
+   "available_until": {
+    "day": 0,
+    "time": "18:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 2
+   }
+  },
+  {
+   "name": "Yusuf",
+   "available_from": null,
+   "available_until": {
+    "day": 0,
+    "time": "18:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Anna",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Paul",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Torben",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Ayesha",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Peter",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Karim",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Farid",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Jonas",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": 480,
+   "prefers_long_days": false,
+   "values": {
+    "0": 2
+   }
+  },
+  {
+   "name": "Zoe",
+   "available_from": {
+    "day": 1,
+    "time": "08:00"
+   },
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 2
+   }
+  },
+  {
+   "name": "Emma",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": 600,
+   "prefers_long_days": true,
+   "values": {}
+  },
+  {
+   "name": "Leo",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Axel",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Samira",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Mia",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Bea",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Laura",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Nina",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Hannah",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": 240,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Tariq",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": 120,
+   "prefers_long_days": false,
+   "values": {}
+  },
+  {
+   "name": "Amira",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Theo",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Lena",
+   "available_from": null,
+   "available_until": {
+    "day": 1,
+    "time": "12:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Clara",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Ben",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Finn",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Elif",
+   "available_from": {
+    "day": 1,
+    "time": "08:00"
+   },
+   "available_until": {
+    "day": 1,
+    "time": "18:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Omar",
+   "available_from": {
+    "day": 1,
+    "time": "08:00"
+   },
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Ravi",
+   "available_from": {
+    "day": 1,
+    "time": "08:00"
+   },
+   "available_until": {
+    "day": 1,
+    "time": "18:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Rosa",
+   "available_from": null,
+   "available_until": {
+    "day": 1,
+    "time": "12:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Sven",
+   "available_from": null,
+   "available_until": {
+    "day": 1,
+    "time": "12:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 2
+   }
+  },
+  {
+   "name": "Tilda",
+   "available_from": null,
+   "available_until": {
+    "day": 1,
+    "time": "12:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Uwe",
+   "available_from": null,
+   "available_until": {
+    "day": 1,
+    "time": "12:00"
+   },
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
    }
   }
  ],
@@ -157,7 +561,8 @@
      "participants": [
       "Anna",
       "Peter",
-      "Robbie"
+      "Robbie",
+      "Jonas"
      ]
     },
     {
@@ -168,9 +573,12 @@
      "comment_de": "Nachtschicht Campingplatz - Ansprechpartner",
      "comment_en": "Evening shift camping - contact person",
      "locked": false,
-     "participants": []
+     "participants": [
+      "Zoe"
+     ]
     }
-   ]
+   ],
+   "exp_min_level": null
   },
   {
    "title_de": "Gastronomie",
@@ -278,7 +686,8 @@
       "Theo"
      ]
     }
-   ]
+   ],
+   "exp_min_level": null
   },
   {
    "title_de": "Bar",
@@ -287,9 +696,9 @@
    "description_en": "The mood is best behind the counter – and the spots are in high demand!\n\n**Duties:**\n\n- Serve drinks and handle payments\n- Keep the counter clean and fetch supplies\n- Take back deposit cups\n\n**Note:** There are only a few shifts, and many volunteers want one. The coordination team distributes the spots fairly.",
    "location_de": "Hauptbar",
    "location_en": "Main Bar",
-   "load_factor": 1,
+   "load_factor": 1.5,
    "popularity": "auto",
-   "exp_min_count": 0,
+   "exp_min_count": 1,
    "shifts": [
     {
      "day": 0,
@@ -310,7 +719,9 @@
       "Max",
       "Clara",
       "Ben"
-     ]
+     ],
+     "exp_min_count": 2,
+     "exp_min_level": 1
     },
     {
      "day": 0,
@@ -329,10 +740,11 @@
       "Lena",
       "Ida",
       "Finn",
-      "Zoe",
-      "Omar",
       "Amira",
       "Kira"
+     ],
+     "assigned": [
+      "Lena"
      ]
     },
     {
@@ -373,7 +785,8 @@
       "Kira"
      ]
     }
-   ]
+   ],
+   "exp_min_level": 1
   },
   {
    "title_de": "Infotheke",
@@ -401,7 +814,8 @@
       "Axel"
      ]
     }
-   ]
+   ],
+   "exp_min_level": null
   },
   {
    "title_de": "Bühnentechnik",
@@ -578,7 +992,8 @@
       "Bea"
      ]
     }
-   ]
+   ],
+   "exp_min_level": null
   },
   {
    "title_de": "Putzen",
@@ -587,7 +1002,7 @@
    "description_en": "Help us maintain a clean and sustainable festival! This flexible team keeps the venue pleasant for everyone and ensures we leave no trace.\n\n**Duties:**\n\n- Empty trash and recycling bins regularly\n- Clean and maintain toilet facilities\n- Pick up litter around the festival grounds\n- Sort waste according to recycling guidelines\n- Assist with end-of-event cleanup\n- Help with equipment and decoration removal\n- Support sustainability initiatives\n\n**Requirements:**\n\n- No special skills required - just a helpful attitude!\n- Physical ability to walk extensively and lift trash bags\n- Awareness of hygiene and safety\n- Environmentally conscious mindset appreciated\n- Flexible and easygoing personality\n\n**Special Note:** These shifts have no participant limit - the more helpers, the cleaner the festival! Perfect for those who want flexible commitment or want to help alongside friends.\n\n**What to bring:** Weather-appropriate work clothes that can get dirty, gloves provided",
    "location_de": "Haupttresen",
    "location_en": "Main Baar",
-   "load_factor": 1,
+   "load_factor": 2,
    "popularity": "auto",
    "exp_min_count": 0,
    "shifts": [
@@ -826,7 +1241,103 @@
       "Uwe"
      ]
     }
+   ],
+   "exp_min_level": null
+  },
+  {
+   "title_de": "Bühnentechnik",
+   "title_en": "Stage Tech",
+   "description_de": "Ton, Licht und Bühnenaufbau. Mindestens eine erfahrene Person pro Schicht.",
+   "description_en": "Sound, lights and stage setup. At least one experienced person per shift.",
+   "location_de": "Hauptbühne",
+   "location_en": "Main stage",
+   "load_factor": 1.2,
+   "popularity": "popular",
+   "exp_min_count": 1,
+   "exp_min_level": 1,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "14:00",
+     "duration": 240,
+     "required": 3,
+     "comment_de": "Soundcheck und Aufbau",
+     "comment_en": "Soundcheck and setup",
+     "locked": false,
+     "participants": [
+      "Sven",
+      "Nils",
+      "Hugo",
+      "Kaja"
+     ],
+     "assigned": [
+      "Sven"
+     ]
+    },
+    {
+     "day": 0,
+     "time": "22:00",
+     "duration": 240,
+     "required": 2,
+     "comment_de": "Nachtschicht, läuft parallel zur Bar (Engpass: nur Jonas)",
+     "comment_en": "Night shift, parallel to the bar (bottleneck: only Jonas)",
+     "locked": false,
+     "participants": [
+      "Jonas",
+      "Kaja",
+      "Hugo"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "02:00",
+     "duration": 180,
+     "required": 2,
+     "comment_de": "Abbau, geht über die Tagesgrenze 04:00",
+     "comment_en": "Teardown, crosses the 04:00 day boundary",
+     "locked": false,
+     "participants": [
+      "Uwe",
+      "Tilda"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "14:00",
+     "duration": 240,
+     "required": 2,
+     "comment_de": "Nachmittag, viele Erfahrene frei (kein Engpass)",
+     "comment_en": "Afternoon, plenty of experienced people (no bottleneck)",
+     "locked": false,
+     "participants": [
+      "Omar",
+      "Zoe",
+      "Elif",
+      "Ravi"
+     ]
+    },
+    {
+     "day": 1,
+     "time": "20:00",
+     "duration": 240,
+     "required": 2,
+     "comment_de": "Abend, parallel zur Bar (Engpass: nur Omar)",
+     "comment_en": "Evening, parallel to the bar (bottleneck: only Omar)",
+     "locked": false,
+     "participants": [
+      "Omar",
+      "Pavel",
+      "Nils"
+     ]
+    }
    ]
   }
- ]
+ ],
+ "coordination": {
+  "attendance_mode": "participant",
+  "default_target_minutes": 360,
+  "min_rest_minutes": 60,
+  "max_day_minutes": 600,
+  "show_declined": false
+ }
 }

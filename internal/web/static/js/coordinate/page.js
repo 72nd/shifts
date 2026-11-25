@@ -11,9 +11,14 @@
 import { formatDate, formatTime, parseDate } from '../datetime.js';
 import { PlanRealtime } from '../realtime.js';
 import { personKey } from '../stats/compute.js';
-import { buildModel, rankCandidates, applyOpsLocally, invertOps, newLottery } from './compute.js';
+import {
+    buildModel, rankCandidates, concurrentShifts, buildTimeline, buildPersonTimeline,
+    applyOpsLocally, invertOps, newLottery,
+} from './compute.js';
 
 const TABS = ['distribute', 'people', 'settings'];
+const VIEWS = ['list', 'timeline', 'people'];
+const WIDE_QUERY = '(min-width: 1024px)'; // Tailwind lg: timeline and people views need the room
 const STATUS_FILTERS = ['overbooked', 'open', 'full', 'experience'];
 const TOAST_MS = 10000;
 
@@ -39,8 +44,14 @@ document.addEventListener('alpine:init', () => {
         filter: { typeIds: [], days: [], status: '' },
         selectedShiftId: null,
         source: 'interested',
-        candidates: { ranked: [], unavailable: [] },
+        candidates: { ranked: [], unavailable: [] }, // ranked[].impacts / .level come from rank.js
+        concurrent: [], // shifts overlapping the selected one (CoordShift[]), for the "concurrent" bar
         shiftList: [],
+
+        // Distribute view: 'list' | 'timeline' | 'people' (the latter two only from lg up)
+        view: 'list',
+        timelineDay: '', // logical day (YYYY-MM-DD) of the two time views; '' = derived (see currentTimelineDay)
+        isWide: false,
 
         // Changes in flight and undo
         busy: false,
@@ -73,6 +84,9 @@ document.addEventListener('alpine:init', () => {
                 this.adminToken = '';
             }
             this.readUrl();
+            const mq = window.matchMedia(WIDE_QUERY);
+            this.isWide = mq.matches;
+            mq.addEventListener('change', (e) => { this.isWide = e.matches; });
             if (!this.adminToken) {
                 this.isLoading = false;
                 this.denied = true;
@@ -85,7 +99,7 @@ document.addEventListener('alpine:init', () => {
             return !!this.adminToken && !this.denied;
         },
 
-        // --- URL state (?tab=&type=&day=&status=&shift=) ---
+        // --- URL state (?tab=&type=&day=&status=&shift=&view=&tday=) ---
 
         readUrl() {
             const sp = new URLSearchParams(window.location.search);
@@ -97,6 +111,10 @@ document.addEventListener('alpine:init', () => {
             this.filter = { typeIds: type, days: day, status: STATUS_FILTERS.includes(status) ? status : '' };
             const shift = Number(sp.get('shift'));
             this.selectedShiftId = Number.isInteger(shift) && shift > 0 ? shift : null;
+            const view = sp.get('view');
+            this.view = VIEWS.includes(view) ? view : 'list';
+            const tday = sp.get('tday') || '';
+            this.timelineDay = /^\d{4}-\d{2}-\d{2}$/.test(tday) ? tday : '';
         },
 
         writeUrl() {
@@ -106,6 +124,8 @@ document.addEventListener('alpine:init', () => {
             if (this.filter.days.length) sp.set('day', this.filter.days.join(','));
             if (this.filter.status) sp.set('status', this.filter.status);
             if (this.selectedShiftId) sp.set('shift', String(this.selectedShiftId));
+            if (this.view !== 'list') sp.set('view', this.view);
+            if (this.view !== 'list' && this.timelineDay) sp.set('tday', this.timelineDay);
             const q = sp.toString();
             history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : ''));
         },
@@ -207,6 +227,7 @@ document.addEventListener('alpine:init', () => {
             this.candidates = this.selectedShiftId
                 ? rankCandidates(this.model, this.selectedShiftId, this.source)
                 : { ranked: [], unavailable: [] };
+            this.concurrent = this.selectedShiftId ? concurrentShifts(this.model, this.selectedShiftId) : [];
         },
 
         matchesStatus(cs, status) {
@@ -231,6 +252,64 @@ document.addEventListener('alpine:init', () => {
         /** Persons as a list for the tables. */
         get personList() {
             return this.model ? [...this.model.persons.values()] : [];
+        },
+
+        // --- Views (list, timeline, people) ---
+
+        /** The view in effect: below lg only the list is available. */
+        get activeView() {
+            return this.isWide ? this.view : 'list';
+        },
+
+        setView(view) {
+            if (!VIEWS.includes(view)) return;
+            this.view = view;
+            this.writeUrl();
+        },
+
+        /**
+         * Day shown by the time views: the chosen one if it has shifts, else the day of the selected
+         * shift, else the first day with shifts ('' without shifts).
+         */
+        get currentTimelineDay() {
+            const days = this.dayOptions;
+            if (this.timelineDay && days.includes(this.timelineDay)) return this.timelineDay;
+            return this.selectedShift?.day || days[0] || '';
+        },
+
+        setTimelineDay(day) {
+            this.timelineDay = day;
+            this.writeUrl();
+        },
+
+        /** Moves the time views by n days among the days that have shifts (‹ ›); stays put at the ends. */
+        shiftTimelineDay(n) {
+            const days = this.dayOptions;
+            const i = days.indexOf(this.currentTimelineDay);
+            const next = days[Math.min(days.length - 1, Math.max(0, i + n))];
+            if (next) this.setTimelineDay(next);
+        },
+
+        get hasPrevDay() {
+            return this.dayOptions.indexOf(this.currentTimelineDay) > 0;
+        },
+
+        get hasNextDay() {
+            const days = this.dayOptions;
+            const i = days.indexOf(this.currentTimelineDay);
+            return i >= 0 && i < days.length - 1;
+        },
+
+        /** Data of the timeline view for the current day and filter (see timeline.js). */
+        get timeline() {
+            if (!this.model) return { startMin: 0, endMin: 0, hours: [], rows: [] };
+            return buildTimeline(this.model, this.shiftList.map(cs => cs.id), this.currentTimelineDay);
+        },
+
+        /** Data of the people view for the current day (rows in model order; the template sorts them). */
+        get personTimeline() {
+            if (!this.model) return { startMin: 0, endMin: 0, hours: [], selection: null, rows: [] };
+            return buildPersonTimeline(this.model, this.currentTimelineDay, this.selectedShiftId);
         },
 
         selectShift(id) {
@@ -261,6 +340,48 @@ document.addEventListener('alpine:init', () => {
 
         get hasFilter() {
             return this.filter.typeIds.length > 0 || this.filter.days.length > 0 || !!this.filter.status;
+        },
+
+        // --- Coordination switch ---
+
+        /** Coordination is switched off for this plan (plan setting coordination_enabled). */
+        get coordinationOff() {
+            return !!this.plan && !this.plan.coordination_enabled;
+        },
+
+        /** Switches coordination on (plan update with all plan fields), then reloads. */
+        async enableCoordination() {
+            if (this.busy || !this.plan) return;
+            const p = this.plan;
+            this.busy = true;
+            this.pendingKey = 'enable';
+            this.clearErrors();
+            try {
+                await this.api('PUT', '', {
+                    title_de: p.title_de,
+                    title_en: p.title_en,
+                    description_de: p.description_de,
+                    description_en: p.description_en,
+                    start_date: p.start_date,
+                    end_date: p.end_date,
+                    is_multilingual: p.is_multilingual,
+                    day_boundary_time: p.day_boundary_time,
+                    collaborative_mode: p.collaborative_mode,
+                    show_declined: p.show_declined,
+                    experience_field_id: p.experience_field_id ?? null,
+                    attendance_mode: p.attendance_mode,
+                    default_target_minutes: p.default_target_minutes ?? null,
+                    min_rest_minutes: p.min_rest_minutes ?? null,
+                    max_day_minutes: p.max_day_minutes ?? null,
+                    coordination_enabled: true,
+                });
+                await this.load(true);
+            } catch (e) {
+                this.fail(e, false);
+            } finally {
+                this.busy = false;
+                this.pendingKey = null;
+            }
         },
 
         // --- Tabs ---
@@ -453,6 +574,22 @@ document.addEventListener('alpine:init', () => {
         shiftLabel(cs) {
             if (!cs) return '';
             return `${this.typeTitle(cs.type)}, ${this.dayLabel(cs.start)} ${this.time(cs.start)}–${this.time(cs.end)}`;
+        },
+
+        /** "Bar 20:00" for a model shift (type and start time). */
+        shortLabel(cs) {
+            return cs ? `${this.typeTitle(cs.type)} ${this.time(cs.start)}` : '';
+        },
+
+        /** Text of an impact { id, params } of a candidate (long: the explanation for the tooltip). */
+        impactText(imp, long = false) {
+            const shift = this.shortLabel(this.model?.shifts.get(imp.params.shiftId));
+            return this.$t(`coord.impact_${imp.id}${long ? '_long' : ''}`, { shift });
+        },
+
+        /** Warnings and impacts of a candidate as one text (tooltip and screen readers). */
+        candidateNotes(c) {
+            return [...c.warnings.map(w => this.reasonText('warn', w)), ...c.impacts.map(i => this.impactText(i))].join(', ');
         },
 
         /** "3/4" or "3/∞" for a model shift. */

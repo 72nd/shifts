@@ -43,7 +43,18 @@
                             <button type="button" class="link link-hover min-h-11 text-left truncate max-w-full" :title="p.name"
                                 @click.stop="edit(p.key)" x-text="p.name"></button>
                         </td>
-                        <td x-show="model.experience.field" x-text="levelLabel($data, p)"></td>
+                        <td x-show="model.experience.field" @click.stop>
+                            <select class="select select-bordered select-sm h-11 w-full min-w-28"
+                                :aria-label="$t('coord.experience_of', { name: p.name })"
+                                :disabled="levelState[p.key]?.saving" @change="setLevel($data, p, $event)">
+                                <option value="" :selected="p.level < 0">–</option>
+                                <template x-for="o in model.experience.options" :key="o.id">
+                                    <option :value="o.id" :selected="p.level === o.level" x-text="t(o)"></option>
+                                </template>
+                            </select>
+                            <span class="loading loading-spinner loading-xs" x-show="levelState[p.key]?.saving"></span>
+                            <span class="block text-error text-xs" role="alert" x-show="levelState[p.key]?.error" x-text="levelState[p.key]?.error"></span>
+                        </td>
                         <td x-show="plan.attendance_mode !== 'off'" class="whitespace-nowrap" x-text="attendanceLabel($data, p)"></td>
                         <td class="text-right tabular-nums" x-text="targetLabel($data, p)"></td>
                         <td class="text-right tabular-nums" x-text="number(p.hours)"></td>
@@ -58,7 +69,7 @@
                                 <template x-for="w in p.warnings" :key="w.kind + w.shiftIds.join('-')">
                                     <li class="badge badge-warning badge-sm" x-text="warningText(w)"></li>
                                 </template>
-                                <li class="badge badge-ghost badge-sm" x-show="p.missingRequired" x-text="$t('coord.missing_required')"></li>
+                                <li class="badge badge-ghost badge-sm" x-show="p.missingRequired" x-text="missingText($data, p)"></li>
                             </ul>
                         </td>
                     </tr>
@@ -83,6 +94,7 @@
                         <template x-for="w in p.warnings" :key="w.kind + w.shiftIds.join('-')">
                             <span class="badge badge-warning badge-sm" x-text="warningText(w)"></span>
                         </template>
+                        <span class="badge badge-ghost badge-sm" x-show="p.missingRequired" x-text="missingText($data, p)"></span>
                     </span>
                 </button>
             </li>

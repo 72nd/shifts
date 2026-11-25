@@ -48,6 +48,11 @@ document.addEventListener('alpine:init', () => {
             return [...result.personDelta.values()].sort((a, b) => a.name.localeCompare(b.name));
         },
 
+        /** Notes of the run: people who were assigned although another shift needs them (result.impacts). */
+        impacts(result) {
+            return (result.impacts || []).map(i => ({ ...i, id: `${i.shiftId}|${i.name}` }));
+        },
+
         isEmpty(result) {
             return result.ops.length === 0 && result.unfilled.length === 0;
         },

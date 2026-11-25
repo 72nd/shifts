@@ -1,0 +1,64 @@
+{{ define "coord-timeline" }}
+{{/* Timeline view (from lg): shifts of one day as bars per area, above the workbench. Needs coordDistribute scope.
+     Bars are buttons positioned in percent (left/width) by buildTimeline; hours are 4 rem wide and the band scrolls inside itself. */}}
+<template x-if="activeView === 'timeline'">
+    <div>
+        <p class="text-base-content/70" x-show="!timeline.rows.length" x-text="$t('coord.timeline_empty')"></p>
+        <template x-for="tl in [timeline]" :key="currentTimelineDay">
+            <div x-show="tl.rows.length" class="max-h-[45vh] overflow-auto border border-base-300 rounded-box">
+                <div :style="{ minWidth: timelineWidth(tl.hours, 9) }">
+                    <!-- Hour header -->
+                    <div class="sticky top-0 z-20 flex bg-base-100 border-b border-base-300">
+                        <div class="sticky left-0 z-30 w-36 shrink-0 bg-base-100"></div>
+                        <div class="flex min-w-0 flex-1">
+                            <template x-for="(h, i) in tl.hours" :key="i">
+                                <div class="flex-1 min-w-0 border-l border-base-300 px-1 text-xs tabular-nums text-base-content/70" x-text="String(h).padStart(2, '0')"></div>
+                            </template>
+                        </div>
+                    </div>
+                    <template x-for="row in tl.rows" :key="row.type.id">
+                        <div class="flex border-b border-base-300 last:border-b-0" data-row>
+                            <div class="sticky left-0 z-10 w-36 shrink-0 bg-base-100 px-2 py-1 text-sm font-medium truncate"
+                                :title="typeTitle(row.type)" x-text="typeTitle(row.type)"></div>
+                            <div class="relative min-w-0 flex-1">
+                                <!-- Hour grid lines -->
+                                <div class="absolute inset-0 flex" aria-hidden="true">
+                                    <template x-for="(h, i) in tl.hours" :key="i">
+                                        <div class="flex-1 border-l border-base-300"></div>
+                                    </template>
+                                </div>
+                                <template x-for="(lane, li) in row.lanes" :key="li">
+                                    <div class="relative h-12">
+                                        <template x-for="b in lane" :key="b.cs.id">
+                                            <button type="button" data-bar :data-left="b.left"
+                                                class="absolute top-0.5 bottom-0.5 min-h-11 min-w-0 overflow-hidden rounded-field border border-base-content/20 px-1 flex items-center gap-1 text-xs"
+                                                :class="{
+                                                    'bg-base-200': !b.cs.overbooked && (b.cs.unlimited || b.cs.open > 0),
+                                                    'bg-base-300': !b.cs.overbooked && !b.cs.unlimited && b.cs.open === 0,
+                                                    'bg-warning/20': b.cs.overbooked,
+                                                    'ring-2 ring-primary': b.cs.id === selectedShiftId,
+                                                    'ring-2 ring-warning': b.cs.id !== selectedShiftId && hoverShiftId === b.cs.id
+                                                }"
+                                                :style="{ left: b.left + '%', width: b.width + '%' }"
+                                                :title="shiftLabel(b.cs) + ' (' + occupancyBadge(b.cs, occupancy(b.cs)) + ')'"
+                                                :aria-label="shiftLabel(b.cs) + ', ' + occupancyBadge(b.cs, occupancy(b.cs))"
+                                                :aria-current="b.cs.id === selectedShiftId ? 'true' : null"
+                                                @click="selectShift(b.cs.id)" @keydown="neighbourBar($event)">
+                                                <span x-show="isHighlighted(b.cs, highlightKey)" class="inline-block h-2 w-2 shrink-0 rounded-full bg-primary" role="img" :aria-label="$t('coord.person_involved')"></span>
+                                                <span class="truncate tabular-nums" x-text="occupancyBadge(b.cs, occupancy(b.cs))"></span>
+                                                <span class="shrink-0" x-show="b.cs.popular">{{ template "coord-icon-star" }}</span>
+                                                <span class="shrink-0" x-show="b.cs.expNeed.count > 0 && !b.cs.expNeed.met">{{ template "coord-icon-warning" }}</span>
+                                                <span class="shrink-0 text-info" x-show="b.cs.locked">{{ template "lock-icon" }}</span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+{{ end }}

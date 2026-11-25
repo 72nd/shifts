@@ -37,7 +37,7 @@ Das Programm wurde entwickelt, weil bisherige Schichtplanungstools den Anforderu
     - Ändern der Sortierung von Schichttypen.
     - Anpassen von Beschreibungstext, Titel, Tagesgrenze und weiteren Einstellungen des Schichtplans.
     - Export: Die Daten des Schichtplans können in verschiedenen Formaten exportiert werden, wobei optional die aktuelle Filterkonfiguration berücksichtigt werden kann. Weitere Informationen zu den Exportformaten finden sich unten.
-- Koordination: Eine Seite für Admins, die bei schwierigen Entscheidungen hilft: wer eine beliebte Schicht bekommt (Erfahrung, Fairness, Konflikte) und wie eine Gruppe mit Arbeitsauftrag gerecht verteilt wird. Mit gereihten Vorschlägen samt Begründung, Auto-Verteilung mit Vorschau und Rückgängig, Personenfeldern, Anwesenheit und Arbeitszeitregeln.
+- Koordination: Eine Seite für Admins, die bei schwierigen Entscheidungen hilft: wer eine beliebte Schicht bekommt (Erfahrung, Fairness, Konflikte) und wie eine Gruppe mit Arbeitsauftrag gerecht verteilt wird. Mit gereihten Vorschlägen samt Begründung, Auto-Verteilung mit Vorschau und Rückgängig, Personenfeldern, Anwesenheit und Arbeitszeitregeln. Die Koordination lässt sich pro Plan ein- und ausschalten; neue Pläne haben sie zunächst aus.
 - Kollaborativer Planungsmodus: Ein optimierter Modus für die Schichtplanung in Teams und Crews. Weitere Informationen dazu finden sich weiter unten.
 - Export: Nach Eingabe des Adminpassworts stehen verschiedene Exportformate zur Verfügung. Auf Wunsch kann dabei die aktuelle Filterkonfiguration berücksichtigt werden. Verfügbare Formate:
     - JSON: Exportiert alle Daten des Schichtplans im JSON-Format.
@@ -117,7 +117,7 @@ Die Statistik hat vier Tabs:
     - Ruhezeit: weniger als 8 Stunden zwischen dem Ende einer Schicht und dem Beginn der nächsten.
     - Belastung: mehr als 10 Stunden an einem Tag.
 
-    Hat der Plan eine Mindestpause oder ein Tagesmaximum (unter »Felder & Regeln« in der Koordination), ersetzen diese Werte die 8 und 10 Stunden. Stunden zählen nur Einsätze, nicht offene Wünsche in beliebten Schichten; nicht berücksichtigte Anmeldungen zählen gar nicht.
+    Hat der Plan eine Mindestpause oder ein Tagesmaximum (im Tab »Einrichtung« der Koordination), ersetzen diese Werte die 8 und 10 Stunden. Stunden zählen nur Einsätze, nicht offene Wünsche in beliebten Schichten; nicht berücksichtigte Anmeldungen zählen gar nicht.
 
     Namen, die sich nur durch Groß- und Kleinschreibung, Leerzeichen oder Akzente unterscheiden, zählen als dieselbe Person. Ähnliche Namen, die sich in Satzzeichen oder Akzenten unterscheiden, bekommen einen Hinweis, dass sie vielleicht dieselbe Person sind. Als Admin kannst du die Tabelle als CSV-Datei herunterladen.
 - **Verlauf**: die Anmeldekurve über die Zeit, mit dem Bedarf als Linie. Wenn in den letzten 7 Tagen genug Anmeldungen eingegangen sind, zeigt die Kurve außerdem, wann der Plan bei diesem Tempo voll wäre. Darunter steht die Verteilung der Stunden auf die Personen.
@@ -129,28 +129,54 @@ Unbegrenzte Schichten zählen nicht zum Bedarf, nicht zu den offenen Plätzen un
 
 ### Koordination
 
-Die Koordinationsseite öffnest Du über »Koordination« in der Leiste des Schichtplans (nur für Admins). Sie hilft bei zwei Arten schwieriger Entscheidungen: beliebte Schichten, für die sich mehr Personen interessieren als Plätze da sind, und eine bekannte Gruppe, die eine Mindeststundenzahl leisten muss. Die Seite hat drei Tabs; alle Zahlen berechnet die Seite im Browser.
+Die Koordinationsseite öffnest Du über »Koordination« in der Leiste des Schichtplans (nur für Admins). Sie hilft bei zwei Arten schwieriger Entscheidungen: beliebte Schichten, für die sich mehr Personen interessieren als Plätze da sind, und eine bekannte Gruppe, die eine Mindeststundenzahl leisten muss. Die Seite hat drei Tabs: »Verteilen«, »Personen« und »Einrichtung«. Alle Zahlen berechnet die Seite im Browser.
+
+**Ein- und Ausschalten.** Die Koordination lässt sich für jeden Plan einzeln ein- und ausschalten. Du findest den Schalter »Koordination verwenden« in den Einstellungen des Plans. Neue Pläne sind zunächst ausgeschaltet. Eingeschaltet erscheint der Link »Koordination« in der Leiste des Plans. Ausgeschaltet verschwinden Link und Abschnitte, und beim Eintragen werden keine Personenfelder und keine Anwesenheit mehr abgefragt. Ausschalten löscht nichts: Angaben, Anmeldestatus, Beliebtheit und Belastungsfaktoren bleiben gespeichert. Öffnest Du die Koordinationsseite, während die Koordination ausgeschaltet ist, siehst Du einen Hinweis mit dem Knopf »Koordination einschalten«. Pläne, die schon Koordinationsdaten enthalten, sind nach dem Update eingeschaltet.
 
 **Status der Anmeldung.** Jede Anmeldung hat einen Status: *angemeldet*, *eingeteilt* oder *nicht berücksichtigt*. In einer beliebten Schicht (mehr Interessierte als Plätze, oder für Schichttyp bzw. Schicht auf »Beliebt« gestellt), die nicht gesperrt ist, ist eine Anmeldung ein offener Wunsch. In allen anderen Schichten zählt sie sofort als Einsatz. Nicht berücksichtigte Personen bleiben gespeichert, weil sie für die Fairness zählen. Im Schichtplan sind sie standardmäßig ausgeblendet; der Filter »Nicht berücksichtigte anzeigen« zeigt sie. Nur Admins können sie entfernen, und die Person kann sich für diese Schicht nicht erneut eintragen (sie wird gebeten, sich an die Koordination zu wenden). In den Einstellungen des Plans legst Du fest, ob Teilnehmende nicht berücksichtigte Anmeldungen überhaupt sehen; standardmäßig sehen sie sie nicht.
 
-**Verteilen.** Wähle links eine Schicht. Die mittlere Spalte reiht die Kandidat:innen und nennt für jede Position den Grund. Die Reihung folgt diesen Regeln, in dieser Reihenfolge:
+**Verteilen.** Wähle eine Schicht, links in der Liste oder in einer der zeitlichen Ansichten (siehe unten). Die mittlere Spalte reiht die Kandidat:innen und nennt für jede Position den Grund. Die Reihung folgt diesen Regeln, in dieser Reihenfolge:
 
 1. Braucht die Schicht erfahrene Personen und ist der Bedarf noch offen, kommen Personen mit der nötigen Stufe zuerst.
-2. Wer eine Regel verletzen würde (Pause zwischen Schichten, Höchststunden pro Tag, mehr als 125 % der Soll-Stunden), steht weiter unten.
-3. Bei beliebten Schichten kommen Personen zuerst, die bisher weniger beliebte Schichten bekommen haben; danach die mit mehr abgelehnten Wünschen oder mehr Einteilungen ohne Wunsch.
-4. Personen, die sich für die Schicht nicht interessiert haben (Quelle »Alle Personen«), kommen danach in der Reihenfolge, wie selten sie ohne Wunsch eingeteilt wurden. Danach zählt die geringste relative Last: Stunden mal Belastungsfaktor, im Verhältnis zum Soll.
-5. Wer lieber am Stück arbeitet und eine direkt anschließende Schicht hat, kommt zuerst.
-6. Den Rest entscheidet das Los (»Neu losen« mischt neu).
+2. Wird eine Person in einer parallelen Schicht als erfahrene Person gebraucht (siehe »Engpass-Hinweis« unten), steht sie weiter unten.
+3. Wer eine Regel verletzen würde (Pause zwischen Schichten, Höchststunden pro Tag, mehr als 125 % der Soll-Stunden), steht weiter unten.
+4. Bei beliebten Schichten kommen Personen zuerst, die bisher weniger beliebte Schichten bekommen haben; danach die mit mehr abgelehnten Wünschen oder mehr Einteilungen ohne Wunsch.
+5. Personen, die sich für die Schicht nicht interessiert haben (Quelle »Alle Personen«), kommen danach in der Reihenfolge, wie selten sie ohne Wunsch eingeteilt wurden. Danach zählt die geringste relative Last: Stunden mal Belastungsfaktor, im Verhältnis zum Soll.
+6. Wer lieber am Stück arbeitet und eine direkt anschließende Schicht hat, kommt zuerst.
+7. Den Rest entscheidet das Los (»Neu losen« mischt neu).
 
 Wer die Schicht nicht übernehmen kann, steht unter »Nicht verfügbar« mit Grund: gleichzeitig in einer anderen Schicht (mit der Aktion »Umbuchen«), nicht anwesend oder bereits abgelehnt. »Vorschlag übernehmen« teilt die ersten freien Plätze ein, »Übrige ablehnen« lehnt alle übrigen ab (auf Wunsch mit Sperren der Schicht). Mit der Quelle »Alle Personen« kannst Du auch Personen einteilen, die sich nicht eingetragen haben.
 
-Die **Auto-Verteilung** füllt die Schichten des aktuellen Filters Schritt für Schritt und zeigt immer zuerst eine Vorschau. Sie ändert nie bestehende Einteilungen oder Ablehnungen, bucht niemanden um und behandelt alle Regeln als hart: Eine Schicht bleibt lieber unterbesetzt, als eine Regel zu verletzen. Offene Plätze erscheinen mit Grund. Nach dem Übernehmen nimmt »Rückgängig« die Änderung zurück, solange die Seite offen bleibt.
+**Gleichzeitig.** Über der Kandidatenliste zeigt die Leiste »Gleichzeitig« alle Schichten, die sich zeitlich mit der gewählten überschneiden. Jeder Chip nennt Uhrzeit, Typ und Belegung. Ist für eine dieser Schichten ein Erfahrungsbedarf offen, steht dort zusätzlich »Erfahrene x/y«. Ein Klick auf einen Chip wählt diese Schicht. Gibt es keine parallelen Schichten, entfällt die Leiste.
 
-**Personen.** Listet alle mit Stunden, Last, Soll, Anwesenheit und den Personenfeldern. Du kannst Personen anlegen, eine Liste von Namen einfügen, Personen umbenennen (auch zwei Schreibweisen zusammenführen) und Angaben bearbeiten.
+**Engpass-Hinweis.** Eine erfahrene Person ist in einer parallelen Schicht unverzichtbar, wenn diese Schicht ohne sie ihren Erfahrungsbedarf nicht mehr erfüllen könnte. Dann steht bei ihr ein Hinweis »⚠ Wird in {Schicht} gebraucht«. Der Hinweis ist nur ein Hinweis: Du kannst die Person trotzdem einteilen. Der eigene Erfahrungsbedarf der gewählten Schicht hat Vorrang. Die Auto-Verteilung füllt zuerst Schichten, denen erfahrene Personen fehlen, und nimmt Personen mit diesem Hinweis nur, wenn sonst niemand frei ist. Die Vorschau nennt solche Fälle unter »Hinweise«.
 
-**Felder & Regeln.** Lege Personenfelder fest (Auswahl, Zahl, Ja/Nein, Text), die Teilnehmende oder nur die Koordination ausfüllen, wähle das Auswahlfeld, das als Erfahrung gilt, frage die Anwesenheit (von/bis) ab und setze die Arbeitszeitregeln: Soll-Stunden pro Person, Mindestpause und Höchststunden pro Tag. Belastungsfaktor, Beliebtheit und Erfahrungsbedarf stellst Du pro Schichttyp ein; pro Schicht kannst Du sie im Abschnitt »Koordination« der Dialoge überschreiben.
+**Die Auto-Verteilung** füllt die Schichten des aktuellen Filters Schritt für Schritt und zeigt immer zuerst eine Vorschau. Sie ändert nie bestehende Einteilungen oder Ablehnungen, bucht niemanden um und behandelt alle Regeln als hart: Eine Schicht bleibt lieber unterbesetzt, als eine Regel zu verletzen. Offene Plätze erscheinen mit Grund. Nach dem Übernehmen nimmt »Rückgängig« die Änderung zurück, solange die Seite offen bleibt.
+
+**Ansichten.** Die Liste ist die Standardansicht. Auf dem Desktop (ab etwa 1024 Pixel Breite) kommen über den Umschalter »Liste | Zeitleiste | Personen« zwei zeitliche Ansichten dazu. Auf dem Smartphone bleibt es bei der Liste. Beide zeigen jeweils einen Tag; mit ‹ › wechselst Du den Tag.
+
+- **Zeitleiste:** Jede Zeile ist ein Bereich, jeder Balken eine Schicht mit ihrer Belegung. ⚠ zeigt offenen Erfahrungsbedarf, ★ Beliebtheit, 🔒 eine Sperre, ein »+« eine Überbelegung. Sich überschneidende Schichten desselben Bereichs liegen untereinander. Ein Klick auf einen Balken wählt die Schicht.
+- **Personen:** Jede Zeile ist eine Person. Volle Balken sind ihre Einsätze, gestrichelte Balken offene Wünsche, graue Flächen Zeiten außerhalb ihrer Anwesenheit. Die Spalte der gewählten Schicht ist markiert. Mit »Nur frei während der gewählten Schicht« siehst Du nur Personen, die in dieser Zeit frei sind; ihr »+« trägt sie direkt in die Schicht ein. Ein Klick auf einen Namen markiert die Person. Diese Ansicht ist nicht der Tab »Personen«, sondern eine Ansicht im Tab »Verteilen«.
+
+**Personen.** Listet alle mit Stunden, Last, Soll, Anwesenheit und den Personenfeldern. Die Erfahrungsstufe lässt sich direkt in der Zeile per Auswahl setzen, ohne das Dialogfenster der Person zu öffnen. Fehlt eine Angabe, nennt die Zeile das fehlende Feld. Du kannst Personen anlegen, eine Liste von Namen einfügen, Personen umbenennen (auch zwei Schreibweisen zusammenführen) und Angaben bearbeiten.
+
+**Einrichtung.** Hier legst Du die Regeln des Plans fest. Die Abschnitte stehen in dieser Reihenfolge: Personenfelder, Erfahrung, Bereiche, Anwesenheit, Arbeitszeit.
+
+- **Personenfelder** (Auswahl, Zahl, Ja/Nein, Text), die Teilnehmende oder nur die Koordination ausfüllen. Sie werden sofort gespeichert.
+- **Erfahrung:** Wähle das Auswahlfeld, das als Erfahrung gilt. Die Reihenfolge der Optionen ist die Stufe, die niedrigste zuerst (z. B. »Neu < Erfahren < Profi«). Die Stufe gilt global für jede Person, nicht pro Bereich: Wer an der Technik Profi ist, ist an der Bar nicht automatisch Profi. Du setzt sie deshalb einmal pro Person, im Tab »Personen« oder im Dialogfenster der Person.
+- **Bereiche:** Eine Tabelle mit allen Schichttypen und den Werten, die für ihre Schichten gelten:
+
+  | Spalte | Bedeutung |
+  |---|---|
+  | Faktor | Belastungsfaktor: wie stark eine Stunde in diesem Bereich zählt (Standard 1). |
+  | Beliebtheit | »Automatisch« (beliebt, sobald die Schicht überbucht ist), »Beliebt« oder »Nicht beliebt«. |
+  | Erfahrene mindestens | Wie viele Personen mindestens mit der angegebenen Stufe eingeteilt sein müssen. Die Spalte erscheint nur, wenn ein Erfahrungsfeld gewählt ist. |
+
+  Jede Zeile speichert, sobald Du das Feld verlässt. Die Werte gelten für alle Schichten des Bereichs; einzelne Schichten stellst Du im Schicht-Dialog abweichend ein.
+- **Anwesenheit und Arbeitszeit:** Frage die Anwesenheit (von/bis) ab und setze die Arbeitszeitregeln: Soll-Stunden pro Person, Mindestpause und Höchststunden pro Tag. Diese Angaben speichert »Speichern«.
 
 Datenschutz: Angaben, die Teilnehmende selbst machen, kann jede Person lesen, die den Namen kennt, weil es keinen Login gibt. Felder, die nur die Koordination ausfüllt, sehen nur Admins.
+
 
 ### Export
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.

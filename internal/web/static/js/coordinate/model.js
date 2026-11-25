@@ -51,6 +51,7 @@
  * @property {number} assignedUnwished Einsätze added by the coordination
  * @property {Map<string, number>} perDayMin  minutes per logical day
  * @property {boolean} missingRequired required participant field without value
+ * @property {Object[]} missingFields   the required participant fields without value (plan.fields entries)
  * @property {Array<{kind:'overlap'|'rest'|'day'|'over_target'|'under_target'|'absent', shiftIds:number[], minutes?:number}>} warnings
  * @property {CoordShift[]} items      Einsätze sorted by start
  *
@@ -59,6 +60,9 @@
  * @property {Map<string, CoordPerson>} persons
  * @property {{field:Object|null, options:Array<{id:string, de:string, en:string, level:number}>}} experience
  * @property {{restMin:number|null, dayMin:number|null}} limits  plan rules (null = not set)
+ * @property {{anyFactor:boolean, anyPopular:boolean, anyDeclined:boolean}} flags
+ *                         which optional columns carry information: a shift has a load factor other than 1,
+ *                         a shift is popular, a participation is declined
  * @property {Array} parts     all participations {shiftId, key, name, status, addedByAdmin} (basis of applyOpsLocally)
  * @property {Map<string, Object>} partIndex  the same by "shiftId|key"
  * @property {Object} ctx      static input shared by rebuilt models
@@ -157,6 +161,7 @@ function buildFromParts(ctx, parts) {
         assignedUnwished: 0,
         perDayMin: new Map(),
         missingRequired: false,
+        missingFields: [],
         warnings: [],
         items: [],
       };
@@ -243,17 +248,26 @@ function buildFromParts(ctx, parts) {
       const names = spellings.get(person.key);
       if (names) person.name = [...names.entries()].sort((a, b) => b[1] - a[1])[0][0];
     }
-    person.missingRequired = requiredFields.some(f => {
+    person.missingFields = requiredFields.filter(f => {
       const v = person.row?.values?.[f.id];
       return v === undefined || v === null || v === '';
     });
+    person.missingRequired = person.missingFields.length > 0;
     person.items.sort((a, b) => a.start - b.start || a.id - b.id);
     person.warnings = personWarnings(person, plan, restMin, dayMin);
   }
 
+  const flags = { anyFactor: false, anyPopular: false, anyDeclined: false };
+  for (const cs of shifts.values()) {
+    if (cs.factor !== 1) flags.anyFactor = true;
+    if (cs.popular) flags.anyPopular = true;
+  }
+  for (const person of persons.values()) if (person.wishesDeclined > 0) flags.anyDeclined = true;
+
   return {
     shifts,
     persons,
+    flags,
     experience,
     limits: { restMin, dayMin },
     parts,

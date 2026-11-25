@@ -37,7 +37,7 @@ The programme was developed because previous shift planning tools did not meet t
     - Changing the sorting of shift types.
     - Adjusting description text, title, day boundary, and further settings of the shift plan.
     - Export: The data of the shift plan can be exported in various formats, whereby the current filter configuration can optionally be taken into account. Further information on the export formats can be found below.
-- Coordination: A page for admins that helps with hard decisions: who gets a popular shift (experience, fairness, conflicts), and how a group with a work assignment is distributed fairly. Includes ranked suggestions with reasons, an auto-distribution with preview and undo, person fields, attendance and working time rules.
+- Coordination: A page for admins that helps with hard decisions: who gets a popular shift (experience, fairness, conflicts), and how a group with a work assignment is distributed fairly. Includes ranked suggestions with reasons, an auto-distribution with preview and undo, person fields, attendance and working time rules. Coordination can be switched on or off for each plan; new plans start with it off.
 - Collaborative planning mode: An optimised mode for shift planning in teams and crews. Further information on this can be found further below.
 - Export: After entering the admin password, various export formats are available. On request, the current filter configuration can be taken into account. Available formats:
     - JSON: Exports all data of the shift plan in JSON format.
@@ -118,7 +118,7 @@ The statistics have four tabs:
     - Rest: less than 8 hours between the end of one shift and the start of the next.
     - Load: more than 10 hours on one day.
 
-    If the plan has a minimum break or a maximum per day (under "Fields & rules" in the coordination), those values replace 8 and 10 hours. Hours count only assignments, not open wishes in popular shifts; not selected sign-ups are not counted at all.
+    If the plan has a minimum break or a maximum per day (in the "Setup" tab of the coordination), those values replace 8 and 10 hours. Hours count only assignments, not open wishes in popular shifts; not selected sign-ups are not counted at all.
 
     Names that differ only in capitalisation, spaces or accents count as the same person. Similar names that differ in punctuation or accents get a hint that they may be the same person. Admins can download the table as a CSV file.
 - **History**: the sign-up curve over time, with the required spots as a line. If enough sign-ups came in during the last 7 days, the curve also shows when the plan would be full at this pace. Below it is the distribution of hours across people.
@@ -130,28 +130,54 @@ Unlimited shifts do not count into demand, open spots or the share filled. The h
 
 ### Coordination
 
-Coordinators open the coordination page via "Coordination" in the control bar (admins only). It helps with two kinds of hard decisions: popular shifts with more interested people than places, and a known group that has to work a minimum number of hours. The page has three tabs; all figures are calculated in the browser.
+You open the coordination page via "Coordination" in the shift plan's control bar (admins only). It helps with two kinds of hard decisions: popular shifts with more interested people than places, and a known group that has to work a minimum number of hours. The page has three tabs: "Distribute", "People" and "Setup". All figures are calculated in the browser.
 
-**Sign-up status.** Every sign-up has a status: *signed up*, *assigned* or *not selected*. In a shift that is popular (more interested people than places, or set to "Popular" for the shift type or shift) and not locked, a sign-up is an open wish. In all other shifts it counts as an assignment right away. People who are not selected stay on record, because they count for fairness. They are hidden from the plan view by default; the filter "Show not selected" shows them. Only the admin can remove them, and the person cannot sign up for that shift again (they are asked to contact the coordination team). In the plan settings you can decide whether participants see not selected sign-ups at all; by default they do not.
+**Switching it on and off.** Coordination can be switched on or off for each plan. You find the switch "Use coordination" in the plan settings. New plans start with it switched off. When it is on, the "Coordination" link appears in the plan's control bar. When it is off, the link and sections disappear, and sign-up no longer asks for person fields or attendance. Switching it off deletes nothing: details, sign-up status, popularity and load factors stay stored. If you open the coordination page while coordination is off, a notice offers the button "Switch on coordination". Plans that already hold coordination data are switched on after the update.
 
-**Distribute.** Choose a shift on the left. The middle column ranks the candidates and gives a reason for every position. The ranking follows these rules, in this order:
+**Sign-up status.** Every sign-up has a status: *signed up*, *assigned* or *not selected*. In a shift that is popular (more interested people than places, or set to "Popular" for the shift type or shift) and not locked, a sign-up is an open wish. In all other shifts it counts as an assignment right away. People who are not selected stay on record, because they count for fairness. They are hidden from the plan view by default; the filter "Show not selected" shows them. Only admins can remove them, and the person cannot sign up for that shift again (they are asked to contact the coordination team). In the plan settings you can decide whether participants see not selected sign-ups at all; by default they do not.
+
+**Distribute.** Choose a shift on the left, in the list or in one of the timeline views (see below). The middle column ranks the candidates and gives a reason for every position. The ranking follows these rules, in this order:
 
 1. If the shift needs experienced people and the need is not met yet, people with the required level come first.
-2. People who would break a rule (break between shifts, maximum hours per day, more than 125 % of their target hours) come last.
-3. For popular shifts, people who received fewer popular shifts so far come first; then those with more declined wishes or more assignments without a request.
-4. People who were not interested in the shift (source "Everyone") come in order of how rarely they were assigned without a request. After that comes the lowest relative load: hours times load factor, compared to the target.
-5. People who prefer long days and have a directly adjoining shift come first.
-6. The rest is decided by a lot ("Draw again" shuffles it).
+2. If a person is needed as an experienced person in a parallel shift (see "Needed in" below), they come further down.
+3. People who would break a rule (break between shifts, maximum hours per day, more than 125 % of their target hours) come further down.
+4. For popular shifts, people who received fewer popular shifts so far come first; then those with more declined wishes or more assignments without a request.
+5. People who were not interested in the shift (source "All people") come in order of how rarely they were assigned without a request. After that comes the lowest relative load: hours times load factor, compared to the target.
+6. People who prefer long days and have a directly adjoining shift come first.
+7. The rest is decided by a lot ("Draw again" shuffles it).
 
-People who cannot take the shift appear under "Not available" with the reason: they are in another shift at the same time (with the action "Move"), they are not present, or they were already declined. "Apply suggestion" assigns the first free places, "Decline the rest" declines everyone who remains (optionally locking the shift). With the source "Everyone" you can also assign people who did not sign up.
+People who cannot take the shift appear under "Not available" with the reason: they are in another shift at the same time (with the action "Move"), they are not present, or they were already declined. "Apply suggestion" assigns the first free places, "Decline the rest" declines everyone who remains (optionally locking the shift). With the source "All people" you can also assign people who did not sign up.
 
-**Auto-distribute** fills the shifts of the current filter step by step and always shows a preview first. It never changes existing assignments or declines, never moves people and treats all rules as hard: a shift stays short rather than break a rule. Open places are listed with the reason. After applying, "Undo" takes the change back as long as the page stays open.
+**At the same time.** Above the candidates, the bar "At the same time" shows all shifts that overlap the selected one. Each chip shows the time, the type and the coverage. If one of these shifts has an open experience need, the chip also shows "Experienced x/y". Clicking a chip selects that shift. Without overlapping shifts the bar is hidden.
 
-**People.** Lists everyone with hours, load, target, attendance and the person fields. You can add people, paste a list of names, rename people (also merging two spellings) and edit details.
+**Needed-in hint.** An experienced person is essential in a parallel shift if that shift could no longer meet its experience need without them. The candidate then shows "⚠ Needed in {shift}". The hint is only a warning: you can still assign the person. The experience need of the selected shift comes first. The auto-distribution fills shifts with missing experienced people first and uses people with this hint only if nobody else is free. The preview lists such cases under "Notes".
 
-**Fields & rules.** Define person fields (choice, number, yes/no, text) that participants or only the coordination fill in, choose which choice field means "experience", ask for attendance (from/until) and set the working time rules: target hours per person, minimum break and maximum hours per day. The load factor, popularity and experience need are set per shift type and can be overridden per shift in the "Coordination" section of the dialogs.
+**Auto-distribution** fills the shifts of the current filter step by step and always shows a preview first. It never changes existing assignments or declines, never moves people and treats all rules as hard: a shift stays short rather than break a rule. Open places are listed with the reason. After applying, "Undo" takes the change back as long as the page stays open.
+
+**Views.** The list is the default view. On the desktop (from about 1024 pixels wide), two timeline views are added with the switch "List | Timeline | People". On a smartphone the list stays. Both views show one day at a time; change the day with ‹ ›.
+
+- **Timeline:** Each row is an area, each bar a shift with its coverage. ⚠ marks an open experience need, ★ popularity, 🔒 a lock, and "+" an overbooking. Overlapping shifts of the same area sit in separate lanes. Clicking a bar selects the shift.
+- **People:** Each row is a person. Solid bars are their assignments, dashed bars open wishes, grey areas times outside their attendance. The column of the selected shift is highlighted. With "Only free during the selected shift" you see only people who are free at that time; their "+" assigns them to the shift directly. Clicking a name highlights the person. This view is not the "People" tab; it is a view inside the "Distribute" tab.
+
+**People.** Lists everyone with hours, load, target, attendance and the person fields. The experience level can be set directly in the row with a select, without opening the person's dialog. If a detail is missing, the row names the missing field. You can add people, paste a list of names, rename people (also merging two spellings) and edit details.
+
+**Setup.** Here you define the rules of the plan. The sections appear in this order: person fields, experience, areas, attendance, working time.
+
+- **Person fields** (choice, number, yes/no, text) that participants or only the coordination fill in. They are saved immediately.
+- **Experience:** Choose the choice field that counts as experience. The order of its options is the level, the lowest first (for example "New < Experienced < Pro"). The level applies globally to each person, not per area: a person who is a pro at technology is not automatically a pro at the bar. Set it once per person, in the "People" tab or in the person's dialog.
+- **Areas:** A table of all shift types with the values that apply to their shifts:
+
+  | Column | Meaning |
+  |---|---|
+  | Load factor | How much one hour in this area counts (default 1). |
+  | Popularity | "Automatic" (popular once overbooked), "Popular" or "Not popular". |
+  | Experienced at least | How many people must be assigned at least at the given level. The column appears only when an experience field is chosen. |
+
+  Each row saves as soon as you leave the field. The values apply to all shifts of the area; set single shifts differently in the shift dialog.
+- **Attendance and working time:** Ask for attendance (from/until) and set the working time rules: target hours per person, minimum break and maximum hours per day. "Save" stores these.
 
 Privacy: details that participants enter themselves can be read by anyone who knows the person's name, because there is no login. Fields that only the coordination fills in are visible to admins only.
+
 
 ### Export
 

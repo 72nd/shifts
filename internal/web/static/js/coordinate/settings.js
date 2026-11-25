@@ -40,6 +40,10 @@ document.addEventListener('alpine:init', () => {
             return plan.fields.filter(f => f.kind === 'choice');
         },
 
+        levelsText(page) {
+            return page.$t('coord.levels_order', { levels: page.model.experience.options.map(o => page.t(o)).join(' < ') });
+        },
+
         kindLabel(page, f) {
             return page.$t(`coord.field_kind_${f.kind}`);
         },
@@ -108,6 +112,62 @@ document.addEventListener('alpine:init', () => {
                 page.fail(e, false);
             } finally {
                 page.busy = false;
+            }
+        },
+    }));
+
+    /** Areas table: factor, popularity and experience need per shift type, saved per row. */
+    Alpine.data('coordAreas', () => ({
+        rows: {},
+
+        /** Copies the types into the rows; rows with unsaved input keep their values. */
+        sync(types, page) {
+            const rows = {};
+            for (const t of types) {
+                const old = this.rows[t.id];
+                rows[t.id] = old && (old.dirty || old.saving) ? old : {
+                    load: String(t.load_factor ?? 1).replace('.', ','),
+                    popularity: t.popularity || 'auto',
+                    count: t.exp_min_count || 0,
+                    level: t.exp_min_level || '',
+                    dirty: false,
+                    saving: false,
+                    error: '',
+                };
+            }
+            this.rows = rows;
+        },
+
+        /** Saves one area with its full type record (title, description and location stay as they are). */
+        async save(page, type) {
+            const row = this.rows[type.id];
+            if (!row || row.saving) return;
+            const load = Number(String(row.load).trim().replace(',', '.'));
+            if (!Number.isFinite(load) || load < 0.1 || load > 5) {
+                row.error = page.$t('coord.error_load_factor');
+                return;
+            }
+            row.saving = true;
+            row.error = '';
+            try {
+                await page.api('PUT', `/types/${type.id}`, {
+                    title_de: type.title_de,
+                    title_en: type.title_en,
+                    description_de: type.description_de,
+                    description_en: type.description_en,
+                    location_de: type.location_de,
+                    location_en: type.location_en,
+                    load_factor: load,
+                    popularity: row.popularity,
+                    exp_min_count: Number(row.count) || 0,
+                    exp_min_level: row.level || '',
+                });
+                row.dirty = false;
+                await page.load(true);
+            } catch (e) {
+                row.error = e.message || page.$t('coord.error_action');
+            } finally {
+                row.saving = false;
             }
         },
     }));

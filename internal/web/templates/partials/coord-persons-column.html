@@ -1,46 +1,60 @@
 {{ define "coord-persons-column" }}
-{{/* Person overview of the workbench (name, hours, load, popular shifts received, declined wishes, warnings).
-     Used twice: as a column on wide screens and as a collapsible section below. Needs coordDistribute scope. */}}
+{{/* Person overview of the workbench (name, level, hours, load, popular shifts received, declined wishes, warnings).
+     Used twice: as a column on wide screens and as a collapsible section below. Needs coordDistribute scope.
+     Columns without information are left out (model.flags, experience field). */}}
 <div class="space-y-2 min-w-0">
     <label class="flex items-center gap-2 text-sm">
         <span class="shrink-0" x-text="$t('coord.people_sort')"></span>
         <select class="select select-bordered select-sm h-11 min-h-11 min-w-0 flex-1" x-model="personSort">
             <option value="load" x-text="$t('coord.sort_load')"></option>
+            <template x-if="model.experience.field">
+                <option value="experience" x-text="$t('coord.sort_experience')"></option>
+            </template>
             <option value="under_target" x-text="$t('coord.sort_under_target')"></option>
             <option value="declined" x-text="$t('coord.sort_declined')"></option>
             <option value="name" x-text="$t('coord.sort_name')"></option>
         </select>
     </label>
-    <div class="grid grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2rem_2rem_1.25rem] gap-x-1 px-2 text-xs text-base-content/70">
+    <div class="grid gap-x-1 px-2 text-xs text-base-content/70" :style="{ gridTemplateColumns: personCols(model) }">
         <span x-text="$t('coord.col_name')"></span>
+        <span x-show="model.experience.field" x-text="$t('coord.col_level')"></span>
         <span class="text-right" :title="$t('coord.col_hours')" x-text="$t('coord.col_hours_short')"></span>
-        <span class="text-right" :title="$t('coord.col_load')" x-text="$t('coord.col_load_short')"></span>
-        <span class="text-right" role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</span>
-        <span class="text-right" role="img" :aria-label="$t('coord.col_declined')" :title="$t('coord.col_declined')">✗</span>
+        <span class="text-right" x-show="model.flags.anyFactor" :title="$t('coord.col_load')" x-text="$t('coord.col_load_short')"></span>
+        <span class="text-right" x-show="model.flags.anyPopular" role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</span>
+        <span class="text-right" x-show="model.flags.anyDeclined" role="img" :aria-label="$t('coord.col_declined')" :title="$t('coord.col_declined')">✗</span>
         <span></span>
     </div>
-    <ul class="divide-y divide-base-300 max-h-[60vh] overflow-y-auto">
-        <template x-for="p in sortedPersons(personList)" :key="p.key">
-            <li>
-                <button type="button"
-                    class="w-full min-h-11 px-2 grid grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2rem_2rem_1.25rem] gap-x-1 items-center text-left text-sm hover:bg-base-200"
-                    :class="{ 'bg-base-200': highlightKey === p.key }"
-                    :aria-pressed="highlightKey === p.key ? 'true' : 'false'"
-                    @click="toggleHighlight(p.key)">
-                    <span class="truncate" :title="p.name" x-text="p.name"></span>
-                    <span class="text-right tabular-nums" x-text="number(p.hours)"></span>
-                    <span class="text-right tabular-nums" x-text="number(p.load)"></span>
-                    <span class="text-right tabular-nums" x-text="p.popularReceived"></span>
-                    <span class="text-right tabular-nums" x-text="p.wishesDeclined"></span>
-                    <span class="inline-flex justify-end text-warning" x-show="p.warnings.length" :title="p.warnings.map(w => warningText(w)).join(', ')">
-                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span class="sr-only" x-text="p.warnings.map(w => warningText(w)).join(', ')"></span>
-                    </span>
-                </button>
-            </li>
-        </template>
-    </ul>
+    <template x-for="g in personGroups(personList, model.experience, o => t(o), $t('coord.level_none'))" :key="g.id">
+        <section>
+            <h3 class="sticky top-0 z-10 bg-base-100 px-2 py-1 text-xs font-medium text-base-content/70" x-show="g.label" x-text="g.label"></h3>
+            <ul class="divide-y divide-base-300">
+                <template x-for="p in g.persons" :key="p.key">
+                    <li>
+                        <button type="button"
+                            class="w-full min-h-11 px-2 grid gap-x-1 items-center text-left text-sm hover:bg-base-200"
+                            :style="{ gridTemplateColumns: personCols(model) }"
+                            :class="{ 'bg-base-200': highlightKey === p.key }"
+                            :aria-pressed="highlightKey === p.key ? 'true' : 'false'"
+                            @click="toggleHighlight(p.key)">
+                            <span class="truncate" :title="p.name" x-text="p.name"></span>
+                            <span class="truncate text-xs" x-show="model.experience.field"
+                                :title="p.level >= 0 ? t(model.experience.options[p.level]) : ''"
+                                x-text="p.level >= 0 ? t(model.experience.options[p.level]) : '–'"></span>
+                            <span class="text-right tabular-nums" x-text="number(p.hours)"></span>
+                            <span class="text-right tabular-nums" x-show="model.flags.anyFactor" x-text="number(p.load)"></span>
+                            <span class="text-right tabular-nums" x-show="model.flags.anyPopular" x-text="p.popularReceived"></span>
+                            <span class="text-right tabular-nums" x-show="model.flags.anyDeclined" x-text="p.wishesDeclined"></span>
+                            <span class="inline-flex justify-end text-warning" :title="p.warnings.map(w => warningText(w)).join(', ')">
+                                <svg x-show="p.warnings.length" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span class="sr-only" x-text="p.warnings.map(w => warningText(w)).join(', ')"></span>
+                            </span>
+                        </button>
+                    </li>
+                </template>
+            </ul>
+        </section>
+    </template>
 </div>
 {{ end }}

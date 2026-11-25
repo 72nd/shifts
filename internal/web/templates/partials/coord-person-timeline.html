@@ -1,0 +1,78 @@
+{{ define "coord-person-timeline" }}
+{{/* People view (from lg): matrix person x time of one day, replaces shift list and person column. Needs coordDistribute scope.
+     Rows are sorted like the person column (personSort); "+" assigns like "Assign" in the workbench. */}}
+<template x-if="activeView === 'people'">
+    <div>
+        <p class="text-base-content/70" x-show="!personTimeline.rows.length" x-text="$t('coord.people_empty')"></p>
+        <p class="text-base-content/70" x-show="personTimeline.rows.length && !personTimeline.hours.length" x-text="$t('coord.timeline_empty')"></p>
+        <template x-for="pt in [personTimeline]" :key="currentTimelineDay">
+            <div x-show="pt.rows.length && pt.hours.length" class="max-h-[45vh] overflow-auto border border-base-300 rounded-box">
+                <div :style="{ minWidth: timelineWidth(pt.hours, 11) }">
+                    <!-- Hour header -->
+                    <div class="sticky top-0 z-30 flex bg-base-100 border-b border-base-300">
+                        <div class="sticky left-0 z-30 w-44 shrink-0 bg-base-100"></div>
+                        <div class="relative flex min-w-0 flex-1">
+                            <div class="absolute inset-y-0 bg-primary/10" x-show="pt.selection" aria-hidden="true"
+                                :style="pt.selection ? { left: pt.selection.left + '%', width: pt.selection.width + '%' } : {}"></div>
+                            <template x-for="(h, i) in pt.hours" :key="i">
+                                <div class="relative flex-1 min-w-0 border-l border-base-300 px-1 text-xs tabular-nums text-base-content/70" x-text="String(h).padStart(2, '0')"></div>
+                            </template>
+                        </div>
+                    </div>
+                    <template x-for="row in timelineRows(pt, !!model.experience.field, onlyFree)" :key="row.person.key">
+                        <div class="flex border-b border-base-300 last:border-b-0" data-row>
+                            <button type="button" class="sticky left-0 z-20 w-44 shrink-0 min-h-11 px-2 flex items-center gap-2 text-left text-sm hover:bg-base-200"
+                                :class="highlightKey === row.person.key ? 'bg-base-200' : 'bg-base-100'"
+                                :aria-pressed="highlightKey === row.person.key ? 'true' : 'false'"
+                                :title="row.person.name" @click="toggleHighlight(row.person.key)">
+                                <span class="min-w-0 flex-1 truncate" x-text="row.person.name"></span>
+                                <span class="shrink-0 text-xs text-base-content/70" x-show="model.experience.field && row.person.level >= 0"
+                                    x-text="row.person.level >= 0 ? t(model.experience.options[row.person.level]) : ''"></span>
+                            </button>
+                            <div class="relative h-11 min-w-0 flex-1">
+                                <!-- Selected shift as a column, hour grid lines on top -->
+                                <div class="absolute inset-y-0 bg-primary/10" x-show="pt.selection" aria-hidden="true"
+                                    :style="pt.selection ? { left: pt.selection.left + '%', width: pt.selection.width + '%' } : {}"></div>
+                                <div class="absolute inset-0 flex" aria-hidden="true">
+                                    <template x-for="(h, i) in pt.hours" :key="i">
+                                        <div class="flex-1 border-l border-base-300"></div>
+                                    </template>
+                                </div>
+                                <template x-for="(a, ai) in row.absent" :key="ai">
+                                    <div class="absolute inset-y-0 bg-base-200" :style="{ left: a.left + '%', width: a.width + '%' }">
+                                        <span class="sr-only" x-text="$t('coord.absent')"></span>
+                                    </div>
+                                </template>
+                                <template x-for="b in row.bars" :key="b.kind + b.cs.id">
+                                    <button type="button" data-bar :data-left="b.left"
+                                        class="absolute top-0.5 bottom-0.5 min-w-0 overflow-hidden rounded-field px-1 flex items-center text-xs"
+                                        :class="[b.kind === 'wish' ? 'border border-dashed border-base-content/40 bg-base-100' : 'bg-base-300',
+                                            b.cs.id === selectedShiftId ? 'ring-2 ring-primary' : '']"
+                                        :style="{ left: b.left + '%', width: b.width + '%' }"
+                                        :title="shiftLabel(b.cs) + (b.kind === 'wish' ? ' (' + $t('coord.wish') + ')' : '')"
+                                        :aria-label="shiftLabel(b.cs) + (b.kind === 'wish' ? ', ' + $t('coord.wish') : '')"
+                                        :aria-current="b.cs.id === selectedShiftId ? 'true' : null"
+                                        @click="selectShift(b.cs.id)" @keydown="neighbourBar($event)">
+                                        <span class="truncate" x-text="typeTitle(b.cs.type)"></span>
+                                    </button>
+                                </template>
+                                <!-- Free during the selected shift: assign -->
+                                <div class="absolute inset-y-0 flex items-center justify-center" x-show="pt.selection && row.freeDuring"
+                                    :style="pt.selection ? { left: pt.selection.left + '%', width: pt.selection.width + '%' } : {}">
+                                    <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11 text-lg" :disabled="busy"
+                                        :aria-label="$t('coord.assign_person', { name: row.person.name, shift: shortLabel(selectedShift) })"
+                                        :title="$t('coord.assign_person', { name: row.person.name, shift: shortLabel(selectedShift) })"
+                                        @click="apply(assignOps(selectedShift, row.person), { pending: row.person.key })">
+                                        <span class="loading loading-spinner loading-sm" x-show="pendingKey === row.person.key"></span>
+                                        <span aria-hidden="true" x-show="pendingKey !== row.person.key">+</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+{{ end }}

@@ -14,6 +14,7 @@ export class SettingsModal extends Modal {
         this.is_multilingual = false;
         this.collaborative_mode = false;
         this.hide_declined = true; // shown as "hide not selected sign-ups"; the API stores show_declined
+        this.coordination_enabled = false;
         this.coordination = {}; // coordination settings of the plan, sent back unchanged
         this.title_de = '';
         this.title_en = '';
@@ -35,6 +36,7 @@ export class SettingsModal extends Modal {
         this.is_multilingual = plan.is_multilingual;
         this.collaborative_mode = plan.collaborative_mode || false;
         this.hide_declined = !plan.show_declined;
+        this.coordination_enabled = !!plan.coordination_enabled;
         this.coordination = {
             experience_field_id: plan.experience_field_id ?? null,
             attendance_mode: plan.attendance_mode || 'off',
@@ -121,6 +123,7 @@ export class SettingsModal extends Modal {
             body: JSON.stringify({
                 is_multilingual: this.is_multilingual,
                 collaborative_mode: this.collaborative_mode,
+                coordination_enabled: this.coordination_enabled,
                 title_de: this.is_multilingual ? this.title_de : null,
                 title_en: this.title_en,
                 description_de: this.is_multilingual ? this.description_de : null,

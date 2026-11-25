@@ -43,6 +43,8 @@ type ShiftPlan struct {
 	MinRestMinutes    *int   `json:"min_rest_minutes"`
 	MaxDayMinutes     *int   `json:"max_day_minutes"`
 	ShowDeclined      bool   `json:"show_declined"` // show declined participations to non-admins
+	// CoordinationEnabled switches the coordination tools (person fields, attendance) on for the plan.
+	CoordinationEnabled bool `json:"coordination_enabled"`
 
 	// Fields are the person fields of the plan (loaded by GetShiftPlanByToken only).
 	Fields []PlanField `json:"-"`
@@ -52,7 +54,7 @@ type ShiftPlan struct {
 const planColumns = `id, token, admin_password, start_date, end_date, created_at,
 	is_multilingual, title_de, title_en, description_de, description_en,
 	day_boundary_time, collaborative_mode, time_zone,
-	experience_field_id, attendance_mode, default_target_minutes, min_rest_minutes, max_day_minutes, show_declined`
+	experience_field_id, attendance_mode, default_target_minutes, min_rest_minutes, max_day_minutes, show_declined, coordination_enabled`
 
 // scanPlan reads a row selected with planColumns.
 func scanPlan(row rowScanner) (ShiftPlan, error) {
@@ -80,6 +82,7 @@ func scanPlan(row rowScanner) (ShiftPlan, error) {
 		&rest,
 		&maxDay,
 		&plan.ShowDeclined,
+		&plan.CoordinationEnabled,
 	)
 	if err != nil {
 		return plan, err
@@ -140,6 +143,8 @@ type NewShiftPlan struct {
 	MinRestMinutes    *int   `json:"-"`
 	MaxDayMinutes     *int   `json:"-"`
 	ShowDeclined      bool   `json:"-"`
+	// CoordinationEnabled is the coordination switch on update; nil leaves it unchanged.
+	CoordinationEnabled *bool `json:"-"`
 	// KeepCoordination leaves the coordination settings unchanged on update.
 	KeepCoordination bool `json:"-"`
 }
@@ -537,6 +542,13 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 		}
 		if rowsAffected == 0 {
 			return fmt.Errorf("shift plan not found")
+		}
+
+		if plan.CoordinationEnabled != nil {
+			if _, err := tx.Exec(`UPDATE shift_plans SET coordination_enabled = ? WHERE token = ?`,
+				*plan.CoordinationEnabled, token); err != nil {
+				return fmt.Errorf("failed to update coordination switch: %w", err)
+			}
 		}
 
 		// Get the updated plan within the transaction to avoid deadlock

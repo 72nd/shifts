@@ -64,6 +64,8 @@ type ShiftPlanUpdateRequest struct {
 	MaxDayMinutes *int `json:"max_day_minutes" example:"480"`
 	// Whether participants can see declined sign-ups
 	ShowDeclined bool `json:"show_declined" example:"false"`
+	// Coordination switch (omitted or null = unchanged)
+	CoordinationEnabled *bool `json:"coordination_enabled,omitempty" example:"false"`
 } // @name ShiftPlanUpdateRequest
 
 // ShiftTypeOrderRequest represents a request to update shift type order
@@ -122,6 +124,8 @@ type ShiftPlanResponse struct {
 	MaxDayMinutes *int `json:"max_day_minutes" example:"480"`
 	// Whether participants can see declined sign-ups
 	ShowDeclined bool `json:"show_declined" example:"false"`
+	// Whether the coordination tools are switched on for this plan
+	CoordinationEnabled bool `json:"coordination_enabled" example:"false"`
 	// Person fields of the plan (definitions only, no values)
 	Fields []PlanFieldResponse `json:"fields"`
 } // @name ShiftPlanResponse
