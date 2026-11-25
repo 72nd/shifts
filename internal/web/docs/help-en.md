@@ -37,6 +37,7 @@ The programme was developed because previous shift planning tools did not meet t
     - Changing the sorting of shift types.
     - Adjusting description text, title, day boundary, and further settings of the shift plan.
     - Export: The data of the shift plan can be exported in various formats, whereby the current filter configuration can optionally be taken into account. Further information on the export formats can be found below.
+- Coordination: A page for admins that helps with hard decisions: who gets a popular shift (experience, fairness, conflicts), and how a group with a work assignment is distributed fairly. Includes ranked suggestions with reasons, an auto-distribution with preview and undo, person fields, attendance and working time rules.
 - Collaborative planning mode: An optimised mode for shift planning in teams and crews. Further information on this can be found further below.
 - Export: After entering the admin password, various export formats are available. On request, the current filter configuration can be taken into account. Available formats:
     - JSON: Exports all data of the shift plan in JSON format.
@@ -54,7 +55,7 @@ At events, two fundamentally different types of shifts can be distinguished. Man
 The collaborative planning mode differs from the normal mode, in which the aim is to fill all shifts as quickly as possible according to the first-come-first-served principle. The collaborative mode, by contrast, is based on a two-stage process:
 
 1. All people can initially express interest in a shift. Shifts can be deliberately "overbooked" in this mode. In this way, the needs and wishes of all crew members are made transparent.
-2. Based on the expressed interests, the team can now decide which shifts are concretely filled how. The corresponding changes are made in the shift plan. Finalised shifts can be fixed or locked by the admin. After that, they are no longer changeable for regular users. Fixed shifts are highlighted in colour.
+2. Based on the expressed interests, the team can now decide which shifts are concretely filled how. People who are chosen are marked as assigned, the others as not selected (they are not deleted, see "Coordination"). Finalised shifts can be fixed or locked by the admin. After that, they are no longer changeable for regular users. Fixed shifts are highlighted in colour.
 
 This makes it clear to all participants at all times which shifts are definitively assigned. Since people can no longer remove themselves from fixed shifts independently, they are motivated to contact their crew coordination for necessary changes.
 
@@ -114,12 +115,39 @@ The statistics have four tabs:
     - Rest: less than 8 hours between the end of one shift and the start of the next.
     - Load: more than 10 hours on one day.
 
+    If the plan has a minimum break or a maximum per day (under "Fields & rules" in the coordination), those values replace 8 and 10 hours. Hours count only assignments, not open wishes in popular shifts; not selected sign-ups are not counted at all.
+
     Names that differ only in capitalisation, spaces or accents count as the same person. Similar names that differ in punctuation or accents get a hint that they may be the same person. Admins can download the table as a CSV file.
 - **History**: the sign-up curve over time, with the required spots as a line. If enough sign-ups came in during the last 7 days, the curve also shows when the plan would be full at this pace. Below it are the distribution of hours across people and a few quick facts, such as the longest shift.
 
 The area and day filters apply to all tabs. They are kept in the page address, so you can share a filtered view or reload it.
 
 Unlimited shifts do not count into demand, open spots or the share filled. The hours of their participants still count. Overfilled shifts are counted at most as 100 % filled.
+
+### Coordination
+
+Coordinators open the coordination page via "Coordination" in the control bar (admins only). It helps with two kinds of hard decisions: popular shifts with more interested people than places, and a known group that has to work a minimum number of hours. The page has three tabs; all figures are calculated in the browser.
+
+**Sign-up status.** Every sign-up has a status: *signed up*, *assigned* or *not selected*. In a shift that is popular (more interested people than places, or set to "Popular" for the shift type or shift) and not locked, a sign-up is an open wish. In all other shifts it counts as an assignment right away. People who are not selected stay on record, because they count for fairness. They are hidden from the plan view by default; the filter "Show not selected" shows them. Only the admin can remove them, and the person cannot sign up for that shift again (they are asked to contact the coordination team). In the plan settings you can decide whether participants see not selected sign-ups at all; by default they do not.
+
+**Distribute.** Choose a shift on the left. The middle column ranks the candidates and gives a reason for every position. The ranking follows these rules, in this order:
+
+1. If the shift needs experienced people and the need is not met yet, people with the required level come first.
+2. People who would break a rule (break between shifts, maximum hours per day, more than 125 % of their target hours) come last.
+3. For popular shifts, people who received fewer popular shifts so far come first; then those with more declined wishes or more assignments without a request.
+4. People who were not interested in the shift (source "Everyone") come in order of how rarely they were assigned without a request. After that comes the lowest relative load: hours times load factor, compared to the target.
+5. People who prefer long days and have a directly adjoining shift come first.
+6. The rest is decided by a lot ("Draw again" shuffles it).
+
+People who cannot take the shift appear under "Not available" with the reason: they are in another shift at the same time (with the action "Move"), they are not present, or they were already declined. "Apply suggestion" assigns the first free places, "Decline the rest" declines everyone who remains (optionally locking the shift). With the source "Everyone" you can also assign people who did not sign up.
+
+**Auto-distribute** fills the shifts of the current filter step by step and always shows a preview first. It never changes existing assignments or declines, never moves people and treats all rules as hard: a shift stays short rather than break a rule. Open places are listed with the reason. After applying, "Undo" takes the change back as long as the page stays open.
+
+**People.** Lists everyone with hours, load, target, attendance and the person fields. You can add people, paste a list of names, rename people (also merging two spellings) and edit details.
+
+**Fields & rules.** Define person fields (choice, number, yes/no, text) that participants or only the coordination fill in, choose which choice field means "experience", ask for attendance (from/until) and set the working time rules: target hours per person, minimum break and maximum hours per day. The load factor, popularity and experience need are set per shift type and can be overridden per shift in the "Coordination" section of the dialogs.
+
+Privacy: details that participants enter themselves can be read by anyone who knows the person's name, because there is no login. Fields that only the coordination fills in are visible to admins only.
 
 ### Export
 

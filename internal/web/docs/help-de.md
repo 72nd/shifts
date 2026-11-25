@@ -37,6 +37,7 @@ Das Programm wurde entwickelt, weil bisherige Schichtplanungstools den Anforderu
     - Ändern der Sortierung von Schichttypen.
     - Anpassen von Beschreibungstext, Titel, Tagesgrenze und weiteren Einstellungen des Schichtplans.
     - Export: Die Daten des Schichtplans können in verschiedenen Formaten exportiert werden, wobei optional die aktuelle Filterkonfiguration berücksichtigt werden kann. Weitere Informationen zu den Exportformaten finden sich unten.
+- Koordination: Eine Seite für Admins, die bei schwierigen Entscheidungen hilft: wer eine beliebte Schicht bekommt (Erfahrung, Fairness, Konflikte) und wie eine Gruppe mit Arbeitsauftrag gerecht verteilt wird. Mit gereihten Vorschlägen samt Begründung, Auto-Verteilung mit Vorschau und Rückgängig, Personenfeldern, Anwesenheit und Arbeitszeitregeln.
 - Kollaborativer Planungsmodus: Ein optimierter Modus für die Schichtplanung in Teams und Crews. Weitere Informationen dazu finden sich weiter unten.
 - Export: Nach Eingabe des Adminpassworts stehen verschiedene Exportformate zur Verfügung. Auf Wunsch kann dabei die aktuelle Filterkonfiguration berücksichtigt werden. Verfügbare Formate:
     - JSON: Exportiert alle Daten des Schichtplans im JSON-Format.
@@ -54,7 +55,7 @@ Bei Veranstaltungen lassen sich zwei grundsätzlich verschiedene Arten von Schic
 Der kollaborative Planungsmodus unterscheidet sich vom normalen Modus, bei dem es darum geht, alle Schichten möglichst zügig nach dem First-Come-First-Served-Prinzip zu besetzen. Der kollaborative Modus basiert hingegen auf einem zweistufigen Prozess:
 
 1. Alle Personen können zunächst Interesse an einer Schicht bekunden. Schichten können in diesem Modus bewusst »überbucht« werden. Auf diese Weise werden die Bedürfnisse und Wünsche aller Crewmitglieder transparent gemacht.
-2. Auf Grundlage der bekundeten Interessen kann das Team nun entscheiden, welche Schichten konkret wie besetzt werden. Die entsprechenden Änderungen werden im Schichtplan vorgenommen. Finalisierte Schichten können vom Admin fixiert bzw. gesperrt werden. Danach sind sie für reguläre Nutzer:innen nicht mehr veränderbar. Fixierte Schichten werden farblich hervorgehoben.
+2. Auf Grundlage der bekundeten Interessen kann das Team nun entscheiden, welche Schichten konkret wie besetzt werden. Wer ausgewählt wird, wird als eingeteilt markiert, die übrigen als nicht berücksichtigt (sie werden nicht gelöscht, siehe »Koordination«). Finalisierte Schichten können vom Admin fixiert bzw. gesperrt werden. Danach sind sie für reguläre Nutzer:innen nicht mehr veränderbar. Fixierte Schichten werden farblich hervorgehoben.
 
 Dadurch ist für alle Beteiligten jederzeit ersichtlich, welche Schichten definitiv zugeteilt sind. Da Personen sich nicht mehr eigenständig aus fixierten Schichten austragen können, werden sie motiviert, sich bei notwendigen Änderungen an ihre Crewkoordination zu wenden.
 
@@ -113,12 +114,39 @@ Die Statistik hat vier Tabs:
     - Ruhezeit: weniger als 8 Stunden zwischen dem Ende einer Schicht und dem Beginn der nächsten.
     - Belastung: mehr als 10 Stunden an einem Tag.
 
+    Hat der Plan eine Mindestpause oder ein Tagesmaximum (unter »Felder & Regeln« in der Koordination), ersetzen diese Werte die 8 und 10 Stunden. Stunden zählen nur Einsätze, nicht offene Wünsche in beliebten Schichten; nicht berücksichtigte Anmeldungen zählen gar nicht.
+
     Namen, die sich nur durch Groß- und Kleinschreibung, Leerzeichen oder Akzente unterscheiden, zählen als dieselbe Person. Ähnliche Namen, die sich in Satzzeichen oder Akzenten unterscheiden, bekommen einen Hinweis, dass sie vielleicht dieselbe Person sind. Als Admin kannst du die Tabelle als CSV-Datei herunterladen.
 - **Verlauf**: die Anmeldekurve über die Zeit, mit dem Bedarf als Linie. Wenn in den letzten 7 Tagen genug Anmeldungen eingegangen sind, zeigt die Kurve außerdem, wann der Plan bei diesem Tempo voll wäre. Darunter steht die Verteilung der Stunden auf die Personen und eine Reihe von Kurzfakten, etwa der längste Einsatz.
 
 Die Filter für Bereich und Tag gelten für alle Tabs. Sie stehen in der Adresse der Seite, du kannst eine gefilterte Ansicht also direkt teilen oder neu laden.
 
 Unbegrenzte Schichten zählen nicht zum Bedarf, nicht zu den offenen Plätzen und nicht zum Besetzungsgrad. Die Stunden ihrer Teilnehmenden zählen aber mit. Überbesetzte Schichten werden beim Besetzungsgrad höchstens mit 100 % gerechnet.
+
+### Koordination
+
+Die Koordinationsseite öffnest Du über »Koordination« in der Leiste des Schichtplans (nur für Admins). Sie hilft bei zwei Arten schwieriger Entscheidungen: beliebte Schichten, für die sich mehr Personen interessieren als Plätze da sind, und eine bekannte Gruppe, die eine Mindeststundenzahl leisten muss. Die Seite hat drei Tabs; alle Zahlen berechnet die Seite im Browser.
+
+**Status der Anmeldung.** Jede Anmeldung hat einen Status: *angemeldet*, *eingeteilt* oder *nicht berücksichtigt*. In einer beliebten Schicht (mehr Interessierte als Plätze, oder für Schichttyp bzw. Schicht auf »Beliebt« gestellt), die nicht gesperrt ist, ist eine Anmeldung ein offener Wunsch. In allen anderen Schichten zählt sie sofort als Einsatz. Nicht berücksichtigte Personen bleiben gespeichert, weil sie für die Fairness zählen. Im Schichtplan sind sie standardmäßig ausgeblendet; der Filter »Nicht berücksichtigte anzeigen« zeigt sie. Nur Admins können sie entfernen, und die Person kann sich für diese Schicht nicht erneut eintragen (sie wird gebeten, sich an die Koordination zu wenden). In den Einstellungen des Plans legst Du fest, ob Teilnehmende nicht berücksichtigte Anmeldungen überhaupt sehen; standardmäßig sehen sie sie nicht.
+
+**Verteilen.** Wähle links eine Schicht. Die mittlere Spalte reiht die Kandidat:innen und nennt für jede Position den Grund. Die Reihung folgt diesen Regeln, in dieser Reihenfolge:
+
+1. Braucht die Schicht erfahrene Personen und ist der Bedarf noch offen, kommen Personen mit der nötigen Stufe zuerst.
+2. Wer eine Regel verletzen würde (Pause zwischen Schichten, Höchststunden pro Tag, mehr als 125 % der Soll-Stunden), steht weiter unten.
+3. Bei beliebten Schichten kommen Personen zuerst, die bisher weniger beliebte Schichten bekommen haben; danach die mit mehr abgelehnten Wünschen oder mehr Einteilungen ohne Wunsch.
+4. Personen, die sich für die Schicht nicht interessiert haben (Quelle »Alle Personen«), kommen danach in der Reihenfolge, wie selten sie ohne Wunsch eingeteilt wurden. Danach zählt die geringste relative Last: Stunden mal Belastungsfaktor, im Verhältnis zum Soll.
+5. Wer lieber am Stück arbeitet und eine direkt anschließende Schicht hat, kommt zuerst.
+6. Den Rest entscheidet das Los (»Neu losen« mischt neu).
+
+Wer die Schicht nicht übernehmen kann, steht unter »Nicht verfügbar« mit Grund: gleichzeitig in einer anderen Schicht (mit der Aktion »Umbuchen«), nicht anwesend oder bereits abgelehnt. »Vorschlag übernehmen« teilt die ersten freien Plätze ein, »Übrige ablehnen« lehnt alle übrigen ab (auf Wunsch mit Sperren der Schicht). Mit der Quelle »Alle Personen« kannst Du auch Personen einteilen, die sich nicht eingetragen haben.
+
+Die **Auto-Verteilung** füllt die Schichten des aktuellen Filters Schritt für Schritt und zeigt immer zuerst eine Vorschau. Sie ändert nie bestehende Einteilungen oder Ablehnungen, bucht niemanden um und behandelt alle Regeln als hart: Eine Schicht bleibt lieber unterbesetzt, als eine Regel zu verletzen. Offene Plätze erscheinen mit Grund. Nach dem Übernehmen nimmt »Rückgängig« die Änderung zurück, solange die Seite offen bleibt.
+
+**Personen.** Listet alle mit Stunden, Last, Soll, Anwesenheit und den Personenfeldern. Du kannst Personen anlegen, eine Liste von Namen einfügen, Personen umbenennen (auch zwei Schreibweisen zusammenführen) und Angaben bearbeiten.
+
+**Felder & Regeln.** Lege Personenfelder fest (Auswahl, Zahl, Ja/Nein, Text), die Teilnehmende oder nur die Koordination ausfüllen, wähle das Auswahlfeld, das als Erfahrung gilt, frage die Anwesenheit (von/bis) ab und setze die Arbeitszeitregeln: Soll-Stunden pro Person, Mindestpause und Höchststunden pro Tag. Belastungsfaktor, Beliebtheit und Erfahrungsbedarf stellst Du pro Schichttyp ein; pro Schicht kannst Du sie im Abschnitt »Koordination« der Dialoge überschreiben.
+
+Datenschutz: Angaben, die Teilnehmende selbst machen, kann jede Person lesen, die den Namen kennt, weil es keinen Login gibt. Felder, die nur die Koordination ausfüllt, sehen nur Admins.
 
 ### Export
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.

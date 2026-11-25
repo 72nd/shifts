@@ -1,0 +1,7 @@
+Shift Type,Start Datetime,Duration in Minutes,Required Participants,Comment DE,Comment EN,Person 1,Person 2,Person 3,Person 4,Person 5,Person 6,Person 7
+Bar,2026-07-17 20:00,240,4,Freitag Abend - Tresen,Friday evening - bar,Anna,Ben,Cleo,Dana,Emil,Fritz,Gina
+Bar,2026-07-18 18:00,240,4,Samstag früh - Tresen,Saturday early - bar,Anna,Ben,Hans,Ida,Jan,Fritz,
+Bar,2026-07-18 22:00,240,4,Samstag spät - Tresen,Saturday late - bar,Cleo,Dana,Kira,Leo,Mia,Noah,Olga
+Küche,2026-07-18 18:00,240,3,Samstag Abendessen - Küche,Saturday dinner - kitchen,Fritz,Gina,Hans,,,,
+Küche,2026-07-19 08:00,240,3,Sonntag Frühstück - Küche,Sunday breakfast - kitchen,Emil,,,,,,
+Küche,2026-07-17 17:00,180,3,Freitag Abendessen - Küche,Friday dinner - kitchen,Ida,Jan,,,,,
