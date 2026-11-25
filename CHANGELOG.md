@@ -112,3 +112,5 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Development: Migration 0003 adds the coordination schema** New tables `plan_fields` and `plan_people` and new columns on plans, shift types, shifts and participants. An automatic backup is created before the first migration of an existing database.
 - **Development: Test scenarios** `scripts/scenarios/scenario.py` creates a complete test plan (shift types, shifts, sign-ups, people, person fields) on a running instance via the API, e.g. `./scenario.py summer-festival --start 2026-07-18`. It prints the plan URL and the admin password; `--dry-run` sends nothing. The scenario `summer-festival` is built for trying the coordination; more scenarios are JSON files in `scripts/scenarios/definitions/`.
 
+
+## v0.9.0
