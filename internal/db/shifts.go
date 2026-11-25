@@ -21,6 +21,72 @@ type Shift struct {
 	CommentENHTML *string        `json:"comment_en_html,omitempty"`
 	IsLocked      bool           `json:"is_locked"`
 	Participants  []Participant  `json:"participants,omitempty"`
+	// Overrides of the shift type's coordination settings (nil = as the type).
+	LoadFactor  *float64 `json:"load_factor,omitempty"`
+	Popularity  *string  `json:"popularity,omitempty"`
+	ExpMinCount *int     `json:"exp_min_count,omitempty"`
+	ExpMinLevel *string  `json:"exp_min_level,omitempty"`
+}
+
+// shiftColumns are the shifts columns in the order scanShift expects.
+const shiftColumns = `id, type_id, start_time, duration, required, comment_de, comment_en, is_locked,
+	load_factor, popularity, exp_min_count, exp_min_level`
+
+// shiftJoinColumns are the same columns qualified with the alias s, for JOIN queries.
+const shiftJoinColumns = `s.id, s.type_id, s.start_time, s.duration, s.required, s.comment_de, s.comment_en, s.is_locked,
+	s.load_factor, s.popularity, s.exp_min_count, s.exp_min_level`
+
+// nullableShiftOverrides scans the four override columns.
+type shiftOverrides struct {
+	loadFactor  sql.NullFloat64
+	popularity  sql.NullString
+	expMinCount sql.NullInt64
+	expMinLevel sql.NullString
+}
+
+// apply copies the scanned overrides to the shift.
+func (o shiftOverrides) apply(s *Shift) {
+	if o.loadFactor.Valid {
+		v := o.loadFactor.Float64
+		s.LoadFactor = &v
+	}
+	if o.popularity.Valid {
+		v := o.popularity.String
+		s.Popularity = &v
+	}
+	if o.expMinCount.Valid {
+		v := int(o.expMinCount.Int64)
+		s.ExpMinCount = &v
+	}
+	if o.expMinLevel.Valid {
+		v := o.expMinLevel.String
+		s.ExpMinLevel = &v
+	}
+}
+
+// scanShift reads a row selected with shiftColumns (without participants or rendered comments).
+func scanShift(row rowScanner) (Shift, error) {
+	var s Shift
+	var o shiftOverrides
+	err := row.Scan(&s.ID, &s.TypeID, &s.StartTime, &s.Duration, &s.Required, &s.CommentDE, &s.CommentEN, &s.IsLocked,
+		&o.loadFactor, &o.popularity, &o.expMinCount, &o.expMinLevel)
+	if err != nil {
+		return s, err
+	}
+	o.apply(&s)
+	return s, nil
+}
+
+// renderShiftComments fills the HTML fields of a shift from its Markdown comments.
+func renderShiftComments(s *Shift) {
+	if s.CommentEN != "" {
+		html := renderMarkdown(s.CommentEN)
+		s.CommentENHTML = &html
+	}
+	if s.CommentDE != "" {
+		html := renderMarkdown(s.CommentDE)
+		s.CommentDEHTML = &html
+	}
 }
 
 // NewShift contains the data needed to create a new shift
@@ -31,6 +97,11 @@ type NewShift struct {
 	Required  int            `json:"required"`
 	CommentDE string         `json:"comment_de"`
 	CommentEN string         `json:"comment_en"`
+	// Overrides of the shift type's coordination settings (nil = as the type).
+	LoadFactor  *float64 `json:"load_factor,omitempty"`
+	Popularity  *string  `json:"popularity,omitempty"`
+	ExpMinCount *int     `json:"exp_min_count,omitempty"`
+	ExpMinLevel *string  `json:"exp_min_level,omitempty"`
 }
 
 // CreateShift creates a new shift
@@ -51,8 +122,9 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 		query := `
             INSERT INTO shifts (
                 type_id, start_time, duration, required,
-                comment_de, comment_en
-            ) VALUES (?, ?, ?, ?, ?, ?)
+                comment_de, comment_en,
+                load_factor, popularity, exp_min_count, exp_min_level
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
 		res, err := tx.Exec(query,
 			shift.TypeID,
@@ -61,6 +133,10 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 			shift.Required,
 			shift.CommentDE,
 			shift.CommentEN,
+			shift.LoadFactor,
+			shift.Popularity,
+			shift.ExpMinCount,
+			shift.ExpMinLevel,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert shift: %w", err)
@@ -92,13 +168,12 @@ func (db *DB) CreateShift(shift NewShift) (*Shift, error) {
 // This uses a single JOIN query to fetch shifts and participants efficiently.
 func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 	query := `
-		SELECT s.id, s.type_id, s.start_time, s.duration, s.required,
-			   s.comment_de, s.comment_en, s.is_locked,
-			   p.id, p.name, p.created_at
+		SELECT ` + shiftJoinColumns + `,
+			   ` + participantJoinColumns + `
 		FROM shifts s
 		LEFT JOIN participants p ON p.shift_id = s.id
 		WHERE s.type_id = ?
-		ORDER BY s.start_time, p.created_at
+		ORDER BY s.start_time, p.created_at, p.id
 	`
 	rows, err := db.rdb.Query(query, typeID)
 	if err != nil {
@@ -114,14 +189,13 @@ func (db *DB) GetShiftsByType(typeID int64) ([]Shift, error) {
 // This uses a single JOIN query to fetch shifts and participants efficiently.
 func (db *DB) GetShiftsByPlan(planID int64) ([]Shift, error) {
 	query := `
-        SELECT s.id, s.type_id, s.start_time, s.duration, s.required,
-               s.comment_de, s.comment_en, s.is_locked,
-               p.id, p.name, p.created_at
+        SELECT ` + shiftJoinColumns + `,
+               ` + participantJoinColumns + `
         FROM shifts s
         JOIN shift_types st ON s.type_id = st.id
         LEFT JOIN participants p ON p.shift_id = s.id
         WHERE st.plan_id = ?
-        ORDER BY s.start_time, p.created_at
+        ORDER BY s.start_time, p.created_at, p.id
     `
 	rows, err := db.rdb.Query(query, planID)
 	if err != nil {
@@ -148,17 +222,17 @@ func (db *DB) groupShiftsResult(rows *sql.Rows) ([]Shift, error) {
 		var shiftCommentDE string
 		var shiftCommentEN string
 		var shiftIsLocked bool
+		var overrides shiftOverrides
 
 		// Participant fields (nullable due to LEFT JOIN)
-		var participantID sql.NullInt64
-		var participantName sql.NullString
-		var participantCreatedAt sql.NullString
+		var np nullableParticipant
 
-		if err := rows.Scan(
+		dest := []any{
 			&shiftID, &shiftTypeID, &shiftStartTime, &shiftDuration, &shiftRequired,
 			&shiftCommentDE, &shiftCommentEN, &shiftIsLocked,
-			&participantID, &participantName, &participantCreatedAt,
-		); err != nil {
+			&overrides.loadFactor, &overrides.popularity, &overrides.expMinCount, &overrides.expMinLevel,
+		}
+		if err := rows.Scan(append(dest, np.scanDest()...)...); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
@@ -176,33 +250,20 @@ func (db *DB) groupShiftsResult(rows *sql.Rows) ([]Shift, error) {
 				IsLocked:     shiftIsLocked,
 				Participants: []Participant{},
 			}
-
-			// Render markdown to HTML for comments
-			if s.CommentEN != "" {
-				html := renderMarkdown(s.CommentEN)
-				s.CommentENHTML = &html
-			}
-			if s.CommentDE != "" {
-				html := renderMarkdown(s.CommentDE)
-				s.CommentDEHTML = &html
-			}
+			overrides.apply(s)
+			renderShiftComments(s)
 
 			shiftMap[shiftID] = s
 			shiftOrder = append(shiftOrder, shiftID)
 		}
 
 		// Handle participant if present
-		if participantID.Valid {
-			createdAt, err := parseTimestamp("participants", participantID.Int64, "created_at", participantCreatedAt.String)
+		if np.ID.Valid {
+			p, err := np.toParticipant(shiftID)
 			if err != nil {
 				return nil, err
 			}
-			s.Participants = append(s.Participants, Participant{
-				ID:        participantID.Int64,
-				ShiftID:   shiftID,
-				Name:      participantName.String,
-				CreatedAt: createdAt,
-			})
+			s.Participants = append(s.Participants, p)
 		}
 	}
 
@@ -232,7 +293,11 @@ func (db *DB) UpdateShift(id int64, shift Shift) error {
             duration = ?,
             required = ?,
             comment_de = ?,
-            comment_en = ?
+            comment_en = ?,
+            load_factor = ?,
+            popularity = ?,
+            exp_min_count = ?,
+            exp_min_level = ?
         WHERE id = ? AND type_id = ?
     `
 	result, err := db.Exec(query,
@@ -241,6 +306,10 @@ func (db *DB) UpdateShift(id int64, shift Shift) error {
 		shift.Required,
 		shift.CommentDE,
 		shift.CommentEN,
+		shift.LoadFactor,
+		shift.Popularity,
+		shift.ExpMinCount,
+		shift.ExpMinLevel,
 		id,
 		shift.TypeID,
 	)
@@ -288,24 +357,7 @@ func (db *DB) DeleteShift(id int64) error {
 
 // getShiftByID retrieves a shift by ID within a transaction
 func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
-	var s Shift
-
-	query := `
-        SELECT id, type_id, start_time, duration, required,
-               comment_de, comment_en, is_locked
-        FROM shifts
-        WHERE id = ?
-    `
-	err := tx.QueryRow(query, id).Scan(
-		&s.ID,
-		&s.TypeID,
-		&s.StartTime,
-		&s.Duration,
-		&s.Required,
-		&s.CommentDE,
-		&s.CommentEN,
-		&s.IsLocked,
-	)
+	s, err := scanShift(tx.QueryRow(`SELECT `+shiftColumns+` FROM shifts WHERE id = ?`, id))
 	if err != nil {
 		return s, fmt.Errorf("failed to scan shift: %w", err)
 	}
@@ -316,16 +368,7 @@ func (db *DB) getShiftByID(tx *sql.Tx, id int64) (Shift, error) {
 		return s, fmt.Errorf("failed to load participants: %w", err)
 	}
 
-	// Render markdown to HTML for comments
-	if s.CommentEN != "" {
-		html := renderMarkdown(s.CommentEN)
-		s.CommentENHTML = &html
-	}
-	if s.CommentDE != "" {
-		html := renderMarkdown(s.CommentDE)
-		s.CommentDEHTML = &html
-	}
-
+	renderShiftComments(&s)
 	return s, nil
 }
 
@@ -390,24 +433,7 @@ func (db *DB) UnlockShift(shiftID int64) error {
 
 // GetShiftByID retrieves a shift by ID (public version for handlers)
 func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
-	var s Shift
-
-	query := `
-        SELECT id, type_id, start_time, duration, required,
-               comment_de, comment_en, is_locked
-        FROM shifts
-        WHERE id = ?
-    `
-	err := db.rdb.QueryRow(query, shiftID).Scan(
-		&s.ID,
-		&s.TypeID,
-		&s.StartTime,
-		&s.Duration,
-		&s.Required,
-		&s.CommentDE,
-		&s.CommentEN,
-		&s.IsLocked,
-	)
+	s, err := scanShift(db.rdb.QueryRow(`SELECT `+shiftColumns+` FROM shifts WHERE id = ?`, shiftID))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -422,15 +448,6 @@ func (db *DB) GetShiftByID(shiftID int64) (*Shift, error) {
 		return nil, fmt.Errorf("failed to load participants: %w", err)
 	}
 
-	// Render markdown to HTML for comments
-	if s.CommentEN != "" {
-		html := renderMarkdown(s.CommentEN)
-		s.CommentENHTML = &html
-	}
-	if s.CommentDE != "" {
-		html := renderMarkdown(s.CommentDE)
-		s.CommentDEHTML = &html
-	}
-
+	renderShiftComments(&s)
 	return &s, nil
 }

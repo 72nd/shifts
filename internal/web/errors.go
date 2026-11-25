@@ -82,9 +82,11 @@ const (
 	ErrUnauthorized    = "unauthorized"
 
 	// Ressourcenfehler
-	ErrResourceNotFound = "not_found"
-	ErrShiftFull        = "shift_full"
-	ErrDuplicateName    = "duplicate_name"
+	ErrResourceNotFound    = "not_found"
+	ErrShiftFull           = "shift_full"
+	ErrDuplicateName       = "duplicate_name"
+	ErrParticipantDeclined = "participant_declined"
+	ErrPersonExists        = "person_exists"
 
 	// Validierungsfehler
 	ErrInvalidInput = "invalid_input"

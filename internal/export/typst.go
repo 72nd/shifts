@@ -56,7 +56,8 @@ func (e *TypstExporter) Export(data *ExportData) ([]byte, error) {
 
 	// Write JSON data to temp file
 	jsonPath := filepath.Join(tempDir, "data.json")
-	jsonData, err := json.MarshalIndent(data, "", "  ")
+	// Declined participations are not listed in PDFs
+	jsonData, err := json.MarshalIndent(data.withoutDeclined(), "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal export data: %w", err)
 	}

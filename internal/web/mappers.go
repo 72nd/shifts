@@ -1,6 +1,8 @@
 package web
 
 import (
+	"time"
+
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/model"
 )
@@ -27,6 +29,69 @@ func ShiftPlanToResponse(plan *db.ShiftPlan) model.ShiftPlanResponse {
 		DayBoundaryTime:   plan.DayBoundaryTime,
 		CollaborativeMode: plan.CollaborativeMode,
 		TimeZone:          plan.TimeZone,
+
+		ExperienceFieldID:    plan.ExperienceFieldID,
+		AttendanceMode:       plan.AttendanceMode,
+		DefaultTargetMinutes: plan.DefaultTargetMin,
+		MinRestMinutes:       plan.MinRestMinutes,
+		MaxDayMinutes:        plan.MaxDayMinutes,
+		ShowDeclined:         plan.ShowDeclined,
+		Fields:               PlanFieldsToResponse(plan.Fields),
+	}
+}
+
+// PlanFieldToResponse converts a db.PlanField to a model.PlanFieldResponse
+func PlanFieldToResponse(f *db.PlanField) model.PlanFieldResponse {
+	options := make([]model.FieldOption, len(f.Options))
+	for i, o := range f.Options {
+		options[i] = model.FieldOption{ID: o.ID, DE: o.DE, EN: o.EN}
+	}
+	return model.PlanFieldResponse{
+		ID:         f.ID,
+		SortOrder:  f.SortOrder,
+		LabelDE:    f.LabelDE,
+		LabelEN:    f.LabelEN,
+		Kind:       f.Kind,
+		Options:    options,
+		EditableBy: f.EditableBy,
+		Required:   f.Required,
+	}
+}
+
+// PlanFieldsToResponse converts a slice of db.PlanField (never nil in the response)
+func PlanFieldsToResponse(fields []db.PlanField) []model.PlanFieldResponse {
+	responses := make([]model.PlanFieldResponse, len(fields))
+	for i := range fields {
+		responses[i] = PlanFieldToResponse(&fields[i])
+	}
+	return responses
+}
+
+// PlanFieldRequestToNew converts a model.PlanFieldRequest to a db.NewPlanField
+func PlanFieldRequestToNew(req *model.PlanFieldRequest) db.NewPlanField {
+	options := make([]db.FieldOption, len(req.Options))
+	for i, o := range req.Options {
+		options[i] = db.FieldOption{ID: o.ID, DE: o.DE, EN: o.EN}
+	}
+	return db.NewPlanField{
+		LabelDE:    req.LabelDE,
+		LabelEN:    req.LabelEN,
+		Kind:       req.Kind,
+		Options:    options,
+		EditableBy: req.EditableBy,
+		Required:   req.Required,
+	}
+}
+
+// PersonToResponse converts a db.PlanPerson to a model.PersonResponse
+func PersonToResponse(p *db.PlanPerson) model.PersonResponse {
+	return model.PersonResponse{
+		Name:            p.DisplayName,
+		AvailableFrom:   p.AvailableFrom,
+		AvailableUntil:  p.AvailableUntil,
+		TargetMinutes:   p.TargetMinutes,
+		PrefersLongDays: p.PrefersLongDays,
+		Values:          p.Values,
 	}
 }
 
@@ -47,9 +112,18 @@ func CreateShiftPlanRequestToNew(req *model.CreateShiftPlanRequest) db.NewShiftP
 	}
 }
 
-// UpdateShiftPlanRequestToNew converts a model.ShiftPlanUpdateRequest to a db.NewShiftPlan
+// UpdateShiftPlanRequestToNew converts a model.ShiftPlanUpdateRequest to a db.NewShiftPlan.
+// An empty attendance_mode means the client does not know the coordination settings:
+// they are left unchanged.
 func UpdateShiftPlanRequestToNew(req *model.ShiftPlanUpdateRequest) db.NewShiftPlan {
 	return db.NewShiftPlan{
+		KeepCoordination:  req.AttendanceMode == "",
+		ExperienceFieldID: req.ExperienceFieldID,
+		AttendanceMode:    req.AttendanceMode,
+		DefaultTargetMin:  req.DefaultTargetMinutes,
+		MinRestMinutes:    req.MinRestMinutes,
+		MaxDayMinutes:     req.MaxDayMinutes,
+		ShowDeclined:      req.ShowDeclined,
 		TitleDE:           req.TitleDE,
 		TitleEN:           req.TitleEN,
 		DescriptionDE:     req.DescriptionDE,
@@ -81,6 +155,10 @@ func ShiftTypeToResponse(shiftType *db.ShiftType) model.ShiftTypeResponse {
 		DescriptionENHTML: shiftType.DescriptionENHTML,
 		LocationDE:        shiftType.LocationDE,
 		LocationEN:        shiftType.LocationEN,
+		LoadFactor:        shiftType.LoadFactor,
+		Popularity:        shiftType.Popularity,
+		ExpMinCount:       shiftType.ExpMinCount,
+		ExpMinLevel:       shiftType.ExpMinLevel,
 	}
 
 	// Convert nested shifts if present
@@ -102,7 +180,7 @@ func ShiftTypesToResponse(shiftTypes []db.ShiftType) []model.ShiftTypeResponse {
 
 // CreateShiftTypeRequestToNew converts a model.CreateShiftTypeRequest to a db.NewShiftType
 func CreateShiftTypeRequestToNew(req *model.CreateShiftTypeRequest, planID int64) db.NewShiftType {
-	return db.NewShiftType{
+	st := db.NewShiftType{
 		PlanID:        planID,
 		Password:      req.Password,
 		TitleDE:       req.TitleDE,
@@ -112,6 +190,19 @@ func CreateShiftTypeRequestToNew(req *model.CreateShiftTypeRequest, planID int64
 		LocationDE:    req.LocationDE,
 		LocationEN:    req.LocationEN,
 	}
+	if req.LoadFactor != nil {
+		st.LoadFactor = *req.LoadFactor
+	}
+	if req.Popularity != nil {
+		st.Popularity = *req.Popularity
+	}
+	if req.ExpMinCount != nil {
+		st.ExpMinCount = *req.ExpMinCount
+	}
+	if req.ExpMinLevel != nil && *req.ExpMinLevel != "" {
+		st.ExpMinLevel = req.ExpMinLevel
+	}
+	return st
 }
 
 // =============================================================================
@@ -131,6 +222,10 @@ func ShiftToResponse(shift *db.Shift) model.ShiftResponse {
 		CommentDEHTML: shift.CommentDEHTML,
 		CommentENHTML: shift.CommentENHTML,
 		IsLocked:      shift.IsLocked,
+		LoadFactor:    shift.LoadFactor,
+		Popularity:    shift.Popularity,
+		ExpMinCount:   shift.ExpMinCount,
+		ExpMinLevel:   shift.ExpMinLevel,
 	}
 
 	// Convert nested participants if present
@@ -235,10 +330,19 @@ func BatchDeleteResultToResponse(result *model.BatchResult[int64]) model.BatchDe
 
 // ParticipantToResponse converts a db.Participant to a model.ParticipantResponse
 func ParticipantToResponse(participant *db.Participant) model.ParticipantResponse {
+	var changedAt *time.Time
+	if participant.StatusChangedAt != nil {
+		t := participant.StatusChangedAt.UTC()
+		changedAt = &t
+	}
 	return model.ParticipantResponse{
 		ID:        participant.ID,
 		Name:      participant.Name,
 		CreatedAt: participant.CreatedAt.UTC(),
+
+		Status:          participant.Status,
+		StatusChangedAt: changedAt,
+		AddedByAdmin:    participant.AddedByAdmin,
 	}
 }
 

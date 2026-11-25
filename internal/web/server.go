@@ -100,6 +100,7 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/plans/success", s.handleShiftPlanSuccess).Methods("GET")
 	s.router.HandleFunc("/plans/{token}", s.handleViewShiftPlan).Methods("GET")
 	s.router.HandleFunc("/plans/{token}/stats", s.handleShiftPlanStats).Methods("GET")
+	s.router.HandleFunc("/plans/{token}/coordinate", s.handleCoordinationPage).Methods("GET")
 	s.router.HandleFunc("/help", s.handleHelp).Methods("GET")
 	s.router.HandleFunc("/images/{filename}", s.handleHelpImage).Methods("GET")
 	s.router.HandleFunc("/plan-deleted", s.handlePlanDeleted()).Methods("GET")
@@ -151,6 +152,23 @@ func (s *Server) setupRoutes() {
 	// Participant routes
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants", s.handleAddParticipant).Methods("POST")
 	api.HandleFunc("/plans/{token}/shifts/{shiftId}/participants/{participantId}", s.handleRemoveParticipant).Methods("DELETE")
+
+	// Person field routes ("order" before {fieldId})
+	api.HandleFunc("/plans/{token}/fields", s.middleware.adminMiddleware(s.handleCreateField)).Methods("POST")
+	api.HandleFunc("/plans/{token}/fields/order", s.middleware.adminMiddleware(s.handleUpdateFieldOrder)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/fields/{fieldId}", s.middleware.adminMiddleware(s.handleUpdateField)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/fields/{fieldId}", s.middleware.adminMiddleware(s.handleDeleteField)).Methods("DELETE")
+
+	// People routes (fixed paths before {key})
+	api.HandleFunc("/plans/{token}/people", s.middleware.adminMiddleware(s.handleListPeople)).Methods("GET")
+	api.HandleFunc("/plans/{token}/people", s.middleware.adminMiddleware(s.handleUpsertPerson)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/people/import", s.middleware.adminMiddleware(s.handleImportPeople)).Methods("POST")
+	api.HandleFunc("/plans/{token}/people/rename", s.middleware.adminMiddleware(s.handleRenamePerson)).Methods("POST")
+	api.HandleFunc("/plans/{token}/people/lookup", s.handleLookupPerson).Methods("GET")
+	api.HandleFunc("/plans/{token}/people/{key:.+}", s.middleware.adminMiddleware(s.handleDeletePerson)).Methods("DELETE")
+
+	// Coordination
+	api.HandleFunc("/plans/{token}/coordination/apply", s.middleware.adminMiddleware(s.handleApplyCoordination)).Methods("POST")
 
 	// Swagger documentation - also needs CORS for cross-origin requests
 	swaggerRouter := s.router.PathPrefix("/swagger/").Subrouter()

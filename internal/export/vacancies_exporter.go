@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/model"
 )
 
@@ -37,8 +38,9 @@ func (e *VacanciesExporter) Export(data *ExportData) ([]byte, error) {
 		for _, shiftDay := range shiftType.ShiftDays {
 			for _, shift := range shiftDay.Shifts {
 				// Only include shifts with vacancies (and Required > 0 to skip unlimited shifts)
-				if shift.Required > 0 && len(shift.Participants) < shift.Required {
-					needed := shift.Required - len(shift.Participants)
+				occupied := len(db.ActiveParticipants(shift.Participants))
+				if shift.Required > 0 && occupied < shift.Required {
+					needed := shift.Required - occupied
 					endTime := shift.StartTime.Time.Add(time.Duration(shift.Duration) * time.Minute)
 
 					vacantShift := VacantShift{

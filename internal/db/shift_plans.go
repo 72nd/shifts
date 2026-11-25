@@ -35,6 +35,79 @@ type ShiftPlan struct {
 	DayBoundaryTime   string     `json:"day_boundary_time"`
 	CollaborativeMode bool       `json:"collaborative_mode"`
 	TimeZone          string     `json:"time_zone"` // IANA name, fixed at creation
+
+	// Coordination settings (see prj/coordination-plan.md)
+	ExperienceFieldID *int64 `json:"experience_field_id"` // choice field that defines the experience level
+	AttendanceMode    string `json:"attendance_mode"`     // off | participant | admin
+	DefaultTargetMin  *int   `json:"default_target_minutes"`
+	MinRestMinutes    *int   `json:"min_rest_minutes"`
+	MaxDayMinutes     *int   `json:"max_day_minutes"`
+	ShowDeclined      bool   `json:"show_declined"` // show declined participations to non-admins
+
+	// Fields are the person fields of the plan (loaded by GetShiftPlanByToken only).
+	Fields []PlanField `json:"-"`
+}
+
+// planColumns are the shift_plans columns in the order scanPlan expects.
+const planColumns = `id, token, admin_password, start_date, end_date, created_at,
+	is_multilingual, title_de, title_en, description_de, description_en,
+	day_boundary_time, collaborative_mode, time_zone,
+	experience_field_id, attendance_mode, default_target_minutes, min_rest_minutes, max_day_minutes, show_declined`
+
+// scanPlan reads a row selected with planColumns.
+func scanPlan(row rowScanner) (ShiftPlan, error) {
+	var plan ShiftPlan
+	var createdAt string
+	var expField, target, rest, maxDay sql.NullInt64
+	err := row.Scan(
+		&plan.ID,
+		&plan.Token,
+		&plan.AdminPassword,
+		&plan.StartDate,
+		&plan.EndDate,
+		&createdAt,
+		&plan.IsMultilingual,
+		&plan.TitleDE,
+		&plan.TitleEN,
+		&plan.DescriptionDE,
+		&plan.DescriptionEN,
+		&plan.DayBoundaryTime,
+		&plan.CollaborativeMode,
+		&plan.TimeZone,
+		&expField,
+		&plan.AttendanceMode,
+		&target,
+		&rest,
+		&maxDay,
+		&plan.ShowDeclined,
+	)
+	if err != nil {
+		return plan, err
+	}
+	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
+		return plan, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
+	}
+	plan.ExperienceFieldID = nullInt64Ptr(expField)
+	plan.DefaultTargetMin = nullIntPtr(target)
+	plan.MinRestMinutes = nullIntPtr(rest)
+	plan.MaxDayMinutes = nullIntPtr(maxDay)
+	return plan, nil
+}
+
+func nullInt64Ptr(n sql.NullInt64) *int64 {
+	if !n.Valid {
+		return nil
+	}
+	v := n.Int64
+	return &v
+}
+
+func nullIntPtr(n sql.NullInt64) *int {
+	if !n.Valid {
+		return nil
+	}
+	v := int(n.Int64)
+	return &v
 }
 
 // Location returns the plan's time zone, falling back to the default zone if
@@ -59,6 +132,16 @@ type NewShiftPlan struct {
 	DayBoundaryTime   string     `json:"day_boundary_time"`
 	CollaborativeMode bool       `json:"collaborative_mode"`
 	TimeZone          string     `json:"time_zone"` // only used on create; empty = default zone
+
+	// Coordination settings, only used on update (create leaves the defaults).
+	ExperienceFieldID *int64 `json:"-"`
+	AttendanceMode    string `json:"-"`
+	DefaultTargetMin  *int   `json:"-"`
+	MinRestMinutes    *int   `json:"-"`
+	MaxDayMinutes     *int   `json:"-"`
+	ShowDeclined      bool   `json:"-"`
+	// KeepCoordination leaves the coordination settings unchanged on update.
+	KeepCoordination bool `json:"-"`
 }
 
 // generateToken generates a random token for shift plans
@@ -307,40 +390,14 @@ func renderMarkdown(text string) string {
 	return string(markdown.Render(md, renderer))
 }
 
-// GetShiftPlanByToken retrieves a shift plan by its token
+// GetShiftPlanByToken retrieves a shift plan by its token, including its person fields
 func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 	start := time.Now()
 	defer func() {
 		db.recordQuery("select", "shift_plans", start)
 	}()
 
-	var plan ShiftPlan
-	var createdAt string
-
-	query := `
-        SELECT id, token, admin_password, start_date, end_date, created_at,
-               is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time, collaborative_mode, time_zone
-        FROM shift_plans
-        WHERE token = ?
-    `
-	err := db.rdb.QueryRow(query, token).Scan(
-		&plan.ID,
-		&plan.Token,
-		&plan.AdminPassword,
-		&plan.StartDate,
-		&plan.EndDate,
-		&createdAt,
-		&plan.IsMultilingual,
-		&plan.TitleDE,
-		&plan.TitleEN,
-		&plan.DescriptionDE,
-		&plan.DescriptionEN,
-		&plan.DayBoundaryTime,
-		&plan.CollaborativeMode,
-		&plan.TimeZone,
-	)
-
+	plan, err := scanPlan(db.rdb.QueryRow(`SELECT `+planColumns+` FROM shift_plans WHERE token = ?`, token))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -348,10 +405,6 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		db.logError("GetShiftPlanByToken", err, token)
 		db.recordError("select", err)
 		return nil, fmt.Errorf("failed to get shift plan: %w", err)
-	}
-
-	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
-		return nil, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
 	}
 
 	// Render markdown to HTML
@@ -364,84 +417,28 @@ func (db *DB) GetShiftPlanByToken(token string) (*ShiftPlan, error) {
 		plan.DescriptionDEHTML = &html
 	}
 
+	if plan.Fields, err = getPlanFields(db.rdb, plan.ID); err != nil {
+		return nil, err
+	}
+
 	return &plan, nil
 }
 
 // getShiftPlanByID retrieves a shift plan by ID within a transaction
 func (db *DB) getShiftPlanByID(tx *sql.Tx, id int64) (ShiftPlan, error) {
-	var plan ShiftPlan
-	var createdAt string
-
-	query := `
-        SELECT id, token, admin_password, start_date, end_date, created_at,
-               is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time, collaborative_mode, time_zone
-        FROM shift_plans
-        WHERE id = ?
-    `
-	err := tx.QueryRow(query, id).Scan(
-		&plan.ID,
-		&plan.Token,
-		&plan.AdminPassword,
-		&plan.StartDate,
-		&plan.EndDate,
-		&createdAt,
-		&plan.IsMultilingual,
-		&plan.TitleDE,
-		&plan.TitleEN,
-		&plan.DescriptionDE,
-		&plan.DescriptionEN,
-		&plan.DayBoundaryTime,
-		&plan.CollaborativeMode,
-		&plan.TimeZone,
-	)
+	plan, err := scanPlan(tx.QueryRow(`SELECT `+planColumns+` FROM shift_plans WHERE id = ?`, id))
 	if err != nil {
 		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
 	}
-
-	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
-		return plan, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
-	}
-
 	return plan, nil
 }
 
 // getShiftPlanByToken retrieves a shift plan by token within a transaction
 func (db *DB) getShiftPlanByToken(tx *sql.Tx, token string) (ShiftPlan, error) {
-	var plan ShiftPlan
-	var createdAt string
-
-	query := `
-        SELECT id, token, admin_password, start_date, end_date, created_at,
-               is_multilingual, title_de, title_en, description_de, description_en,
-               day_boundary_time, collaborative_mode, time_zone
-        FROM shift_plans
-        WHERE token = ?
-    `
-	err := tx.QueryRow(query, token).Scan(
-		&plan.ID,
-		&plan.Token,
-		&plan.AdminPassword,
-		&plan.StartDate,
-		&plan.EndDate,
-		&createdAt,
-		&plan.IsMultilingual,
-		&plan.TitleDE,
-		&plan.TitleEN,
-		&plan.DescriptionDE,
-		&plan.DescriptionEN,
-		&plan.DayBoundaryTime,
-		&plan.CollaborativeMode,
-		&plan.TimeZone,
-	)
+	plan, err := scanPlan(tx.QueryRow(`SELECT `+planColumns+` FROM shift_plans WHERE token = ?`, token))
 	if err != nil {
 		return plan, fmt.Errorf("failed to scan shift plan: %w", err)
 	}
-
-	if plan.CreatedAt, err = time.Parse(time.RFC3339, createdAt); err != nil {
-		return plan, fmt.Errorf("shift_plans id %d: invalid created_at %q: %w", plan.ID, createdAt, err)
-	}
-
 	return plan, nil
 }
 
@@ -509,6 +506,29 @@ func (db *DB) UpdateShiftPlan(token string, plan NewShiftPlan) (*ShiftPlan, erro
 		)
 		if err != nil {
 			return fmt.Errorf("failed to update shift plan: %w", err)
+		}
+
+		if !plan.KeepCoordination {
+			if _, err := tx.Exec(`
+                UPDATE shift_plans SET
+                    experience_field_id = ?,
+                    attendance_mode = ?,
+                    default_target_minutes = ?,
+                    min_rest_minutes = ?,
+                    max_day_minutes = ?,
+                    show_declined = ?
+                WHERE token = ?
+            `,
+				plan.ExperienceFieldID,
+				plan.AttendanceMode,
+				plan.DefaultTargetMin,
+				plan.MinRestMinutes,
+				plan.MaxDayMinutes,
+				plan.ShowDeclined,
+				token,
+			); err != nil {
+				return fmt.Errorf("failed to update coordination settings: %w", err)
+			}
 		}
 
 		rowsAffected, err := res.RowsAffected()

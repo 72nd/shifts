@@ -40,6 +40,8 @@ func (s *Server) handleGetShiftTypes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.hideDeclined(r, plan, types)
+
 	// Convert to response DTOs
 	response := ShiftTypesToResponse(types)
 	s.respondJSON(w, response)
@@ -75,6 +77,11 @@ func (s *Server) handleCreateShiftType(w http.ResponseWriter, r *http.Request) {
 
 	// Validate and sanitize input
 	if result := validation.ValidateCreateShiftTypeRequest(&req, plan.IsMultilingual); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	if result := validateTypeCoordination(req.LoadFactor, req.Popularity, req.ExpMinCount, req.ExpMinLevel, plan); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -141,6 +148,27 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if result := validateTypeCoordination(req.LoadFactor, req.Popularity, req.ExpMinCount, req.ExpMinLevel, plan); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	// Coordination settings that are not sent stay as they are
+	existing, err := s.db.GetShiftTypeByID(plan.ID, typeID)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(
+			ErrDatabaseError,
+			"Failed to get shift type",
+			http.StatusInternalServerError,
+			err,
+		))
+		return
+	}
+	if existing == nil {
+		s.RespondWithError(w, NewAppError(ErrResourceNotFound, "Shift type not found", http.StatusNotFound, nil))
+		return
+	}
+
 	// Convert to ShiftType
 	shiftType := db.ShiftType{
 		ID:            typeID,
@@ -151,6 +179,26 @@ func (s *Server) handleUpdateShiftType(w http.ResponseWriter, r *http.Request) {
 		DescriptionEN: req.DescriptionEN,
 		LocationDE:    req.LocationDE,
 		LocationEN:    req.LocationEN,
+		LoadFactor:    existing.LoadFactor,
+		Popularity:    existing.Popularity,
+		ExpMinCount:   existing.ExpMinCount,
+		ExpMinLevel:   existing.ExpMinLevel,
+	}
+	if req.LoadFactor != nil {
+		shiftType.LoadFactor = *req.LoadFactor
+	}
+	if req.Popularity != nil {
+		shiftType.Popularity = *req.Popularity
+	}
+	if req.ExpMinCount != nil {
+		shiftType.ExpMinCount = *req.ExpMinCount
+	}
+	if req.ExpMinLevel != nil {
+		if *req.ExpMinLevel == "" {
+			shiftType.ExpMinLevel = nil
+		} else {
+			shiftType.ExpMinLevel = req.ExpMinLevel
+		}
 	}
 
 	// Update shift type
@@ -207,4 +255,18 @@ func (s *Server) handleDeleteShiftType(w http.ResponseWriter, r *http.Request) {
 
 	s.notifyPlanChanged(plan.ID, scopeTypes)
 	s.respondOK(w)
+}
+
+// validateTypeCoordination validates the coordination settings of a shift type request.
+// A type has no place count, so the experience need is only bounded by a fixed maximum.
+func validateTypeCoordination(loadFactor *float64, popularity *string, count *int, level *string, plan *db.ShiftPlan) *validation.Result {
+	r := validation.NewResult()
+	if loadFactor != nil {
+		validation.ValidateLoadFactor(*loadFactor, "load_factor", r)
+	}
+	if popularity != nil && !validation.ValidPopularity(*popularity) {
+		r.AddInvalid("popularity", "Popularity must be auto, popular or normal")
+	}
+	validation.ValidateExperienceNeed(count, level, 0, plan, r)
+	return r
 }

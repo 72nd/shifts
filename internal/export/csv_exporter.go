@@ -5,6 +5,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"strconv"
+
+	"github.com/72nd/shifts/internal/db"
 )
 
 // CSVExporter implements the Exporter interface for CSV format
@@ -34,6 +36,7 @@ func (e *CSVExporter) Export(data *ExportData) ([]byte, error) {
 		"is_locked",
 		"participants_count",
 		"participants",
+		"participants_status",
 	}
 	if err := writer.Write(header); err != nil {
 		return nil, fmt.Errorf("failed to write CSV header: %w", err)
@@ -44,9 +47,12 @@ func (e *CSVExporter) Export(data *ExportData) ([]byte, error) {
 		for _, shiftDay := range shiftType.ShiftDays {
 			for _, shift := range shiftDay.Shifts {
 				// Collect participant names
+				// Names and their statuses (signed_up, assigned, declined) in the same order
 				participantNames := make([]string, len(shift.Participants))
+				participantStatuses := make([]string, len(shift.Participants))
 				for i, p := range shift.Participants {
 					participantNames[i] = p.Name
+					participantStatuses[i] = p.Status
 				}
 				participantsStr := ""
 				if len(participantNames) > 0 {
@@ -75,8 +81,10 @@ func (e *CSVExporter) Export(data *ExportData) ([]byte, error) {
 					shift.CommentDE,
 					shift.CommentEN,
 					isLockedStr,
-					strconv.Itoa(len(shift.Participants)),
+					// The count only includes participations that occupy a place (not declined)
+					strconv.Itoa(len(db.ActiveParticipants(shift.Participants))),
 					participantsStr,
+					joinWithSemicolon(participantStatuses),
 				}
 				if err := writer.Write(row); err != nil {
 					return nil, fmt.Errorf("failed to write CSV row: %w", err)

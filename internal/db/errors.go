@@ -25,4 +25,16 @@ var (
 
 	// ErrInvalidRequired is returned when the required field has an invalid value
 	ErrInvalidRequired = errors.New("required participants must be either -1 for unlimited or a positive number")
+
+	// ErrParticipantDeclined is returned when a person tries to sign up for a shift where they are already listed as declined
+	ErrParticipantDeclined = errors.New("participant is listed as declined in this shift")
+
+	// ErrPersonExists is returned when renaming a person to a name that is already taken (without merging)
+	ErrPersonExists = errors.New("a person with this name already exists")
+
+	// ErrPersonNotFound is returned when a person does not exist in the plan
+	ErrPersonNotFound = errors.New("person not found")
+
+	// ErrFieldNotFound is returned when a person field does not exist in the plan
+	ErrFieldNotFound = errors.New("field not found")
 )

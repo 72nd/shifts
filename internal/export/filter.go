@@ -131,7 +131,7 @@ func (f *ExportFilter) matchesStatusFilter(shift db.Shift) bool {
 		return true
 	}
 
-	participantCount := len(shift.Participants)
+	participantCount := len(db.ActiveParticipants(shift.Participants))
 	percentage := 0.0
 	if shift.Required > 0 {
 		percentage = (float64(participantCount) / float64(shift.Required)) * 100
@@ -165,8 +165,8 @@ func (f *ExportFilter) matchesSearchQuery(shift db.Shift) bool {
 
 	queryLower := strings.ToLower(query)
 
-	// Search in participant names
-	for _, participant := range shift.Participants {
+	// Search in participant names (declined ones do not occupy a place)
+	for _, participant := range db.ActiveParticipants(shift.Participants) {
 		if strings.Contains(strings.ToLower(participant.Name), queryLower) {
 			return true
 		}

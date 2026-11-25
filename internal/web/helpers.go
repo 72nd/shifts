@@ -265,3 +265,43 @@ func (s *Server) respondNoContent(w http.ResponseWriter) {
 func (s *Server) respondOK(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusOK)
 }
+
+// isAdminRequest reports whether the request carries a valid admin token for the plan.
+// A missing or wrong token is not an error here; the caller decides what a non-admin may see.
+func (s *Server) isAdminRequest(r *http.Request, plan *db.ShiftPlan) bool {
+	token := r.Header.Get("X-Admin-Token")
+	if token == "" {
+		return false
+	}
+	ok, err := s.db.ValidateShiftPlanPassword(plan.ID, hashPassword(token))
+	return err == nil && ok
+}
+
+// requireAdminForbidden checks the admin token and answers 403 with message if it is missing or wrong.
+func (s *Server) requireAdminForbidden(w http.ResponseWriter, r *http.Request, plan *db.ShiftPlan, message string) bool {
+	if s.isAdminRequest(r, plan) {
+		return true
+	}
+	s.RespondWithError(w, NewAppError(ErrUnauthorized, message, http.StatusForbidden, nil))
+	return false
+}
+
+// hideDeclined removes declined participations from the types if the viewer must not see them:
+// the plan hides them (show_declined = false) and the request is not from an admin.
+// This is the single place where the visibility rule is applied.
+func (s *Server) hideDeclined(r *http.Request, plan *db.ShiftPlan, types []db.ShiftType) {
+	if plan.ShowDeclined || s.isAdminRequest(r, plan) {
+		return
+	}
+	for i := range types {
+		for j := range types[i].Shifts {
+			kept := types[i].Shifts[j].Participants[:0]
+			for _, p := range types[i].Shifts[j].Participants {
+				if p.Status != db.StatusDeclined {
+					kept = append(kept, p)
+				}
+			}
+			types[i].Shifts[j].Participants = kept
+		}
+	}
+}

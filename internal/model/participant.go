@@ -11,6 +11,8 @@ import "time"
 type AddParticipantRequest struct {
 	// Name of the participant to add
 	Name string `json:"name" example:"John Doe" validate:"required,min=1,max=100"`
+	// Optional details about the person (attendance, person fields)
+	Person *PersonInput `json:"person,omitempty"`
 } // @name AddParticipantRequest
 
 // =============================================================================
@@ -26,4 +28,10 @@ type ParticipantResponse struct {
 	Name string `json:"name" example:"John Doe"`
 	// Time of sign-up (RFC3339, UTC)
 	CreatedAt time.Time `json:"created_at" example:"2024-12-01T10:00:00Z"`
+	// signed_up, assigned or declined
+	Status string `json:"status" example:"signed_up" enums:"signed_up,assigned,declined"`
+	// Time of the last status change by the coordination (RFC3339, UTC)
+	StatusChangedAt *time.Time `json:"status_changed_at,omitempty" example:"2024-12-01T10:00:00Z"`
+	// Whether the coordination added this person without a request
+	AddedByAdmin bool `json:"added_by_admin"`
 } // @name ParticipantResponse

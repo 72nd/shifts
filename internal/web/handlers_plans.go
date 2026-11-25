@@ -268,6 +268,13 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.AttendanceMode != "" {
+		if result := validation.ValidateCoordinationSettings(&req, plan.Fields); result.HasErrors() {
+			s.respondValidationError(w, result)
+			return
+		}
+	}
+
 	// Convert to db model
 	updateData := UpdateShiftPlanRequestToNew(&req)
 
@@ -286,6 +293,7 @@ func (s *Server) handleUpdateShiftPlan(w http.ResponseWriter, r *http.Request) {
 	s.notifyPlanChanged(plan.ID, scopePlan)
 
 	// Convert to response DTO
+	updatedPlan.Fields = plan.Fields
 	response := ShiftPlanToResponse(updatedPlan)
 	s.respondJSON(w, response)
 }

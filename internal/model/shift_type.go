@@ -21,6 +21,14 @@ type CreateShiftTypeRequest struct {
 	LocationEN string `json:"location_en" example:"Main Kitchen"`
 	// Optional password to restrict participation (if set, participants must provide this password)
 	Password *string `json:"password,omitempty" example:"secret123"`
+	// Load factor of the shifts (0.1 to 5.0, default 1.0)
+	LoadFactor *float64 `json:"load_factor,omitempty" example:"1.0"`
+	// Popularity: auto, popular or normal
+	Popularity *string `json:"popularity,omitempty" example:"auto" enums:"auto,popular,normal"`
+	// Number of people with at least exp_min_level needed per shift
+	ExpMinCount *int `json:"exp_min_count,omitempty" example:"0"`
+	// Experience level (option ID of the experience field) required for exp_min_count people. Empty string clears.
+	ExpMinLevel *string `json:"exp_min_level,omitempty" example:"a1b2c3d4"`
 } // @name CreateShiftTypeRequest
 
 // ShiftTypeUpdateRequest represents the fields that can be updated on a shift type
@@ -38,6 +46,15 @@ type ShiftTypeUpdateRequest struct {
 	LocationDE string `json:"location_de" example:"Hauptküche"`
 	// Location in English
 	LocationEN string `json:"location_en" example:"Main Kitchen"`
+	// Load factor of the shifts (0.1 to 5.0, default 1.0)
+	LoadFactor *float64 `json:"load_factor,omitempty" example:"1.0"`
+	// Popularity: auto, popular or normal
+	Popularity *string `json:"popularity,omitempty" example:"auto" enums:"auto,popular,normal"`
+	// Number of people with at least exp_min_level needed per shift
+	ExpMinCount *int `json:"exp_min_count,omitempty" example:"0"`
+	// Experience level (option ID of the experience field) required for exp_min_count people. Empty string clears.
+	ExpMinLevel *string `json:"exp_min_level,omitempty" example:"a1b2c3d4"`
+	// Omitted coordination fields are left unchanged.
 } // @name ShiftTypeUpdateRequest
 
 // =============================================================================
@@ -69,6 +86,14 @@ type ShiftTypeResponse struct {
 	LocationDE string `json:"location_de" example:"Hauptküche"`
 	// Location in English
 	LocationEN string `json:"location_en" example:"Main Kitchen"`
+	// Load factor of the shifts (0.1 to 5.0, default 1.0)
+	LoadFactor float64 `json:"load_factor" example:"1.0"`
+	// Popularity: auto, popular or normal
+	Popularity string `json:"popularity" example:"auto" enums:"auto,popular,normal"`
+	// Number of people with at least exp_min_level needed per shift
+	ExpMinCount int `json:"exp_min_count" example:"0"`
+	// Experience level (option ID of the experience field)
+	ExpMinLevel *string `json:"exp_min_level" example:"a1b2c3d4"`
 	// Array of shifts belonging to this type (only present when requested)
 	Shifts []ShiftResponse `json:"shifts,omitempty"`
 } // @name ShiftTypeResponse

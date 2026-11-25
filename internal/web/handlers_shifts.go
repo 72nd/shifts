@@ -46,6 +46,7 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 	if !s.parseJSONTimes(w, r, &shift) {
 		return
 	}
+	shift.ExpMinLevel = emptyToNil(shift.ExpMinLevel)
 
 	// Get plan first (needed for validation)
 	plan, ok := s.getPlanByToken(w, r)
@@ -55,6 +56,11 @@ func (s *Server) handleCreateShift(w http.ResponseWriter, r *http.Request) {
 
 	// Validate and sanitize input (including plan date range check)
 	if result := validation.ValidateNewShiftWithPlanDates(&shift, plan.StartDate, plan.EndDate, plan.DayBoundaryTime); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	if result := validateShiftOverrides(&shift, plan); result.HasErrors() {
 		s.respondValidationError(w, result)
 		return
 	}
@@ -157,14 +163,30 @@ func (s *Server) handleUpdateShift(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert to db.Shift for the update
+	if result := validateShiftOverrides(&db.NewShift{
+		Required:    req.Required,
+		LoadFactor:  req.LoadFactor,
+		Popularity:  req.Popularity,
+		ExpMinCount: req.ExpMinCount,
+		ExpMinLevel: req.ExpMinLevel,
+	}, plan); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+
+	// Convert to db.Shift for the update. The overrides are replaced as a whole:
+	// null or omitted means "as the shift type".
 	shift := db.Shift{
-		TypeID:    req.TypeID,
-		StartTime: req.StartTime,
-		Duration:  req.Duration,
-		Required:  req.Required,
-		CommentDE: req.CommentDE,
-		CommentEN: req.CommentEN,
+		TypeID:      req.TypeID,
+		StartTime:   req.StartTime,
+		Duration:    req.Duration,
+		Required:    req.Required,
+		CommentDE:   req.CommentDE,
+		CommentEN:   req.CommentEN,
+		LoadFactor:  req.LoadFactor,
+		Popularity:  req.Popularity,
+		ExpMinCount: req.ExpMinCount,
+		ExpMinLevel: emptyToNil(req.ExpMinLevel),
 	}
 
 	// Update the shift
@@ -500,4 +522,19 @@ func (s *Server) handleBatchDeleteShifts(w http.ResponseWriter, r *http.Request)
 	// Map response
 	response := BatchDeleteResultToResponse(result)
 	s.respondJSON(w, response)
+}
+
+// emptyToNil turns an empty string pointer into nil (no experience level).
+func emptyToNil(s *string) *string {
+	if s != nil && *s == "" {
+		return nil
+	}
+	return s
+}
+
+// validateShiftOverrides validates the coordination overrides of a shift.
+func validateShiftOverrides(shift *db.NewShift, plan *db.ShiftPlan) *validation.Result {
+	r := validation.NewResult()
+	validation.ValidateShiftOverrides(shift.LoadFactor, shift.Popularity, shift.ExpMinCount, shift.ExpMinLevel, shift.Required, plan, r)
+	return r
 }

@@ -21,7 +21,12 @@ type ShiftType struct {
 	DescriptionENHTML *string `json:"description_en_html,omitempty"`
 	LocationDE        string  `json:"location_de"`
 	LocationEN        string  `json:"location_en"`
-	Shifts            []Shift `json:"shifts,omitempty"` // Added field for shifts
+	// Coordination settings. Shifts inherit them unless they override them.
+	LoadFactor  float64 `json:"load_factor"`      // 0.1 to 5.0, default 1.0
+	Popularity  string  `json:"popularity"`       // auto | popular | normal
+	ExpMinCount int     `json:"exp_min_count"`    // people with at least ExpMinLevel needed
+	ExpMinLevel *string `json:"exp_min_level"`    // option ID of the experience field
+	Shifts      []Shift `json:"shifts,omitempty"` // Added field for shifts
 }
 
 // NewShiftType contains the data needed to create a new shift type
@@ -34,6 +39,10 @@ type NewShiftType struct {
 	DescriptionEN string  `json:"description_en"`
 	LocationDE    string  `json:"location_de"`
 	LocationEN    string  `json:"location_en"`
+	LoadFactor    float64 `json:"load_factor"` // 0 = default 1.0
+	Popularity    string  `json:"popularity"`  // "" = auto
+	ExpMinCount   int     `json:"exp_min_count"`
+	ExpMinLevel   *string `json:"exp_min_level"`
 }
 
 // CreateShiftType creates a new shift type
@@ -58,9 +67,16 @@ func (db *DB) CreateShiftType(st NewShiftType) (*ShiftType, error) {
                 plan_id, password, sort_order,
                 title_de, title_en,
                 description_de, description_en,
-                location_de, location_en
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                location_de, location_en,
+                load_factor, popularity, exp_min_count, exp_min_level
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `
+		if st.LoadFactor == 0 {
+			st.LoadFactor = 1.0
+		}
+		if st.Popularity == "" {
+			st.Popularity = "auto"
+		}
 		res, err := tx.Exec(query,
 			st.PlanID,
 			st.Password,
@@ -71,6 +87,10 @@ func (db *DB) CreateShiftType(st NewShiftType) (*ShiftType, error) {
 			st.DescriptionEN,
 			st.LocationDE,
 			st.LocationEN,
+			st.LoadFactor,
+			st.Popularity,
+			st.ExpMinCount,
+			st.ExpMinLevel,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert shift type: %w", err)
@@ -107,14 +127,16 @@ func (db *DB) GetShiftTypesByPlan(planID int64) ([]ShiftType, error) {
             st.id, st.plan_id, st.password, st.sort_order,
             st.title_de, st.title_en, st.description_de, st.description_en,
             st.location_de, st.location_en,
+            st.load_factor, st.popularity, st.exp_min_count, st.exp_min_level,
             s.id, s.start_time, s.duration, s.required,
             s.comment_de, s.comment_en, s.is_locked,
-            p.id, p.name, p.created_at
+            s.load_factor, s.popularity, s.exp_min_count, s.exp_min_level,
+            ` + participantJoinColumns + `
         FROM shift_types st
         LEFT JOIN shifts s ON s.type_id = st.id
         LEFT JOIN participants p ON p.shift_id = s.id
         WHERE st.plan_id = ?
-        ORDER BY st.sort_order, s.start_time, p.created_at
+        ORDER BY st.sort_order, s.start_time, p.created_at, p.id
     `
 	rows, err := db.rdb.Query(query, planID)
 	if err != nil {
@@ -141,6 +163,10 @@ func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
 		var typeTitleDE, typeTitleEN string
 		var typeDescDE, typeDescEN string
 		var typeLocDE, typeLocEN string
+		var typeLoadFactor float64
+		var typePopularity string
+		var typeExpMinCount int
+		var typeExpMinLevel *string
 
 		// Shift fields (nullable due to LEFT JOIN)
 		var shiftID sql.NullInt64
@@ -150,20 +176,21 @@ func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
 		var shiftCommentDE sql.NullString
 		var shiftCommentEN sql.NullString
 		var shiftIsLocked sql.NullBool
+		var overrides shiftOverrides
 
 		// Participant fields (nullable due to LEFT JOIN)
-		var participantID sql.NullInt64
-		var participantName sql.NullString
-		var participantCreatedAt sql.NullString
+		var np nullableParticipant
 
-		if err := rows.Scan(
+		dest := []any{
 			&typeID, &typePlanID, &typePassword, &typeSortOrder,
 			&typeTitleDE, &typeTitleEN, &typeDescDE, &typeDescEN,
 			&typeLocDE, &typeLocEN,
+			&typeLoadFactor, &typePopularity, &typeExpMinCount, &typeExpMinLevel,
 			&shiftID, &shiftStartTime, &shiftDuration, &shiftRequired,
 			&shiftCommentDE, &shiftCommentEN, &shiftIsLocked,
-			&participantID, &participantName, &participantCreatedAt,
-		); err != nil {
+			&overrides.loadFactor, &overrides.popularity, &overrides.expMinCount, &overrides.expMinLevel,
+		}
+		if err := rows.Scan(append(dest, np.scanDest()...)...); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 
@@ -181,6 +208,10 @@ func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
 				DescriptionEN: typeDescEN,
 				LocationDE:    typeLocDE,
 				LocationEN:    typeLocEN,
+				LoadFactor:    typeLoadFactor,
+				Popularity:    typePopularity,
+				ExpMinCount:   typeExpMinCount,
+				ExpMinLevel:   typeExpMinLevel,
 				Shifts:        []Shift{},
 			}
 
@@ -217,45 +248,32 @@ func (db *DB) groupShiftTypesResult(rows *sql.Rows) ([]ShiftType, error) {
 					IsLocked:     shiftIsLocked.Bool,
 					Participants: []Participant{},
 				}
-
-				// Render markdown to HTML for comments
-				if shift.CommentEN != "" {
-					html := renderMarkdown(shift.CommentEN)
-					shift.CommentENHTML = &html
-				}
-				if shift.CommentDE != "" {
-					html := renderMarkdown(shift.CommentDE)
-					shift.CommentDEHTML = &html
-				}
+				overrides.apply(shift)
+				renderShiftComments(shift)
 
 				shiftMap[shiftID.Int64] = shift
 				st.Shifts = append(st.Shifts, *shift)
 			}
 
 			// Handle participant if present
-			if participantID.Valid {
+			if np.ID.Valid {
 				// Find the shift in st.Shifts and add participant
 				for i := range st.Shifts {
 					if st.Shifts[i].ID == shiftID.Int64 {
 						// Check if participant already added (shouldn't happen with proper ORDER BY)
 						participantExists := false
 						for _, p := range st.Shifts[i].Participants {
-							if p.ID == participantID.Int64 {
+							if p.ID == np.ID.Int64 {
 								participantExists = true
 								break
 							}
 						}
 						if !participantExists {
-							createdAt, err := parseTimestamp("participants", participantID.Int64, "created_at", participantCreatedAt.String)
+							p, err := np.toParticipant(shiftID.Int64)
 							if err != nil {
 								return nil, err
 							}
-							st.Shifts[i].Participants = append(st.Shifts[i].Participants, Participant{
-								ID:        participantID.Int64,
-								ShiftID:   shiftID.Int64,
-								Name:      participantName.String,
-								CreatedAt: createdAt,
-							})
+							st.Shifts[i].Participants = append(st.Shifts[i].Participants, p)
 						}
 						break
 					}
@@ -284,7 +302,8 @@ func (db *DB) UpdateShiftType(id int64, st ShiftType) error {
             password = ?,
             title_de = ?, title_en = ?,
             description_de = ?, description_en = ?,
-            location_de = ?, location_en = ?
+            location_de = ?, location_en = ?,
+            load_factor = ?, popularity = ?, exp_min_count = ?, exp_min_level = ?
         WHERE id = ? AND plan_id = ?
     `
 	result, err := db.Exec(query,
@@ -295,6 +314,10 @@ func (db *DB) UpdateShiftType(id int64, st ShiftType) error {
 		st.DescriptionEN,
 		st.LocationDE,
 		st.LocationEN,
+		st.LoadFactor,
+		st.Popularity,
+		st.ExpMinCount,
+		st.ExpMinLevel,
 		id,
 		st.PlanID,
 	)
@@ -389,7 +412,8 @@ func (db *DB) getShiftTypeByID(tx *sql.Tx, id int64) (ShiftType, error) {
         SELECT id, plan_id, password, sort_order,
                title_de, title_en,
                description_de, description_en,
-               location_de, location_en
+               location_de, location_en,
+               load_factor, popularity, exp_min_count, exp_min_level
         FROM shift_types
         WHERE id = ?
     `
@@ -404,6 +428,10 @@ func (db *DB) getShiftTypeByID(tx *sql.Tx, id int64) (ShiftType, error) {
 		&st.DescriptionEN,
 		&st.LocationDE,
 		&st.LocationEN,
+		&st.LoadFactor,
+		&st.Popularity,
+		&st.ExpMinCount,
+		&st.ExpMinLevel,
 	)
 	if err != nil {
 		return st, fmt.Errorf("failed to scan shift type: %w", err)
@@ -420,4 +448,29 @@ func (db *DB) getShiftTypeByID(tx *sql.Tx, id int64) (ShiftType, error) {
 	}
 
 	return st, nil
+}
+
+// GetShiftTypeByID retrieves a single shift type of a plan (without shifts).
+// It returns nil if the type does not exist in the plan.
+func (db *DB) GetShiftTypeByID(planID, id int64) (*ShiftType, error) {
+	var st ShiftType
+	err := db.rdb.QueryRow(`
+        SELECT id, plan_id, password, sort_order, title_de, title_en,
+               description_de, description_en, location_de, location_en,
+               load_factor, popularity, exp_min_count, exp_min_level
+        FROM shift_types
+        WHERE id = ? AND plan_id = ?
+    `, id, planID).Scan(
+		&st.ID, &st.PlanID, &st.Password, &st.SortOrder, &st.TitleDE, &st.TitleEN,
+		&st.DescriptionDE, &st.DescriptionEN, &st.LocationDE, &st.LocationEN,
+		&st.LoadFactor, &st.Popularity, &st.ExpMinCount, &st.ExpMinLevel,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		db.logError("GetShiftTypeByID", err, planID, id)
+		return nil, fmt.Errorf("failed to get shift type: %w", err)
+	}
+	return &st, nil
 }

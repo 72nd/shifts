@@ -3,11 +3,10 @@ package db
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/72nd/shifts/internal/model"
-	"golang.org/x/text/unicode/norm"
+	"github.com/72nd/shifts/internal/util"
 )
 
 // Stats represents all statistics for a shift plan
@@ -77,12 +76,6 @@ type DailyStats struct {
 	PercentFilled int        `json:"percent_filled"`
 }
 
-// helperKey groups participants by their normalised name: Unicode NFC, trimmed,
-// runs of whitespace collapsed to one space, lower case.
-func helperKey(name string) string {
-	return strings.ToLower(strings.Join(strings.Fields(norm.NFC.String(name)), " "))
-}
-
 // GetShiftPlanStats calculates all statistics for a shift plan
 func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 	// Get all shift types with their shifts and participants
@@ -133,7 +126,9 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 			startTime := shift.StartTime.Time
 			endTime := startTime.Add(time.Duration(shift.Duration) * time.Minute)
 			shiftHours := float64(shift.Duration) / 60
-			filledPositions := len(shift.Participants)
+			// Declined participations never count (P4)
+			participants := ActiveParticipants(shift.Participants)
+			filledPositions := len(participants)
 
 			// Unlimited shifts (Required == -1) have no demand: they do not count into
 			// required totals, open positions or percentages. Their participants' hours
@@ -199,8 +194,8 @@ func (db *DB) GetShiftPlanStats(planID int64) (*Stats, error) {
 			dailyStats.OpenPositions += openPositions
 
 			// Update helper stats
-			for _, p := range shift.Participants {
-				key := helperKey(p.Name)
+			for _, p := range participants {
+				key := util.PersonKey(p.Name)
 				uniqueHelperKeys[key] = true
 				helperStats, exists := helperMap[key]
 				if !exists {

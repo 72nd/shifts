@@ -262,3 +262,27 @@ func (s *Service) loadShiftsForType(shiftType *db.ShiftType) error {
 	shiftType.Shifts = shifts
 	return nil
 }
+
+// withoutDeclined returns a copy of the data in which declined participations are removed.
+// The original is not changed.
+func (e *ExportData) withoutDeclined() *ExportData {
+	out := &ExportData{
+		Plan:          e.Plan,
+		ExportedAt:    e.ExportedAt,
+		AppliedFilter: e.AppliedFilter,
+		ShiftTypes:    make([]*ShiftTypeWithDays, len(e.ShiftTypes)),
+	}
+	for i, t := range e.ShiftTypes {
+		days := make([]ShiftsByDay, len(t.ShiftDays))
+		for j, d := range t.ShiftDays {
+			shifts := make([]db.Shift, len(d.Shifts))
+			for k, s := range d.Shifts {
+				s.Participants = db.ActiveParticipants(s.Participants)
+				shifts[k] = s
+			}
+			days[j] = ShiftsByDay{Date: d.Date, DayCount: d.DayCount, Shifts: shifts}
+		}
+		out.ShiftTypes[i] = &ShiftTypeWithDays{ShiftType: t.ShiftType, ShiftDays: days}
+	}
+	return out
+}

@@ -52,6 +52,18 @@ type ShiftPlanUpdateRequest struct {
 	DayBoundaryTime string `json:"day_boundary_time" example:"00:00"`
 	// Whether participants can see each other's names
 	CollaborativeMode bool `json:"collaborative_mode" example:"false"`
+	// Coordination settings. attendance_mode empty = leave all of these unchanged.
+	ExperienceFieldID *int64 `json:"experience_field_id" example:"1"`
+	// off, participant or admin
+	AttendanceMode string `json:"attendance_mode" example:"off" enums:"off,participant,admin"`
+	// Default target minutes per person (0-100000, null = none)
+	DefaultTargetMinutes *int `json:"default_target_minutes" example:"720"`
+	// Minimum break between shifts in minutes (0-1440, null = default)
+	MinRestMinutes *int `json:"min_rest_minutes" example:"60"`
+	// Maximum minutes per logical day (0-1440, null = default)
+	MaxDayMinutes *int `json:"max_day_minutes" example:"480"`
+	// Whether participants can see declined sign-ups
+	ShowDeclined bool `json:"show_declined" example:"false"`
 } // @name ShiftPlanUpdateRequest
 
 // ShiftTypeOrderRequest represents a request to update shift type order
@@ -98,6 +110,20 @@ type ShiftPlanResponse struct {
 	CollaborativeMode bool `json:"collaborative_mode" example:"false"`
 	// IANA time zone of the event
 	TimeZone string `json:"time_zone" example:"Europe/Berlin"`
+	// Coordination settings
+	ExperienceFieldID *int64 `json:"experience_field_id" example:"1"`
+	// off, participant or admin
+	AttendanceMode string `json:"attendance_mode" example:"off" enums:"off,participant,admin"`
+	// Default target minutes per person (0-100000, null = none)
+	DefaultTargetMinutes *int `json:"default_target_minutes" example:"720"`
+	// Minimum break between shifts in minutes (0-1440, null = default)
+	MinRestMinutes *int `json:"min_rest_minutes" example:"60"`
+	// Maximum minutes per logical day (0-1440, null = default)
+	MaxDayMinutes *int `json:"max_day_minutes" example:"480"`
+	// Whether participants can see declined sign-ups
+	ShowDeclined bool `json:"show_declined" example:"false"`
+	// Person fields of the plan (definitions only, no values)
+	Fields []PlanFieldResponse `json:"fields"`
 } // @name ShiftPlanResponse
 
 // CreateShiftPlanResponse represents the response after creating a shift plan
