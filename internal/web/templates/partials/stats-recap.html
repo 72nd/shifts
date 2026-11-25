@@ -43,8 +43,17 @@
                         <template x-for="r in s.rows" :key="r.id">
                             <div class="min-w-0">
                                 <dt class="text-sm text-base-content/70" x-text="r.label"></dt>
-                                <dd class="font-medium" x-text="r.value"></dd>
-                                <dd x-show="r.detail" class="text-sm text-base-content/70 break-words" x-text="r.detail"></dd>
+                                <template x-for="(item, i) in r.items" :key="i">
+                                    <div class="min-w-0" :class="r.items.length > 1 ? 'flex flex-wrap items-baseline gap-x-2' : ''">
+                                        <dd class="font-medium tabular-nums" x-text="item.value"></dd>
+                                        <dd class="text-sm text-base-content/70 break-words min-w-0">
+                                            <span x-text="item.names.length ? namesText(r, i) : item.detail"></span>
+                                            <button type="button" class="link link-primary relative px-1 align-baseline after:content-[''] after:absolute after:inset-x-0 after:-inset-y-3" x-show="canToggle(r, i)"
+                                                :aria-expanded="isExpanded(r, i) ? 'true' : 'false'" @click="toggle(r, i)"
+                                                x-text="isExpanded(r, i) ? $t('common.show_less') : $t('stats.recap_others', { n: number(item.names.length - 1) })"></button>
+                                        </dd>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </dl>

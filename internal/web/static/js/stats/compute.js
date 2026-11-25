@@ -63,9 +63,8 @@ const MS_DAY = 24 * 60 * MS_MINUTE;
  * @property {string} id      most_shifts, most_days, longest_shift, early_bird, night_owl, all_rounder,
  *   dream_team, first_signup, fastest_full, last_minute, best_signup_day
  * @property {'people'|'signups'} group
- * @property {number} value
- * @property {string[]} names  shown names (1, or 2 for dream_team; empty for counts)
- * @property {number} others   further people (or pairs) with the same value, 0 if none
+ * @property {Array<{value:number, names:string[]}>} places  best first; several only for the rankings
+ *   (most_shifts, night_owl). names: everyone with that value (pairs "A & B" for dream_team); empty for counts
  * @property {number} [shiftId]  (longest_shift)
  * @property {Date} [at]       floating sign-up instant (first_signup) or shift start (fastest_full)
  * @property {Date} [end]      shift end (fastest_full)
@@ -444,19 +443,29 @@ function buildSignups(shifts, totals, plan, now, boundary) {
 }
 
 /**
- * Person(s) with the highest (or lowest) value; null if no one qualifies.
- * people are sorted by name, so the first of a tie is the alphabetically first.
+ * Places of a ranking: people grouped by value, best first. Places are added until at least
+ * `cover` people are listed, so a tie is never cut. null if no one qualifies.
+ * people are sorted by name, so names within a place are alphabetical.
  * min applies only when looking for the highest value; null/undefined values are skipped.
  */
-function leaders(people, valueOf, { min = 1, lowest = false } = {}) {
-  let best = null, list = [];
+function leaders(people, valueOf, { min = 1, lowest = false, cover = 1 } = {}) {
+  const groups = new Map();
   for (const p of people) {
     const v = valueOf(p);
     if (v === null || v === undefined || (!lowest && v < min)) continue;
-    if (best === null || (lowest ? v < best : v > best)) { best = v; list = [p]; }
-    else if (v === best) list.push(p);
+    if (!groups.has(v)) groups.set(v, []);
+    groups.get(v).push(p);
   }
-  return best === null ? null : { value: best, names: [list[0].name], others: list.length - 1, first: list[0] };
+  const values = [...groups.keys()].sort((a, b) => lowest ? a - b : b - a);
+  const places = [];
+  let listed = 0;
+  for (const value of values) {
+    const list = groups.get(value);
+    places.push({ value, names: list.map(p => p.name) });
+    listed += list.length;
+    if (listed >= cover) break;
+  }
+  return places.length ? { places, first: groups.get(values[0])[0] } : null;
 }
 
 /** Most people on assignment at the same time (sweep over start/end events). */
@@ -488,18 +497,14 @@ function dreamTeam(shifts, people) {
       }
     }
   }
-  let best = null, ties = 0;
+  let best = 0, pairs = [];
   for (const [k, n] of counts) {
     if (n < 2) continue;
     const names = k.split('\n').map(key => nameOf.get(key) || key).sort((a, b) => a.localeCompare(b));
-    const label = names.join('\n');
-    if (!best || n > best.value) { best = { value: n, names, label }; ties = 0; }
-    else if (n === best.value) {
-      ties++;
-      if (label.localeCompare(best.label) < 0) best = { value: n, names, label };
-    }
+    if (n > best) { best = n; pairs = [names.join(' & ')]; }
+    else if (n === best) pairs.push(names.join(' & '));
   }
-  return best ? { value: best.value, names: best.names, others: ties } : null;
+  return best ? { places: [{ value: best, names: pairs.sort((a, b) => a.localeCompare(b)) }] } : null;
 }
 
 /** Shift that reached its required places fastest by the people's own sign-ups (at least 3 places). */
@@ -516,7 +521,7 @@ function fastestFull(shifts) {
   }
   if (!best) return null;
   const s = best.shift;
-  return { value: best.value, names: [], others: 0, at: s.start, end: s.end, day: s.day, typeTitle: s.typeTitle };
+  return { places: [{ value: best.value, names: [] }], at: s.start, end: s.end, day: s.day, typeTitle: s.typeTitle };
 }
 
 /** Figures and highlights for the recap tab; hours count assignments only (as in the people tab). */
@@ -538,15 +543,15 @@ function buildRecap(shifts, people, points, boundary) {
 
   const facts = recap.facts;
   const add = (id, group, r, extra = {}) => {
-    if (r) facts.push({ id, group, value: r.value, names: r.names, others: r.others, ...extra });
+    if (r) facts.push({ id, group, places: r.places, ...extra });
   };
 
   // People
-  add('most_shifts', 'people', leaders(people, p => p.shifts, { min: 2 }));
+  add('most_shifts', 'people', leaders(people, p => p.shifts, { min: 2, cover: 3 }));
   add('most_days', 'people', leaders(people, p => p.days, { min: 2 }));
   const longest = leaders(people, p => p.longestShiftMinutes);
   if (longest) {
-    const item = longest.first.items.find(i => i.minutes === longest.value);
+    const item = longest.first.items.find(i => i.minutes === longest.places[0].value);
     add('longest_shift', 'people', longest, { shiftId: item?.shiftId });
   }
   add('early_bird', 'people', leaders(people, p => {
@@ -557,7 +562,7 @@ function buildRecap(shifts, people, points, boundary) {
     }
     return earliest;
   }, { lowest: true }));
-  add('night_owl', 'people', leaders(people, p => p.nightMinutes));
+  add('night_owl', 'people', leaders(people, p => p.nightMinutes, { cover: 3 }));
   add('all_rounder', 'people', leaders(people, p => p.typeCount, { min: 2 }));
   add('dream_team', 'people', dreamTeam(shifts, people));
 
@@ -572,10 +577,10 @@ function buildRecap(shifts, people, points, boundary) {
       if (p.createdAt >= dayBefore && p.createdAt < s.start) lastMinute++;
     }
   }
-  if (first) facts.push({ id: 'first_signup', group: 'signups', value: first.createdAt.getTime(), names: [first.name], others: 0, at: first.createdAt });
+  if (first) facts.push({ id: 'first_signup', group: 'signups', places: [{ value: first.createdAt.getTime(), names: [first.name] }], at: first.createdAt });
   const fastest = fastestFull(shifts);
   if (fastest) facts.push({ id: 'fastest_full', group: 'signups', ...fastest });
-  if (lastMinute > 0) facts.push({ id: 'last_minute', group: 'signups', value: lastMinute, names: [], others: 0 });
+  if (lastMinute > 0) facts.push({ id: 'last_minute', group: 'signups', places: [{ value: lastMinute, names: [] }] });
 
   const perDay = new Map();
   for (const p of points) {
@@ -584,7 +589,7 @@ function buildRecap(shifts, people, points, boundary) {
   }
   let bestDay = null;
   for (const [day, count] of perDay) if (!bestDay || count > bestDay[1]) bestDay = [day, count];
-  if (bestDay) facts.push({ id: 'best_signup_day', group: 'signups', value: bestDay[1], names: [], others: 0, day: bestDay[0] });
+  if (bestDay) facts.push({ id: 'best_signup_day', group: 'signups', places: [{ value: bestDay[1], names: [] }], day: bestDay[0] });
   return recap;
 }
 

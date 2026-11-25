@@ -60,37 +60,38 @@
 
         <!-- Heatmap: rows are days, or areas of one day -->
         <section aria-labelledby="stats-heatmap" class="min-w-0">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <h2 id="stats-heatmap" class="font-semibold" x-text="$t('stats.heatmap_title')"></h2>
-                <div class="join" role="group" :aria-label="$t('stats.heat_rows')">
-                    <button type="button" class="btn btn-sm btn-ghost join-item min-h-11"
-                        :class="{ 'btn-active': heatRows === 'days' }"
+            <h2 id="stats-heatmap" class="font-semibold mb-2" x-text="$t('stats.heatmap_title')"></h2>
+            <div class="flex flex-wrap items-center gap-2 mb-2 min-w-0">
+                <div class="tabs tabs-boxed grid grid-flow-col auto-cols-fr w-fit" role="group" :aria-label="$t('stats.heat_rows')">
+                    <button type="button" class="tab px-4 whitespace-nowrap"
+                        :class="{ 'tab-active': heatRows === 'days' }"
                         :aria-pressed="heatRows === 'days' ? 'true' : 'false'"
                         @click="setHeatRows('days')"
                         x-text="$t('stats.heat_rows_days')"></button>
-                    <button type="button" class="btn btn-sm btn-ghost join-item min-h-11"
-                        :class="{ 'btn-active': heatRows === 'types' }"
+                    <button type="button" class="tab px-4 whitespace-nowrap"
+                        :class="{ 'tab-active': heatRows === 'types' }"
                         :aria-pressed="heatRows === 'types' ? 'true' : 'false'"
                         @click="setHeatRows('types')"
                         x-text="$t('stats.heat_rows_types')"></button>
                 </div>
-            </div>
-            <div x-show="heatRows === 'types'" class="flex items-center gap-1 mb-2 min-w-0">
-                <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11 shrink-0"
-                    x-show="model.typeHeatmap.days.length > 1" :disabled="!canStep(-1)" @click="stepDay(-1)"
-                    :aria-label="$t('stats.heat_prev_day')" :title="$t('stats.heat_prev_day')">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <span class="font-medium min-w-0 truncate" aria-live="polite" x-text="heatRows === 'types' ? dateLabel(typeDay) : ''"></span>
-                <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11 shrink-0"
-                    x-show="model.typeHeatmap.days.length > 1" :disabled="!canStep(1)" @click="stepDay(1)"
-                    :aria-label="$t('stats.heat_next_day')" :title="$t('stats.heat_next_day')">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
+                <!-- Day of the area view: same look as the tab bar -->
+                <div x-show="heatRows === 'types'" class="flex items-center gap-1 min-w-0 p-1 rounded-btn bg-base-200 sm:ml-auto">
+                    <button type="button" class="btn btn-ghost btn-sm btn-square shrink-0"
+                        x-show="model.typeHeatmap.days.length > 1" :disabled="!canStep(-1)" @click="stepDay(-1)"
+                        :aria-label="$t('stats.heat_prev_day')" :title="$t('stats.heat_prev_day')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <span class="text-sm font-medium px-2 min-w-0 truncate" aria-live="polite" x-text="heatRows === 'types' ? dateLabel(typeDay) : ''"></span>
+                    <button type="button" class="btn btn-ghost btn-sm btn-square shrink-0"
+                        x-show="model.typeHeatmap.days.length > 1" :disabled="!canStep(1)" @click="stepDay(1)"
+                        :aria-label="$t('stats.heat_next_day')" :title="$t('stats.heat_next_day')">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="overflow-x-auto border border-base-300 rounded" tabindex="0" role="group" :aria-label="$t('stats.heatmap_title')">
                 <div class="min-w-max">

@@ -9,6 +9,7 @@ document.addEventListener('alpine:init', () => {
         copied: false,
         copyFailed: false,
         copiedTimer: null,
+        expanded: {}, // "rowId:itemIndex" → true while the full list of names is shown
 
         destroy() {
             clearTimeout(this.copiedTimer);
@@ -46,7 +47,7 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        /** Sections with rows { id, label, value, detail }; empty sections are left out. */
+        /** Sections with rows { id, label, items: [{ value, detail, names }] }; empty sections are left out. */
         get sections() {
             const r = this.recap;
             const numbers = [];
@@ -72,52 +73,80 @@ document.addEventListener('alpine:init', () => {
         },
 
         row(id, labelKey, value, detail = '') {
-            return { id, label: this.$t(labelKey), value, detail };
+            return { id, label: this.$t(labelKey), items: [{ value, detail, names: [] }] };
         },
 
+        /** A fact becomes a row with one item per place (several only for the top 3 rankings). */
         factRow(f) {
-            let value, detail = this.names(f);
-            switch (f.id) {
-                case 'most_days':
-                    value = this.$t('stats.days_unit', { n: this.number(f.value) });
-                    break;
-                case 'longest_shift':
-                case 'night_owl':
-                    value = this.$t('stats.hours_unit', { n: this.hours(f.value) });
-                    break;
-                case 'early_bird':
-                    value = this.$t('stats.fact_early_bird_value', { time: this.clock(f.value) });
-                    break;
-                case 'dream_team':
-                    value = this.$t('stats.fact_dream_team_value', { n: this.number(f.value) });
-                    break;
-                case 'first_signup':
-                    value = `${this.dayLabel(f.at)}, ${this.time(f.at)}`;
-                    break;
-                case 'fastest_full':
-                    value = this.$t('stats.fact_fastest_full_value', { duration: this.duration(f.value) });
-                    detail = `${this.t(f.typeTitle)}, ${this.dayLabel(f.day)} ${this.timeRange(f.at, f.end)}`;
-                    break;
-                case 'last_minute':
-                    value = this.number(f.value);
-                    detail = this.$t('stats.fact_last_minute_detail');
-                    break;
-                case 'best_signup_day':
-                    value = this.number(f.value);
-                    detail = this.dayLabel(f.day);
-                    break;
-                default: // most_shifts, all_rounder
-                    value = this.number(f.value);
-            }
-            return { id: f.id, label: this.$t(`stats.fact_${f.id}`), value, detail };
+            const items = f.places.map(place => {
+                let value, detail = '';
+                switch (f.id) {
+                    case 'most_days':
+                        value = this.$t('stats.days_unit', { n: this.number(place.value) });
+                        break;
+                    case 'longest_shift':
+                    case 'night_owl':
+                        value = this.$t('stats.hours_unit', { n: this.hours(place.value) });
+                        break;
+                    case 'early_bird':
+                        value = this.$t('stats.fact_early_bird_value', { time: this.clock(place.value) });
+                        break;
+                    case 'dream_team':
+                        value = this.$t('stats.fact_dream_team_value', { n: this.number(place.value) });
+                        break;
+                    case 'first_signup':
+                        value = `${this.dayLabel(f.at)}, ${this.time(f.at)}`;
+                        break;
+                    case 'fastest_full':
+                        value = this.$t('stats.fact_fastest_full_value', { duration: this.duration(place.value) });
+                        detail = `${this.t(f.typeTitle)}, ${this.dayLabel(f.day)} ${this.timeRange(f.at, f.end)}`;
+                        break;
+                    case 'last_minute':
+                        value = this.number(place.value);
+                        detail = this.$t('stats.fact_last_minute_detail');
+                        break;
+                    case 'best_signup_day':
+                        value = this.number(place.value);
+                        detail = this.dayLabel(f.day);
+                        break;
+                    default: // most_shifts, all_rounder
+                        value = this.number(place.value);
+                }
+                return { value, detail, names: place.names };
+            });
+            return { id: f.id, label: this.$t(`stats.fact_${f.id}`), items };
         },
 
-        /** "Anna", "Cem und Dora", plus "+2 weitere" for ties. */
-        names(f) {
-            if (!f.names.length) return '';
-            let s = f.names.length === 2 ? this.$t('stats.recap_and', { a: f.names[0], b: f.names[1] }) : f.names[0];
-            if (f.others > 0) s += ' ' + this.$t('stats.recap_others', { n: this.number(f.others) });
-            return s;
+        /** "Anna, Ben und Cem" in the language of the page. */
+        joinNames(names) {
+            return new Intl.ListFormat(this.lang() === 'en' ? 'en-GB' : 'de-DE', { style: 'long', type: 'conjunction' }).format(names);
+        },
+
+        /** Names as shown on the page: up to two in full, more as the first name until expanded. */
+        namesText(row, index) {
+            const names = row.items[index].names;
+            return names.length <= 2 || this.isExpanded(row, index) ? this.joinNames(names) : names[0];
+        },
+
+        canToggle(row, index) {
+            return row.items[index].names.length > 2;
+        },
+
+        isExpanded(row, index) {
+            return Boolean(this.expanded[`${row.id}:${index}`]);
+        },
+
+        toggle(row, index) {
+            const key = `${row.id}:${index}`;
+            this.expanded = { ...this.expanded, [key]: !this.expanded[key] };
+        },
+
+        /** One row as plain text: "8 (Anna), 7 (Ben und Cem)"; all names, the copy has no buttons. */
+        rowText(row) {
+            return row.items.map(i => {
+                const who = i.names.length ? this.joinNames(i.names) : i.detail;
+                return who ? `${i.value} (${who})` : i.value;
+            }).join(', ');
         },
 
         /** Minutes after midnight → "05:00". */
@@ -155,7 +184,7 @@ document.addEventListener('alpine:init', () => {
             const sentences = [this.heroSentence, this.daysSentence].filter(Boolean);
             if (sentences.length) blocks.push(sentences.join('\n'));
             for (const s of this.sections) {
-                const lines = s.rows.map(r => `- ${r.label}: ${r.value}${r.detail ? ` (${r.detail})` : ''}`);
+                const lines = s.rows.map(r => `- ${r.label}: ${this.rowText(r)}`);
                 blocks.push([s.title, ...lines].join('\n'));
             }
             return blocks.join('\n\n');
