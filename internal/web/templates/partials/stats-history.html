@@ -60,24 +60,5 @@
         <p class="text-sm text-base-content/70 mt-2" x-show="model && model.distribution.top20SharePercent != null"
            x-text="model && model.distribution.top20SharePercent != null ? $t('stats.distribution_top', { p: number(model.distribution.top20SharePercent) }) : ''"></p>
     </section>
-
-    <!-- Quick facts -->
-    <section x-show="model && model.facts.length" aria-labelledby="stats-facts-title">
-        <h2 id="stats-facts-title" class="text-lg font-semibold mb-2" x-text="$t('stats.facts_title')"></h2>
-        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3">
-            <template x-for="f in (model ? model.facts : [])" :key="f.id">
-                <div>
-                    <dt class="text-sm text-base-content/70" x-text="$t('stats.fact_' + f.id)"></dt>
-                    <dd class="font-medium flex flex-wrap gap-x-2">
-                        <span x-show="f.id === 'longest_shift' || f.id === 'night_owl'" x-text="$t('stats.hours_unit', { n: hours(f.value) })"></span>
-                        <span x-show="f.id === 'all_rounder' || f.id === 'peak_hour' || f.id === 'best_signup_day'" x-text="number(f.value)"></span>
-                        <span x-show="f.personName" class="font-normal text-base-content/70" x-text="f.personName"></span>
-                        <span x-show="f.day" class="font-normal text-base-content/70"
-                              x-text="f.day ? dayLabel(f.day) + (f.at ? ', ' + time(f.at) : '') : ''"></span>
-                    </dd>
-                </div>
-            </template>
-        </dl>
-    </section>
 </div>
 {{ end }}

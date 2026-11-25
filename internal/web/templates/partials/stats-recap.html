@@ -1,0 +1,56 @@
+{{ define "stats-recap" }}
+<div x-data="statsRecap" class="space-y-6 min-w-0">
+    <!-- Empty state: nobody with an assignment -->
+    <div x-show="model.recap.people === 0" class="py-8 text-center space-y-3">
+        <p x-text="hasFilter ? $t('stats.empty_filtered') : $t('stats.empty_people')"></p>
+        <button type="button" class="btn btn-primary min-h-11" x-show="hasFilter" @click="resetFilter()" x-text="$t('stats.filter_reset')"></button>
+    </div>
+
+    <div x-show="model.recap.people > 0" class="space-y-6">
+        <!-- Copy as text: the only primary action of this tab -->
+        <div class="space-y-2">
+            <div class="flex sm:justify-end">
+                <button type="button" class="btn btn-primary min-h-11 w-full sm:w-auto" @click="copy()"
+                    x-text="copied ? $t('stats.recap_copied') : $t('stats.recap_copy')"></button>
+            </div>
+            <span role="status" class="sr-only" x-text="copied ? $t('stats.recap_copied') : ''"></span>
+            <template x-if="copyFailed">
+                <div class="space-y-2">
+                    <p role="alert" class="text-sm text-error" x-text="$t('stats.recap_copy_failed')"></p>
+                    <textarea readonly class="textarea textarea-bordered w-full h-48" :aria-label="$t('stats.recap_copy')"
+                        x-init="$el.value = copyText(); $nextTick(() => $el.select())"></textarea>
+                </div>
+            </template>
+        </div>
+
+        <!-- Big numbers -->
+        <dl class="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 border-y border-base-300 py-4">
+            <template x-for="f in figures" :key="f.id">
+                <div class="min-w-0">
+                    <dt class="text-sm text-base-content/70" x-text="f.label"></dt>
+                    <dd class="text-3xl font-bold tabular-nums" x-text="f.value"></dd>
+                </div>
+            </template>
+        </dl>
+        <p x-show="daysSentence" class="text-base-content/70" x-text="daysSentence"></p>
+
+        <!-- Highlights -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <template x-for="s in sections" :key="s.id">
+                <section class="min-w-0" :aria-labelledby="'stats-recap-' + s.id">
+                    <h2 :id="'stats-recap-' + s.id" class="font-semibold mb-2" x-text="s.title"></h2>
+                    <dl class="space-y-3">
+                        <template x-for="r in s.rows" :key="r.id">
+                            <div class="min-w-0">
+                                <dt class="text-sm text-base-content/70" x-text="r.label"></dt>
+                                <dd class="font-medium" x-text="r.value"></dd>
+                                <dd x-show="r.detail" class="text-sm text-base-content/70 break-words" x-text="r.detail"></dd>
+                            </div>
+                        </template>
+                    </dl>
+                </section>
+            </template>
+        </div>
+    </div>
+</div>
+{{ end }}

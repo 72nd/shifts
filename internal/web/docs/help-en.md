@@ -108,8 +108,7 @@ You open the statistics via "Statistics" in the shift plan's control bar. They o
 
 The statistics have four tabs:
 
-- **Overview**: key figures (share filled, open spots, people, planned and done hours), staffing per day and per area as bars, and a heatmap across the day that shows how many spots are filled at each hour. Clicking a bar sets the filter to that day or area; clicking a heatmap cell opens the shift plan at that point.
-- **Gaps**: all open spots, the next 24 hours first, then the rest. "Show in plan" takes you to the shift plan, filtered to that shift.
+- **Overview**: key figures (share filled, open spots, people, planned and done hours), staffing per day and per area as bars, and a heatmap across the day that shows how many spots are filled at each hour; where spots are missing, the cell shows the highest number missing at the same time (e.g. "−2"). "Rows: Days | Areas" switches the rows: with "Areas" each row is an area and one day is shown, which you change with ‹ ›. Clicking a bar sets the filter to that day or area; clicking a heatmap cell opens the shift plan at that point. For a list of all open spots, use the filter "Open places" in the shift plan.
 - **People**: a table of all participants with shifts, hours, days, areas, night hours and their busiest day. Columns can be sorted, the table can be searched and narrowed to people with warnings or with only one shift. Expanding a row shows all of the person's shifts and a "Show in plan" link. Warnings are given for:
     - Overlap: two shifts of the same person overlap.
     - Rest: less than 8 hours between the end of one shift and the start of the next.
@@ -118,7 +117,8 @@ The statistics have four tabs:
     If the plan has a minimum break or a maximum per day (under "Fields & rules" in the coordination), those values replace 8 and 10 hours. Hours count only assignments, not open wishes in popular shifts; not selected sign-ups are not counted at all.
 
     Names that differ only in capitalisation, spaces or accents count as the same person. Similar names that differ in punctuation or accents get a hint that they may be the same person. Admins can download the table as a CSV file.
-- **History**: the sign-up curve over time, with the required spots as a line. If enough sign-ups came in during the last 7 days, the curve also shows when the plan would be full at this pace. Below it are the distribution of hours across people and a few quick facts, such as the longest shift.
+- **History**: the sign-up curve over time, with the required spots as a line. If enough sign-ups came in during the last 7 days, the curve also shows when the plan would be full at this pace. Below it is the distribution of hours across people.
+- **Recap**: the figures for a thank-you, a speech or a social media post: people, hours, shifts and sign-ups, converted into days around the clock and working days, plus highlights such as most shifts, early bird, night hours, the dream team (most shifts together), the first sign-up, the shift filled fastest and last-minute sign-ups. "Copy as text" copies everything, names included, as text for you to adjust.
 
 The area and day filters apply to all tabs. They are kept in the page address, so you can share a filtered view or reload it.
 

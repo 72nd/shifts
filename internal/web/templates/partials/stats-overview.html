@@ -58,36 +58,72 @@
             </section>
         </div>
 
-        <!-- Heatmap -->
+        <!-- Heatmap: rows are days, or areas of one day -->
         <section aria-labelledby="stats-heatmap" class="min-w-0">
-            <h2 id="stats-heatmap" class="font-semibold mb-2" x-text="$t('stats.heatmap_title')"></h2>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <h2 id="stats-heatmap" class="font-semibold" x-text="$t('stats.heatmap_title')"></h2>
+                <div class="join" role="group" :aria-label="$t('stats.heat_rows')">
+                    <button type="button" class="btn btn-sm btn-ghost join-item min-h-11"
+                        :class="{ 'btn-active': heatRows === 'days' }"
+                        :aria-pressed="heatRows === 'days' ? 'true' : 'false'"
+                        @click="setHeatRows('days')"
+                        x-text="$t('stats.heat_rows_days')"></button>
+                    <button type="button" class="btn btn-sm btn-ghost join-item min-h-11"
+                        :class="{ 'btn-active': heatRows === 'types' }"
+                        :aria-pressed="heatRows === 'types' ? 'true' : 'false'"
+                        @click="setHeatRows('types')"
+                        x-text="$t('stats.heat_rows_types')"></button>
+                </div>
+            </div>
+            <div x-show="heatRows === 'types'" class="flex items-center gap-1 mb-2 min-w-0">
+                <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11 shrink-0"
+                    x-show="model.typeHeatmap.days.length > 1" :disabled="!canStep(-1)" @click="stepDay(-1)"
+                    :aria-label="$t('stats.heat_prev_day')" :title="$t('stats.heat_prev_day')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <span class="font-medium min-w-0 truncate" aria-live="polite" x-text="heatRows === 'types' ? dateLabel(typeDay) : ''"></span>
+                <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11 shrink-0"
+                    x-show="model.typeHeatmap.days.length > 1" :disabled="!canStep(1)" @click="stepDay(1)"
+                    :aria-label="$t('stats.heat_next_day')" :title="$t('stats.heat_next_day')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
             <div class="overflow-x-auto border border-base-300 rounded" tabindex="0" role="group" :aria-label="$t('stats.heatmap_title')">
                 <div class="min-w-max">
                     <div class="flex">
-                        <div class="sticky left-0 z-10 bg-base-100 w-20 shrink-0"></div>
-                        <template x-for="h in model.heatmap.hours" :key="h">
-                            <div class="flex-1 min-w-11 text-center text-xs tabular-nums text-base-content/70 py-1" x-text="hourLabel(h)"></div>
+                        <div class="sticky left-0 z-10 bg-base-100 shrink-0" :class="heatRows === 'types' ? 'w-28 sm:w-40' : 'w-20'"></div>
+                        <template x-for="col in heatHours" :key="col.hourIdx">
+                            <div class="flex-1 min-w-11 text-center text-xs tabular-nums text-base-content/70 py-1" x-text="hourLabel(col.hour)"></div>
                         </template>
                     </div>
-                    <template x-for="(day, di) in model.heatmap.days" :key="day">
+                    <template x-for="line in heatLines" :key="heatRows + '-' + line.key">
                         <div class="flex">
-                            <div class="sticky left-0 z-10 bg-base-100 w-20 shrink-0 px-2 flex items-center text-sm border-r border-base-300"
-                                x-text="dayLabel(day)"></div>
-                            <template x-for="(cell, hi) in model.heatmap.cells[di]" :key="hi">
+                            <div class="sticky left-0 z-10 bg-base-100 shrink-0 px-2 flex items-center text-sm border-r border-base-300 min-w-0"
+                                :class="heatRows === 'types' ? 'w-28 sm:w-40' : 'w-20'">
+                                <span class="truncate" :title="line.label" x-text="line.label"></span>
+                            </div>
+                            <template x-for="c in line.cells" :key="c.hourIdx">
                                 <div class="flex-1 min-w-11 h-11 p-px relative">
-                                    <template x-if="cell">
-                                        <a :href="cellUrl(day, cell)"
+                                    <template x-if="c.cell">
+                                        <a :href="cellUrl(line, c.cell)"
                                             class="absolute inset-px rounded-sm flex items-center justify-center text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary"
-                                            :class="cellClass(cell)" :style="cellStyle(cell)"
-                                            :title="cellLabel(day, hi, cell)" :aria-label="cellLabel(day, hi, cell)">
-                                            <span x-show="cell.ratio === null" aria-hidden="true">∞</span>
+                                            :class="cellClass(c.cell)" :style="cellStyle(c.cell)"
+                                            :title="cellLabel(line, c.hourIdx, c.cell)" :aria-label="cellLabel(line, c.hourIdx, c.cell)">
+                                            <span x-show="c.cell.ratio === null" aria-hidden="true">∞</span>
+                                            <span x-show="c.cell.openPeak > 0" aria-hidden="true"
+                                                class="rounded px-0.5 bg-base-100 text-base-content font-medium tabular-nums"
+                                                x-text="'−' + number(c.cell.openPeak)"></span>
                                         </a>
                                     </template>
-                                    <template x-if="!cell">
+                                    <template x-if="!c.cell">
                                         <div class="absolute inset-px rounded-sm bg-base-200"
-                                            :title="cellLabel(day, hi, cell)" role="img" :aria-label="cellLabel(day, hi, cell)"></div>
+                                            :title="cellLabel(line, c.hourIdx, c.cell)" role="img" :aria-label="cellLabel(line, c.hourIdx, c.cell)"></div>
                                     </template>
-                                    <template x-if="isNow(di, hi)">
+                                    <template x-if="isNow(line.dayIdx, c.hourIdx)">
                                         <span class="absolute top-0 bottom-0 w-0.5 bg-base-content z-[1] pointer-events-none"
                                             :style="`left: ${nowMark.frac * 100}%`" :title="$t('stats.now')" aria-hidden="true"></span>
                                     </template>
@@ -104,6 +140,7 @@
                 <li class="flex items-center gap-2"><span class="inline-block w-5 h-5 rounded-sm border-2 border-error" style="background-color: oklch(var(--p) / 0.25); background-image: repeating-linear-gradient(45deg, transparent 0 3px, oklch(var(--er) / 0.6) 3px 5px)"></span><span x-text="$t('stats.legend_low')"></span></li>
                 <li class="flex items-center gap-2"><span class="inline-block w-5 h-5 rounded-sm bg-base-200"></span><span x-text="$t('stats.heatmap_none')"></span></li>
                 <li class="flex items-center gap-2"><span class="inline-flex items-center justify-center w-5 h-5 rounded-sm border border-dashed border-base-content/40 bg-base-200 text-xs" aria-hidden="true">∞</span><span x-text="$t('stats.unlimited')"></span></li>
+                <li class="flex items-center gap-2"><span class="rounded px-0.5 bg-base-100 text-base-content text-xs font-medium tabular-nums border border-base-300" aria-hidden="true">−2</span><span x-text="$t('stats.legend_open')"></span></li>
                 <li class="flex items-center gap-2" x-show="nowMark"><span class="inline-block w-0.5 h-5 bg-base-content"></span><span x-text="$t('stats.now')"></span></li>
             </ul>
         </section>

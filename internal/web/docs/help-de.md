@@ -107,8 +107,7 @@ Die Statistik öffnest du über »Statistik« in der Leiste des Schichtplans. Si
 
 Die Statistik hat vier Tabs:
 
-- **Überblick**: Kennzahlen (Besetzungsgrad, offene Plätze, Personen, geplante und geleistete Stunden), die Besetzung pro Tag und pro Bereich als Balken sowie eine Heatmap über den Tag. Sie zeigt, wie viele Plätze zu welcher Stunde besetzt sind. Ein Klick auf einen Balken setzt den Filter auf diesen Tag bzw. Bereich, ein Klick auf eine Heatmap-Zelle öffnet den Schichtplan an dieser Stelle.
-- **Lücken**: alle offenen Plätze, zuerst die der nächsten 24 Stunden, danach die übrigen. Mit »Im Plan zeigen« springst du in den Schichtplan, gefiltert auf diese Schicht.
+- **Überblick**: Kennzahlen (Besetzungsgrad, offene Plätze, Personen, geplante und geleistete Stunden), die Besetzung pro Tag und pro Bereich als Balken sowie eine Heatmap über den Tag. Sie zeigt, wie viele Plätze zu welcher Stunde besetzt sind; fehlen Plätze, steht die höchste Zahl gleichzeitig fehlender Plätze in der Zelle (z. B. »−2«). Mit »Zeilen: Tage | Bereiche« schaltest du um: Bei »Bereiche« ist jede Zeile ein Bereich, gezeigt wird ein Tag, den du mit ‹ › wechselst. Ein Klick auf einen Balken setzt den Filter auf diesen Tag bzw. Bereich, ein Klick auf eine Heatmap-Zelle öffnet den Schichtplan an dieser Stelle. Eine Liste aller offenen Plätze bekommst du im Schichtplan mit dem Filter »Offene Plätze«.
 - **Personen**: eine Tabelle aller Teilnehmenden mit Schichten, Stunden, Tagen, Bereichen, Nachtstunden und dem stärksten Tag. Die Spalten lassen sich sortieren, die Tabelle durchsuchen und auf Personen mit Warnungen oder mit nur einer Schicht eingrenzen. Eine Zeile aufklappen zeigt alle Schichten der Person und den Link »Im Plan zeigen«. Warnungen gibt es für:
     - Überschneidung: zwei Schichten derselben Person überlappen sich.
     - Ruhezeit: weniger als 8 Stunden zwischen dem Ende einer Schicht und dem Beginn der nächsten.
@@ -117,7 +116,8 @@ Die Statistik hat vier Tabs:
     Hat der Plan eine Mindestpause oder ein Tagesmaximum (unter »Felder & Regeln« in der Koordination), ersetzen diese Werte die 8 und 10 Stunden. Stunden zählen nur Einsätze, nicht offene Wünsche in beliebten Schichten; nicht berücksichtigte Anmeldungen zählen gar nicht.
 
     Namen, die sich nur durch Groß- und Kleinschreibung, Leerzeichen oder Akzente unterscheiden, zählen als dieselbe Person. Ähnliche Namen, die sich in Satzzeichen oder Akzenten unterscheiden, bekommen einen Hinweis, dass sie vielleicht dieselbe Person sind. Als Admin kannst du die Tabelle als CSV-Datei herunterladen.
-- **Verlauf**: die Anmeldekurve über die Zeit, mit dem Bedarf als Linie. Wenn in den letzten 7 Tagen genug Anmeldungen eingegangen sind, zeigt die Kurve außerdem, wann der Plan bei diesem Tempo voll wäre. Darunter steht die Verteilung der Stunden auf die Personen und eine Reihe von Kurzfakten, etwa der längste Einsatz.
+- **Verlauf**: die Anmeldekurve über die Zeit, mit dem Bedarf als Linie. Wenn in den letzten 7 Tagen genug Anmeldungen eingegangen sind, zeigt die Kurve außerdem, wann der Plan bei diesem Tempo voll wäre. Darunter steht die Verteilung der Stunden auf die Personen.
+- **Rückblick**: die Zahlen für Dank, Ansprache oder Social-Media-Post: Personen, Stunden, Schichten und Anmeldungen, umgerechnet in Tage rund um die Uhr und Arbeitstage, dazu Highlights wie die meisten Schichten, Frühaufsteher:in, Nachtstunden, das Dream-Team (die meisten Schichten zusammen), die erste Anmeldung, die am schnellsten volle Schicht und Last-Minute-Anmeldungen. Mit »Als Text kopieren« kopierst du alles, auch die Namen, als Text und passt ihn danach an.
 
 Die Filter für Bereich und Tag gelten für alle Tabs. Sie stehen in der Adresse der Seite, du kannst eine gefilterte Ansicht also direkt teilen oder neu laden.
 

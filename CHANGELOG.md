@@ -114,3 +114,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 
 
 ## v0.9.0
+
+- **Feature: Statistics recap** The new tab "Recap" on the statistics page shows totals (people, hours, shifts, sign-ups), converts the hours into days around the clock and working days, and lists highlights with names: most shifts, most days, longest shift, early bird, most night hours, most areas, dream team (most shifts together), first sign-up, shift filled fastest, last-minute sign-ups and busiest sign-up day. "Copy as text" copies everything for a thank-you, a speech or a post. The quick facts moved here from "History".
+- **Enhancement: Heatmap by area** The heatmap "Staffing across the day" on the statistics overview has a switch "Rows: Days | Areas". With "Areas" each row is a shift type and one day is shown at a time, changed with ‹ ›; the choice is kept in the URL (`rows=types`). In both modes every hour cell shows the highest number of places missing at the same time (e.g. "−2").
+- **Enhancement: Gaps tab removed** The statistics tab "Gaps" is gone; missing places are shown in the heatmap, and the plan filter "Open places" lists the shifts. Old links with `?tab=gaps` open the overview.

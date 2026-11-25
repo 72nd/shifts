@@ -35,15 +35,42 @@ const MS_DAY = 24 * 60 * MS_MINUTE;
  *   people, avgMinutesPerPerson, medianMinutesPerPerson
  * @property {Array}  days     [{ day, shifts, required, filledCapped, open, percent, filledMinutes }] ascending
  * @property {Array}  types    [{ typeId, title:{de,en}, shifts, required, filledCapped, open, percent, filledMinutes }] plan order
- * @property {Object} heatmap  { days: string[], hours: number[] (clock hour of each column), cells: [[{required, filled, ratio}|null]] }
- * @property {Array}  gaps     [{ shiftId, typeId, typeTitle, day, start, end, required, filled, open, locked, status, within24h }]
+ * @property {Object} heatmap  { days: string[], hours: number[] (clock hour of each column),
+ *   cells: [[{required, filled, ratio, openPeak}|null]] } (openPeak: most places missing at once in that hour)
+ * @property {Object} typeHeatmap  { days, hours (as heatmap), rows: [{ typeId, title:{de,en}, cells: [[cell|null]] }] }
+ *   one row per type with shifts, plan order; cells[dayIdx][hourIdx] like heatmap.cells
  * @property {Array}  people   [{ key, name, shifts, minutes, doneMinutes, plannedMinutes, nightMinutes, days, typeCount,
  *   maxDayMinutes, longestShiftMinutes, firstSignup, lastSignup, warnings:[{kind, shiftIds, minutes}], items:[...] }]
  * @property {Array}  possibleDuplicates  [[key, key]]
  * @property {Object} distribution { buckets:[{fromHours, toHours|null, count}], top20SharePercent|null }
  * @property {Object} signups  { points:[{at: Date, cumulative}], requiredTotal, planStart: Date,
  *   forecast: { date: Date|null, remainingAtStart: number|null } | null }
- * @property {Array}  facts    [{ id, value, personName?, shiftId?, day?, at? }]
+ * @property {Recap}  recap    figures and highlights for the recap tab (see buildRecap)
+ *
+ * @typedef {Object} Recap
+ * @property {number} people          people.length (assignments only)
+ * @property {number} minutes         sum of people[].minutes
+ * @property {number} shifts          shifts with at least one assignment
+ * @property {number} types           distinct areas among those shifts
+ * @property {number} signups         participations (declined excluded)
+ * @property {number} nightMinutes    sum of people[].nightMinutes
+ * @property {number} avgShiftMinutes mean length of shifts with an assignment, rounded; 0 if none
+ * @property {number|null} repeatPercent  % of people with at least two shifts; null if fewer than 3 people
+ * @property {{value:number, at:Date, day:string}|null} peak  most people on assignment at once
+ * @property {Array<RecapFact>} facts
+ *
+ * @typedef {Object} RecapFact
+ * @property {string} id      most_shifts, most_days, longest_shift, early_bird, night_owl, all_rounder,
+ *   dream_team, first_signup, fastest_full, last_minute, best_signup_day
+ * @property {'people'|'signups'} group
+ * @property {number} value
+ * @property {string[]} names  shown names (1, or 2 for dream_team; empty for counts)
+ * @property {number} others   further people (or pairs) with the same value, 0 if none
+ * @property {number} [shiftId]  (longest_shift)
+ * @property {Date} [at]       floating sign-up instant (first_signup) or shift start (fastest_full)
+ * @property {Date} [end]      shift end (fastest_full)
+ * @property {string} [day]    day key
+ * @property {{de:string,en:string}} [typeTitle]  (fastest_full)
  */
 
 /** Normalised person key: trimmed, single spaces, lower case, NFC. */
@@ -172,6 +199,8 @@ function normaliseShifts(plan, types, now, boundary) {
           key: personKey(p.name),
           name: String(p.name || '').trim().replace(/\s+/g, ' '),
           createdAt: p.created_at ? instantInZone(p.created_at, plan.time_zone) : null,
+          // Entries made by the coordination are not a sign-up of the person.
+          byAdmin: !!p.added_by_admin,
           // Open wishes (signed up for a popular, unlocked shift) are not assignments yet.
           einsatz: isEinsatz(p.status || 'signed_up', popular, locked),
         }));
@@ -215,8 +244,13 @@ function aggregate(list) {
   return a;
 }
 
-function buildHeatmap(shifts, boundary) {
-  const days = [...new Set(shifts.map(s => s.day))].sort();
+/**
+ * Hour grid for the given shifts: cells[dayIndex][hourIndex] = {required, filled, ratio, openPeak} | null.
+ * days: ordered day keys that define the rows of the grid (shifts on other days are ignored).
+ * required/filled are weighted by the share of the hour a shift covers (they set the colour);
+ * openPeak is the highest number of places missing at the same time within the hour (whole number).
+ */
+function buildGrid(shifts, boundary, days) {
   const dayIndex = new Map(days.map((d, i) => [d, i]));
   const cells = days.map(() => new Array(24).fill(null));
   for (const s of shifts) {
@@ -231,12 +265,19 @@ function buildHeatmap(shifts, boundary) {
         const offset = (minutesOfDay(slotStart) - boundary + 1440) % 1440;
         const hi = Math.floor(offset / 60);
         const share = overlap / 60;
-        const cell = cells[di][hi] || (cells[di][hi] = { required: 0, filled: 0, ratio: null });
+        const cell = cells[di][hi] || (cells[di][hi] = { required: 0, filled: 0, ratio: null, openPeak: 0 });
         if (s.required === null) {
           cell.filled += s.filled * share;
         } else {
           cell.required += s.required * share;
           cell.filled += s.filledCapped * share;
+          if (s.open > 0) {
+            (cell.openParts || (cell.openParts = [])).push([
+              Math.max(slotStart.getTime(), s.start.getTime()),
+              Math.min(slotEnd.getTime(), s.end.getTime()),
+              s.open,
+            ]);
+          }
         }
       }
       slotStart = slotEnd;
@@ -248,11 +289,39 @@ function buildHeatmap(shifts, boundary) {
       c.required = Math.round(c.required * 10) / 10;
       c.filled = Math.round(c.filled * 10) / 10;
       c.ratio = c.required > 0 ? Math.min(1, c.filled / c.required) : null;
+      c.openPeak = peakOf(c.openParts || []);
+      delete c.openParts;
     }
   }
+  return cells;
+}
+
+/** Highest sum of `open` over overlapping [from, to) parts (sweep, ends before starts). */
+function peakOf(parts) {
+  const ev = [];
+  for (const [from, to, open] of parts) ev.push([from, open], [to, -open]);
+  ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  let cur = 0, peak = 0;
+  for (const [, d] of ev) { cur += d; peak = Math.max(peak, cur); }
+  return peak;
+}
+
+function buildHeatmap(shifts, boundary) {
+  const days = [...new Set(shifts.map(s => s.day))].sort();
   const firstHour = Math.floor(boundary / 60);
   const hours = Array.from({ length: 24 }, (_, i) => (firstHour + i) % 24);
-  return { days, hours, cells };
+  return { days, hours, cells: buildGrid(shifts, boundary, days) };
+}
+
+/** Same grid per type: rows in plan order, only types with at least one shift. Days and hours as in heatmap. */
+function buildTypeHeatmap(shifts, boundary, days, hours, typeOptions) {
+  const rows = [];
+  for (const t of typeOptions) {
+    const list = shifts.filter(s => s.typeId === t.typeId);
+    if (!list.length) continue;
+    rows.push({ typeId: t.typeId, title: t.title, cells: buildGrid(list, boundary, days) });
+  }
+  return { days, hours, rows };
 }
 
 function buildPeople(shifts, boundary, limits) {
@@ -374,25 +443,24 @@ function buildSignups(shifts, totals, plan, now, boundary) {
   return { points, requiredTotal: totals.required, filledCapped: totals.filledCapped, planStart, forecast };
 }
 
-function buildFacts(shifts, people, points, boundary) {
-  const facts = [];
-  const top = (key, min = 1) => {
-    let best = null;
-    for (const p of people) if (p[key] >= min && (!best || p[key] > best[key])) best = p;
-    return best;
-  };
-
-  const longest = top('longestShiftMinutes');
-  if (longest) {
-    const item = longest.items.find(i => i.minutes === longest.longestShiftMinutes);
-    facts.push({ id: 'longest_shift', value: longest.longestShiftMinutes, personName: longest.name, shiftId: item?.shiftId });
+/**
+ * Person(s) with the highest (or lowest) value; null if no one qualifies.
+ * people are sorted by name, so the first of a tie is the alphabetically first.
+ * min applies only when looking for the highest value; null/undefined values are skipped.
+ */
+function leaders(people, valueOf, { min = 1, lowest = false } = {}) {
+  let best = null, list = [];
+  for (const p of people) {
+    const v = valueOf(p);
+    if (v === null || v === undefined || (!lowest && v < min)) continue;
+    if (best === null || (lowest ? v < best : v > best)) { best = v; list = [p]; }
+    else if (v === best) list.push(p);
   }
-  const owl = top('nightMinutes');
-  if (owl) facts.push({ id: 'night_owl', value: owl.nightMinutes, personName: owl.name });
-  const allRounder = top('typeCount', 2);
-  if (allRounder) facts.push({ id: 'all_rounder', value: allRounder.typeCount, personName: allRounder.name });
+  return best === null ? null : { value: best, names: [list[0].name], others: list.length - 1, first: list[0] };
+}
 
-  // Most people active at the same time (sweep over start/end events).
+/** Most people on assignment at the same time (sweep over start/end events). */
+function peakAtOnce(shifts, boundary) {
   const events = [];
   for (const s of shifts) {
     if (!s.einsatzCount) continue;
@@ -404,7 +472,110 @@ function buildFacts(shifts, people, points, boundary) {
     current += delta;
     if (current > peak) { peak = current; peakAt = new Date(t); }
   }
-  if (peak > 0) facts.push({ id: 'peak_hour', value: peak, at: peakAt, day: dateKey(logicalDay(peakAt, boundary)) });
+  return peak > 0 ? { value: peak, at: peakAt, day: dateKey(logicalDay(peakAt, boundary)) } : null;
+}
+
+/** Pair of people with the most shifts together (assignments only), or null below 2 shared shifts. */
+function dreamTeam(shifts, people) {
+  const nameOf = new Map(people.map(p => [p.key, p.name]));
+  const counts = new Map();
+  for (const s of shifts) {
+    const keys = [...new Set(s.participants.filter(p => p.einsatz).map(p => p.key))].sort();
+    for (let i = 0; i < keys.length; i++) {
+      for (let j = i + 1; j < keys.length; j++) {
+        const k = keys[i] + '\n' + keys[j];
+        counts.set(k, (counts.get(k) || 0) + 1);
+      }
+    }
+  }
+  let best = null, ties = 0;
+  for (const [k, n] of counts) {
+    if (n < 2) continue;
+    const names = k.split('\n').map(key => nameOf.get(key) || key).sort((a, b) => a.localeCompare(b));
+    const label = names.join('\n');
+    if (!best || n > best.value) { best = { value: n, names, label }; ties = 0; }
+    else if (n === best.value) {
+      ties++;
+      if (label.localeCompare(best.label) < 0) best = { value: n, names, label };
+    }
+  }
+  return best ? { value: best.value, names: best.names, others: ties } : null;
+}
+
+/** Shift that reached its required places fastest by the people's own sign-ups (at least 3 places). */
+function fastestFull(shifts) {
+  let best = null;
+  for (const s of shifts) {
+    if (s.required === null || s.required < 3 || s.filled < s.required) continue;
+    // Entries of the coordination are written in bulk with one timestamp; only own sign-ups count.
+    const times = s.participants.filter(p => !p.byAdmin && p.createdAt).map(p => p.createdAt.getTime()).sort((a, b) => a - b);
+    if (times.length < s.required) continue;
+    const value = Math.round((times[s.required - 1] - times[0]) / MS_MINUTE);
+    // Shifts are sorted by start, so a tie keeps the earlier shift.
+    if (!best || value < best.value) best = { value, shift: s };
+  }
+  if (!best) return null;
+  const s = best.shift;
+  return { value: best.value, names: [], others: 0, at: s.start, end: s.end, day: s.day, typeTitle: s.typeTitle };
+}
+
+/** Figures and highlights for the recap tab; hours count assignments only (as in the people tab). */
+function buildRecap(shifts, people, points, boundary) {
+  const withEinsatz = shifts.filter(s => s.einsatzCount > 0);
+  const sumOf = (list, f) => list.reduce((a, x) => a + f(x), 0);
+  const recap = {
+    people: people.length,
+    minutes: sumOf(people, p => p.minutes),
+    shifts: withEinsatz.length,
+    types: new Set(withEinsatz.map(s => s.typeId)).size,
+    signups: sumOf(shifts, s => s.participants.length),
+    nightMinutes: sumOf(people, p => p.nightMinutes),
+    avgShiftMinutes: withEinsatz.length ? Math.round(sumOf(withEinsatz, s => s.minutes) / withEinsatz.length) : 0,
+    repeatPercent: people.length >= 3 ? Math.round((people.filter(p => p.shifts >= 2).length / people.length) * 100) : null,
+    peak: peakAtOnce(shifts, boundary),
+    facts: [],
+  };
+
+  const facts = recap.facts;
+  const add = (id, group, r, extra = {}) => {
+    if (r) facts.push({ id, group, value: r.value, names: r.names, others: r.others, ...extra });
+  };
+
+  // People
+  add('most_shifts', 'people', leaders(people, p => p.shifts, { min: 2 }));
+  add('most_days', 'people', leaders(people, p => p.days, { min: 2 }));
+  const longest = leaders(people, p => p.longestShiftMinutes);
+  if (longest) {
+    const item = longest.first.items.find(i => i.minutes === longest.value);
+    add('longest_shift', 'people', longest, { shiftId: item?.shiftId });
+  }
+  add('early_bird', 'people', leaders(people, p => {
+    let earliest = null;
+    for (const i of p.items) {
+      const m = minutesOfDay(i.start);
+      if (m >= 180 && m < 720 && (earliest === null || m < earliest)) earliest = m;
+    }
+    return earliest;
+  }, { lowest: true }));
+  add('night_owl', 'people', leaders(people, p => p.nightMinutes));
+  add('all_rounder', 'people', leaders(people, p => p.typeCount, { min: 2 }));
+  add('dream_team', 'people', dreamTeam(shifts, people));
+
+  // Sign-ups
+  let first = null;
+  let lastMinute = 0;
+  for (const s of shifts) {
+    const dayBefore = addMinutes(s.start, -24 * 60);
+    for (const p of s.participants) {
+      if (p.byAdmin || !p.createdAt) continue;
+      if (!first || p.createdAt < first.createdAt) first = p;
+      if (p.createdAt >= dayBefore && p.createdAt < s.start) lastMinute++;
+    }
+  }
+  if (first) facts.push({ id: 'first_signup', group: 'signups', value: first.createdAt.getTime(), names: [first.name], others: 0, at: first.createdAt });
+  const fastest = fastestFull(shifts);
+  if (fastest) facts.push({ id: 'fastest_full', group: 'signups', ...fastest });
+  if (lastMinute > 0) facts.push({ id: 'last_minute', group: 'signups', value: lastMinute, names: [], others: 0 });
 
   const perDay = new Map();
   for (const p of points) {
@@ -413,8 +584,8 @@ function buildFacts(shifts, people, points, boundary) {
   }
   let bestDay = null;
   for (const [day, count] of perDay) if (!bestDay || count > bestDay[1]) bestDay = [day, count];
-  if (bestDay) facts.push({ id: 'best_signup_day', value: bestDay[1], day: bestDay[0] });
-  return facts;
+  if (bestDay) facts.push({ id: 'best_signup_day', group: 'signups', value: bestDay[1], names: [], others: 0, day: bestDay[0] });
+  return recap;
 }
 
 /**
@@ -482,28 +653,20 @@ export function computeStats(plan, types, filter, now) {
     typeStats.push({ typeId: t.typeId, title: t.title, shifts: n, required, filledCapped, open, percent, filledMinutes: fm });
   }
 
-  const in24h = addMinutes(now, 24 * 60);
-  const gaps = shifts
-    .filter(s => s.open > 0 && s.status !== 'past')
-    .map(s => ({
-      shiftId: s.id, typeId: s.typeId, typeTitle: s.typeTitle, day: s.day, start: s.start, end: s.end,
-      required: s.required, filled: s.filled, open: s.open, locked: s.locked, status: s.status,
-      within24h: s.start <= in24h,
-    }));
-
   const signups = buildSignups(shifts, totals, plan, now, boundary);
+  const heatmap = buildHeatmap(shifts, boundary);
 
   return {
     options,
     totals,
     days: dayStats,
     types: typeStats,
-    heatmap: buildHeatmap(shifts, boundary),
-    gaps,
+    heatmap,
+    typeHeatmap: buildTypeHeatmap(shifts, boundary, heatmap.days, heatmap.hours, options.types),
     people,
     possibleDuplicates: findDuplicates(people),
     distribution: buildDistribution(people),
     signups,
-    facts: buildFacts(shifts, people, signups.points, boundary),
+    recap: buildRecap(shifts, people, signups.points, boundary),
   };
 }

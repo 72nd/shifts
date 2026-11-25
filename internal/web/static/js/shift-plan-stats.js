@@ -3,7 +3,7 @@ import { computeStats, thresholds } from './stats/compute.js';
 import { planUrl } from './stats/links.js';
 import { PlanRealtime } from './realtime.js';
 
-const TABS = ['overview', 'gaps', 'people', 'history'];
+const TABS = ['overview', 'people', 'history', 'recap'];
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('shiftPlanStats', () => ({
@@ -16,6 +16,7 @@ document.addEventListener('alpine:init', () => {
         tabs: TABS,
         tabPrefix: 'stats',
         filter: { typeIds: [], days: [] },
+        heatRows: 'days', // rows of the heatmap: 'days' | 'types'
         isLoading: true,
         error: null,
         realtime: null,
@@ -36,7 +37,7 @@ document.addEventListener('alpine:init', () => {
             return !!this.adminToken;
         },
 
-        // --- URL state (?tab=&type=&day=) ---
+        // --- URL state (?tab=&type=&day=&rows=) ---
 
         readUrl() {
             const sp = new URLSearchParams(window.location.search);
@@ -45,6 +46,7 @@ document.addEventListener('alpine:init', () => {
             const type = (sp.get('type') || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0);
             const day = (sp.get('day') || '').split(',').filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d));
             this.filter = { typeIds: type, days: day };
+            this.heatRows = sp.get('rows') === 'types' ? 'types' : 'days';
         },
 
         writeUrl() {
@@ -52,6 +54,7 @@ document.addEventListener('alpine:init', () => {
             if (this.tab !== 'overview') sp.set('tab', this.tab);
             if (this.filter.typeIds.length) sp.set('type', this.filter.typeIds.join(','));
             if (this.filter.days.length) sp.set('day', this.filter.days.join(','));
+            if (this.heatRows === 'types') sp.set('rows', 'types');
             const q = sp.toString();
             history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : ''));
         },
@@ -142,9 +145,13 @@ document.addEventListener('alpine:init', () => {
         /** Count badge for the page-tabs partial (0 = no badge). */
         tabCount(name) {
             if (!this.model) return 0;
-            if (name === 'gaps') return this.model.gaps.length;
             if (name === 'people') return this.model.people.length;
             return 0;
+        },
+
+        setHeatRows(value) {
+            this.heatRows = value === 'types' ? 'types' : 'days';
+            this.writeUrl();
         },
 
         setFilter(patch) {

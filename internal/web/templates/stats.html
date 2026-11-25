@@ -38,14 +38,14 @@
             <section role="tabpanel" id="stats-panel-overview" aria-labelledby="stats-tab-overview" x-show="tab === 'overview'">
                 {{ template "stats-overview" . }}
             </section>
-            <section role="tabpanel" id="stats-panel-gaps" aria-labelledby="stats-tab-gaps" x-show="tab === 'gaps'">
-                {{ template "stats-gaps" . }}
-            </section>
             <section role="tabpanel" id="stats-panel-people" aria-labelledby="stats-tab-people" x-show="tab === 'people'">
                 {{ template "stats-people" . }}
             </section>
             <section role="tabpanel" id="stats-panel-history" aria-labelledby="stats-tab-history" x-show="tab === 'history'">
                 {{ template "stats-history" . }}
+            </section>
+            <section role="tabpanel" id="stats-panel-recap" aria-labelledby="stats-tab-recap" x-show="tab === 'recap'">
+                {{ template "stats-recap" . }}
             </section>
         </div>
     </template>
@@ -56,5 +56,6 @@
 <script type="module" src="/static/js/stats/overview.js"></script>
 <script type="module" src="/static/js/stats/people.js"></script>
 <script type="module" src="/static/js/stats/history.js"></script>
+<script type="module" src="/static/js/stats/recap.js"></script>
 <script type="module" src="/static/js/shift-plan-stats.js"></script>
 {{ end }}

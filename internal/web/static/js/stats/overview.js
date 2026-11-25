@@ -15,6 +15,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('statsOverview', () => ({
         now: null,
         timer: null,
+        heatDay: null, // day shown when the heatmap rows are areas (local, not in the URL)
 
         init() {
             this.tick();
@@ -81,17 +82,95 @@ document.addEventListener('alpine:init', () => {
             return 'border border-transparent';
         },
 
-        cellLabel(day, hourIdx, cell) {
-            const when = `${this.dayLabel(day)} ${this.hourLabel(this.model.heatmap.hours[hourIdx])}:00`;
+        /** Hour columns of the grid: all 24 by day, trimmed to the hours with shifts by area. */
+        get heatHours() {
+            const hm = this.model.heatmap;
+            const idx = this.heatRows === 'types' ? this.typeHourIdx : hm.hours.map((_, i) => i);
+            return idx.map(hourIdx => ({ hourIdx, hour: hm.hours[hourIdx] }));
+        },
+
+        /**
+         * Rows of the grid in both modes: { key, label, day, dayIdx, typeId, cells: [{hourIdx, cell}] }.
+         * dayIdx always refers to model.heatmap.days (typeHeatmap.days is the same list), so the
+         * "now" marker works in both modes.
+         */
+        get heatLines() {
+            const hm = this.model.heatmap;
+            if (this.heatRows !== 'types') {
+                return hm.days.map((day, dayIdx) => ({
+                    key: day, label: this.dayLabel(day), day, dayIdx, typeId: null,
+                    cells: hm.cells[dayIdx].map((cell, hourIdx) => ({ hourIdx, cell })),
+                }));
+            }
+            const day = this.typeDay;
+            const dayIdx = this.typeDayIdx;
+            const hours = this.typeHourIdx;
+            return this.model.typeHeatmap.rows
+                .filter(row => row.cells[dayIdx].some(c => c))
+                .map(row => ({
+                    key: row.typeId, label: this.t(row.title), day, dayIdx, typeId: row.typeId,
+                    cells: hours.map(hourIdx => ({ hourIdx, cell: row.cells[dayIdx][hourIdx] })),
+                }));
+        },
+
+        /** Day shown by area: the chosen one, else today (logical day), else the first day. */
+        get typeDay() {
+            const days = this.model.typeHeatmap.days;
+            if (this.heatDay && days.includes(this.heatDay)) return this.heatDay;
+            const today = this.nowMark ? days[this.nowMark.dayIdx] : null;
+            return today || days[0];
+        },
+
+        get typeDayIdx() {
+            return this.model.typeHeatmap.days.indexOf(this.typeDay);
+        },
+
+        canStep(delta) {
+            const i = this.typeDayIdx + delta;
+            return i >= 0 && i < this.model.typeHeatmap.days.length;
+        },
+
+        stepDay(delta) {
+            if (this.canStep(delta)) this.heatDay = this.model.typeHeatmap.days[this.typeDayIdx + delta];
+        },
+
+        /** Hour indices from the first to the last hour with a shift in any area on any day (stable across days). */
+        get typeHourIdx() {
+            let first = 24, last = -1;
+            for (const row of this.model.typeHeatmap.rows) {
+                for (const day of row.cells) {
+                    day.forEach((c, i) => {
+                        if (!c) return;
+                        if (i < first) first = i;
+                        if (i > last) last = i;
+                    });
+                }
+            }
+            if (last < 0) return [];
+            return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+        },
+
+        cellLabel(line, hourIdx, cell) {
+            let when = `${this.dayLabel(line.day)} ${this.hourLabel(this.model.heatmap.hours[hourIdx])}:00`;
+            if (line.typeId !== null) when = `${line.label}, ${when}`;
             let what;
             if (!cell) what = this.$t('stats.heatmap_none');
             else if (cell.ratio === null) what = `∞ ${this.$t('stats.unlimited')}`;
-            else what = this.$t('stats.heatmap_cell', { filled: this.number(cell.filled), required: this.number(cell.required) });
+            else if (cell.openPeak > 0) {
+                what = this.$t('stats.heatmap_cell_open', {
+                    filled: this.number(cell.filled), required: this.number(cell.required), open: this.number(cell.openPeak),
+                });
+            } else what = this.$t('stats.heatmap_cell', { filled: this.number(cell.filled), required: this.number(cell.required) });
             return `${when}: ${what}`;
         },
 
-        cellUrl(day, cell) {
-            return this.planUrl({ day, status: cell.ratio !== null && cell.ratio < 1 ? 'open' : undefined, view: 'list' });
+        cellUrl(line, cell) {
+            return this.planUrl({
+                type: line.typeId ?? undefined,
+                day: line.day,
+                status: cell.ratio !== null && cell.ratio < 1 ? 'open' : undefined,
+                view: 'list',
+            });
         },
 
         /** Position of the current time in the heatmap grid, or null when outside. */
