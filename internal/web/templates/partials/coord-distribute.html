@@ -1,0 +1,203 @@
+{{ define "coord-distribute" }}
+<div x-data="coordDistribute" class="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)_20rem] items-start">
+
+    <!-- Shifts: filters and list -->
+    <aside class="space-y-3 min-w-0">
+        {{ template "coord-filters" . }}
+
+        <div x-show="!shiftList.length" class="space-y-2">
+            <p class="text-base-content/70" x-text="$t('coord.no_shifts')"></p>
+            <button type="button" class="btn btn-sm min-h-11" x-show="hasFilter" @click="resetFilter()" x-text="$t('coord.filter_reset')"></button>
+        </div>
+
+        <!-- Phone: select instead of the list -->
+        <label class="md:hidden flex flex-col gap-1 text-sm" x-show="shiftList.length">
+            <span x-text="$t('coord.shift')"></span>
+            <select class="select select-bordered h-11 min-h-11 w-full" @change="selectShift(Number($event.target.value) || null)">
+                <option value="" :selected="!selectedShiftId" x-text="$t('coord.select_shift_short')"></option>
+                <template x-for="cs in shiftList" :key="cs.id">
+                    <option :value="cs.id" :selected="cs.id === selectedShiftId" x-text="shiftLabel(cs) + ' ' + occupancy(cs)"></option>
+                </template>
+            </select>
+        </label>
+
+        <ul class="hidden md:block divide-y divide-base-300 max-h-[70vh] overflow-y-auto" x-show="shiftList.length"
+            @keydown="const id = neighbourShift($event, shiftList, selectedShiftId); if (id) { $event.preventDefault(); selectShift(id); $nextTick(() => $el.querySelector('[data-shift=\'' + id + '\']')?.focus()); }">
+            <template x-for="cs in shiftList" :key="cs.id">
+                <li>
+                    <button type="button" :data-shift="cs.id"
+                        class="w-full min-h-11 px-2 py-1 flex items-center gap-2 text-left hover:bg-base-200"
+                        :class="{ 'bg-base-200 font-semibold': cs.id === selectedShiftId }"
+                        :aria-current="cs.id === selectedShiftId ? 'true' : null"
+                        @click="selectShift(cs.id)">
+                        <span class="min-w-0 flex-1">
+                            <span class="block truncate" :title="typeTitle(cs.type)" x-text="typeTitle(cs.type)"></span>
+                            <span class="block text-xs text-base-content/70 truncate" x-text="dayLabel(cs.start) + ' ' + time(cs.start)"></span>
+                        </span>
+                        <span class="flex items-center gap-1 shrink-0">
+                            <span x-show="isHighlighted(cs, highlightKey)" class="inline-block h-2 w-2 rounded-full bg-primary" role="img" :aria-label="$t('coord.person_involved')"></span>
+                            <span x-show="cs.popular">{{ template "coord-icon-star" }}</span>
+                            <span x-show="cs.expNeed.count > 0 && !cs.expNeed.met">{{ template "coord-icon-warning" }}</span>
+                            <span x-show="cs.locked" class="text-info">{{ template "lock-icon" }}</span>
+                            <span class="badge badge-sm" x-text="occupancy(cs)"></span>
+                        </span>
+                    </button>
+                </li>
+            </template>
+        </ul>
+    </aside>
+
+    <!-- Preview of the auto-distribution replaces the workbench and the person column -->
+    <div x-show="preview" class="min-w-0 md:col-start-2 xl:col-span-2">
+        {{ template "coord-preview" . }}
+    </div>
+
+    <!-- Workbench -->
+    <section x-show="!preview" class="min-w-0 space-y-4" aria-live="polite">
+        <p class="hidden md:block text-base-content/70" x-show="!selectedShift && shiftList.length" x-text="$t('coord.select_shift')"></p>
+
+        <template x-if="selectedShift">
+            <div class="space-y-4">
+                <header class="space-y-1 min-w-0">
+                    <h2 class="text-lg font-semibold break-words" x-text="shiftLabel(selectedShift)"></h2>
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/70">
+                        <span x-text="$t('coord.load_factor') + ' ' + number(selectedShift.factor)"></span>
+                        <span class="inline-flex items-center gap-1" x-show="selectedShift.popular">{{ template "coord-icon-star" }}<span x-text="$t('coord.popular')"></span></span>
+                        <span class="inline-flex items-center gap-1" x-show="selectedShift.locked"><span class="text-info">{{ template "lock-icon" }}</span><span x-text="$t('coord.locked')"></span></span>
+                        <span class="inline-flex items-center gap-1" x-show="selectedShift.expNeed.count > 0">
+                            <span x-show="!selectedShift.expNeed.met">{{ template "coord-icon-warning" }}</span>
+                            <span x-text="$t('coord.exp_progress', { have: selectedShift.expNeed.have, count: selectedShift.expNeed.count, level: levelLabel(selectedShift) })"></span>
+                        </span>
+                        <span x-text="$t('coord.places', { occupied: selectedShift.occupancy, required: selectedShift.unlimited ? '∞' : selectedShift.required })"></span>
+                    </div>
+                </header>
+
+                <div class="flex flex-wrap items-center gap-2" x-show="!selectedShift.unlimited">
+                    <div class="join" role="group" :aria-label="$t('coord.auto_candidates')">
+                        <button type="button" class="btn btn-sm join-item min-h-11" :class="{ 'btn-active': source === 'interested' }"
+                            :aria-pressed="source === 'interested' ? 'true' : 'false'" @click="setSource('interested')" x-text="$t('coord.source_interested')"></button>
+                        <button type="button" class="btn btn-sm join-item min-h-11" :class="{ 'btn-active': source === 'all' }"
+                            :aria-pressed="source === 'all' ? 'true' : 'false'" @click="setSource('all')" x-text="$t('coord.source_all')"></button>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm min-h-11" @click="reroll()" x-text="$t('coord.reroll')"></button>
+                </div>
+
+                <!-- Assigned -->
+                <div x-show="selectedShift.assigned.length" class="space-y-1">
+                    <h3 class="font-medium" x-text="$t('coord.section_assigned')"></h3>
+                    <ul class="divide-y divide-base-300">
+                        <template x-for="key in selectedShift.assigned" :key="key">
+                            <li class="min-h-11 py-1 flex flex-wrap items-center gap-x-3 gap-y-1" :class="{ 'bg-base-200': highlightKey === key }">
+                                <span class="inline-flex items-center gap-1 min-w-0 flex-1">
+                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <span class="sr-only" x-text="$t('shift_plans.view.status_assigned')"></span>
+                                    <span class="truncate" :title="model.persons.get(key).name" x-text="model.persons.get(key).name"></span>
+                                    <span class="badge badge-ghost badge-sm" x-show="part(selectedShift.id, key)?.addedByAdmin" x-text="$t('coord.added_by_coordination')"></span>
+                                </span>
+                                <button type="button" class="btn btn-sm min-h-11" :class="{ 'loading': pendingKey === key }" :disabled="busy"
+                                    x-show="part(selectedShift.id, key)?.status === 'assigned'"
+                                    @click="apply(resetOps(selectedShift, model.persons.get(key).name, part(selectedShift.id, key)), { pending: key })"
+                                    x-text="$t('coord.reset')"></button>
+                                <button type="button" class="btn btn-sm min-h-11" :disabled="busy"
+                                    x-show="part(selectedShift.id, key)?.status !== 'assigned'"
+                                    @click="apply(declineOps(selectedShift, model.persons.get(key).name), { pending: key })"
+                                    x-text="$t('coord.decline')"></button>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <!-- Suggestion -->
+                <div x-show="!selectedShift.unlimited && selectedShift.open > 0" class="space-y-1">
+                    <h3 class="font-medium" x-text="$t('coord.section_suggestion')"></h3>
+                    <p class="text-base-content/70" x-show="!candidates.ranked.length" x-text="$t('coord.no_candidates')"></p>
+                    <button type="button" class="btn btn-sm min-h-11" x-show="!candidates.ranked.length && source === 'interested'"
+                        @click="setSource('all')" x-text="$t('coord.show_everyone')"></button>
+                    <ol class="divide-y divide-base-300">
+                        <template x-for="(c, i) in candidates.ranked" :key="c.key">
+                            <li class="py-2 space-y-1" :class="{ 'bg-base-200': highlightKey === c.key }">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span class="w-6 text-right text-base-content/70 tabular-nums" x-text="i + 1"></span>
+                                    <span class="font-medium min-w-0 flex-1 truncate" :title="c.name" x-text="c.name"></span>
+                                    <span class="flex gap-2">
+                                        <button type="button" class="btn btn-sm min-h-11" :class="{ 'loading': pendingKey === c.key }" :disabled="busy"
+                                            @click="apply(assignOps(selectedShift, c), { pending: c.key })" x-text="$t('coord.assign')"></button>
+                                        <button type="button" class="btn btn-sm min-h-11" :disabled="busy" x-show="c.interested"
+                                            @click="apply(declineOps(selectedShift, c.name), { pending: c.key })" x-text="$t('coord.decline')"></button>
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-1 pl-9">
+                                    <template x-for="r in c.reasons" :key="r.id">
+                                        <span class="badge badge-ghost" x-text="reasonText('reason', r)"></span>
+                                    </template>
+                                    <template x-for="w in c.warnings" :key="w.id">
+                                        <span class="badge badge-warning gap-1">
+                                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                            <span x-text="reasonText('warn', w)"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                                <p class="pl-9 text-xs text-base-content/70" x-show="c.alsoInterested.length"
+                                    x-text="$t('coord.also_interested', { shifts: c.alsoInterested.map(id => shiftLabel(model.shifts.get(id))).join(', ') })"></p>
+                            </li>
+                        </template>
+                    </ol>
+                </div>
+                <p class="text-base-content/70" x-show="!selectedShift.unlimited && selectedShift.open === 0" x-text="$t('coord.shift_full')"></p>
+                <p class="text-base-content/70" x-show="selectedShift.unlimited" x-text="$t('coord.unlimited_shift')"></p>
+
+                <!-- Not available -->
+                <details x-show="candidates.unavailable.length" class="border-t border-base-300 pt-2">
+                    <summary class="min-h-11 flex items-center cursor-pointer font-medium" x-text="$t('coord.section_unavailable', { count: candidates.unavailable.length })"></summary>
+                    <ul class="divide-y divide-base-300">
+                        <template x-for="u in candidates.unavailable" :key="u.key">
+                            <li class="min-h-11 py-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span class="font-medium min-w-0 truncate" :title="u.name" x-text="u.name"></span>
+                                <span class="text-sm text-base-content/70 min-w-0 flex-1"
+                                    x-text="u.reason === 'overlap' ? $t('coord.unavail_overlap', { shift: shiftLabel(model.shifts.get(u.params.shiftId)) }) : $t('coord.unavail_' + u.reason)"></span>
+                                <button type="button" class="btn btn-sm min-h-11" x-show="u.move" :disabled="busy"
+                                    @click="askMove(u, selectedShift.id)" x-text="$t('coord.move')"></button>
+                                <button type="button" class="btn btn-sm min-h-11" x-show="u.reason === 'declined'" :disabled="busy"
+                                    @click="apply(resetOps(selectedShift, u.name, part(selectedShift.id, u.key)), { pending: u.key })" x-text="$t('coord.reset')"></button>
+                            </li>
+                        </template>
+                    </ul>
+                </details>
+
+                <!-- Actions -->
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-base-300 pt-3" x-show="!selectedShift.unlimited">
+                    <button type="button" class="btn btn-primary min-h-11"
+                        :disabled="busy || suggestionCount(selectedShift, candidates.ranked) === 0"
+                        @click="apply(suggestionOps(selectedShift, candidates.ranked), { pending: 'suggestion' })">
+                        <span class="loading loading-spinner loading-sm" x-show="pendingKey === 'suggestion'"></span>
+                        <span x-text="$t('coord.take_suggestion')"></span>
+                    </button>
+                    <button type="button" class="btn min-h-11" :disabled="busy || !selectedShift.wishes.length"
+                        @click="apply(declineRestOps(selectedShift, model.persons), { lock: lockAfter ? [selectedShift.id] : [], pending: 'rest' })"
+                        x-text="$t('coord.decline_rest')"></button>
+                    <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                        <input type="checkbox" class="checkbox checkbox-sm" x-model="lockAfter">
+                        <span x-text="$t('coord.and_lock')"></span>
+                    </label>
+                </div>
+            </div>
+        </template>
+
+        <div class="space-y-2 border-t border-base-300 pt-3 md:border-0 md:pt-0">
+            <button type="button" class="btn min-h-11" @click="$dispatch('coord-auto')" x-text="$t('coord.auto')"></button>
+        </div>
+    </section>
+
+    <!-- Persons: column on wide screens -->
+    <aside class="hidden min-w-0" :class="{ 'xl:block': !preview }">
+        <h2 class="font-medium mb-2" x-text="$t('coord.people_title')"></h2>
+        {{ template "coord-persons-column" . }}
+    </aside>
+
+    <!-- Persons: collapsible below on narrower screens -->
+    <details x-show="!preview" class="xl:hidden min-w-0 md:col-span-2">
+        <summary class="min-h-11 flex items-center cursor-pointer font-medium" x-text="$t('coord.people_title') + ' (' + personList.length + ')'"></summary>
+        {{ template "coord-persons-column" . }}
+    </details>
+</div>
+{{ end }}

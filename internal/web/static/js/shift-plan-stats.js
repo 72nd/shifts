@@ -1,5 +1,5 @@
 import { formatDate, formatTime, parseDate, nowInZone } from './datetime.js';
-import { computeStats } from './stats/compute.js';
+import { computeStats, thresholds } from './stats/compute.js';
 import { planUrl } from './stats/links.js';
 import { PlanRealtime } from './realtime.js';
 
@@ -13,6 +13,8 @@ document.addEventListener('alpine:init', () => {
         types: [],
         model: null,
         tab: 'overview',
+        tabs: TABS,
+        tabPrefix: 'stats',
         filter: { typeIds: [], days: [] },
         isLoading: true,
         error: null,
@@ -122,7 +124,27 @@ document.addEventListener('alpine:init', () => {
             if (!next) return;
             event.preventDefault();
             this.setTab(next);
-            this.$nextTick(() => document.getElementById(`stats-tab-${next}`)?.focus());
+            this.$nextTick(() => document.getElementById(`${this.tabPrefix}-tab-${next}`)?.focus());
+        },
+
+        /** Warning text; rest and day load name the plan's thresholds (or the defaults). */
+        warnText(kind) {
+            const limits = thresholds(this.plan);
+            const minutes = kind === 'rest' ? limits.restMin : limits.dayMin;
+            return this.$t(`stats.warn_${kind}`, { hours: this.hours(minutes) });
+        },
+
+        /** Tab label for the page-tabs partial. */
+        tabLabel(name) {
+            return this.$t(`stats.tab_${name}`);
+        },
+
+        /** Count badge for the page-tabs partial (0 = no badge). */
+        tabCount(name) {
+            if (!this.model) return 0;
+            if (name === 'gaps') return this.model.gaps.length;
+            if (name === 'people') return this.model.people.length;
+            return 0;
         },
 
         setFilter(patch) {

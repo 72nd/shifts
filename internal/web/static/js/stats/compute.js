@@ -15,6 +15,7 @@ import {
   minutesOfDay, instantInZone,
 } from '../datetime.js';
 
+/** Default warning thresholds; the plan's min_rest_minutes / max_day_minutes replace them (see thresholds). */
 export const REST_WARN_MIN = 8 * 60;
 export const DAY_LOAD_WARN_MIN = 10 * 60;
 export const NIGHT_START_MIN = 22 * 60;
@@ -56,9 +57,76 @@ function looseKey(key) {
 }
 
 /** "HH:MM" → minutes after midnight. */
-function boundaryMinutes(str) {
+export function boundaryMinutes(str) {
   const m = /^(\d{1,2}):(\d{2})/.exec(str || '');
   return m ? +m[1] * 60 + +m[2] : 0;
+}
+
+/**
+ * Warning thresholds of the statistics: the plan's settings, else the defaults.
+ * @returns {{restMin: number, dayMin: number}}
+ */
+export function thresholds(plan) {
+  return {
+    restMin: plan?.min_rest_minutes ?? REST_WARN_MIN,
+    dayMin: plan?.max_day_minutes ?? DAY_LOAD_WARN_MIN,
+  };
+}
+
+/**
+ * Whether a shift counts as popular: the shift's own popularity setting, else the type's.
+ * "auto" means more interested people (all statuses) than places.
+ * @param {Object} shift  API shift (popularity may be null/undefined)
+ * @param {Object} type   API shift type (popularity: auto|popular|normal)
+ * @param {number} interest  participations of any status that people made themselves
+ *   (entries added by the coordination are not interest)
+ */
+export function isPopular(shift, type, interest) {
+  const mode = shift.popularity || type?.popularity || 'auto';
+  if (mode === 'popular') return true;
+  if (mode === 'normal') return false;
+  return shift.required > 0 && interest > shift.required;
+}
+
+/**
+ * Whether a participation is an assignment ("Einsatz") rather than an open wish or a decline:
+ * assigned, or signed up in a shift that is not popular or is locked.
+ */
+export function isEinsatz(status, popular, locked) {
+  if (status === 'assigned') return true;
+  return status === 'signed_up' && (!popular || locked);
+}
+
+/**
+ * Finds overlap, rest and day load warnings in one person's shifts.
+ * @param {Array<{id:number, start:Date, end:Date, minutes:number, day:string}>} items  sorted by start
+ * @param {number|null} restMin  minimum break between shifts (null = no check)
+ * @param {number|null} dayMin   maximum minutes per logical day (null = no check)
+ * @returns {Array<{kind:'overlap'|'rest'|'dayload', shiftIds:number[], minutes:number}>}
+ */
+export function findShiftWarnings(items, restMin, dayMin) {
+  const warnings = [];
+  let prev = null; // shift with latest end so far
+  for (const s of items) {
+    if (prev) {
+      if (prev.end > s.start) {
+        const overlap = (Math.min(prev.end, s.end) - s.start) / MS_MINUTE;
+        warnings.push({ kind: 'overlap', shiftIds: [prev.id, s.id], minutes: Math.round(overlap) });
+      } else if (restMin !== null) {
+        const gap = (s.start - prev.end) / MS_MINUTE;
+        if (gap < restMin) warnings.push({ kind: 'rest', shiftIds: [prev.id, s.id], minutes: Math.round(gap) });
+      }
+    }
+    if (!prev || s.end > prev.end) prev = s;
+  }
+  if (dayMin !== null) {
+    const perDay = new Map();
+    for (const s of items) perDay.set(s.day, (perDay.get(s.day) || 0) + s.minutes);
+    for (const [day, m] of perDay) {
+      if (m > dayMin) warnings.push({ kind: 'dayload', shiftIds: items.filter(s => s.day === day).map(s => s.id), minutes: m });
+    }
+  }
+  return warnings;
 }
 
 const pct = (filled, required) => (required > 0 ? Math.round((filled / required) * 100) : null);
@@ -94,12 +162,21 @@ function normaliseShifts(plan, types, now, boundary) {
       const minutes = s.duration || 0;
       const end = addMinutes(start, minutes);
       const unlimited = s.required === -1;
-      const participants = (s.participants || []).map(p => ({
-        key: personKey(p.name),
-        name: String(p.name || '').trim().replace(/\s+/g, ' '),
-        createdAt: p.created_at ? instantInZone(p.created_at, plan.time_zone) : null,
-      }));
+      // Declined participations never occupy a place (they only count as interest).
+      const interest = (s.participants || []).filter(p => !p.added_by_admin).length;
+      const popular = isPopular(s, type, interest);
+      const locked = !!s.is_locked;
+      const participants = (s.participants || [])
+        .filter(p => p.status !== 'declined')
+        .map(p => ({
+          key: personKey(p.name),
+          name: String(p.name || '').trim().replace(/\s+/g, ' '),
+          createdAt: p.created_at ? instantInZone(p.created_at, plan.time_zone) : null,
+          // Open wishes (signed up for a popular, unlocked shift) are not assignments yet.
+          einsatz: isEinsatz(p.status || 'signed_up', popular, locked),
+        }));
       const filled = participants.length;
+      const einsatzCount = participants.filter(p => p.einsatz).length;
       const required = unlimited ? null : Math.max(0, s.required || 0);
       shifts.push({
         id: s.id,
@@ -110,9 +187,10 @@ function normaliseShifts(plan, types, now, boundary) {
         minutes,
         required,
         filled,
+        einsatzCount,
         filledCapped: unlimited ? 0 : Math.min(filled, required),
         open: unlimited ? 0 : Math.max(0, required - filled),
-        locked: !!s.is_locked,
+        locked,
         day: dateKey(logicalDay(start, boundary)),
         status: end <= now ? 'past' : start > now ? 'future' : 'current',
         participants,
@@ -177,10 +255,12 @@ function buildHeatmap(shifts, boundary) {
   return { days, hours, cells };
 }
 
-function buildPeople(shifts, boundary) {
+function buildPeople(shifts, boundary, limits) {
   const map = new Map();
   for (const s of shifts) {
+    // Hours count only assignments, not open wishes.
     for (const p of s.participants) {
+      if (!p.einsatz) continue;
       let person = map.get(p.key);
       if (!person) {
         person = { key: p.key, spellings: new Map(), items: [], signups: [] };
@@ -209,25 +289,7 @@ function buildPeople(shifts, boundary) {
       typeIds.add(s.typeId);
     }
 
-    const warnings = [];
-    let prev = null; // shift with latest end so far
-    for (const s of items) {
-      if (prev) {
-        if (prev.end > s.start) {
-          const overlap = (Math.min(prev.end, s.end) - s.start) / MS_MINUTE;
-          warnings.push({ kind: 'overlap', shiftIds: [prev.id, s.id], minutes: Math.round(overlap) });
-        } else {
-          const gap = (s.start - prev.end) / MS_MINUTE;
-          if (gap < REST_WARN_MIN) warnings.push({ kind: 'rest', shiftIds: [prev.id, s.id], minutes: Math.round(gap) });
-        }
-      }
-      if (!prev || s.end > prev.end) prev = s;
-    }
-    for (const [day, m] of perDay) {
-      if (m > DAY_LOAD_WARN_MIN) {
-        warnings.push({ kind: 'dayload', shiftIds: items.filter(s => s.day === day).map(s => s.id), minutes: m });
-      }
-    }
+    const warnings = findShiftWarnings(items, limits.restMin, limits.dayMin);
 
     const signups = person.signups.sort((a, b) => a - b);
     people.push({
@@ -333,8 +395,8 @@ function buildFacts(shifts, people, points, boundary) {
   // Most people active at the same time (sweep over start/end events).
   const events = [];
   for (const s of shifts) {
-    if (!s.filled) continue;
-    events.push([s.start.getTime(), s.filled], [s.end.getTime(), -s.filled]);
+    if (!s.einsatzCount) continue;
+    events.push([s.start.getTime(), s.einsatzCount], [s.end.getTime(), -s.einsatzCount]);
   }
   events.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   let current = 0, peak = 0, peakAt = null;
@@ -377,7 +439,7 @@ export function computeStats(plan, types, filter, now) {
   const shifts = all.filter(s => (!typeIds.size || typeIds.has(s.typeId)) && (!days.size || days.has(s.day)));
 
   const sum = aggregate(shifts);
-  const people = buildPeople(shifts, boundary);
+  const people = buildPeople(shifts, boundary, thresholds(plan));
   let requiredMinutes = 0, filledMinutes = 0, doneMinutes = 0;
   for (const s of shifts) {
     if (s.required !== null) requiredMinutes += s.required * s.minutes;
@@ -398,7 +460,7 @@ export function computeStats(plan, types, filter, now) {
     doneMinutes,
     plannedMinutes: filledMinutes - doneMinutes,
     people: people.length,
-    avgMinutesPerPerson: people.length ? Math.round(filledMinutes / people.length) : 0,
+    avgMinutesPerPerson: people.length ? Math.round(personMinutes.reduce((a, b) => a + b, 0) / people.length) : 0,
     medianMinutesPerPerson: median(personMinutes),
   };
 

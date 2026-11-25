@@ -1,0 +1,19 @@
+{{ define "page-tabs" }}
+{{/* Tab bar of a page. Expects the Alpine scope to provide: tabs (names), tab, tabPrefix,
+     tabLabel(name), tabCount(name), setTab(name) and tabKey(event). Panels use the ids
+     "<tabPrefix>-panel-<name>" and aria-labelledby "<tabPrefix>-tab-<name>". */}}
+<div role="tablist" class="tabs tabs-boxed grid grid-flow-col auto-cols-fr w-full lg:w-auto" @keydown="tabKey($event)">
+    <template x-for="name in tabs" :key="name">
+        <button type="button" role="tab" class="tab h-auto min-h-11 px-1 sm:px-4 gap-2 whitespace-nowrap"
+            :id="tabPrefix + '-tab-' + name"
+            :aria-controls="tabPrefix + '-panel-' + name"
+            :aria-selected="tab === name ? 'true' : 'false'"
+            :tabindex="tab === name ? 0 : -1"
+            :class="{ 'tab-active': tab === name }"
+            @click="setTab(name)">
+            <span x-text="tabLabel(name)"></span>
+            <span x-show="tabCount(name) > 0" class="badge badge-sm hidden sm:inline-flex" x-text="tabCount(name)"></span>
+        </button>
+    </template>
+</div>
+{{ end }}

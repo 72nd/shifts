@@ -1,0 +1,29 @@
+{{ define "coord-move-modal" }}
+<div x-data="coordMove" @coord-move.window="open($event.detail, $refs.dlg)">
+    <dialog x-ref="dlg" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-2" x-text="$t('coord.move')"></h3>
+            {{ template "error-display" "modalError" }}
+            <template x-if="entry">
+                <div class="space-y-2">
+                    <p x-text="$t(entry.move.ops[1].status === 'remove' ? 'coord.move_confirm_remove' : 'coord.move_confirm_decline', {
+                        name: entry.name,
+                        from: shiftLabel(model.shifts.get(entry.move.fromShiftId)),
+                        to: shiftLabel(model.shifts.get(toShiftId)) })"></p>
+                    <p class="text-warning" x-show="entry.move.fromLocked"
+                        x-text="$t('coord.move_locked', { shift: shiftLabel(model.shifts.get(entry.move.fromShiftId)) })"></p>
+                </div>
+            </template>
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+                <button type="button" class="btn btn-sm min-h-11" @click="clearErrors(); close($refs.dlg)" x-text="$t('common.cancel')"></button>
+                <button type="button" class="btn btn-sm btn-primary min-h-11" :disabled="busy"
+                    @click="apply(entry.move.ops, { modal: true, message: $t('coord.moved', { name: entry.name }) }).then(ok => { if (ok) close($refs.dlg) })"
+                    x-text="$t('coord.move')"></button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="clearErrors(); close($refs.dlg)">close</button>
+        </form>
+    </dialog>
+</div>
+{{ end }}

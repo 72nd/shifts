@@ -17,21 +17,7 @@
 
     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 pb-3 border-b border-base-300">
         <div class="min-w-0">
-            <div role="tablist" class="tabs tabs-boxed grid grid-cols-4 w-full lg:w-auto" @keydown="tabKey($event)">
-                <template x-for="name in ['overview', 'gaps', 'people', 'history']" :key="name">
-                    <button type="button" role="tab" class="tab h-auto min-h-11 px-1 sm:px-4 gap-2 whitespace-nowrap"
-                        :id="'stats-tab-' + name"
-                        :aria-controls="'stats-panel-' + name"
-                        :aria-selected="tab === name ? 'true' : 'false'"
-                        :tabindex="tab === name ? 0 : -1"
-                        :class="{ 'tab-active': tab === name }"
-                        @click="setTab(name)">
-                        <span x-text="$t('stats.tab_' + name)"></span>
-                        <span x-show="model && name === 'gaps' && model.gaps.length" class="badge badge-sm hidden sm:inline-flex" x-text="model?.gaps.length"></span>
-                        <span x-show="model && name === 'people' && model.people.length" class="badge badge-sm hidden sm:inline-flex" x-text="model?.people.length"></span>
-                    </button>
-                </template>
-            </div>
+            {{ template "page-tabs" . }}
         </div>
         <div x-show="plan && !error">
             {{ template "stats-filters" . }}

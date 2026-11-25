@@ -1,0 +1,39 @@
+{{ define "coord-filters" }}
+<div class="flex flex-wrap items-end gap-x-3 gap-y-2">
+    <label class="flex flex-col gap-1 text-sm min-w-0">
+        <span x-text="$t('coord.filter_type')"></span>
+        <select class="select select-bordered select-sm h-11 min-h-11 max-w-40"
+            :class="{ 'select-primary': filter.typeIds.length }"
+            @change="setFilter({ typeIds: $event.target.value ? [Number($event.target.value)] : [] })">
+            <option value="" :selected="!filter.typeIds.length" x-text="$t('coord.filter_all')"></option>
+            <template x-for="ty in types" :key="ty.id">
+                <option :value="ty.id" :selected="filter.typeIds.includes(ty.id)" x-text="typeTitle(ty)"></option>
+            </template>
+        </select>
+    </label>
+    <label class="flex flex-col gap-1 text-sm min-w-0">
+        <span x-text="$t('coord.filter_day')"></span>
+        <select class="select select-bordered select-sm h-11 min-h-11 max-w-40"
+            :class="{ 'select-primary': filter.days.length }"
+            @change="setFilter({ days: $event.target.value ? [$event.target.value] : [] })">
+            <option value="" :selected="!filter.days.length" x-text="$t('coord.filter_all')"></option>
+            <template x-for="d in dayOptions" :key="d">
+                <option :value="d" :selected="filter.days.includes(d)" x-text="dayLabel(d)"></option>
+            </template>
+        </select>
+    </label>
+    <label class="flex flex-col gap-1 text-sm min-w-0">
+        <span x-text="$t('coord.filter_status')"></span>
+        <select class="select select-bordered select-sm h-11 min-h-11 max-w-40"
+            :class="{ 'select-primary': filter.status }"
+            @change="setFilter({ status: $event.target.value })">
+            <option value="" :selected="!filter.status" x-text="$t('coord.filter_all')"></option>
+            <template x-for="st in ['overbooked', 'open', 'full', 'experience']" :key="st">
+                <option :value="st" :selected="filter.status === st" x-text="$t('coord.status_' + st)"></option>
+            </template>
+        </select>
+    </label>
+    <button type="button" class="btn btn-ghost btn-sm min-h-11 underline" x-show="hasFilter" @click="resetFilter()"
+        x-text="$t('coord.filter_reset')"></button>
+</div>
+{{ end }}

@@ -1,0 +1,92 @@
+{{ define "coord-settings" }}
+<div x-data="coordSettings" x-init="sync(plan, $data); $watch('plan', p => { if (!dirty) sync(p, $data) })" class="max-w-3xl space-y-8">
+
+    <!-- Person fields -->
+    <section class="space-y-3" aria-labelledby="coord-fields-heading">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="coord-fields-heading" class="text-lg font-semibold" x-text="$t('coord.fields')"></h2>
+            <button type="button" class="btn min-h-11" @click="editField(null)" x-text="$t('coord.field_add')"></button>
+        </div>
+        <p class="text-base-content/70" x-show="!plan.fields.length" x-text="$t('coord.fields_empty')"></p>
+        <ul class="divide-y divide-base-300">
+            <template x-for="(f, i) in plan.fields" :key="f.id">
+                <li class="py-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span class="flex">
+                        <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="busy || i === 0"
+                            :aria-label="$t('coord.move_up')" @click="move($data, f.id, -1)">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="busy || i === plan.fields.length - 1"
+                            :aria-label="$t('coord.move_down')" @click="move($data, f.id, 1)">
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block font-medium truncate" :title="fieldLabel(f)" x-text="fieldLabel(f)"></span>
+                        <span class="flex flex-wrap gap-1 mt-1">
+                            <span class="badge badge-ghost badge-sm" x-text="kindLabel($data, f)"></span>
+                            <span class="badge badge-ghost badge-sm" x-text="f.editable_by === 'participant' ? $t('coord.field_editable_participant') : $t('coord.field_editable_admin')"></span>
+                            <span class="badge badge-ghost badge-sm" x-show="f.required" x-text="$t('coord.field_required')"></span>
+                            <span class="badge badge-ghost badge-sm" x-show="f.kind === 'choice'" x-text="f.options.map(o => t(o)).join(', ')"></span>
+                        </span>
+                    </span>
+                    <button type="button" class="btn btn-sm min-h-11" @click="editField(f.id)" x-text="$t('common.edit')"></button>
+                </li>
+            </template>
+        </ul>
+    </section>
+
+    <form class="space-y-8" @submit.prevent="save($data)" @input="dirty = true" @change="dirty = true">
+
+        <!-- Experience -->
+        <section class="space-y-2" aria-labelledby="coord-exp-heading">
+            <h2 id="coord-exp-heading" class="text-lg font-semibold" x-text="$t('coord.experience')"></h2>
+            <label class="flex flex-col gap-1 sm:max-w-sm">
+                <span class="text-sm" x-text="$t('coord.experience_field')"></span>
+                <select class="select select-bordered w-full h-11" x-model="form.experienceFieldId" :disabled="!choiceFields(plan).length">
+                    <option value="" x-text="$t('coord.experience_none')"></option>
+                    <template x-for="f in choiceFields(plan)" :key="f.id">
+                        <option :value="String(f.id)" :selected="String(f.id) === form.experienceFieldId" x-text="fieldLabel(f)"></option>
+                    </template>
+                </select>
+            </label>
+            <p class="text-sm text-base-content/70" x-show="!choiceFields(plan).length" x-text="$t('coord.experience_needs_choice')"></p>
+        </section>
+
+        <!-- Attendance -->
+        <fieldset class="space-y-1">
+            <legend class="text-lg font-semibold mb-1" x-text="$t('coord.attendance')"></legend>
+            <template x-for="mode in ['off', 'participant', 'admin']" :key="mode">
+                <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                    <input type="radio" name="attendance" class="radio radio-sm" :value="mode" x-model="form.attendanceMode">
+                    <span x-text="$t('coord.attendance_' + mode)"></span>
+                </label>
+            </template>
+        </fieldset>
+
+        <!-- Working time -->
+        <section class="space-y-2" aria-labelledby="coord-rules-heading">
+            <h2 id="coord-rules-heading" class="text-lg font-semibold" x-text="$t('coord.rules')"></h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label class="flex flex-col gap-1 min-w-0">
+                    <span class="text-sm" x-text="$t('coord.default_target')"></span>
+                    <input type="text" inputmode="decimal" class="input input-bordered w-full h-11" :class="{ 'input-error': errors.target }" x-model="form.target" :placeholder="$t('coord.hours_placeholder')">
+                </label>
+                <label class="flex flex-col gap-1 min-w-0">
+                    <span class="text-sm" x-text="$t('coord.min_rest')"></span>
+                    <input type="text" inputmode="decimal" class="input input-bordered w-full h-11" :class="{ 'input-error': errors.rest }" x-model="form.rest" placeholder="1:00">
+                </label>
+                <label class="flex flex-col gap-1 min-w-0">
+                    <span class="text-sm" x-text="$t('coord.max_day')"></span>
+                    <input type="text" inputmode="decimal" class="input input-bordered w-full h-11" :class="{ 'input-error': errors.maxDay }" x-model="form.maxDay" :placeholder="$t('coord.hours_placeholder')">
+                </label>
+            </div>
+            <p class="text-sm text-error" x-show="Object.keys(errors).length" x-text="$t('coord.error_hours')"></p>
+        </section>
+
+        <div class="flex justify-end">
+            <button type="submit" class="btn btn-primary min-h-11" :disabled="busy" x-text="$t('common.save')"></button>
+        </div>
+    </form>
+</div>
+{{ end }}

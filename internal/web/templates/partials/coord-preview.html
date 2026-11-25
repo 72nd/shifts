@@ -1,0 +1,57 @@
+{{ define "coord-preview" }}
+<div x-data="coordPreview" x-show="preview" class="space-y-4">
+    <template x-if="preview">
+        <div class="space-y-4">
+            <h2 class="text-lg font-semibold"
+                x-text="$t('coord.preview_summary', { assigned: preview.result.summary.assigned, declined: preview.result.summary.declined, free: preview.result.summary.free })"></h2>
+
+            <div role="alert" class="alert alert-warning" x-show="previewStale">
+                <span x-text="$t('coord.preview_stale')"></span>
+            </div>
+
+            <p class="text-base-content/70" x-show="isEmpty(preview.result)" x-text="$t('coord.preview_nothing')"></p>
+
+            <p class="text-sm text-base-content/70" x-show="preview.result.skipped.length"
+                x-text="$t('coord.preview_skipped', { count: preview.result.skipped.length })"></p>
+
+            <ul class="divide-y divide-base-300">
+                <template x-for="r in rows(model, preview.result)" :key="r.cs.id">
+                    <li class="py-2 space-y-1">
+                        <div class="font-medium break-words" x-text="shiftLabel(r.cs)"></div>
+                        <p class="text-sm" x-show="r.assigned.length">
+                            <span class="font-medium" x-text="$t('coord.preview_assigned')"></span>
+                            <span x-text="r.assigned.join(', ')"></span>
+                        </p>
+                        <p class="text-sm" x-show="r.declined.length">
+                            <span class="font-medium" x-text="$t('coord.preview_declined')"></span>
+                            <span x-text="r.declined.join(', ')"></span>
+                        </p>
+                        <p class="text-sm text-warning flex flex-wrap items-center gap-x-3" x-show="r.unfilled">
+                            <span x-text="r.unfilled?.reason === 'move_only'
+                                ? $t('coord.unfilled_move_only', { count: r.unfilled.free, people: r.unfilled.movable.join(', ') })
+                                : $t('coord.unfilled_none', { count: r.unfilled?.free })"></span>
+                            <button type="button" class="btn btn-ghost btn-sm min-h-11 underline" x-show="r.unfilled?.reason === 'move_only'"
+                                @click="selectShift(r.cs.id); discardPreview()" x-text="$t('coord.open_in_bench')"></button>
+                        </p>
+                    </li>
+                </template>
+            </ul>
+
+            <ul class="text-sm space-y-1" x-show="deltas(preview.result).length">
+                <template x-for="d in deltas(preview.result)" :key="d.name">
+                    <li x-text="$t('coord.person_change', { name: d.name, before: number(d.hoursBefore), after: number(d.hoursAfter) })"></li>
+                </template>
+            </ul>
+
+            <div class="flex flex-wrap justify-end gap-2 border-t border-base-300 pt-3">
+                <button type="button" class="btn min-h-11" @click="discardPreview()" x-text="$t('coord.preview_discard')"></button>
+                <button type="button" class="btn btn-primary min-h-11" :disabled="busy || previewStale || isEmpty(preview.result)"
+                    @click="applyPreview()">
+                    <span class="loading loading-spinner loading-sm" x-show="pendingKey === 'preview'"></span>
+                    <span x-text="$t('coord.preview_apply')"></span>
+                </button>
+            </div>
+        </div>
+    </template>
+</div>
+{{ end }}

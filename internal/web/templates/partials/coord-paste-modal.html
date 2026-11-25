@@ -1,0 +1,26 @@
+{{ define "coord-paste-modal" }}
+<div x-data="coordPasteModal" @coord-paste.window="open($refs.dlg)">
+    <dialog x-ref="dlg" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-2" x-text="$t('coord.people_paste')"></h3>
+            {{ template "error-display" "modalError" }}
+            <template x-if="!result">
+                <label class="flex flex-col gap-1">
+                    <span class="text-sm" x-text="$t('coord.people_paste_hint')"></span>
+                    <textarea class="textarea textarea-bordered w-full h-48" x-model="text" autocomplete="off"></textarea>
+                </label>
+            </template>
+            <p x-show="result" role="status" x-text="result ? $t('coord.people_paste_result', { created: result.created, skipped: result.skipped }) : ''"></p>
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+                <button type="button" class="btn btn-sm min-h-11" @click="clearErrors(); $refs.dlg.close()"
+                    x-text="result ? $t('coord.close') : $t('common.cancel')"></button>
+                <button type="button" class="btn btn-sm btn-primary min-h-11" x-show="!result" :disabled="busy || !names().length"
+                    @click="submit($data)" x-text="$t('coord.people_paste_submit')"></button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="clearErrors()">close</button>
+        </form>
+    </dialog>
+</div>
+{{ end }}

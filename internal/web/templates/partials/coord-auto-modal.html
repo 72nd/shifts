@@ -1,0 +1,41 @@
+{{ define "coord-auto-modal" }}
+<div x-data="coordAuto" @coord-auto.window="open($refs.dlg)">
+    <dialog x-ref="dlg" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg mb-2" x-text="$t('coord.auto_title')"></h3>
+            <p class="text-base-content/70 mb-4" x-text="$t('coord.auto_scope', { count: shiftList.length })"></p>
+
+            <fieldset class="mb-4">
+                <legend class="mb-1" x-text="$t('coord.auto_candidates')"></legend>
+                <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                    <input type="radio" class="radio radio-sm" value="interested" x-model="source">
+                    <span x-text="$t('coord.source_interested')"></span>
+                </label>
+                <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                    <input type="radio" class="radio radio-sm" value="all" x-model="source">
+                    <span x-text="$t('coord.source_all')"></span>
+                </label>
+            </fieldset>
+
+            <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                <input type="checkbox" class="checkbox checkbox-sm" x-model="declineRest">
+                <span x-text="$t('coord.auto_decline_rest')"></span>
+            </label>
+            <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                <input type="checkbox" class="checkbox checkbox-sm" x-model="lock">
+                <span x-text="$t('coord.auto_lock')"></span>
+            </label>
+
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+                <button type="button" class="btn btn-sm min-h-11" @click="close($refs.dlg)" x-text="$t('common.cancel')"></button>
+                <button type="button" class="btn btn-sm btn-primary min-h-11" :disabled="!shiftList.length"
+                    @click="const r = run(model, shiftList); openPreview(r.result, r.options); close($refs.dlg)"
+                    x-text="$t('coord.auto_preview')"></button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="close($refs.dlg)">close</button>
+        </form>
+    </dialog>
+</div>
+{{ end }}

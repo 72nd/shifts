@@ -1,0 +1,90 @@
+{{ define "coord-field-modal" }}
+<div x-data="coordFieldModal" @coord-field.window="open($event.detail, $data, $refs.dlg)">
+    <dialog x-ref="dlg" class="modal">
+        <div class="modal-box max-h-[90vh]">
+            <h3 class="font-bold text-lg mb-2" x-text="id ? $t('coord.field_edit') : $t('coord.field_add')"></h3>
+            {{ template "error-display" "modalError" }}
+
+            <form class="space-y-3" @submit.prevent="save($data, $refs.dlg)">
+                <label class="flex flex-col gap-1" x-show="plan.is_multilingual">
+                    <span class="text-sm" x-text="$t('coord.field_label_de')"></span>
+                    <input type="text" class="input input-bordered w-full h-11" maxlength="150" x-model="form.label_de" :required="plan.is_multilingual" autocomplete="off">
+                </label>
+                <label class="flex flex-col gap-1">
+                    <span class="text-sm" x-text="$t('coord.field_label_en')"></span>
+                    <input type="text" class="input input-bordered w-full h-11" maxlength="150" required x-model="form.label_en" autocomplete="off">
+                </label>
+
+                <label class="flex flex-col gap-1 sm:max-w-48">
+                    <span class="text-sm" x-text="$t('coord.field_kind')"></span>
+                    <select class="select select-bordered w-full h-11" x-model="form.kind" :disabled="!!id">
+                        <template x-for="k in ['choice', 'number', 'boolean', 'text']" :key="k">
+                            <option :value="k" :selected="form.kind === k" x-text="$t('coord.field_kind_' + k)"></option>
+                        </template>
+                    </select>
+                </label>
+
+                <fieldset class="space-y-2" x-show="form.kind === 'choice'">
+                    <legend class="text-sm" x-text="$t('coord.field_options')"></legend>
+                    <ol class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        <template x-for="(o, i) in form.options" :key="i">
+                            <li class="flex flex-wrap items-center gap-2">
+                                <input type="text" class="input input-bordered input-sm h-11 min-w-0 flex-1" maxlength="100" x-show="plan.is_multilingual"
+                                    :aria-label="$t('coord.field_label_de')" :placeholder="$t('coord.field_label_de')" x-model="o.de">
+                                <input type="text" class="input input-bordered input-sm h-11 min-w-0 flex-1" maxlength="100"
+                                    :aria-label="$t('coord.field_label_en')" :placeholder="$t('coord.field_label_en')" x-model="o.en">
+                                <span class="flex">
+                                    <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="i === 0" :aria-label="$t('coord.move_up')" @click="moveOption(i, -1)">
+                                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                                    </button>
+                                    <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="i === form.options.length - 1" :aria-label="$t('coord.move_down')" @click="moveOption(i, 1)">
+                                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                                    </button>
+                                    <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="form.options.length <= 2" :aria-label="$t('common.remove')" @click="removeOption(i)">
+                                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </span>
+                            </li>
+                        </template>
+                    </ol>
+                    <button type="button" class="btn btn-sm min-h-11" :disabled="form.options.length >= 10" @click="addOption()" x-text="$t('coord.field_option_add')"></button>
+                </fieldset>
+
+                <fieldset>
+                    <legend class="text-sm mb-1" x-text="$t('coord.field_editable_by')"></legend>
+                    <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                        <input type="radio" name="field-editable" class="radio radio-sm" value="participant" x-model="form.editable_by">
+                        <span x-text="$t('coord.field_editable_participant')"></span>
+                    </label>
+                    <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+                        <input type="radio" name="field-editable" class="radio radio-sm" value="admin" x-model="form.editable_by">
+                        <span x-text="$t('coord.field_editable_admin')"></span>
+                    </label>
+                </fieldset>
+
+                <label class="flex items-center gap-2 min-h-11 cursor-pointer" x-show="form.editable_by === 'participant'">
+                    <input type="checkbox" class="checkbox checkbox-sm" x-model="form.required">
+                    <span x-text="$t('coord.field_required')"></span>
+                </label>
+
+                <div class="flex flex-wrap justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+                    <template x-if="id">
+                        <div class="mr-auto">
+                            <button type="button" class="btn btn-sm btn-error btn-outline min-h-11" x-show="!confirmDelete" @click="confirmDelete = true" x-text="$t('common.delete')"></button>
+                            <div class="flex flex-wrap items-center gap-2" x-show="confirmDelete">
+                                <span class="text-sm" x-text="$t('coord.field_delete_confirm', { name: form.label_en })"></span>
+                                <button type="button" class="btn btn-sm btn-error min-h-11" :disabled="busy" @click="remove($data, $refs.dlg)" x-text="$t('common.delete')"></button>
+                            </div>
+                        </div>
+                    </template>
+                    <button type="button" class="btn btn-sm min-h-11" @click="close($data, $refs.dlg)" x-text="$t('common.cancel')"></button>
+                    <button type="submit" class="btn btn-sm btn-primary min-h-11" :disabled="busy" x-text="$t('common.save')"></button>
+                </div>
+            </form>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button @click="clearErrors()">close</button>
+        </form>
+    </dialog>
+</div>
+{{ end }}

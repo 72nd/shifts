@@ -1,0 +1,94 @@
+{{ define "coord-people" }}
+<div x-data="coordPeople" class="space-y-4">
+    <div class="flex flex-wrap items-end gap-x-3 gap-y-2">
+        <button type="button" class="btn btn-primary min-h-11" @click="add()" x-text="$t('coord.people_add')"></button>
+        <button type="button" class="btn min-h-11" @click="paste()" x-text="$t('coord.people_paste')"></button>
+        <label class="flex flex-col gap-1 text-sm min-w-0 sm:ml-auto">
+            <span x-text="$t('coord.people_search')"></span>
+            <input type="search" class="input input-bordered input-sm h-11 w-full sm:w-56" x-model="search" autocomplete="off">
+        </label>
+        <label class="flex items-center gap-2 min-h-11 cursor-pointer">
+            <input type="checkbox" class="checkbox checkbox-sm" x-model="onlyWarnings">
+            <span x-text="$t('coord.people_only_warnings')"></span>
+        </label>
+    </div>
+
+    <div x-show="!personList.length" class="space-y-2">
+        <p class="text-base-content/70" x-text="$t('coord.people_empty')"></p>
+    </div>
+
+    <!-- Table on wider screens; scrolls inside its own container -->
+    <div class="hidden md:block overflow-x-auto" x-show="personList.length">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th scope="col" x-text="$t('coord.col_name')"></th>
+                    <th scope="col" x-show="model.experience.field" x-text="$t('coord.col_experience')"></th>
+                    <th scope="col" x-show="plan.attendance_mode !== 'off'" x-text="$t('coord.col_present')"></th>
+                    <th scope="col" class="text-right" x-text="$t('coord.col_target')"></th>
+                    <th scope="col" class="text-right" x-text="$t('coord.col_hours')"></th>
+                    <th scope="col" class="text-right" x-text="$t('coord.col_load')"></th>
+                    <th scope="col" class="text-right" role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</th>
+                    <th scope="col" class="text-right" role="img" :aria-label="$t('coord.col_declined')" :title="$t('coord.col_declined')">✗</th>
+                    <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
+                        <th scope="col" class="max-w-40 truncate" :title="fieldLabel(f)" x-text="fieldLabel(f)"></th>
+                    </template>
+                    <th scope="col" x-text="$t('coord.col_warnings')"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="p in rows(personList)" :key="p.key">
+                    <tr class="hover cursor-pointer" @click="edit(p.key)">
+                        <td class="max-w-56">
+                            <button type="button" class="link link-hover min-h-11 text-left truncate max-w-full" :title="p.name"
+                                @click.stop="edit(p.key)" x-text="p.name"></button>
+                        </td>
+                        <td x-show="model.experience.field" x-text="levelLabel($data, p)"></td>
+                        <td x-show="plan.attendance_mode !== 'off'" class="whitespace-nowrap" x-text="attendanceLabel($data, p)"></td>
+                        <td class="text-right tabular-nums" x-text="targetLabel($data, p)"></td>
+                        <td class="text-right tabular-nums" x-text="number(p.hours)"></td>
+                        <td class="text-right tabular-nums" x-text="number(p.load)"></td>
+                        <td class="text-right tabular-nums" x-text="p.popularReceived"></td>
+                        <td class="text-right tabular-nums" x-text="p.wishesDeclined"></td>
+                        <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
+                            <td class="max-w-40 truncate" :title="fieldValue($data, p, f)" x-text="fieldValue($data, p, f)"></td>
+                        </template>
+                        <td>
+                            <ul class="flex flex-wrap gap-1">
+                                <template x-for="w in p.warnings" :key="w.kind + w.shiftIds.join('-')">
+                                    <li class="badge badge-warning badge-sm" x-text="warningText(w)"></li>
+                                </template>
+                                <li class="badge badge-ghost badge-sm" x-show="p.missingRequired" x-text="$t('coord.missing_required')"></li>
+                            </ul>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- List on phones -->
+    <ul class="md:hidden divide-y divide-base-300" x-show="personList.length">
+        <template x-for="p in rows(personList)" :key="p.key">
+            <li>
+                <button type="button" class="w-full min-h-11 py-2 text-left space-y-1" @click="edit(p.key)">
+                    <span class="block font-medium truncate" x-text="p.name"></span>
+                    <span class="block text-sm text-base-content/70"
+                        x-text="number(p.hours) + ' ' + $t('coord.col_hours_short') + ', ' + $t('coord.col_load') + ' ' + number(p.load)"></span>
+                    <span class="flex flex-wrap gap-1">
+                        <span class="badge badge-ghost badge-sm" x-show="levelLabel($data, p)" x-text="levelLabel($data, p)"></span>
+                        <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
+                            <span class="badge badge-ghost badge-sm" x-show="fieldValue($data, p, f)" x-text="fieldValue($data, p, f)"></span>
+                        </template>
+                        <template x-for="w in p.warnings" :key="w.kind + w.shiftIds.join('-')">
+                            <span class="badge badge-warning badge-sm" x-text="warningText(w)"></span>
+                        </template>
+                    </span>
+                </button>
+            </li>
+        </template>
+    </ul>
+
+    <p class="text-base-content/70" x-show="personList.length && !rows(personList).length" x-text="$t('coord.no_match')"></p>
+</div>
+{{ end }}

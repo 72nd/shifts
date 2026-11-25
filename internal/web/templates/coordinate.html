@@ -1,0 +1,79 @@
+{{ template "base.html" . }}
+
+{{ define "content" }}
+<div x-data="coordinationPage" class="container mx-auto p-4 space-y-4">
+    <header class="space-y-1 min-w-0">
+        <a :href="backUrl()" class="link link-hover inline-flex items-center gap-1 min-h-11 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span x-text="$t('coord.back_to_plan')"></span>
+        </a>
+        <h1 class="text-2xl font-bold min-w-0">
+            <span class="block truncate" x-text="planTitle()" :title="planTitle()"></span>
+            <span class="block text-base font-normal text-base-content/70" x-text="$t('coord.title')"></span>
+        </h1>
+    </header>
+
+    <div x-show="denied" role="alert" class="alert alert-warning">
+        <span x-text="$t('coord.admin_only')"></span>
+        <a :href="backUrl()" class="btn btn-sm" x-text="$t('coord.back_to_plan')"></a>
+    </div>
+
+    <div x-show="isAdmin" class="pb-3 border-b border-base-300">
+        {{ template "page-tabs" . }}
+    </div>
+
+    <div x-show="isLoading && !denied" class="flex justify-center items-center min-h-[50vh]">
+        <span class="loading loading-spinner loading-lg"></span>
+    </div>
+
+    <div x-show="!isLoading && error" role="alert" class="alert alert-error">
+        <span x-text="$t('coord.error_load')"></span>
+        <button type="button" class="btn btn-sm" @click="load()" x-text="$t('coord.reload')"></button>
+    </div>
+
+    <template x-if="isAdmin && !isLoading && !error && model">
+        <div>
+            <section role="tabpanel" id="coord-panel-distribute" aria-labelledby="coord-tab-distribute" x-show="tab === 'distribute'">
+                {{ template "coord-distribute" . }}
+            </section>
+            <section role="tabpanel" id="coord-panel-people" aria-labelledby="coord-tab-people" x-show="tab === 'people'">
+                {{ template "coord-people" . }}
+            </section>
+            <section role="tabpanel" id="coord-panel-settings" aria-labelledby="coord-tab-settings" x-show="tab === 'settings'">
+                {{ template "coord-settings" . }}
+            </section>
+        </div>
+    </template>
+
+    <template x-if="isAdmin && model">
+        <div>
+            {{ template "coord-move-modal" . }}
+            {{ template "coord-auto-modal" . }}
+            {{ template "coord-person-modal" . }}
+            {{ template "coord-paste-modal" . }}
+            {{ template "coord-field-modal" . }}
+        </div>
+    </template>
+
+    <div class="toast toast-end z-50" x-show="toast || actionError" role="status" aria-live="polite">
+        <div class="alert" :class="actionError ? 'alert-error' : 'alert-info'" x-show="actionError">
+            <span x-text="actionError"></span>
+            <button type="button" class="btn btn-sm btn-ghost" @click="actionError = null" x-text="$t('common.cancel')"></button>
+        </div>
+        <div class="alert alert-info" x-show="toast && !actionError">
+            <span x-text="toast?.message"></span>
+            <button type="button" class="btn btn-sm" x-show="toast?.undoable && lastUndo" @click="undo()" :disabled="busy" x-text="$t('coord.undo')"></button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script type="module" src="/static/js/coordinate/distribute.js"></script>
+<script type="module" src="/static/js/coordinate/auto.js"></script>
+<script type="module" src="/static/js/coordinate/people.js"></script>
+<script type="module" src="/static/js/coordinate/settings.js"></script>
+<script type="module" src="/static/js/coordinate/page.js"></script>
+{{ end }}
