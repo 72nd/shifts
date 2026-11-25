@@ -21,7 +21,7 @@
                 : 'lg:grid-rows-[minmax(0,1fr)] lg:h-[calc(100dvh-14rem-45vh)] lg:min-h-[20rem]')">
 
         <!-- Shifts: grouped by day -->
-        <aside x-show="activeView === 'list'" class="min-w-0 min-h-0 space-y-3 md:overflow-y-auto">
+        <aside x-show="activeView === 'list'" class="relative min-w-0 min-h-0 space-y-3 md:overflow-y-auto">
             <div x-show="!shiftList.length" class="space-y-2">
                 <p class="text-base-content/70" x-text="$t('coord.no_shifts')"></p>
                 <button type="button" class="btn btn-sm min-h-11" x-show="hasFilter" @click="resetFilter()" x-text="$t('coord.filter_reset')"></button>
@@ -72,7 +72,7 @@
         </aside>
 
         <!-- Workbench -->
-        <section class="min-w-0 min-h-0 space-y-4 md:overflow-y-auto" aria-live="polite">
+        <section class="relative min-w-0 min-h-0 space-y-4 md:overflow-y-auto" aria-live="polite">
             <p class="hidden md:block text-base-content/70" x-show="!selectedShift && shiftList.length" x-text="$t('coord.select_shift')"></p>
 
             <template x-if="selectedShift">
@@ -268,7 +268,7 @@
         </section>
 
         <!-- Persons: column on wide screens -->
-        <aside x-show="activeView !== 'people'" class="hidden xl:block min-w-0 min-h-0 overflow-y-auto">
+        <aside x-show="activeView !== 'people'" class="relative hidden xl:block min-w-0 min-h-0 overflow-y-auto">
             <h2 class="font-medium mb-2" x-text="$t('coord.people_title')"></h2>
             {{ template "coord-persons-column" . }}
         </aside>
