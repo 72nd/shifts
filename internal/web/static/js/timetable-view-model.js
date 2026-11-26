@@ -9,7 +9,7 @@ import {
     parseBoundaryTime,
     resolveDayContext
 } from './timetable-view-layout.js';
-import { parseDateTime, parseDate, addMinutes, daysBetween, logicalDay } from './datetime.js';
+import { parseDateTime, parseDate, addMinutes, addDays, dateKey as toDateKey, daysBetween, logicalDay } from './datetime.js';
 
 function getLocalizedValue({ de, en }, isMultilingual, locale) {
     if (!isMultilingual) {
@@ -74,9 +74,11 @@ function normalizeShift({
     const participants = Array.isArray(shift.participants) ? shift.participants : [];
     const declinedParticipants = Array.isArray(shift.declinedParticipants) ? shift.declinedParticipants : [];
     const required = typeof shift.required === 'number' ? shift.required : 0;
-    const durationMinutes = clampToDay(Number(shift.duration) || 0);
+    const fullDuration = Math.max(Number(shift.duration) || 0, 0);
     const startMinutes = clampToDay(offsetMinutes);
-    const endMinutes = clampToDay(startMinutes + durationMinutes);
+    // Drawn only up to the end of the day; the rest becomes a continuation (see splitAtDayEnd)
+    const durationMinutes = Math.min(fullDuration, MINUTES_PER_DAY - startMinutes);
+    const endMinutes = startMinutes + durationMinutes;
 
     // Determine fill status for visual styling
     let fillStatus = 'empty';
@@ -103,7 +105,9 @@ function normalizeShift({
         endMinutes: Math.max(endMinutes, startMinutes + 5),
         durationMinutes,
         startTime: shift.start_time,
-        displayTime: formatTimeRange(parseDateTime(shift.start_time), durationMinutes, locale),
+        overflowMinutes: fullDuration - durationMinutes,
+        isContinuation: false,
+        displayTime: formatTimeRange(parseDateTime(shift.start_time), fullDuration, locale),
         participants,
         declinedParticipants,
         participantsCount: participants.length,
@@ -220,14 +224,45 @@ export function buildTimetableModel({
             }
 
             const column = dayEntry.columns.get(typeMeta.id);
-            column.shifts.push(normalizeShift({
+            const normalized = normalizeShift({
                 shift,
                 typeMeta,
                 offsetMinutes,
                 locale,
                 isMultilingual,
                 collaborativeMode
-            }));
+            });
+            column.shifts.push(normalized);
+
+            // A shift reaching past the end of its day continues at the top of the following day(s)
+            let rest = normalized.overflowMinutes;
+            let continuationDate = normalizedDate;
+            while (rest > 0) {
+                continuationDate = addDays(continuationDate, 1);
+                const key = toDateKey(continuationDate);
+                if (!dayMap.has(key)) {
+                    dayMap.set(key, { dateKey: key, date: continuationDate, columns: new Map() });
+                }
+                const nextDay = dayMap.get(key);
+                if (!nextDay.columns.has(typeMeta.id)) {
+                    nextDay.columns.set(typeMeta.id, {
+                        typeId: typeMeta.id,
+                        typeTitle: typeMeta.title,
+                        color: typeMeta.color,
+                        shifts: []
+                    });
+                }
+                const visible = Math.min(rest, MINUTES_PER_DAY);
+                rest -= visible;
+                nextDay.columns.get(typeMeta.id).shifts.push({
+                    ...normalized,
+                    startMinutes: 0,
+                    endMinutes: Math.max(visible, 5),
+                    durationMinutes: visible,
+                    overflowMinutes: rest,
+                    isContinuation: true
+                });
+            }
         });
     });
 

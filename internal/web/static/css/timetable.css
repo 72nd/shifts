@@ -332,15 +332,11 @@
   cursor: pointer;
 }
 
-.timetable-shift:hover {
-  border-width: 2px;
-  box-shadow: 0 4px 12px oklch(var(--bc) / 0.2);
+/* Hover must never change the size or content flow of a cell: ring via box-shadow, no border width or transform */
+.timetable-shift:hover,
+.timetable-shift:focus-within {
+  box-shadow: 0 0 0 1px oklch(var(--bc) / 0.35), 0 4px 12px oklch(var(--bc) / 0.2);
   z-index: 5;
-}
-
-.timetable-shift.has-overflow:hover {
-  border-width: 3px;
-  transform: translateY(-1px);
 }
 
 /* Expanded state - overlays other cells */
@@ -357,7 +353,6 @@
 
 .timetable-shift.is-expanded:hover {
   z-index: 20;
-  transform: none;
 }
 
 /* Content wrapper */
@@ -400,14 +395,26 @@
   outline-offset: -1px;
 }
 
-/* Admin actions - inline in header */
+/* Admin actions - overlay in the bottom right corner, shown on hover/focus without taking space in the layout */
 .timetable-shift-admin-actions {
-  display: none;
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  z-index: 6;
+  display: flex;
   gap: 0.125rem;
+  padding: 0.125rem;
+  background: oklch(var(--b1));
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 4px oklch(var(--bc) / 0.3);
+  opacity: 0;
+  visibility: hidden;
 }
 
-.timetable-shift:hover .timetable-shift-admin-actions {
-  display: flex;
+.timetable-shift:hover .timetable-shift-admin-actions,
+.timetable-shift:focus-within .timetable-shift-admin-actions {
+  opacity: 1;
+  visibility: visible;
 }
 
 .timetable-shift-admin-btn {
@@ -711,10 +718,6 @@
     page-break-inside: avoid;
   }
 
-  .timetable-shift:hover {
-    border-width: 1px;
-    transform: none;
-  }
 
   .timetable-time-rail,
   .timetable-time-header,
