@@ -12,7 +12,7 @@ MODE ?= tag
 GO_BIN := $(shell go env GOPATH)/bin
 SWAG   := $(GO_BIN)/swag
 
-.PHONY: all install update docs build dist clean status tools help
+.PHONY: all install update docs check-version build dist clean status tools help
 
 ## all: Update to the latest release and rebuild (shortcut for: make update && make install)
 all: update install
@@ -64,8 +64,14 @@ docs: tools
 		--parseDependency \
 		--parseInternal
 
+## check-version: Fail if internal/web/version.go differs from the newest CHANGELOG.md release heading
+check-version:
+	@CL=$$(grep -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | tail -1 | cut -c4-); \
+	V=$$(grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' internal/web/version.go); \
+	if [ "$$CL" != "$$V" ]; then echo "Version mismatch: version.go=$$V, CHANGELOG.md=$$CL"; exit 1; fi
+
 ## build: Compile the binary (CGO_ENABLED=1 required for SQLite)
-build:
+build: check-version
 	@echo "Building $(GO_OUTPUT)..."
 	@CGO_ENABLED=1 go build -o $(GO_OUTPUT) $(GO_MAIN)
 	@echo "Build complete: ./$(GO_OUTPUT)"

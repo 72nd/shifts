@@ -39,4 +39,5 @@ Only after the user confirms the finalized version is tagged and pushed.
    - If unsure, or the user names a bump, ask or follow the user.
 2. Insert an empty `## vX.Y.Z` heading (no summary) before `## Feature Request / Backlog`. Leave the closed release untouched.
 3. Set the same version in `internal/web/version.go` (`const Version = "vX.Y.Z"`, with `v` prefix).
-4. Add no bullets and do not commit.
+4. Run `make check-version`; it fails if `version.go` differs from the newest `CHANGELOG.md` heading (`make build` runs it too).
+5. Add no bullets and do not commit.
