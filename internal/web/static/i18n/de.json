@@ -270,7 +270,6 @@
                 "search_placeholder": "Nach Namen suchen...",
                 "clear": "Filter zurücksetzen",
                 "selected": "ausgewählt",
-                "select_types": "Schichttypen auswählen...",
                 "n_types_selected": "{count} Schichttypen ausgewählt",
                 "all_types": "Alle Schichttypen"
             },

@@ -271,7 +271,6 @@
                 "search_placeholder": "Search by name...",
                 "clear": "Clear filters",
                 "selected": "selected",
-                "select_types": "Select shift types...",
                 "n_types_selected": "{count} shift types selected",
                 "all_types": "All Shift Types"
             },
