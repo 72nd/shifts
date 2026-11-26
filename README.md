@@ -4,9 +4,14 @@
 
 # Shifts - Collaborative Shift Planning
 
-The Shifts shift planning web application enables the collaborative coordination of shift cover for an event. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. The application also offers exports in various formats as well as printable PDFs.
+The Shifts shift planning web application enables the collaborative coordination of shift cover for an event in real time. Organisers simply need to share a URL with participants. Participants can then easily sign up using a nickname of their choice. Organisers always have a clear overview of how many shifts have already been filled. They are also supported with complex shift allocations. The application also offers exports in various formats as well as printable PDFs.
 
 The application was developed out of frustration that existing tools were either too complicated for participants to use (login, email, etc.) or simply could not handle more complex events with numerous shifts and shift types.
+
+The application has two fundamental goals:
+
+- **For volunteers:** A user-friendly, clear interface. Signing up for shifts should be as simple and frictionless as possible, which is why there is deliberately no login or similar. Depending on their needs, the shift plan can be displayed as a timetable or as a list. Additional information, such as experience level, can be requested directly.
+- **For organisers:** The backend of every shift plan offers extensive reporting as well as powerful tools for complex shift allocation scenarios.
 
 > [!WARNING]
 > **LLM Disclaimer.** This tool is the result of an experiment designed to investigate the potential applications of Vibe/Agentic Coding. The architecture was specified by humans. Nevertheless, it is likely that this code will contain the usual problems and errors associated with LLM coding agents. Use is therefore at your own risk, and you must carry out your own risk assessment. Apart from a freely chosen nickname, the tool does not store any user data.
@@ -37,6 +42,16 @@ A full list of features can be found [below](#features).
       <br /><em>Edit shifts and shift types.</em>
     </td>
   </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="opt/showcase-05.png" alt="Statistics view." width="100%" />
+      <br /><em>View statistics.</em>
+    </td>
+    <td align="center" width="50%">
+      <img src="opt/showcase-06.png" alt="Coordination view" width="100%" />
+      <br /><em>Coordination tool for complex shift allocation scenarios.</em>
+    </td>
+  </tr>
 </table>
 
 
@@ -44,38 +59,38 @@ A full list of features can be found [below](#features).
 
 ### Deployment
 
-- **🚀 Single binary deployment:** Written in Go, with SQLite as the database backend. Deployment requires just a single binary — no external services or runtime dependencies.
-- **📅 Unlimited shift plans per instance:** A single Shifts instance manages any number of independent shift schedules. No login is required to create them.
+- **Single binary deployment:** Written in Go, with SQLite as the database backend. Deployment requires just a single binary — no external services or runtime dependencies.
+- **Unlimited shift plans per instance:** A single Shifts instance manages any number of independent shift schedules. No login is required to create them.
 
 ### Participant Experience
 
-- **🔑 No login required for sign up:** Participants need only the link to the shift schedule and can sign up using a nickname of their choice. No account, login, or email address is needed.
-- **🌐 Bilingual support:** Shift schedules can be created in a single language or in two languages simultaneously (currently German and English).
-- **👀 List, chronological and table (timetable) views:** Three complementary views are available: a grouped list well suited to small screens, a chronological list that shows all shifts of all areas in order of time, and a table/timetable view that provides a convenient overview of many shifts at once. Empty stretches of four hours or more within a day are collapsed to a thin band (click to show), so there is less scrolling.
-- **🌗 Light and dark mode:** Both light and dark modes are supported.
-- **⚡ Live updates:** Changes by other people (sign-ups, shifts, types, settings, locks, deletion) appear in an open shift plan within about a second, without reloading. A status indicator shows the connection state and a viewer counter shows how many tabs of the plan are open. Changed shifts are briefly highlighted, open sign-up dialogs warn when a shift became full or was deleted, and the statistics page updates too. Can be switched off with `realtime_enabled` in `config.toml`.
+- **No login required for sign up:** Participants need only the link to the shift schedule and can sign up using a nickname of their choice. No account, login, or email address is needed.
+- **Bilingual support:** Shift schedules can be created in a single language or in two languages simultaneously (currently German and English).
+- **List, chronological and table (timetable) views:** Three complementary views are available: a grouped list well suited to small screens, a chronological list that shows all shifts of all areas in order of time, and a table/timetable view that provides a convenient overview of many shifts at once. Empty stretches of four hours or more within a day are collapsed to a thin band (click to show), so there is less scrolling.
+- **Light and dark mode:** Both light and dark modes are supported.
+- **Live updates:** Changes by other people (sign-ups, shifts, types, settings, locks, deletion) appear in an open shift plan within about a second, without reloading. A status indicator shows the connection state and a viewer counter shows how many tabs of the plan are open. Changed shifts are briefly highlighted, open sign-up dialogs warn when a shift became full or was deleted, and the statistics page updates too. Can be switched off with `realtime_enabled` in `config.toml`.
 
 ### Shift Planning
 
-- **📝 Flexible shift configuration with Markdown support:** Each shift schedule comprises a description (Markdown supported), shift types, and individual shifts. The number of required participants is configurable per shift; an unlimited headcount is also supported.
-- **🤝 Collaborative and controlled planning mode:** Designed for scenarios where a significantly larger number of people are interested in shifts, or where organisers wish to retain control over the final allocation. Participants *apply* for shifts; organisers then confirm selections and lock the shift against further changes by non-admins.
-- **🕒 Time zone per shift plan:** Each plan has its own time zone, chosen when the plan is created and fixed afterwards. Shift times are local times of the event and look the same on every device, regardless of the browser's time zone.
-- **🧩 Easy application for multiple shifts:** The interface is designed to make signing up for several shifts as effortless as possible.
+- **Flexible shift configuration with Markdown support:** Each shift schedule comprises a description (Markdown supported), shift types, and individual shifts. The number of required participants is configurable per shift; an unlimited headcount is also supported.
+- **Collaborative and controlled planning mode:** Designed for scenarios where a significantly larger number of people are interested in shifts, or where organisers wish to retain control over the final allocation. Participants *apply* for shifts; organisers then confirm selections and lock the shift against further changes by non-admins.
+- **Time zone per shift plan:** Each plan has its own time zone, chosen when the plan is created and fixed afterwards. Shift times are local times of the event and look the same on every device, regardless of the browser's time zone.
+- **Easy application for multiple shifts:** The interface is designed to make signing up for several shifts as effortless as possible.
 
 ### Organiser Tools
 
-- **🛡️ Admin-only mode:** The administration panel is secured with an admin password, which is displayed once immediately after the schedule has been created.
-- **🔍 Multi-dimensional filter:** Shifts can be filtered along four independent dimensions — shift type, day, occupancy status, and participant name — applied in combination. The occupancy status filter distinguishes five levels: *empty* (no participants), *critical* (fewer than 50 % of required slots filled), *not full* (at least one vacancy remaining), *full* (exactly at capacity), and *overbooked* (more participants than required slots). The participant search performs a case-insensitive substring match across all enrolled names. Active filters carry through to both the list and timetable views as well as to CSV and PDF exports.
-- **📊 Statistics:** Four tabs for coverage (key figures, per day and area, staffing heatmap by day or by area with missing places per hour), a sortable people table with overlap, rest and load warnings (CSV export for admins), the sign-up history with a forecast, and a recap with highlights that can be copied as text. Area and day filters apply to all tabs and are kept in the URL. Unlimited shifts do not count into demand.
-- **🧭 Coordination tools:** An admin page for hard allocation decisions: popular shifts with more interested people than places, and groups with a work assignment. Sign-ups get a status (signed up, assigned, not selected; not selected ones stay on record for fairness and can be hidden from participants), a ranked list of candidates with a reason for each position (experience need, fairness over popular shifts, load factor, breaks, attendance, lot), moving people between overlapping shifts, and an auto-distribution with preview and undo. Person fields (choice, number, yes/no, text), attendance and working time rules are configurable per plan. Coordination is switched on per plan in the plan settings (off for new plans). It shows the shifts that overlap the selected one, flags experienced people who are needed in a parallel shift, and offers a timeline by area and a people-by-time view on desktop screens.
-- **📚 Integrated documentation system:** A built-in documentation system powers the application's help pages.
-- **📤 Export to CSV or PDF:** Shift schedules can be exported as CSV or PDF files. The PDF poster export, for instance, enables a transition to a paper-based schedule during the event itself.
+- **Admin-only mode:** The administration panel is secured with an admin password, which is displayed once immediately after the schedule has been created.
+- **Multi-dimensional filter:** Shifts can be filtered along four independent dimensions — shift type, day, occupancy status, and participant name — applied in combination. The occupancy status filter distinguishes five levels: *empty* (no participants), *critical* (fewer than 50 % of required slots filled), *not full* (at least one vacancy remaining), *full* (exactly at capacity), and *overbooked* (more participants than required slots). The participant search performs a case-insensitive substring match across all enrolled names. Active filters carry through to both the list and timetable views as well as to CSV and PDF exports.
+- **Statistics:** Four tabs for coverage (key figures, per day and area, staffing heatmap by day or by area with missing places per hour), a sortable people table with overlap, rest and load warnings (CSV export for admins), the sign-up history with a forecast, and a recap with highlights that can be copied as text. Area and day filters apply to all tabs and are kept in the URL. Unlimited shifts do not count into demand.
+- **Coordination tools:** An admin page for hard allocation decisions: popular shifts with more interested people than places, and groups with a work assignment. Sign-ups get a status (signed up, assigned, not selected; not selected ones stay on record for fairness and can be hidden from participants), a ranked list of candidates with a reason for each position (experience need, fairness over popular shifts, load factor, breaks, attendance, lot), moving people between overlapping shifts, and an auto-distribution with preview and undo. Person fields (choice, number, yes/no, text), attendance and working time rules are configurable per plan. Coordination is switched on per plan in the plan settings (off for new plans). It shows the shifts that overlap the selected one, flags experienced people who are needed in a parallel shift, and offers a timeline by area and a people-by-time view on desktop screens.
+- **Integrated documentation system:** A built-in documentation system powers the application's help pages.
+- **Export to CSV or PDF:** Shift schedules can be exported as CSV or PDF files. The PDF poster export, for instance, enables a transition to a paper-based schedule during the event itself.
 
 
 ### Export & Integration
 
-- **🛠️ REST API with Swagger docs and batch operations:** A REST API is available with interactive Swagger/OpenAPI documentation and support for batch operations on shifts (creation, partial updates, and deletion). Documentation is accessible at `/swagger/index.html` once the server is running.
-- **📈 Prometheus-compatible metrics endpoint:** An optional metrics endpoint exposes performance and business metrics in a Prometheus-compatible format on a configurable dedicated port (`metrics_port` in `config.toml`).
+- **REST API with Swagger docs and batch operations:** A REST API is available with interactive Swagger/OpenAPI documentation and support for batch operations on shifts (creation, partial updates, and deletion). Documentation is accessible at `/swagger/index.html` once the server is running.
+- **Prometheus-compatible metrics endpoint:** An optional metrics endpoint exposes performance and business metrics in a Prometheus-compatible format on a configurable dedicated port (`metrics_port` in `config.toml`).
 
 
 ## Installation
