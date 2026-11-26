@@ -441,8 +441,8 @@ document.addEventListener('alpine:init', () => {
                 const container = this.$refs.timetableContainer;
                 if (!container) return;
                 const newState = {};
-                container.querySelectorAll('[data-shift-id]').forEach(el => {
-                    const shiftId = el.dataset.shiftId;
+                container.querySelectorAll('[data-cell-key]').forEach(el => {
+                    const shiftId = el.dataset.cellKey;
                     if (!shiftId) return;
                     const contentEl = el.querySelector('.timetable-shift-content');
                     if (!contentEl) return;

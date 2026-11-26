@@ -179,6 +179,11 @@
   contain-intrinsic-size: auto 1000px; /* exact height is set inline per day */
 }
 
+/* content-visibility implies paint containment and would clip an expanded cell at the end of its day */
+.timetable-day-section:has(.timetable-shift.is-expanded) {
+  content-visibility: visible;
+}
+
 .timetable-day-section:last-child {
   border-bottom: none;
 }

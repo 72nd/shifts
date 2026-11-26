@@ -99,6 +99,7 @@ function normalizeShift({
 
     const result = {
         id: shift.id,
+        cellKey: String(shift.id), // expand/overflow state is kept per drawn box (a midnight shift has two)
         typeId: typeMeta.id,
         typeTitle: typeMeta.title,
         startMinutes,
@@ -260,7 +261,8 @@ export function buildTimetableModel({
                     endMinutes: Math.max(visible, 5),
                     durationMinutes: visible,
                     overflowMinutes: rest,
-                    isContinuation: true
+                    isContinuation: true,
+                    cellKey: `${normalized.id}@${key}`
                 });
             }
         });
