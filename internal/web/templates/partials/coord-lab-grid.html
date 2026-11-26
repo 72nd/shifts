@@ -1,0 +1,91 @@
+{{ define "coord-lab-grid" }}
+{{/* Lab grid of one day: rows per shift type, lanes for simultaneous shifts, 5-minute CSS-grid columns (lab.js buildLabGrid).
+     Chips are draggable buttons (native drag and drop); keyboard: Enter picks up, "Here" puts down. */}}
+<div class="min-w-0 flex-1">
+    <p class="text-base-content/70" x-show="!grid.rows.length" x-text="$t('coord.lab_no_shifts_day')"></p>
+    <div x-show="grid.rows.length" class="overflow-auto lg:max-h-[75vh] border border-base-300 rounded-box">
+        <div :style="{ minWidth: gridMinWidth() }">
+            <div class="sticky top-0 z-20 flex bg-base-100 border-b border-base-300">
+                <div class="sticky left-0 z-30 w-32 shrink-0 bg-base-100"></div>
+                <div class="grid min-w-0 flex-1" :style="{ gridTemplateColumns: 'repeat(' + grid.columns + ', minmax(0, 1fr))' }">
+                    <template x-for="(h, i) in grid.hours" :key="i">
+                        <div class="border-l border-base-300 px-1 text-xs tabular-nums text-base-content/70"
+                            :style="{ gridColumn: (h.gridStart + 1) + ' / span ' + h.gridSpan }" x-text="String(h.hour).padStart(2, '0')"></div>
+                    </template>
+                </div>
+            </div>
+            <template x-for="row in grid.rows" :key="row.type.id">
+                <div class="flex border-b border-base-300 last:border-b-0">
+                    <div class="sticky left-0 z-10 w-32 shrink-0 bg-base-100 px-2 py-1 text-sm font-medium truncate"
+                        :title="typeTitle(row.type)" x-text="typeTitle(row.type)"></div>
+                    <div class="relative min-w-0 flex-1">
+                        <div class="absolute inset-0 grid" aria-hidden="true" :style="{ gridTemplateColumns: 'repeat(' + grid.columns + ', minmax(0, 1fr))' }">
+                            <template x-for="(h, i) in grid.hours" :key="i">
+                                <div class="border-l border-base-300" :style="{ gridColumn: (h.gridStart + 1) + ' / span ' + h.gridSpan }"></div>
+                            </template>
+                        </div>
+                        <template x-for="(lane, li) in row.lanes" :key="li">
+                            <div class="relative grid items-start py-0.5" :style="{ gridTemplateColumns: 'repeat(' + grid.columns + ', minmax(0, 1fr))' }">
+                                <template x-for="b in lane" :key="b.cs.id">
+                                    <section class="row-start-1 min-w-0 mx-0.5 rounded-field border bg-base-100 p-1 space-y-1"
+                                        :aria-label="shiftLabel(b.cs)"
+                                        :class="[dragOver === b.cs.id ? 'ring-2 ring-primary' : '', b.required >= 0 && b.einsaetze > b.required ? 'border-warning' : 'border-base-content/20']"
+                                        :style="{ gridColumn: (b.gridStart + 1) + ' / span ' + b.gridSpan }"
+                                        @dragover="overBox($event, b.cs.id)" @dragleave="leaveBox($event, b.cs.id)" @drop.prevent="dropOn(b.cs.id)">
+                                        <div class="flex flex-wrap items-center gap-x-1.5 text-xs">
+                                            <span class="tabular-nums" x-text="time(b.cs.start) + '–' + time(b.cs.end)"></span>
+                                            <span class="tabular-nums font-medium" x-text="boxCount(b)"></span>
+                                            <span class="inline-flex" x-show="b.cs.popular">{{ template "coord-icon-star" }}<span x-show="b.cs.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
+                                            <span class="inline-flex items-center gap-0.5" x-show="b.cs.expNeed.count > 0 && !b.cs.expNeed.met">{{ template "coord-icon-warning" }}<span class="tabular-nums" x-text="b.cs.expNeed.have + '/' + b.cs.expNeed.count"></span></span>
+                                            <span class="text-info" x-show="b.cs.locked">{{ template "lock-icon" }}</span>
+                                            <button type="button" data-drop class="btn btn-xs btn-primary ml-auto" x-show="picked && picked.from !== b.cs.id"
+                                                @click="dropOn(b.cs.id)" x-text="$t('coord.lab_drop_here')"></button>
+                                        </div>
+                                        <p class="text-xs text-base-content/60" x-show="!b.chips.length" x-text="$t('coord.lab_box_empty')"></p>
+                                        <div class="flex flex-wrap gap-1">
+                                            <template x-for="c in b.chips" :key="c.key">
+                                                <span class="group relative inline-flex h-6 max-w-[10rem] items-center rounded-field text-xs"
+                                                    :class="[c.kind === 'wish' ? 'border border-dashed border-base-content/40' : 'bg-base-200',
+                                                        c.overlapIds.length ? 'border border-warning' : '',
+                                                        selectedKey === c.key ? 'ring-2 ring-primary' : '']">
+                                                    <button type="button" draggable="true" class="inline-flex h-full min-w-0 items-center gap-1 rounded-field px-1.5"
+                                                        :aria-pressed="selectedKey === c.key ? 'true' : 'false'"
+                                                        :title="c.name + (c.overlapIds.length ? ' – ' + $t('coord.overlap_bar', { shift: labShiftLabel(c.overlapIds[0]) }) : '')"
+                                                        @click="selectPerson(c.key)" @keydown="chipKey($event, c, b.cs.id)"
+                                                        @dragstart="startDrag($event, { key: c.key, name: c.name, from: b.cs.id })" @dragend="endDrag()">
+                                                        <span class="shrink-0" x-show="model.experience.field">{{ template "coord-level-dots" "c.level" }}</span>
+                                                        <span class="truncate" x-text="c.name"></span>
+                                                        <span class="sr-only" x-show="c.kind === 'wish'" x-text="$t('coord.wish')"></span>
+                                                        <span class="shrink-0" x-show="c.overlapIds.length" aria-hidden="true">⚠</span>
+                                                        <span class="sr-only" x-show="c.overlapIds.length" x-text="$t('coord.overlap_bar', { shift: c.overlapIds.length ? labShiftLabel(c.overlapIds[0]) : '' })"></span>
+                                                        <span class="shrink-0" x-show="c.changed" aria-hidden="true">•</span>
+                                                        <span class="sr-only" x-show="c.changed" x-text="$t('coord.lab_changed')"></span>
+                                                    </button>
+                                                    <span class="absolute inset-y-0 right-0 hidden items-center rounded-field bg-base-100 group-hover:flex group-focus-within:flex">
+                                                        <button type="button" class="btn btn-ghost btn-xs h-full min-h-0 px-1" x-show="c.kind === 'wish'"
+                                                            :aria-label="$t('coord.lab_chip_assign', { name: c.name, shift: shiftLabel(b.cs) })"
+                                                            :title="$t('coord.lab_chip_assign', { name: c.name, shift: shiftLabel(b.cs) })"
+                                                            @click="assign(c.key, c.name, b.cs.id)">
+                                                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                                                        </button>
+                                                        <button type="button" class="btn btn-ghost btn-xs h-full min-h-0 px-1"
+                                                            :aria-label="$t('coord.lab_chip_remove', { name: c.name, shift: shiftLabel(b.cs) })"
+                                                            :title="$t('coord.lab_chip_remove', { name: c.name, shift: shiftLabel(b.cs) })"
+                                                            @click="remove(c, b.cs.id)">
+                                                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                    </span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </section>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{{ end }}

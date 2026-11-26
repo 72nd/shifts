@@ -147,7 +147,7 @@ function sortKeys(model, cs, person, interested, adjacent) {
     needsExperience ? (experienced ? 0 : 1) : 0,
     0, // concurrent bottleneck (impacts), filled in by the caller
     0, // soft violations, filled in by the caller
-    cs.popular ? person.popularReceived : 0,
+    cs.popular ? person.popularScore : 0,
     cs.popular ? -(person.wishesDeclined + person.assignedUnwished) : 0,
     interested ? 0 : person.assignedUnwished,
     relativeLoad(person),
@@ -156,7 +156,7 @@ function sortKeys(model, cs, person, interested, adjacent) {
   ];
 }
 
-function compareKeys(a, b) {
+export function compareKeys(a, b) {
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) return a[i] - b[i];
   }
@@ -166,7 +166,7 @@ function compareKeys(a, b) {
 /**
  * Evaluates one person for one shift.
  * @param {Array<{shiftId:number, pool:Set<string>}>} [bottle]  result of bottlenecks(); without it no impacts
- * @returns {null | {unavailable: Unavailable} | {candidate: Candidate & {keys:number[], lot:number}}}
+ * @returns {null | {unavailable: Unavailable} | {candidate: Candidate & {keys:number[]}}}
  *   null = the person is not a candidate for this source (no Einsatz and no interest, or already assigned)
  */
 export function evaluate(model, cs, person, source, bottle = []) {
@@ -194,7 +194,7 @@ export function evaluate(model, cs, person, source, bottle = []) {
 
   const reasons = [];
   if (needsExperience && person.level >= cs.expNeed.level) reasons.push({ id: 'experience', params: {} });
-  if (cs.popular) reasons.push({ id: 'popular_received', params: { count: person.popularReceived } });
+  if (cs.popular) reasons.push({ id: 'popular_received', params: { count: person.popularReceived, very: person.veryPopularReceived } });
   if (cs.popular && person.wishesDeclined > 0) reasons.push({ id: 'wishes_declined', params: { count: person.wishesDeclined } });
   if (person.assignedUnwished > 0 && (cs.popular || !interested)) {
     reasons.push({ id: 'assigned_unwished', params: { count: person.assignedUnwished } });
@@ -224,23 +224,47 @@ export function evaluate(model, cs, person, source, bottle = []) {
       level: person.level,
       alsoInterested,
       keys,
-      lot: model.ctx.lottery.get(person.key) ?? 0,
     },
   };
+}
+
+/**
+ * The group of equal sort keys that spans the boundary of the free places, or null.
+ * Only candidates that were not declined count. Needs the candidates' `keys` (rankCandidates keeps them).
+ * @param {Array<{key:string, declined:boolean, keys:number[]}>} ranked  in ranking order
+ * @param {number} places  free places
+ * @returns {null | {keys: string[], places: number, before: number}}
+ *   keys = person keys of the group, before = candidates clearly ahead of it, places = places left for the group
+ */
+export function cutTie(ranked, places) {
+  const list = ranked.filter(c => !c.declined);
+  if (!(places > 0) || places >= list.length) return null;
+  const edge = list[places - 1].keys;
+  if (compareKeys(edge, list[places].keys) !== 0) return null;
+  let from = places - 1;
+  while (from > 0 && compareKeys(list[from - 1].keys, edge) === 0) from--;
+  let to = places;
+  while (to + 1 < list.length && compareKeys(list[to + 1].keys, edge) === 0) to++;
+  return { keys: list.slice(from, to + 1).map(c => c.key), places: places - from, before: from };
 }
 
 /**
  * Candidates for a shift, ranked, with reasons and warnings, plus the people who are not available.
  * Candidates are people without an Einsatz in the shift. With source 'interested' only people with
  * an open wish; with 'all' everybody (people who were declined in this shift too, flagged as such).
+ * Equal sort keys are ordered by `draw` (random number per person key, missing = 0), then by name.
+ * Without a draw nothing is random.
  * @param {import('./model.js').CoordModel} model
  * @param {number} shiftId
  * @param {'interested'|'all'} source
- * @returns {{ranked: Candidate[], unavailable: Unavailable[]}}
+ * @param {Map<string, number>|null} [draw]
+ * @returns {{ranked: Candidate[], unavailable: Unavailable[], tie: null | {keys:string[], places:number, before:number, drawn:boolean}}}
+ *   tie = tie across the free places (cutTie); drawn = the draw holds exactly the group, so it is decided
+ *   and the places won by lot carry the reason 'lottery'
  */
-export function rankCandidates(model, shiftId, source) {
+export function rankCandidates(model, shiftId, source, draw = null) {
   const cs = model.shifts.get(shiftId);
-  if (!cs) return { ranked: [], unavailable: [] };
+  if (!cs) return { ranked: [], unavailable: [], tie: null };
 
   const ranked = [];
   const unavailable = [];
@@ -252,17 +276,21 @@ export function rankCandidates(model, shiftId, source) {
     else ranked.push(ev.candidate);
   }
 
-  ranked.sort((a, b) => compareKeys(a.keys, b.keys) || a.lot - b.lot || a.name.localeCompare(b.name));
-  // The lottery only shows as a reason where it decided between neighbours.
-  ranked.forEach((c, i) => {
-    const tied = (ranked[i - 1] && !compareKeys(ranked[i - 1].keys, c.keys)) || (ranked[i + 1] && !compareKeys(ranked[i + 1].keys, c.keys));
-    if (tied) c.reasons.push({ id: 'lottery', params: {} });
-  });
-  for (const c of ranked) {
-    delete c.keys;
-    delete c.lot;
-  }
-
+  const lot = c => draw?.get(c.key) ?? 0;
+  ranked.sort((a, b) => compareKeys(a.keys, b.keys) || lot(a) - lot(b) || a.name.localeCompare(b.name));
   unavailable.sort((a, b) => a.name.localeCompare(b.name));
-  return { ranked, unavailable };
+
+  const found = cs.unlimited ? null : cutTie(ranked, cs.open);
+  let tie = null;
+  if (found) {
+    const drawn = !!draw && draw.size === found.keys.length && found.keys.every(k => draw.has(k));
+    tie = { ...found, drawn };
+    if (drawn) {
+      // The first `places` of the group in draw order won the lot
+      const group = new Set(found.keys);
+      ranked.filter(c => group.has(c.key) && !c.declined).slice(0, found.places)
+        .forEach(c => c.reasons.push({ id: 'lottery', params: {} }));
+    }
+  }
+  return { ranked, unavailable, tie };
 }

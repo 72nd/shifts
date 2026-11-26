@@ -4,7 +4,7 @@
  * The run itself is the pure autoDistribute() of the coordination core. These components only hold
  * the options and shape the result for display; the page applies it (openPreview, applyPreview).
  */
-import { autoDistribute } from './compute.js';
+import { autoDistribute, newLottery } from './compute.js';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('coordAuto', () => ({
@@ -23,7 +23,9 @@ document.addEventListener('alpine:init', () => {
         /** Runs the distribution over the given shifts; the caller shows the result. */
         run(model, shiftList) {
             const options = { source: this.source, declineRest: this.declineRest, lock: this.lock };
-            return { result: autoDistribute(model, shiftList.map(cs => cs.id), options), options };
+            // A fresh lot for every run: ties are decided by it
+            const lottery = newLottery(model.persons.keys());
+            return { result: autoDistribute(model, shiftList.map(cs => cs.id), { ...options, lottery }), options };
         },
     }));
 

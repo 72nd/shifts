@@ -8,7 +8,8 @@
     </div>
 
     <!-- Time views (from lg): a band above the workbench, filled by coord-timeline.html / coord-person-timeline.html -->
-    <div x-show="!preview" class="space-y-3 min-w-0">
+    <div x-show="!preview" class="min-w-0"
+        :class="activeView === 'list' ? 'space-y-3' : 'space-y-3 lg:space-y-0 lg:flex lg:flex-col lg:gap-3 lg:h-[calc(100dvh-14rem)] lg:min-h-[32rem]'">
         {{ template "coord-timeline" . }}
         {{ template "coord-person-timeline" . }}
 
@@ -17,8 +18,8 @@
         :class="activeView === 'list'
             ? 'md:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)_22rem] 2xl:grid-cols-[22rem_minmax(0,1fr)_28rem] md:grid-rows-[minmax(0,1fr)] md:h-[calc(100dvh-14rem)] md:min-h-[32rem]'
             : (activeView === 'timeline'
-                ? 'xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_28rem] lg:grid-rows-[minmax(0,1fr)] lg:h-[calc(100dvh-14rem-45vh)] lg:min-h-[20rem]'
-                : 'lg:grid-rows-[minmax(0,1fr)] lg:h-[calc(100dvh-14rem-45vh)] lg:min-h-[20rem]')">
+                ? 'xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_28rem] lg:grid-rows-[minmax(0,1fr)] lg:flex-1 lg:min-h-0'
+                : 'lg:grid-rows-[minmax(0,1fr)] lg:flex-1 lg:min-h-0')">
 
         <!-- Shifts: grouped by day -->
         <aside x-show="activeView === 'list'" class="relative min-w-0 min-h-0 space-y-3 md:overflow-y-auto">
@@ -57,7 +58,7 @@
                                         </span>
                                         <span class="flex items-center gap-1 shrink-0">
                                             <span x-show="isHighlighted(cs, highlightKey)" class="inline-block h-2 w-2 rounded-full bg-primary" role="img" :aria-label="$t('coord.person_involved')"></span>
-                                            <span x-show="cs.popular">{{ template "coord-icon-star" }}</span>
+                                            <span class="inline-flex" x-show="cs.popular">{{ template "coord-icon-star" }}<span x-show="cs.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
                                             <span x-show="cs.expNeed.count > 0 && !cs.expNeed.met">{{ template "coord-icon-warning" }}</span>
                                             <span x-show="cs.locked" class="text-info">{{ template "lock-icon" }}</span>
                                             <span class="badge badge-sm" :class="{ 'badge-warning': cs.overbooked }" x-text="occupancyBadge(cs, occupancy(cs))"></span>
@@ -87,7 +88,7 @@
                                 <span x-text="$t('coord.exp_progress', { have: selectedShift.expNeed.have, count: selectedShift.expNeed.count, level: levelLabel(selectedShift) })"></span>
                             </span>
                             <span x-show="model.flags.anyFactor" x-text="$t('coord.load_factor') + ' ' + number(selectedShift.factor)"></span>
-                            <span class="inline-flex items-center gap-1" x-show="selectedShift.popular">{{ template "coord-icon-star" }}<span x-text="$t('coord.popular')"></span></span>
+                            <span class="inline-flex items-center gap-1" x-show="selectedShift.popular">{{ template "coord-icon-star" }}<span x-show="selectedShift.tier === 2">{{ template "coord-icon-star-very" }}</span><span x-text="$t(selectedShift.tier === 2 ? 'coord.very_popular' : 'coord.popular')"></span></span>
                             <span class="inline-flex items-center gap-1" x-show="selectedShift.locked"><span class="text-info">{{ template "lock-icon" }}</span><span x-text="$t('coord.locked')"></span></span>
                         </div>
 
@@ -98,14 +99,15 @@
                                 <button type="button" class="btn btn-sm join-item min-h-11 lg:min-h-8" :class="{ 'btn-active': source === 'all' }"
                                     :aria-pressed="source === 'all' ? 'true' : 'false'" @click="setSource('all')" x-text="$t('coord.source_all')"></button>
                             </div>
-                            <button type="button" class="btn btn-ghost btn-sm min-h-11 lg:min-h-8" @click="reroll()" x-text="$t('coord.reroll')"></button>
                             <span class="hidden lg:block h-5 w-px bg-base-300" aria-hidden="true"></span>
                             <button type="button" class="btn btn-primary btn-sm min-h-11 lg:min-h-8"
-                                :disabled="busy || suggestionCount(selectedShift, candidates.ranked) === 0"
-                                @click="apply(suggestionOps(selectedShift, candidates.ranked), { pending: 'suggestion' })">
+                                :disabled="busy || suggestionCount(selectedShift, candidates.ranked, candidates.tie) === 0"
+                                @click="apply(suggestionOps(selectedShift, candidates.ranked, candidates.tie), { pending: 'suggestion' })">
                                 <span class="loading loading-spinner loading-sm" x-show="pendingKey === 'suggestion'"></span>
-                                <span x-text="$t('coord.take_suggestion_count', { count: suggestionCount(selectedShift, candidates.ranked) })"></span>
+                                <span x-text="$t('coord.take_suggestion_count', { count: suggestionCount(selectedShift, candidates.ranked, candidates.tie) })"></span>
                             </button>
+                            <span class="text-sm text-base-content/70" x-show="candidates.tie && !candidates.tie.drawn"
+                                x-text="$t('coord.tie_open_hint', { places: candidates.tie?.places })"></span>
                             <button type="button" class="btn btn-sm min-h-11 lg:min-h-8" :disabled="busy || !selectedShift.wishes.length"
                                 @click="apply(declineRestOps(selectedShift, model.persons), { lock: lockAfter ? [selectedShift.id] : [], pending: 'rest' })"
                                 x-text="$t('coord.decline_rest')"></button>
@@ -128,7 +130,7 @@
                                     <span class="tabular-nums" x-text="time(o.start)"></span>
                                     <span class="truncate" x-text="typeTitle(o.type)"></span>
                                     <span class="badge badge-xs" :class="{ 'badge-warning': o.overbooked }" x-text="occupancyBadge(o, occupancy(o))"></span>
-                                    <span x-show="o.popular">{{ template "coord-icon-star" }}</span>
+                                    <span class="inline-flex" x-show="o.popular">{{ template "coord-icon-star" }}<span x-show="o.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
                                     <span class="inline-flex items-center gap-1 text-warning" x-show="o.expNeed.count > 0 && !o.expNeed.met">
                                         <span aria-hidden="true">⚠</span>
                                         <span x-text="$t('coord.exp_short', { have: o.expNeed.have, count: o.expNeed.count })"></span>
@@ -143,24 +145,28 @@
 
                 <!-- Assigned -->
                 <div x-show="selectedShift.assigned.length" class="space-y-1">
-                    <h3 class="font-medium" x-text="$t('coord.section_assigned')"></h3>
+                    <h3 class="text-sm font-medium pt-2" x-text="$t('coord.section_assigned')"></h3>
                     <ul class="divide-y divide-base-300">
                         <template x-for="key in selectedShift.assigned" :key="key">
-                            <li class="min-h-11 py-1 flex flex-wrap items-center gap-x-3 gap-y-1" :class="{ 'bg-base-200': highlightKey === key }">
-                                <span class="inline-flex items-center gap-1 min-w-0 flex-1">
-                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                                    <span class="sr-only" x-text="$t('shift_plans.view.status_assigned')"></span>
-                                    <span class="truncate" :title="model.persons.get(key).name" x-text="model.persons.get(key).name"></span>
-                                    <span class="badge badge-ghost badge-sm" x-show="part(selectedShift.id, key)?.addedByAdmin" x-text="$t('coord.added_by_coordination')"></span>
+                            <li class="min-h-11 lg:min-h-8 py-1 lg:py-0 flex flex-wrap lg:flex-nowrap items-center gap-x-2 gap-y-1" :class="{ 'bg-base-200': highlightKey === key }">
+                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                <span class="sr-only" x-text="$t('shift_plans.view.status_assigned')"></span>
+                                <button type="button" class="font-medium min-w-24 min-h-11 lg:min-h-8 flex-1 lg:flex-none lg:max-w-56 truncate text-left" :title="model.persons.get(key).name"
+                                    :aria-pressed="highlightKey === key ? 'true' : 'false'"
+                                    @click="toggleHighlight(key)" x-text="model.persons.get(key).name"></button>
+                                {{ template "coord-jump" "model.persons.get(key)" }}
+                                <span class="contents" x-show="model.experience.field && model.persons.get(key).level >= 0">{{ template "coord-level-badge" "model.persons.get(key).level" }}</span>
+                                <span class="badge badge-ghost badge-xs shrink-0" x-show="part(selectedShift.id, key)?.addedByAdmin" x-text="$t('coord.added_by_coordination')"></span>
+                                <span class="ml-auto flex gap-1 shrink-0">
+                                    <button type="button" class="btn btn-xs min-h-11 lg:min-h-7" :class="{ 'loading': pendingKey === key }" :disabled="busy"
+                                        x-show="part(selectedShift.id, key)?.status === 'assigned'"
+                                        @click="apply(resetOps(selectedShift, model.persons.get(key).name, part(selectedShift.id, key)), { pending: key })"
+                                        x-text="$t('coord.reset')"></button>
+                                    <button type="button" class="btn btn-xs min-h-11 lg:min-h-7" :disabled="busy"
+                                        x-show="part(selectedShift.id, key)?.status !== 'assigned'"
+                                        @click="apply(declineOps(selectedShift, model.persons.get(key).name), { pending: key })"
+                                        x-text="$t('coord.decline')"></button>
                                 </span>
-                                <button type="button" class="btn btn-sm min-h-11" :class="{ 'loading': pendingKey === key }" :disabled="busy"
-                                    x-show="part(selectedShift.id, key)?.status === 'assigned'"
-                                    @click="apply(resetOps(selectedShift, model.persons.get(key).name, part(selectedShift.id, key)), { pending: key })"
-                                    x-text="$t('coord.reset')"></button>
-                                <button type="button" class="btn btn-sm min-h-11" :disabled="busy"
-                                    x-show="part(selectedShift.id, key)?.status !== 'assigned'"
-                                    @click="apply(declineOps(selectedShift, model.persons.get(key).name), { pending: key })"
-                                    x-text="$t('coord.decline')"></button>
                             </li>
                         </template>
                     </ul>
@@ -168,62 +174,68 @@
 
                 <!-- Candidates: suggestion (the first open places), then the rest -->
                 <div x-show="!selectedShift.unlimited && selectedShift.open > 0" class="space-y-1">
-                    <h3 class="font-medium" x-text="$t('coord.section_suggestion')"></h3>
+                    <h3 class="text-sm font-medium pt-2" x-text="$t('coord.section_suggestion')"></h3>
                     <p class="text-base-content/70" x-show="!candidates.ranked.length" x-text="$t('coord.no_candidates')"></p>
                     <button type="button" class="btn btn-sm min-h-11" x-show="!candidates.ranked.length && source === 'interested'"
                         @click="setSource('all')" x-text="$t('coord.show_everyone')"></button>
                     <ol class="divide-y divide-base-300">
-                        <template x-for="r in candidateRows(selectedShift, candidates.ranked)" :key="r.id">
+                        <template x-for="r in candidateRows(selectedShift, candidates.ranked, candidates.tie)" :key="r.id">
                             <li :class="{ 'bg-base-200': r.kind === 'row' && highlightKey === r.id }">
                                 <template x-if="r.kind === 'head'">
-                                    <h3 class="font-medium pt-3 pb-1" x-text="$t('coord.section_more', { count: r.count })"></h3>
+                                    <h3 class="text-sm font-medium pt-2 pb-1" x-text="$t('coord.section_more', { count: r.count })"></h3>
+                                </template>
+                                <template x-if="r.kind === 'tie'">
+                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 pb-1">
+                                        <h3 class="text-sm font-medium min-w-0 flex-1"
+                                            x-text="$t(r.places === 1 ? 'coord.tie_head_one' : 'coord.tie_head', { count: r.count, places: r.places })"></h3>
+                                        <button type="button" class="btn btn-sm min-h-11 lg:min-h-8" :class="{ 'btn-ghost': r.drawn }" :disabled="busy"
+                                            @click="drawTie(selectedShift.id, candidates.tie.keys)"
+                                            x-text="$t(r.drawn ? 'coord.tie_redraw' : 'coord.tie_draw')"></button>
+                                    </div>
                                 </template>
                                 <template x-if="r.kind === 'all'">
                                     <button type="button" class="btn btn-sm min-h-11 my-2" @click="showAllMore = true"
                                         x-text="$t('coord.show_all', { count: r.count })"></button>
                                 </template>
                                 <template x-if="r.kind === 'row'">
-                                    <div class="py-1">
-                                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-h-11">
-                                            <span class="w-6 text-right text-base-content/70 tabular-nums" x-text="r.rank"></span>
-                                            <span class="font-medium min-w-0 flex-1 truncate" :title="r.c.name" x-text="r.c.name"></span>
-                                            <span class="badge badge-ghost badge-sm" x-show="model.experience.field && r.c.level >= 0"
-                                                x-text="r.c.level >= 0 ? t(model.experience.options[r.c.level]) : ''"></span>
-                                            <span class="badge badge-ghost badge-sm" x-show="source === 'all' && r.c.interested" x-text="$t('coord.wish')"></span>
-                                            <span class="text-sm text-base-content/70 tabular-nums" x-text="hoursText(model.persons.get(r.c.key), n => number(n))"></span>
-                                            <span class="inline-flex text-warning" x-show="!r.suggested && (r.c.warnings.length || r.c.impacts.length)"
-                                                :title="candidateNotes(r.c)">
-                                                <span aria-hidden="true">⚠</span>
-                                                <span class="sr-only" x-text="candidateNotes(r.c)"></span>
-                                            </span>
-                                            <span class="flex gap-2">
-                                                <button type="button" class="btn btn-sm min-h-11" :class="{ 'loading': pendingKey === r.c.key }" :disabled="busy"
-                                                    @click="apply(assignOps(selectedShift, r.c), { pending: r.c.key })" x-text="$t('coord.assign')"></button>
-                                                <button type="button" class="btn btn-sm min-h-11" :disabled="busy" x-show="r.c.interested"
-                                                    @click="apply(declineOps(selectedShift, r.c.name), { pending: r.c.key })" x-text="$t('coord.decline')"></button>
-                                            </span>
-                                        </div>
-                                        <!-- Second line: only for the suggestion -->
-                                        <div class="flex flex-wrap gap-1 pl-9 pb-1" x-show="r.suggested && (shownReasons(r.c, true).length || r.c.warnings.length || r.c.impacts.length)">
-                                            <template x-for="x in shownReasons(r.c, true)" :key="x.id">
-                                                <span class="badge badge-ghost" x-text="reasonText('reason', x)"></span>
-                                            </template>
-                                            <template x-for="w in r.c.warnings" :key="w.id">
-                                                <span class="badge badge-warning gap-1">
-                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                    <span x-text="reasonText('warn', w)"></span>
-                                                </span>
-                                            </template>
-                                            <template x-for="i in r.c.impacts" :key="i.params.shiftId">
-                                                <span class="badge badge-warning gap-1" :title="impactText(i, true)"
-                                                    @mouseenter="hoverShiftId = i.params.shiftId" @mouseleave="hoverShiftId = null">
-                                                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                                    <span x-text="impactText(i)"></span>
-                                                </span>
-                                            </template>
-                                        </div>
-                                        <p class="pl-9 text-xs text-base-content/70" x-show="r.suggested && r.c.alsoInterested.length"
-                                            x-text="$t('coord.also_interested', { shifts: r.c.alsoInterested.map(id => shiftLabel(model.shifts.get(id))).join(', ') })"></p>
+                                    <div class="flex flex-wrap lg:flex-nowrap items-center gap-x-2 gap-y-1 min-h-11 lg:min-h-8 py-1 lg:py-0">
+                                        <span class="w-5 shrink-0 text-right text-xs text-base-content/70 tabular-nums" x-text="r.tied ? '' : r.rank"></span>
+                                        <button type="button" class="font-medium min-w-24 min-h-11 lg:min-h-8 flex-1 lg:flex-none lg:max-w-56 truncate text-left" :title="r.c.name"
+                                            :aria-pressed="highlightKey === r.c.key ? 'true' : 'false'"
+                                            @click="toggleHighlight(r.c.key)" x-text="r.c.name"></button>
+                                        {{ template "coord-jump" "r.c" }}
+                                        <span class="contents" x-show="model.experience.field && r.c.level >= 0">{{ template "coord-level-badge" "r.c.level" }}</span>
+                                        <span class="badge badge-ghost badge-xs shrink-0" x-show="source === 'all' && r.c.interested" x-text="$t('coord.wish')"></span>
+                                        <template x-for="x in topReasons(r.c, r.suggested).shown" :key="x.id">
+                                            <span class="badge badge-ghost badge-xs shrink-0 whitespace-nowrap" x-text="reasonText('reason', x)"></span>
+                                        </template>
+                                        <span class="badge badge-ghost badge-xs shrink-0" x-show="topReasons(r.c, r.suggested).rest.length"
+                                            :title="topReasons(r.c, r.suggested).rest.map(x => reasonText('reason', x)).join(', ')">
+                                            <span aria-hidden="true" x-text="$t('coord.reasons_more', { count: topReasons(r.c, r.suggested).rest.length })"></span>
+                                            <span class="sr-only" x-text="topReasons(r.c, r.suggested).rest.map(x => reasonText('reason', x)).join(', ')"></span>
+                                        </span>
+                                        <span class="inline-flex items-center gap-0.5 text-xs text-base-content/70 shrink-0" tabindex="0" x-show="r.c.alsoInterested.length"
+                                            :title="$t('coord.also_interested_short', { shifts: r.c.alsoInterested.map(id => shiftLabel(model.shifts.get(id))).join(', ') })"
+                                            @mouseenter="hoverShiftId = r.c.alsoInterested[0]" @mouseleave="hoverShiftId = null"
+                                            @focus="hoverShiftId = r.c.alsoInterested[0]" @blur="hoverShiftId = null">
+                                            <span aria-hidden="true">⇄</span><span aria-hidden="true" x-text="r.c.alsoInterested.length"></span>
+                                            <span class="sr-only" x-text="$t('coord.also_interested_short', { shifts: r.c.alsoInterested.map(id => shiftLabel(model.shifts.get(id))).join(', ') })"></span>
+                                        </span>
+                                        <span class="ml-auto shrink-0 text-xs text-base-content/70 tabular-nums whitespace-nowrap" x-text="hoursText(model.persons.get(r.c.key), n => number(n))"></span>
+                                        <span class="inline-flex items-center gap-0.5 text-warning shrink-0" tabindex="0" x-show="r.c.warnings.length || r.c.impacts.length"
+                                            :title="candidateNotes(r.c)"
+                                            @mouseenter="hoverShiftId = r.c.impacts[0]?.params.shiftId ?? null" @mouseleave="hoverShiftId = null"
+                                            @focus="hoverShiftId = r.c.impacts[0]?.params.shiftId ?? null" @blur="hoverShiftId = null">
+                                            <span aria-hidden="true">⚠</span>
+                                            <span aria-hidden="true" class="text-xs" x-show="r.c.warnings.length + r.c.impacts.length > 1" x-text="r.c.warnings.length + r.c.impacts.length"></span>
+                                            <span class="sr-only" x-text="candidateNotes(r.c)"></span>
+                                        </span>
+                                        <span class="flex gap-1 shrink-0">
+                                            <button type="button" class="btn btn-xs min-h-11 lg:min-h-7" :class="{ 'loading': pendingKey === r.c.key }" :disabled="busy"
+                                                @click="apply(assignOps(selectedShift, r.c), { pending: r.c.key })" x-text="$t('coord.assign')"></button>
+                                            <button type="button" class="btn btn-xs min-h-11 lg:min-h-7" :disabled="busy" x-show="r.c.interested"
+                                                @click="apply(declineOps(selectedShift, r.c.name), { pending: r.c.key })" x-text="$t('coord.decline')"></button>
+                                        </span>
                                     </div>
                                 </template>
                             </li>

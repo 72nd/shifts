@@ -169,6 +169,11 @@ func (s *Server) setupRoutes() {
 
 	// Coordination
 	api.HandleFunc("/plans/{token}/coordination/apply", s.middleware.adminMiddleware(s.handleApplyCoordination)).Methods("POST")
+	api.HandleFunc("/plans/{token}/coordination/drafts", s.middleware.adminMiddleware(s.handleListDrafts)).Methods("GET")
+	api.HandleFunc("/plans/{token}/coordination/drafts", s.middleware.adminMiddleware(s.handleCreateDraft)).Methods("POST")
+	api.HandleFunc("/plans/{token}/coordination/drafts/{id}", s.middleware.adminMiddleware(s.handleGetDraft)).Methods("GET")
+	api.HandleFunc("/plans/{token}/coordination/drafts/{id}", s.middleware.adminMiddleware(s.handleUpdateDraft)).Methods("PUT")
+	api.HandleFunc("/plans/{token}/coordination/drafts/{id}", s.middleware.adminMiddleware(s.handleDeleteDraft)).Methods("DELETE")
 
 	// Swagger documentation - also needs CORS for cross-origin requests
 	swaggerRouter := s.router.PathPrefix("/swagger/").Subrouter()

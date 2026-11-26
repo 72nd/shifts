@@ -21,7 +21,7 @@ type ShiftCreateRequest struct {
 	CommentEN string `json:"comment_en" example:"Please arrive on time"`
 	// Overrides of the shift type's coordination settings (null/omitted = as the type)
 	LoadFactor  *float64 `json:"load_factor,omitempty" example:"1.5"`
-	Popularity  *string  `json:"popularity,omitempty" example:"popular" enums:"auto,popular,normal"`
+	Popularity  *string  `json:"popularity,omitempty" example:"popular" enums:"auto,popular,very_popular,normal"`
 	ExpMinCount *int     `json:"exp_min_count,omitempty" example:"2"`
 	ExpMinLevel *string  `json:"exp_min_level,omitempty" example:"a1b2c3d4"`
 } // @name ShiftCreateRequest
@@ -43,7 +43,7 @@ type ShiftUpdateRequest struct {
 	CommentEN string `json:"comment_en" example:"Please arrive on time"`
 	// Overrides of the shift type's coordination settings (null/omitted = as the type)
 	LoadFactor  *float64 `json:"load_factor,omitempty" example:"1.5"`
-	Popularity  *string  `json:"popularity,omitempty" example:"popular" enums:"auto,popular,normal"`
+	Popularity  *string  `json:"popularity,omitempty" example:"popular" enums:"auto,popular,very_popular,normal"`
 	ExpMinCount *int     `json:"exp_min_count,omitempty" example:"2"`
 	ExpMinLevel *string  `json:"exp_min_level,omitempty" example:"a1b2c3d4"`
 } // @name ShiftUpdateRequest
@@ -121,7 +121,7 @@ type ShiftResponse struct {
 	IsLocked bool `json:"is_locked" example:"false"`
 	// Overrides of the shift type's coordination settings (null/omitted = as the type)
 	LoadFactor  *float64 `json:"load_factor,omitempty" example:"1.5"`
-	Popularity  *string  `json:"popularity,omitempty" example:"popular" enums:"auto,popular,normal"`
+	Popularity  *string  `json:"popularity,omitempty" example:"popular" enums:"auto,popular,very_popular,normal"`
 	ExpMinCount *int     `json:"exp_min_count,omitempty" example:"2"`
 	ExpMinLevel *string  `json:"exp_min_level,omitempty" example:"a1b2c3d4"`
 	// List of participants (only present when requested)

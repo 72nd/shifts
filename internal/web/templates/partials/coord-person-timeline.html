@@ -2,11 +2,15 @@
 {{/* People view (from lg): matrix person x time of one day, replaces shift list and person column. Needs coordDistribute scope.
      Rows are sorted like the person column (personSort); "+" assigns like "Assign" in the workbench. */}}
 <template x-if="activeView === 'people'">
-    <div>
+    <div class="shrink-0">
         <p class="text-base-content/70" x-show="!personTimeline.rows.length" x-text="$t('coord.people_empty')"></p>
+        <div x-show="searchEmpty" class="flex flex-wrap items-center gap-2 text-base-content/70">
+            <span x-text="$t('coord.person_search_none')"></span>
+            <button type="button" class="btn btn-ghost btn-sm min-h-8 underline" @click="clearSearch()" x-text="$t('coord.person_search_clear')"></button>
+        </div>
         <p class="text-base-content/70" x-show="personTimeline.rows.length && !personTimeline.hours.length" x-text="$t('coord.timeline_empty')"></p>
         <template x-for="pt in [personTimeline]" :key="currentTimelineDay">
-            <div x-show="pt.rows.length && pt.hours.length" class="max-h-[45vh] overflow-auto border border-base-300 rounded-box">
+            <div x-show="pt.rows.length && pt.hours.length && !searchEmpty" class="lg:max-h-[45vh] overflow-auto border border-base-300 rounded-box">
                 <div :style="{ minWidth: timelineWidth(pt.hours, 11) }">
                     <!-- Hour header -->
                     <div class="sticky top-0 z-30 flex bg-base-100 border-b border-base-300">
@@ -20,16 +24,15 @@
                         </div>
                     </div>
                     <template x-for="row in timelineRows(pt, !!model.experience.field, onlyFree)" :key="row.person.key">
-                        <div class="flex border-b border-base-300 last:border-b-0" data-row>
-                            <button type="button" class="sticky left-0 z-20 w-44 shrink-0 min-h-11 px-2 flex items-center gap-2 text-left text-sm hover:bg-base-200"
+                        <div class="flex border-b border-base-300 last:border-b-0" data-row :data-person="row.person.key">
+                            <button type="button" class="sticky left-0 z-20 w-44 shrink-0 min-h-7 px-2 flex items-center gap-2 text-left text-sm hover:bg-base-200"
                                 :class="highlightKey === row.person.key ? 'bg-base-200' : 'bg-base-100'"
                                 :aria-pressed="highlightKey === row.person.key ? 'true' : 'false'"
                                 :title="row.person.name" @click="toggleHighlight(row.person.key)">
                                 <span class="min-w-0 flex-1 truncate" x-text="row.person.name"></span>
-                                <span class="shrink-0 text-xs text-base-content/70" x-show="model.experience.field && row.person.level >= 0"
-                                    x-text="row.person.level >= 0 ? t(model.experience.options[row.person.level]) : ''"></span>
+                                <span class="shrink-0" x-show="model.experience.field && row.person.level >= 0">{{ template "coord-level-dots" "row.person.level" }}</span>
                             </button>
-                            <div class="relative h-11 min-w-0 flex-1">
+                            <div class="relative min-h-7 min-w-0 flex-1 flex flex-col justify-center">
                                 <!-- Selected shift as a column, hour grid lines on top -->
                                 <div class="absolute inset-y-0 bg-primary/10" x-show="pt.selection" aria-hidden="true"
                                     :style="pt.selection ? { left: pt.selection.left + '%', width: pt.selection.width + '%' } : {}"></div>
@@ -43,23 +46,29 @@
                                         <span class="sr-only" x-text="$t('coord.absent')"></span>
                                     </div>
                                 </template>
-                                <template x-for="b in row.bars" :key="b.kind + b.cs.id">
-                                    <button type="button" data-bar :data-left="b.left"
-                                        class="absolute top-0.5 bottom-0.5 min-w-0 overflow-hidden rounded-field px-1 flex items-center text-xs"
-                                        :class="[b.kind === 'wish' ? 'border border-dashed border-base-content/40 bg-base-100' : 'bg-base-300',
-                                            b.cs.id === selectedShiftId ? 'ring-2 ring-primary' : '']"
-                                        :style="{ left: b.left + '%', width: b.width + '%' }"
-                                        :title="shiftLabel(b.cs) + (b.kind === 'wish' ? ' (' + $t('coord.wish') + ')' : '')"
-                                        :aria-label="shiftLabel(b.cs) + (b.kind === 'wish' ? ', ' + $t('coord.wish') : '')"
-                                        :aria-current="b.cs.id === selectedShiftId ? 'true' : null"
-                                        @click="selectShift(b.cs.id)" @keydown="neighbourBar($event)">
-                                        <span class="truncate" x-text="typeTitle(b.cs.type)"></span>
-                                    </button>
+                                <template x-for="(lane, li) in row.lanes" :key="li">
+                                    <div class="relative h-6 shrink-0">
+                                        <template x-for="b in lane" :key="b.kind + b.cs.id">
+                                            <button type="button" data-bar :data-left="b.left"
+                                                class="absolute inset-y-px min-w-0 overflow-hidden rounded-field px-1 flex items-center gap-1 text-xs"
+                                                :class="[b.kind === 'wish' ? 'border border-dashed border-base-content/40 bg-base-100' : 'bg-base-300',
+                                                    b.conflict ? 'border border-warning' : '',
+                                                    b.cs.id === selectedShiftId ? 'ring-2 ring-primary' : '']"
+                                                :style="{ left: b.left + '%', width: b.width + '%' }"
+                                                :title="shiftLabel(b.cs) + (b.kind === 'wish' ? ' (' + $t('coord.wish') + ')' : '') + (b.conflict ? ' – ' + $t('coord.overlap_bar', { shift: shiftLabel(b.conflictWith) }) : '')"
+                                                :aria-label="shiftLabel(b.cs) + (b.kind === 'wish' ? ', ' + $t('coord.wish') : '') + (b.conflict ? ', ' + $t('coord.overlap_bar', { shift: shiftLabel(b.conflictWith) }) : '')"
+                                                :aria-current="b.cs.id === selectedShiftId ? 'true' : null"
+                                                @click="selectShift(b.cs.id)" @keydown="neighbourBar($event)">
+                                                <span class="shrink-0 text-warning" x-show="b.conflict" aria-hidden="true">⚠</span>
+                                                <span class="truncate" x-text="typeTitle(b.cs.type)"></span>
+                                            </button>
+                                        </template>
+                                    </div>
                                 </template>
                                 <!-- Free during the selected shift: assign -->
                                 <div class="absolute inset-y-0 flex items-center justify-center" x-show="pt.selection && row.freeDuring"
                                     :style="pt.selection ? { left: pt.selection.left + '%', width: pt.selection.width + '%' } : {}">
-                                    <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11 text-lg" :disabled="busy"
+                                    <button type="button" class="btn btn-ghost btn-xs h-6 min-h-6 w-6 p-0 text-lg" :disabled="busy"
                                         :aria-label="$t('coord.assign_person', { name: row.person.name, shift: shortLabel(selectedShift) })"
                                         :title="$t('coord.assign_person', { name: row.person.name, shift: shortLabel(selectedShift) })"
                                         @click="apply(assignOps(selectedShift, row.person), { pending: row.person.key })">

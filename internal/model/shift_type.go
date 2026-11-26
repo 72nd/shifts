@@ -23,8 +23,8 @@ type CreateShiftTypeRequest struct {
 	Password *string `json:"password,omitempty" example:"secret123"`
 	// Load factor of the shifts (0.1 to 5.0, default 1.0)
 	LoadFactor *float64 `json:"load_factor,omitempty" example:"1.0"`
-	// Popularity: auto, popular or normal
-	Popularity *string `json:"popularity,omitempty" example:"auto" enums:"auto,popular,normal"`
+	// Popularity: auto, popular, very_popular or normal
+	Popularity *string `json:"popularity,omitempty" example:"auto" enums:"auto,popular,very_popular,normal"`
 	// Number of people with at least exp_min_level needed per shift
 	ExpMinCount *int `json:"exp_min_count,omitempty" example:"0"`
 	// Experience level (option ID of the experience field) required for exp_min_count people. Empty string clears.
@@ -48,8 +48,8 @@ type ShiftTypeUpdateRequest struct {
 	LocationEN string `json:"location_en" example:"Main Kitchen"`
 	// Load factor of the shifts (0.1 to 5.0, default 1.0)
 	LoadFactor *float64 `json:"load_factor,omitempty" example:"1.0"`
-	// Popularity: auto, popular or normal
-	Popularity *string `json:"popularity,omitempty" example:"auto" enums:"auto,popular,normal"`
+	// Popularity: auto, popular, very_popular or normal
+	Popularity *string `json:"popularity,omitempty" example:"auto" enums:"auto,popular,very_popular,normal"`
 	// Number of people with at least exp_min_level needed per shift
 	ExpMinCount *int `json:"exp_min_count,omitempty" example:"0"`
 	// Experience level (option ID of the experience field) required for exp_min_count people. Empty string clears.
@@ -88,8 +88,8 @@ type ShiftTypeResponse struct {
 	LocationEN string `json:"location_en" example:"Main Kitchen"`
 	// Load factor of the shifts (0.1 to 5.0, default 1.0)
 	LoadFactor float64 `json:"load_factor" example:"1.0"`
-	// Popularity: auto, popular or normal
-	Popularity string `json:"popularity" example:"auto" enums:"auto,popular,normal"`
+	// Popularity: auto, popular, very_popular or normal
+	Popularity string `json:"popularity" example:"auto" enums:"auto,popular,very_popular,normal"`
 	// Number of people with at least exp_min_level needed per shift
 	ExpMinCount int `json:"exp_min_count" example:"0"`
 	// Experience level (option ID of the experience field)

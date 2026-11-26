@@ -750,3 +750,10 @@
     animation: none;
   }
 }
+
+/* Level select of the coordination person column: the select carries a tone (bg-primary, white text);
+   the options of its popup keep the normal theme colours. */
+.level-select option {
+    background-color: oklch(var(--b1));
+    color: oklch(var(--bc));
+}

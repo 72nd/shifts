@@ -1,0 +1,28 @@
+{{ define "coord-lab-apply-modal" }}
+{{/* Apply dialog of the lab. Needs coordLab scope; the dialog is x-ref="applyDlg". */}}
+<dialog x-ref="applyDlg" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-2" x-text="$t('coord.lab_apply_title')"></h3>
+        {{ template "error-display" "modalError" }}
+        <div class="space-y-2">
+            <p x-text="$t('coord.lab_apply_summary', { assigned: summary.assigned, declined: summary.declined, removed: summary.removed })"></p>
+            <div x-show="newOverlaps.length" class="text-warning space-y-1">
+                <p x-text="$t('coord.lab_apply_overlaps', { count: newOverlaps.length })"></p>
+                <ul class="list-disc pl-5">
+                    <template x-for="n in newOverlaps" :key="n"><li x-text="n"></li></template>
+                </ul>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+            <button type="button" class="btn btn-sm min-h-11" @click="closeApply()" x-text="$t('common.cancel')"></button>
+            <button type="button" class="btn btn-sm btn-primary min-h-11" :disabled="busy || labBusy" @click="confirmApply()">
+                <span class="loading loading-spinner loading-xs" x-show="pendingKey === 'lab'"></span>
+                <span x-text="$t('coord.lab_apply')"></span>
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button @click="pg.clearErrors()">close</button>
+    </form>
+</dialog>
+{{ end }}

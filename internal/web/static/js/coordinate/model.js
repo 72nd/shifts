@@ -2,14 +2,16 @@
  * Coordination model: pure functions without Alpine, DOM or fetch.
  *
  * buildModel turns the plan, its shift types (with shifts and participations of
- * every status), the stored person rows and the lottery numbers into a CoordModel.
+ * every status), the stored person rows into a CoordModel.
  * rank.js and autodistribute.js read it; the UI only reads the model and never
  * contains fairness or rule logic.
  *
  * Terms (see prj/coordination-plan.md, section 4.1):
  * - Einsatz: assigned, or signed up in a shift that is not popular or is locked.
- * - Open wish: signed up in a popular, unlocked shift (not decided yet).
- * - Declined: declined by the coordination (counts as a declined wish for fairness).
+ * - Open wish: signed up in a popular, unlocked shift (not decided yet), or a self-signed
+ *   entry of a person who has another non-declined entry at the same time (double wish).
+ * - Declined: declined by the coordination (counts as a declined wish for fairness, unless the
+ *   person got an Einsatz at the same time).
  *
  * @typedef {Object} CoordShift
  * @property {Object} shift     API shift
@@ -20,7 +22,8 @@
  * @property {number} minutes
  * @property {string} day       logical day key YYYY-MM-DD
  * @property {number} factor    load factor (shift override, else type, default 1)
- * @property {boolean} popular
+ * @property {number} tier         popularity: 0 = normal, 1 = popular, 2 = very popular
+ * @property {boolean} popular     tier > 0
  * @property {boolean} overbooked  required > 0 and occupancy > required
  * @property {boolean} locked
  * @property {boolean} unlimited   required === -1
@@ -33,6 +36,7 @@
  *                                 count 0 = no need; level = index of levelId (−1 = none)
  * @property {string[]} assigned   person keys with an Einsatz
  * @property {string[]} wishes     person keys with an open wish
+ * @property {string[]} conflictWishes  subset of wishes that are wishes only because of a simultaneous entry (double wish)
  * @property {string[]} declined   person keys with a declined participation
  *
  * @typedef {Object} CoordPerson
@@ -46,6 +50,8 @@
  * @property {number} hours            hours of all Einsätze
  * @property {number} load             hours × load factor
  * @property {number} popularReceived  Einsätze in popular shifts
+ * @property {number} veryPopularReceived  Einsätze in very popular shifts
+ * @property {number} popularScore     sum of the tiers of the popular Einsätze (popular 1, very popular 2)
  * @property {number} wishesOpen
  * @property {number} wishesDeclined
  * @property {number} assignedUnwished Einsätze added by the coordination
@@ -71,7 +77,7 @@ import {
   parseDateTime, addMinutes, dateKey, logicalDay,
 } from '../datetime.js';
 import {
-  personKey, boundaryMinutes, isPopular, isEinsatz, findShiftWarnings,
+  personKey, boundaryMinutes, popularTier, isEinsatz, findShiftWarnings,
 } from '../stats/compute.js';
 
 const MS_MINUTE = 60 * 1000;
@@ -81,15 +87,44 @@ function cleanName(name) {
   return String(name || '').trim().replace(/\s+/g, ' ');
 }
 
+/** True if the two shifts overlap in time. */
+function overlapsInTime(a, b) {
+  return a.start < b.end && b.start < a.end;
+}
+
+/**
+ * Participations that are wishes only because of a double wish: self-signed, signed up, in an
+ * unlocked shift, and the person has another non-declined entry in an overlapping shift.
+ * @returns {Set<string>} "shiftId|key"
+ */
+function findDoubleWishes(shiftList, parts) {
+  const byId = new Map(shiftList.map(e => [e.shift.id, e]));
+  const byPerson = new Map();
+  for (const p of parts) {
+    if (p.status === 'declined' || !byId.has(p.shiftId)) continue;
+    if (!byPerson.has(p.key)) byPerson.set(p.key, []);
+    byPerson.get(p.key).push(p);
+  }
+  const result = new Set();
+  for (const list of byPerson.values()) {
+    if (list.length < 2) continue;
+    for (const p of list) {
+      if (p.status !== 'signed_up' || p.addedByAdmin || byId.get(p.shiftId).shift.is_locked) continue;
+      const own = byId.get(p.shiftId);
+      if (list.some(o => o !== p && overlapsInTime(own, byId.get(o.shiftId)))) result.add(`${p.shiftId}|${p.key}`);
+    }
+  }
+  return result;
+}
+
 /**
  * Builds the model.
  * @param {Object} plan   GET /api/plans/{token} (with fields)
  * @param {Array} types   GET /api/plans/{token}/types as admin (participations of every status)
  * @param {Array} people  GET /api/plans/{token}/people (stored person rows)
- * @param {Map<string, number>|Object} lotteryByKey  random number per person key
  * @returns {CoordModel}
  */
-export function buildModel(plan, types, people, lotteryByKey) {
+export function buildModel(plan, types, people) {
   const boundary = boundaryMinutes(plan.day_boundary_time);
   const shifts = [];
   const parts = [];
@@ -116,16 +151,15 @@ export function buildModel(plan, types, people, lotteryByKey) {
     field,
     options: (field?.options || []).map((o, level) => ({ id: o.id, de: o.de, en: o.en, level })),
   };
-  const lottery = lotteryByKey instanceof Map ? lotteryByKey : new Map(Object.entries(lotteryByKey || {}));
   const rows = new Map((people || []).map(row => [personKey(row.name), row]));
 
-  const ctx = { plan, boundary, shifts, experience, rows, lottery };
+  const ctx = { plan, boundary, shifts, experience, rows };
   return buildFromParts(ctx, parts);
 }
 
 /** Builds a model from static context and the list of participations. */
 function buildFromParts(ctx, parts) {
-  const { plan, boundary, shifts: shiftList, experience, rows, lottery } = ctx;
+  const { plan, boundary, shifts: shiftList, experience, rows } = ctx;
   const restMin = plan.min_rest_minutes ?? null;
   const dayMin = plan.max_day_minutes ?? null;
   const partsByShift = new Map();
@@ -134,6 +168,8 @@ function buildFromParts(ctx, parts) {
     partsByShift.get(p.shiftId).push(p);
   }
 
+  const doubleWishes = findDoubleWishes(shiftList, parts);
+  const declinedParts = [];
   const persons = new Map();
   const spellings = new Map();
   const ensurePerson = (key) => {
@@ -156,6 +192,8 @@ function buildFromParts(ctx, parts) {
         hours: 0,
         load: 0,
         popularReceived: 0,
+        veryPopularReceived: 0,
+        popularScore: 0,
         wishesOpen: 0,
         wishesDeclined: 0,
         assignedUnwished: 0,
@@ -177,7 +215,8 @@ function buildFromParts(ctx, parts) {
     const list = partsByShift.get(shift.id) || [];
     // Interest = people who asked for the shift; entries made by the coordination are not interest.
     const interest = list.filter(p => !p.addedByAdmin).length;
-    const popular = isPopular(shift, type, interest);
+    const tier = popularTier(shift, type, interest);
+    const popular = tier > 0;
     const locked = !!shift.is_locked;
     const unlimited = shift.required === -1;
     const required = unlimited ? -1 : Math.max(0, shift.required || 0);
@@ -190,6 +229,7 @@ function buildFromParts(ctx, parts) {
       minutes: entry.minutes,
       day: dateKey(logicalDay(entry.start, boundary)),
       factor: shift.load_factor ?? type.load_factor ?? 1,
+      tier,
       popular,
       locked,
       unlimited,
@@ -201,6 +241,7 @@ function buildFromParts(ctx, parts) {
       expNeed: { count: 0, levelId: null, level: -1, have: 0, met: true },
       assigned: [],
       wishes: [],
+      conflictWishes: [],
       declined: [],
     };
     for (const p of list) {
@@ -210,20 +251,26 @@ function buildFromParts(ctx, parts) {
       names.set(p.name, (names.get(p.name) || 0) + 1);
       if (p.status === 'declined') {
         cs.declined.push(p.key);
-        person.wishesDeclined++;
+        declinedParts.push({ person, cs });
         continue;
       }
       cs.occupancy++;
-      if (isEinsatz(p.status, popular, locked)) {
+      const conflict = doubleWishes.has(`${p.shiftId}|${p.key}`);
+      if (isEinsatz(p.status, popular, locked) && !conflict) {
         cs.assigned.push(p.key);
         person.items.push(cs);
         person.hours += cs.minutes / 60;
         person.load += (cs.minutes / 60) * cs.factor;
         person.perDayMin.set(cs.day, (person.perDayMin.get(cs.day) || 0) + cs.minutes);
-        if (popular) person.popularReceived++;
+        if (popular) {
+          person.popularReceived++;
+          person.popularScore += tier;
+          if (tier === 2) person.veryPopularReceived++;
+        }
         if (p.addedByAdmin) person.assignedUnwished++;
       } else {
         cs.wishes.push(p.key);
+        if (conflict && isEinsatz(p.status, popular, locked)) cs.conflictWishes.push(p.key);
         person.wishesOpen++;
       }
     }
@@ -239,6 +286,11 @@ function buildFromParts(ctx, parts) {
       cs.expNeed = { count, levelId, level, have, met: have >= count };
     }
     shifts.set(cs.id, cs);
+  }
+
+  // A declined entry counts as a declined wish unless the person got an Einsatz at the same time.
+  for (const { person, cs } of declinedParts) {
+    if (!person.items.some(item => overlapsInTime(item, cs))) person.wishesDeclined++;
   }
 
   // Person names, required fields and warnings

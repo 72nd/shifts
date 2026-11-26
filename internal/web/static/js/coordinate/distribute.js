@@ -8,7 +8,14 @@
 
 const PERSON_SORTS = ['load', 'experience', 'under_target', 'declined', 'name'];
 const MORE_LIMIT = 10;        // rows of "More" before "Show all"
+const REASONS_SHOWN = 2;       // reason badges per row; the rest is "+n"
+const REASON_PRIORITY = ['experience', 'wishes_declined', 'popular_received', 'assigned_unwished', 'adjacent', 'lottery'];
 const CONCURRENT_LIMIT = 5;   // chips of "At the same time" before "+n" (only from 6 chips on)
+
+/** Search form of a name: no diacritics, lower case, single spaces. */
+function searchKey(text) {
+    return String(text || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+}
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('coordDistribute', () => ({
@@ -16,6 +23,7 @@ document.addEventListener('alpine:init', () => {
         highlightKey: null,
         lockAfter: false,
         onlyFree: false,       // people view: only persons free during the selected shift
+        personQuery: '',       // person search: filters the people view and the person column (not the candidates)
         peopleOpen: false,
         showAllMore: false,    // "More": all rows instead of the first MORE_LIMIT (per shift)
         concurrentOpen: false, // "At the same time": all chips instead of the first CONCURRENT_LIMIT
@@ -45,19 +53,23 @@ document.addEventListener('alpine:init', () => {
             return [{ shift_id: cs.id, name, status: part?.addedByAdmin ? 'remove' : 'signed_up' }];
         },
 
-        /** The first free places in ranking order (people who were declined here are skipped). */
-        suggestionList(cs, ranked) {
+        /**
+         * The first free places in ranking order (people who were declined here are skipped). With an open
+         * tie (tie across the places, not drawn yet) only the people clearly ahead of it.
+         */
+        suggestionList(cs, ranked, tie = null) {
             if (cs.unlimited) return [];
-            return ranked.filter(c => !c.declined).slice(0, Math.max(0, cs.open));
+            const places = tie && !tie.drawn ? tie.before : Math.max(0, cs.open);
+            return ranked.filter(c => !c.declined).slice(0, places);
         },
 
         /** What "take suggestion" does; the "Suggestion" section shows the same list (suggestionList). */
-        suggestionOps(cs, ranked) {
-            return this.suggestionList(cs, ranked).map(c => ({ shift_id: cs.id, name: c.name, status: 'assigned' }));
+        suggestionOps(cs, ranked, tie = null) {
+            return this.suggestionList(cs, ranked, tie).map(c => ({ shift_id: cs.id, name: c.name, status: 'assigned' }));
         },
 
-        suggestionCount(cs, ranked) {
-            return this.suggestionOps(cs, ranked).length;
+        suggestionCount(cs, ranked, tie = null) {
+            return this.suggestionOps(cs, ranked, tie).length;
         },
 
         /** Declines all open wishes of the shift. */
@@ -68,16 +80,29 @@ document.addEventListener('alpine:init', () => {
         // --- Candidate list ---
 
         /**
-         * Rows of the candidate list: the suggestion, then a heading, the further candidates (first
-         * MORE_LIMIT, or all) and the "show all" button.
-         * @returns {Array<{id:string, kind:'row'|'head'|'all', c?:Object, rank?:number, suggested?:boolean, count?:number}>}
+         * Rows of the candidate list: the suggestion, the tie block (if a tie spans the free places), a
+         * heading, the further candidates (first MORE_LIMIT, or all) and the "show all" button.
+         * An open tie lists its people (alphabetical, no rank) in the block. A drawn tie leaves only the
+         * block head with "draw again"; the winners stand in the suggestion, the others in "More".
+         * @returns {Array<{id:string, kind:'row'|'head'|'tie'|'all', c?:Object, rank?:number, suggested?:boolean, tied?:boolean, count?:number, places?:number, drawn?:boolean}>}
          */
-        candidateRows(cs, ranked) {
-            const suggestion = this.suggestionList(cs, ranked);
-            const inSuggestion = new Set(suggestion.map(c => c.key));
-            const row = (c, suggested) => ({ id: c.key, kind: 'row', c, rank: ranked.indexOf(c) + 1, suggested });
+        candidateRows(cs, ranked, tie = null) {
+            const suggestion = this.suggestionList(cs, ranked, tie);
+            const open = tie && !tie.drawn;
+            const group = new Set(tie ? tie.keys : []);
+            const taken = new Set(suggestion.map(c => c.key));
+            const row = (c, suggested, tied = false) => ({ id: c.key, kind: 'row', c, rank: tied ? 0 : ranked.indexOf(c) + 1, suggested, tied });
             const rows = suggestion.map(c => row(c, true));
-            const more = ranked.filter(c => !inSuggestion.has(c.key));
+            if (tie) {
+                rows.push({ id: 'head-tie', kind: 'tie', count: tie.keys.length, places: tie.places, drawn: !open });
+                if (open) {
+                    for (const c of ranked.filter(c => group.has(c.key) && !c.declined)) {
+                        rows.push(row(c, false, true));
+                        taken.add(c.key);
+                    }
+                }
+            }
+            const more = ranked.filter(c => !taken.has(c.key));
             if (!more.length) return rows;
             const shown = this.showAllMore ? more : more.slice(0, MORE_LIMIT);
             rows.push({ id: 'head-more', kind: 'head', count: more.length });
@@ -94,6 +119,20 @@ document.addEventListener('alpine:init', () => {
                 if (r.id === 'lottery') return suggested;
                 return true;
             });
+        },
+
+        /**
+         * Reasons for the one-line row: the shown ones (shownReasons) in priority order, at most REASONS_SHOWN of
+         * them; the rest is counted in `more` (`rest` holds them for the tooltip).
+         * @returns {{shown:Array<{id:string, params:Object}>, rest:Array<{id:string, params:Object}>}}
+         */
+        topReasons(c, suggested) {
+            const rank = id => { const i = REASON_PRIORITY.indexOf(id); return i < 0 ? REASON_PRIORITY.length : i; };
+            const all = this.shownReasons(c, suggested)
+                .map((r, i) => ({ r, i }))
+                .sort((a, b) => rank(a.r.id) - rank(b.r.id) || a.i - b.i)
+                .map(x => x.r);
+            return { shown: all.slice(0, REASONS_SHOWN), rest: all.slice(REASONS_SHOWN) };
         },
 
         /** "3 / 8 h" or "3 h"; fmt formats a number in the UI language. */
@@ -138,7 +177,7 @@ document.addEventListener('alpine:init', () => {
          * group without heading. label(option) names a level.
          */
         personGroups(list, experience, label, noneLabel) {
-            const sorted = this.sortedPersons(list, !!experience.field);
+            const sorted = this.sortedPersons(this.searchPersons(list), !!experience.field);
             if (this.personSort !== 'experience' || !experience.field) return [{ id: 'all', label: '', persons: sorted }];
             const groups = [];
             for (const p of sorted) {
@@ -167,12 +206,60 @@ document.addEventListener('alpine:init', () => {
             return [...list].sort((a, b) => cmp(a, b) || a.name.localeCompare(b.name));
         },
 
+        // --- Person search ---
+
+        /** Persons whose name contains the query (case, spaces and diacritics ignored: "ann" finds "Anna" and "Änne"). */
+        searchPersons(list) {
+            const q = searchKey(this.personQuery);
+            return q ? list.filter(p => searchKey(p.name).includes(q)) : list;
+        },
+
+        /** True when a search is active but nobody matches. */
+        get searchEmpty() {
+            return !!searchKey(this.personQuery) && this.searchPersons(this.$data.personList).length === 0;
+        },
+
+        clearSearch() {
+            this.personQuery = '';
+        },
+
+        /** Enter in the search field: with exactly one match highlight that person and scroll to the row. */
+        searchEnter() {
+            const hits = this.searchPersons(this.$data.personList);
+            if (hits.length === 1) this.revealPerson(hits[0].key);
+        },
+
+        /** Highlights a person and scrolls the visible row [data-person] into view (focusing the name button). */
+        revealPerson(key, retry = true) {
+            this.highlightKey = key;
+            this.$nextTick(() => {
+                const row = [...document.querySelectorAll('[data-person]')].find(el => el.dataset.person === key && el.offsetParent !== null);
+                if (!row) {
+                    // The view may still be rendering (x-if after a view switch)
+                    if (retry) setTimeout(() => this.revealPerson(key, false), 50);
+                    return;
+                }
+                row.scrollIntoView({ block: 'center' });
+                row.querySelector('button')?.focus({ preventScroll: true });
+            });
+        },
+
+        /** Jump icon: show a person in the people view, on the day of the selected shift. */
+        showPersonInTimeline(key) {
+            const d = this.$data;
+            if (d.selectedShift) d.setTimelineDay(d.selectedShift.day);
+            d.setView('people');
+            this.personQuery = '';
+            this.onlyFree = false;
+            this.revealPerson(key);
+        },
+
         // --- Time views ---
 
         /** Rows of the people view: sorted like the person column; with onlyFree and a selected shift only free persons. */
         timelineRows(pt, hasLevel, onlyFree) {
             const byKey = new Map(pt.rows.map(r => [r.person.key, r]));
-            return this.sortedPersons(pt.rows.map(r => r.person), hasLevel)
+            return this.sortedPersons(this.searchPersons(pt.rows.map(r => r.person)), hasLevel)
                 .map(p => byKey.get(p.key))
                 .filter(r => !onlyFree || r.freeDuring !== false);
         },

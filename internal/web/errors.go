@@ -87,6 +87,7 @@ const (
 	ErrDuplicateName       = "duplicate_name"
 	ErrParticipantDeclined = "participant_declined"
 	ErrPersonExists        = "person_exists"
+	ErrLimitReached        = "limit_reached"
 
 	// Validierungsfehler
 	ErrInvalidInput = "invalid_input"

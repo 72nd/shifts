@@ -86,7 +86,7 @@
                                 <select class="select select-bordered select-sm h-11 w-full"
                                     :disabled="rows[type.id]?.saving" x-model="rows[type.id].popularity"
                                     @change="rows[type.id].dirty = true; save($data, type)">
-                                    <template x-for="m in ['auto', 'popular', 'normal']" :key="m">
+                                    <template x-for="m in ['auto', 'popular', 'very_popular', 'normal']" :key="m">
                                         <option :value="m" :selected="rows[type.id]?.popularity === m" x-text="$t('coord.popularity_' + m)"></option>
                                     </template>
                                 </select>

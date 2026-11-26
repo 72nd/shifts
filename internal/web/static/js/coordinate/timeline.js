@@ -13,12 +13,12 @@ const MS_MINUTE = 60 * 1000;
 const DAY_MIN = 24 * 60;
 
 /** Start of the logical day in ms (floating): midnight of the day key plus the boundary. */
-function dayStartMs(model, day) {
+export function dayStartMs(model, day) {
   return parseDate(day).getTime() + model.ctx.boundary * MS_MINUTE;
 }
 
 /** Minute offsets of a shift from the logical day start; the end is cut at the end of the day. */
-function offsets(cs, base) {
+export function offsets(cs, base) {
   const start = (cs.start.getTime() - base) / MS_MINUTE;
   const end = Math.min((cs.end.getTime() - base) / MS_MINUTE, DAY_MIN);
   return { start, end };
@@ -29,7 +29,7 @@ function offsets(cs, base) {
  * @returns {{startMin:number, endMin:number, hours:number[]}}
  *   hours: clock hour (0-23) of each column, one per full hour in the span
  */
-function span(model, list) {
+export function span(model, list) {
   if (!list.length) return { startMin: 0, endMin: 0, hours: [] };
   const boundary = model.ctx.boundary;
   const first = Math.min(...list.map(o => o.start));
@@ -90,6 +90,21 @@ export function buildTimeline(model, shiftIds, day) {
   return { startMin, endMin, hours, rows };
 }
 
+/** Spreads the bars of one person over lanes (overlapping bars below each other) and flags Einsatz overlaps. */
+function layoutPersonLanes(bars) {
+  const einsaetze = bars.filter(b => b.kind === 'einsatz');
+  for (const b of einsaetze) {
+    const other = einsaetze.find(o => o !== b && b.startMin < o.endMin && o.startMin < b.endMin);
+    b.conflict = !!other;
+    b.conflictWith = other ? other.cs : null;
+  }
+  const laid = bars.map(b => ({ b, startMinutes: b.startMin, endMinutes: b.endMin, durationMinutes: b.endMin - b.startMin }));
+  const count = bars.length ? assignOverlapLanes(laid) : 1;
+  const lanes = Array.from({ length: count }, () => []);
+  for (const l of laid.sort((a, c) => a.startMinutes - c.startMinutes || a.b.cs.id - c.b.cs.id)) lanes[l.laneIndex].push(l.b);
+  return lanes;
+}
+
 /**
  * Einsätze and open wishes per person on one logical day.
  * @param {import('./model.js').CoordModel} model
@@ -98,7 +113,9 @@ export function buildTimeline(model, shiftIds, day) {
  * @returns {{ startMin:number, endMin:number, hours:number[],
  *             selection: {left:number, width:number}|null,   // span of the selected shift (if on this day)
  *             rows: Array<{ person:Object,
- *                           bars: Array<{ cs:Object, kind:'einsatz'|'wish', left:number, width:number }>,
+ *                           lanes: Array<Array<{ cs:Object, kind:'einsatz'|'wish', conflict:boolean, left:number, width:number }>>,
+ *                             // simultaneous bars (e.g. two wishes at the same time) are stacked in separate lanes;
+ *                             // conflict: two Einsätze of the person overlap (a wish next to something else is a choice)
  *                           absent: Array<{ left:number, width:number }>,   // outside the attendance
  *                           freeDuring: boolean|null }> }}                  // free in the selected shift (null without selection)
  *   Rows are in model.persons order; the UI sorts them like the person column. The span covers all
@@ -118,8 +135,9 @@ export function buildPersonTimeline(model, day, selectedShiftId) {
   };
   for (const it of items) {
     const pos = place(it.start, it.end, startMin, endMin);
-    for (const key of it.cs.assigned) push(key, { cs: it.cs, kind: 'einsatz', ...pos });
-    for (const key of it.cs.wishes) push(key, { cs: it.cs, kind: 'wish', ...pos });
+    const times = { startMin: it.start, endMin: it.end };
+    for (const key of it.cs.assigned) push(key, { cs: it.cs, kind: 'einsatz', conflict: false, conflictWith: null, ...pos, ...times });
+    for (const key of it.cs.wishes) push(key, { cs: it.cs, kind: 'wish', conflict: false, conflictWith: null, ...pos, ...times });
   }
 
   const selected = selectedShiftId ? model.shifts.get(selectedShiftId) || null : null;
@@ -145,7 +163,7 @@ export function buildPersonTimeline(model, day, selectedShiftId) {
       freeDuring = !selected.assigned.includes(person.key) && !selected.wishes.includes(person.key)
         && hardRule(model, person, selected) === null;
     }
-    rows.push({ person, bars: barsByKey.get(person.key) || [], absent, freeDuring });
+    rows.push({ person, lanes: layoutPersonLanes(barsByKey.get(person.key) || []), absent, freeDuring });
   }
   return { startMin, endMin, hours, selection, rows };
 }

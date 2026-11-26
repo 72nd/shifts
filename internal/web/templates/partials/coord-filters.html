@@ -25,6 +25,10 @@
             <option :value="st" :selected="filter.status === st" x-text="$t('coord.status_' + st)"></option>
         </template>
     </select>
+    <!-- Person search: filters the people view and the person column -->
+    <input type="search" class="input input-bordered input-sm h-11 min-h-11 lg:h-8 lg:min-h-8 w-40" x-model="personQuery"
+        :class="{ 'input-primary': personQuery }" :placeholder="$t('coord.person_search')" :aria-label="$t('coord.person_search')"
+        @keydown.enter.prevent="searchEnter()" @keydown.escape="clearSearch()">
     <!-- Time views: the day filter becomes previous/next day -->
     <div x-show="activeView !== 'list'" class="flex items-center gap-1">
         <button type="button" class="btn btn-sm min-h-11 min-w-11 lg:min-h-8 lg:min-w-8" :disabled="!hasPrevDay" :aria-label="$t('coord.day_prev')"

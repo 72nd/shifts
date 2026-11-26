@@ -265,7 +265,7 @@ func validateTypeCoordination(loadFactor *float64, popularity *string, count *in
 		validation.ValidateLoadFactor(*loadFactor, "load_factor", r)
 	}
 	if popularity != nil && !validation.ValidPopularity(*popularity) {
-		r.AddInvalid("popularity", "Popularity must be auto, popular or normal")
+		r.AddInvalid("popularity", "Popularity must be auto, popular, very_popular or normal")
 	}
 	validation.ValidateExperienceNeed(count, level, 0, plan, r)
 	return r

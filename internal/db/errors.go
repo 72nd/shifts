@@ -37,4 +37,7 @@ var (
 
 	// ErrFieldNotFound is returned when a person field does not exist in the plan
 	ErrFieldNotFound = errors.New("field not found")
+
+	// ErrLimitReached is returned when a per-plan limit (for example the number of lab variants) is reached
+	ErrLimitReached = errors.New("limit reached")
 )

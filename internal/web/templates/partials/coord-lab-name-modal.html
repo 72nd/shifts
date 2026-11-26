@@ -1,0 +1,40 @@
+{{ define "coord-lab-name-modal" }}
+{{/* Name of a variant (save, save as new, rename) and the confirm dialog (discard, delete). Needs coordLab scope. */}}
+<dialog x-ref="nameDlg" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-2" x-text="nameMode === 'rename' ? $t('coord.lab_rename') : (nameMode === 'saveAs' ? $t('coord.lab_save_as') : $t('coord.lab_save'))"></h3>
+        {{ template "error-display" "modalError" }}
+        <form @submit.prevent="submitName()">
+            <label class="block space-y-1">
+                <span class="text-sm" x-text="$t('coord.lab_name_label')"></span>
+                <input x-ref="nameField" type="text" class="input input-bordered w-full" x-model="nameInput" maxlength="80" autocomplete="off"
+                    :placeholder="$t('coord.lab_name_placeholder')" :aria-invalid="nameError ? 'true' : 'false'" aria-describedby="coord-lab-name-err">
+            </label>
+            <p id="coord-lab-name-err" class="text-sm text-error mt-1" x-show="nameError" x-text="nameError"></p>
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+                <button type="button" class="btn btn-sm min-h-11" @click="closeName()" x-text="$t('common.cancel')"></button>
+                <button type="submit" class="btn btn-sm btn-primary min-h-11" :disabled="labBusy" x-text="$t('coord.lab_save')"></button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button @click="pg.clearErrors()">close</button>
+    </form>
+</dialog>
+
+<dialog x-ref="confirmDlg" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-2" x-text="confirmKind === 'delete' ? $t('coord.lab_delete') : $t('coord.lab_discard')"></h3>
+        {{ template "error-display" "modalError" }}
+        <p x-text="confirmKind === 'delete' ? $t('coord.lab_delete_confirm', { name: draftName }) : $t('coord.lab_discard_confirm')"></p>
+        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-base-content/20">
+            <button type="button" class="btn btn-sm min-h-11" @click="closeConfirm()" x-text="$t('common.cancel')"></button>
+            <button type="button" class="btn btn-sm btn-error min-h-11" :disabled="labBusy" @click="confirmYes()"
+                x-text="confirmKind === 'delete' ? $t('common.delete') : $t('coord.lab_discard')"></button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button @click="pg.clearErrors()">close</button>
+    </form>
+</dialog>
+{{ end }}

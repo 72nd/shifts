@@ -25,9 +25,9 @@ const (
 )
 
 // Popularity values of shift types and shifts.
-var popularityValues = map[string]bool{"auto": true, "popular": true, "normal": true}
+var popularityValues = map[string]bool{"auto": true, "popular": true, "very_popular": true, "normal": true}
 
-// ValidPopularity reports whether p is auto, popular or normal.
+// ValidPopularity reports whether p is auto, popular, very_popular or normal.
 func ValidPopularity(p string) bool { return popularityValues[p] }
 
 // ValidateLoadFactor checks 0.1 to 5.0 with at most one decimal place.
@@ -87,7 +87,7 @@ func ValidateShiftOverrides(loadFactor *float64, popularity *string, count *int,
 		ValidateLoadFactor(*loadFactor, "load_factor", r)
 	}
 	if popularity != nil && !ValidPopularity(*popularity) {
-		r.AddInvalid("popularity", "Popularity must be auto, popular or normal")
+		r.AddInvalid("popularity", "Popularity must be auto, popular, very_popular or normal")
 	}
 	ValidateExperienceNeed(count, level, required, plan, r)
 }
@@ -304,8 +304,19 @@ func ValidateCoordinationApply(req *model.CoordinationApplyRequest) *Result {
 		r.AddRequired("ops", "Operations")
 		return r
 	}
-	for i := range req.Ops {
-		op := &req.Ops[i]
+	validateCoordinationOps(req.Ops, r)
+	for i, id := range req.Lock {
+		if id <= 0 {
+			r.Add("lock["+itoa(i)+"]", CodeInvalidValue, "Shift ID must be a positive number")
+		}
+	}
+	return r
+}
+
+// validateCoordinationOps checks and sanitizes the operations in place (shared by apply and drafts).
+func validateCoordinationOps(ops []model.CoordinationOp, r *Result) {
+	for i := range ops {
+		op := &ops[i]
 		prefix := "ops[" + itoa(i) + "]."
 		if op.ShiftID <= 0 {
 			r.Add(prefix+"shift_id", CodeInvalidValue, "Shift ID must be a positive number")
@@ -319,10 +330,4 @@ func ValidateCoordinationApply(req *model.CoordinationApplyRequest) *Result {
 			r.Add(prefix+"status", CodeInvalidValue, "Status must be signed_up, assigned, declined or remove")
 		}
 	}
-	for i, id := range req.Lock {
-		if id <= 0 {
-			r.Add("lock["+itoa(i)+"]", CodeInvalidValue, "Shift ID must be a positive number")
-		}
-	}
-	return r
 }

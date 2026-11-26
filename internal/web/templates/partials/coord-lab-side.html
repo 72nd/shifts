@@ -1,0 +1,132 @@
+{{ define "coord-lab-side" }}
+{{/* Side panel of the lab: people with hours and load (live +difference), change list, detail of the chosen person, add person. */}}
+<aside class="w-[22rem] 2xl:w-[28rem] shrink-0 space-y-3 lg:max-h-[75vh] overflow-y-auto" :aria-label="$t('coord.tab_people')">
+    <div class="flex flex-wrap items-center gap-2">
+        <input type="search" class="input input-bordered input-sm lg:h-8 lg:min-h-8 min-w-0 flex-1" x-model="labQuery"
+            :placeholder="$t('coord.person_search')" :aria-label="$t('coord.person_search')" @keydown.escape="labQuery = ''">
+        <select class="select select-bordered select-sm lg:h-8 lg:min-h-8" x-model="labSort" :aria-label="$t('coord.people_sort')">
+            <option value="load" x-text="$t('coord.sort_load')"></option>
+            <option value="hours" x-text="$t('coord.col_hours')"></option>
+            <template x-if="model.experience.field"><option value="experience" x-text="$t('coord.sort_experience')"></option></template>
+            <option value="name" x-text="$t('coord.sort_name')"></option>
+        </select>
+    </div>
+    <div x-show="searchEmpty" class="flex flex-wrap items-center gap-2 text-base-content/70">
+        <span x-text="$t('coord.person_search_none')"></span>
+        <button type="button" class="btn btn-ghost btn-sm underline" @click="labQuery = ''" x-text="$t('coord.person_search_clear')"></button>
+    </div>
+    <table class="table table-xs" x-show="sideRows.length">
+        <thead>
+            <tr>
+                <th scope="col" x-text="$t('coord.col_name')"></th>
+                <th scope="col" class="text-right" x-text="$t('coord.lab_col_hours')"></th>
+                <th scope="col" class="text-right" x-text="$t('coord.lab_col_load')"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="r in sideRows" :key="r.key">
+                <tr class="min-h-7" :class="{ 'bg-base-200': selectedKey === r.key }">
+                    <th scope="row" class="font-normal">
+                        <div class="flex items-center gap-1 min-w-0">
+                            <button type="button" draggable="true" class="inline-flex min-w-0 items-center gap-1 text-left min-h-7"
+                                :aria-pressed="selectedKey === r.key ? 'true' : 'false'" :title="r.name"
+                                @click="selectPerson(r.key)"
+                                @keydown.enter.prevent="pickUp({ key: r.key, name: r.name, from: null })"
+                                @dragstart="startDrag($event, { key: r.key, name: r.name, from: null })" @dragend="endDrag()">
+                                <span class="shrink-0" x-show="model.experience.field">{{ template "coord-level-dots" "r.level" }}</span>
+                                <span class="truncate" x-text="r.name"></span>
+                            </button>
+                            <span class="badge badge-sm shrink-0" x-show="r.isNew" x-text="$t('coord.lab_new_badge')"></span>
+                            <span class="shrink-0" x-show="r.newWarnings.length" role="img" :aria-label="warnText(r.newWarnings)" :title="warnText(r.newWarnings)">⚠</span>
+                        </div>
+                    </th>
+                    <td class="text-right tabular-nums whitespace-nowrap"><span x-text="number(r.live.hours)"></span> <span class="font-medium" x-text="delta(r.hoursDelta)"></span></td>
+                    <td class="text-right tabular-nums whitespace-nowrap"><span x-text="number(r.live.load)"></span> <span class="font-medium" x-text="delta(r.loadDelta)"></span></td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+
+    <details x-show="opCount" class="border-t border-base-300 pt-2">
+        <summary class="cursor-pointer min-h-8 flex items-center" x-text="$t('coord.lab_changes_title', { count: opCount })"></summary>
+        <ul class="space-y-1 text-sm">
+            <template x-for="(op, i) in normOps" :key="op.shift_id + '|' + op.name">
+                <li class="flex items-center gap-1">
+                    <span class="min-w-0 flex-1 truncate" :title="opText(op)" x-text="opText(op)"></span>
+                    <button type="button" class="btn btn-ghost btn-xs btn-square shrink-0" :aria-label="$t('coord.lab_change_revert')" :title="$t('coord.lab_change_revert')" @click="revertAt(i)">
+                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </li>
+            </template>
+        </ul>
+    </details>
+
+    <section x-show="detail" class="border-t border-base-300 pt-2 space-y-2" aria-live="polite">
+        <template x-if="detail">
+            <div class="space-y-2">
+                <h3 class="font-medium flex flex-wrap items-center gap-2">
+                    <span class="truncate min-w-0" x-text="detail.name" :title="detail.name"></span>
+                    <span x-show="model.experience.field && detail.level >= 0">{{ template "coord-level-badge" "detail.level" }}</span>
+                </h3>
+                <table class="table table-xs">
+                    <thead>
+                        <tr>
+                            <th scope="col" x-text="$t('coord.filter_day')"></th>
+                            <th scope="col" class="text-right" x-text="$t('coord.lab_before')"></th>
+                            <th scope="col" class="text-right" x-text="$t('coord.lab_after')"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="d in detailDays(detail)" :key="d.day">
+                            <tr :class="{ 'font-bold': d.day === currentLabDay }">
+                                <th scope="row" class="font-[inherit]" x-text="dayLabel(d.day)"></th>
+                                <td class="text-right tabular-nums" x-text="hours(d.live) + ' h'"></td>
+                                <td class="text-right tabular-nums" x-text="d.lab !== d.live ? hours(d.lab) + ' h' : ''"></td>
+                            </tr>
+                        </template>
+                        <tr class="border-t border-base-300">
+                            <th scope="row" x-text="$t('coord.lab_total') + ' ' + $t('coord.lab_col_hours')"></th>
+                            <td class="text-right tabular-nums" x-text="number(detail.live.hours)"></td>
+                            <td class="text-right tabular-nums" x-text="detail.hoursDelta ? number(detail.lab.hours) : ''"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row" x-text="$t('coord.lab_col_load')"></th>
+                            <td class="text-right tabular-nums" x-text="number(detail.live.load)"></td>
+                            <td class="text-right tabular-nums" x-text="detail.loadDelta ? number(detail.lab.load) : ''"></td>
+                        </tr>
+                        <tr x-show="model.flags.anyPopular">
+                            <th scope="row"><span role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</span></th>
+                            <td class="text-right tabular-nums" x-text="detail.live.popularScore"></td>
+                            <td class="text-right tabular-nums" x-text="detail.scoreDelta ? detail.lab.popularScore : ''"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <ul class="text-sm space-y-0.5" x-show="detail.lab.warnings.length">
+                    <template x-for="(w, i) in detail.lab.warnings" :key="i">
+                        <li class="flex items-center gap-1"><span aria-hidden="true">⚠</span><span x-text="warningText(w)"></span></li>
+                    </template>
+                </ul>
+                <div x-show="detailWishes(detail.key).length" class="text-sm">
+                    <p class="font-medium" x-text="$t('coord.lab_wishes_day')"></p>
+                    <ul>
+                        <template x-for="cs in detailWishes(detail.key)" :key="cs.id">
+                            <li class="truncate" :title="shiftLabel(cs)" x-text="shiftLabel(cs)"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+        </template>
+    </section>
+
+    <form class="border-t border-base-300 pt-2 space-y-1" @submit.prevent="addPerson()">
+        <label class="block text-sm font-medium" for="coord-lab-new" x-text="$t('coord.lab_add_person')"></label>
+        <div class="flex gap-2">
+            <input id="coord-lab-new" type="text" class="input input-bordered input-sm lg:h-8 lg:min-h-8 min-w-0 flex-1" x-model="newName" autocomplete="off"
+                :aria-invalid="newNameError ? 'true' : 'false'" aria-describedby="coord-lab-new-err">
+            <button type="submit" class="btn btn-sm lg:min-h-8" x-text="$t('coord.lab_add')"></button>
+        </div>
+        <p id="coord-lab-new-err" class="text-sm text-error" x-show="newNameError" x-text="newNameError"></p>
+        <p class="text-sm text-base-content/70" x-show="hasUnassignedNew" x-text="$t('coord.lab_new_hint')"></p>
+    </form>
+</aside>
+{{ end }}

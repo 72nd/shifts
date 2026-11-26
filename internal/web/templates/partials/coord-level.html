@@ -1,0 +1,27 @@
+{{ define "coord-level-badge" }}
+{{/* Experience level as a toned badge. Parameter: JS expression of the level number (-1 = none), e.g. "r.c.level".
+     Needs coordinationPage scope (levelTone, levelName, model). The name carries the meaning, the tone only grades it. */}}
+<span class="badge badge-sm border-0 shrink-0 font-normal" :class="levelTone({{ . }}, model.experience.options.length)" x-text="levelName({{ . }})"></span>
+{{ end }}
+
+{{ define "coord-level-dots" }}
+{{/* Experience level as dots (filled up to the level). Parameter: JS expression of the level number.
+     Meaning without colour: role="img" with the level name. */}}
+<span role="img" class="inline-flex items-center gap-0.5 shrink-0" :aria-label="levelName({{ . }})" :title="levelName({{ . }})">
+    <template x-for="i in model.experience.options.length" :key="i">
+        <span class="h-2 w-2 rounded-full border border-primary" :class="{ 'bg-primary': i <= {{ . }} + 1 }" aria-hidden="true"></span>
+    </template>
+</span>
+{{ end }}
+
+{{ define "coord-jump" }}
+{{/* Jump icon behind a name: show the person in the people view (from lg). Parameter: JS expression of the person
+     object (needs .key and .name). The function showPersonInTimeline comes with the time views; without it the
+     button is not shown. */}}
+<button type="button" class="hidden lg:inline-flex btn btn-ghost btn-xs btn-square shrink-0"
+    x-show="typeof showPersonInTimeline === 'function'"
+    :aria-label="$t('coord.show_in_people_view', { name: {{ . }}.name })" :title="$t('coord.show_in_people_view', { name: {{ . }}.name })"
+    @click="showPersonInTimeline({{ . }}.key)">
+    {{ template "coord-icon-timeline" }}
+</button>
+{{ end }}

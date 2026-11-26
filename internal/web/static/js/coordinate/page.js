@@ -16,7 +16,7 @@ import {
     applyOpsLocally, invertOps, newLottery,
 } from './compute.js';
 
-const TABS = ['distribute', 'people', 'settings'];
+const TABS = ['distribute', 'people', 'lab', 'settings'];
 const VIEWS = ['list', 'timeline', 'people'];
 const WIDE_QUERY = '(min-width: 1024px)'; // Tailwind lg: timeline and people views need the room
 const STATUS_FILTERS = ['overbooked', 'open', 'full', 'experience'];
@@ -30,7 +30,7 @@ document.addEventListener('alpine:init', () => {
         types: [],
         people: [],
         model: null,
-        lottery: new Map(),
+        draws: new Map(),      // shiftId → Map<personKey, number>: the lot drawn for a tie in that shift (not stored)
         isLoading: true,
         denied: false,
         error: null,
@@ -52,6 +52,9 @@ document.addEventListener('alpine:init', () => {
         view: 'list',
         timelineDay: '', // logical day (YYYY-MM-DD) of the two time views; '' = derived (see currentTimelineDay)
         isWide: false,
+
+        // Lab tab (state of the lab itself lives in lab-page.js): logical day shown by the lab grid, '' = derived
+        labDay: '',
 
         // Changes in flight and undo
         busy: false,
@@ -101,7 +104,7 @@ document.addEventListener('alpine:init', () => {
             return !!this.adminToken && !this.denied;
         },
 
-        // --- URL state (?tab=&type=&day=&status=&shift=&view=&tday=) ---
+        // --- URL state (?tab=&type=&day=&status=&shift=&view=&tday=&lday=) ---
 
         readUrl() {
             const sp = new URLSearchParams(window.location.search);
@@ -117,6 +120,8 @@ document.addEventListener('alpine:init', () => {
             this.view = VIEWS.includes(view) ? view : 'list';
             const tday = sp.get('tday') || '';
             this.timelineDay = /^\d{4}-\d{2}-\d{2}$/.test(tday) ? tday : '';
+            const lday = sp.get('lday') || '';
+            this.labDay = /^\d{4}-\d{2}-\d{2}$/.test(lday) ? lday : '';
         },
 
         writeUrl() {
@@ -128,6 +133,7 @@ document.addEventListener('alpine:init', () => {
             if (this.selectedShiftId) sp.set('shift', String(this.selectedShiftId));
             if (this.view !== 'list') sp.set('view', this.view);
             if (this.view !== 'list' && this.timelineDay) sp.set('tday', this.timelineDay);
+            if (this.tab === 'lab' && this.labDay) sp.set('lday', this.labDay);
             const q = sp.toString();
             history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : ''));
         },
@@ -244,11 +250,7 @@ document.addEventListener('alpine:init', () => {
 
         /** Rebuilds the model from the loaded data (and everything derived from it). */
         rebuild() {
-            const keys = new Set();
-            for (const type of this.types) for (const s of type.shifts || []) for (const p of s.participants || []) keys.add(personKey(p.name));
-            for (const row of this.people) keys.add(personKey(row.name));
-            for (const [key, n] of newLottery(keys)) if (!this.lottery.has(key)) this.lottery.set(key, n);
-            this.model = buildModel(this.plan, this.types, this.people, this.lottery);
+            this.model = buildModel(this.plan, this.types, this.people);
             if (this.selectedShiftId && !this.model.shifts.has(this.selectedShiftId)) this.selectedShiftId = null;
             this.refresh();
             // On a phone the shift is chosen with a select: start with the first one
@@ -266,9 +268,20 @@ document.addEventListener('alpine:init', () => {
                 (!days.length || days.includes(cs.day)) &&
                 this.matchesStatus(cs, status));
             this.candidates = this.selectedShiftId
-                ? rankCandidates(this.model, this.selectedShiftId, this.source)
-                : { ranked: [], unavailable: [] };
+                ? this.rank(this.selectedShiftId)
+                : { ranked: [], unavailable: [], tie: null };
             this.concurrent = this.selectedShiftId ? concurrentShifts(this.model, this.selectedShiftId) : [];
+        },
+
+        /** Ranking of a shift with its drawn lot; a lot that no longer fits the tie group is dropped. */
+        rank(shiftId) {
+            const draw = this.draws.get(shiftId) || null;
+            let result = rankCandidates(this.model, shiftId, this.source, draw);
+            if (draw && !result.tie?.drawn) {
+                this.draws.delete(shiftId);
+                result = rankCandidates(this.model, shiftId, this.source);
+            }
+            return result;
         },
 
         matchesStatus(cs, status) {
@@ -364,9 +377,10 @@ document.addEventListener('alpine:init', () => {
             this.refresh();
         },
 
-        reroll() {
-            this.lottery = newLottery(this.lottery.keys());
-            this.rebuild();
+        /** Draws lots among the people of a tie in the shift (again, if it was drawn before). */
+        drawTie(shiftId, keys) {
+            this.draws.set(shiftId, newLottery(keys));
+            this.refresh();
         },
 
         setFilter(patch) {
@@ -652,12 +666,32 @@ document.addEventListener('alpine:init', () => {
             return o ? this.t(o) : '';
         },
 
+        /** Name of an experience level (number, -1 = none) for badges and dots. */
+        levelName(level) {
+            const o = this.model?.experience.options[level];
+            return o ? this.t(o) : '–';
+        },
+
+        /**
+         * Tone classes of an experience level (level 0..count-1, -1 = none). Written out so the Tailwind CLI finds
+         * them. The dots (coord-level-dots) and the name carry the meaning, the tone only grades it.
+         */
+        levelTone(level, count) {
+            if (level < 0) return 'text-base-content/60';
+            const r = level / Math.max(1, count - 1);
+            if (count === 1) return 'bg-primary text-primary-content';
+            if (r < 0.34) return 'border border-primary/40';
+            if (r < 0.67) return 'bg-primary/20';
+            return 'bg-primary text-primary-content';
+        },
+
         /** Text of a reason or warning { id, params } with the given key prefix (reason | warn). */
         reasonText(kind, r) {
             const params = { ...r.params };
             if (params.minutes !== undefined) params.duration = this.duration(params.minutes);
             for (const k of ['hours', 'target', 'load']) if (params[k] !== undefined) params[k] = this.number(params[k]);
-            return this.$t(`coord.${kind}_${r.id}`, params);
+            const very = r.id === 'popular_received' && params.very > 0 ? '_very' : '';
+            return this.$t(`coord.${kind}_${r.id}${very}`, params);
         },
 
         planTitle() {

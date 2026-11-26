@@ -1,0 +1,43 @@
+{{ define "coord-lab-bar" }}
+{{/* Lab bar: variant, day, number of changes, undo, discard, save, more, apply (the only primary action). */}}
+<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <label class="flex items-center gap-2 text-sm min-w-0">
+        <span class="shrink-0" x-text="$t('coord.lab_variant')"></span>
+        <select class="select select-bordered select-sm lg:h-8 lg:min-h-8 max-w-64 min-w-0" @change="onVariantChange($event)" :disabled="labBusy">
+            <option value="" :selected="draftId === null" x-text="$t('coord.lab_unsaved')"></option>
+            <template x-for="d in drafts" :key="d.id">
+                <option :value="d.id" :selected="draftId === d.id" x-text="draftLabel(d)"></option>
+            </template>
+        </select>
+        <span class="loading loading-spinner loading-xs" x-show="draftsLoading" role="status" :aria-label="$t('coord.lab_loading')"></span>
+    </label>
+    <div class="flex items-center gap-1">
+        <button type="button" class="btn btn-sm lg:min-h-8 lg:min-w-8" :disabled="!hasPrevDay" :aria-label="$t('coord.day_prev')" @click="shiftLabDay(-1)"><span aria-hidden="true">‹</span></button>
+        <span class="min-w-24 text-center font-medium" aria-live="polite" x-text="currentLabDay ? dayLabel(currentLabDay) : ''"></span>
+        <button type="button" class="btn btn-sm lg:min-h-8 lg:min-w-8" :disabled="!hasNextDay" :aria-label="$t('coord.day_next')" @click="shiftLabDay(1)"><span aria-hidden="true">›</span></button>
+    </div>
+    <span class="text-sm tabular-nums" aria-live="polite" x-text="$t(opCount === 1 ? 'coord.lab_changes_one' : 'coord.lab_changes', { count: opCount })"></span>
+    <div class="flex flex-wrap items-center gap-2 ml-auto">
+        <button type="button" class="btn btn-ghost btn-sm lg:min-h-8" :disabled="!undoStack.length" :aria-label="$t('coord.lab_undo')" :title="$t('coord.lab_undo')" @click="undoLab()">
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 010 10H9M3 10l4-4M3 10l4 4" /></svg>
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm lg:min-h-8" :disabled="!dirty" @click="discard()" x-text="$t('coord.lab_discard')"></button>
+        <button type="button" class="btn btn-sm lg:min-h-8" :disabled="!dirty || labBusy" @click="save()">
+            <span class="loading loading-spinner loading-xs" x-show="labBusy"></span>
+            <span x-text="$t('coord.lab_save')"></span>
+        </button>
+        <details class="dropdown dropdown-end" @click.outside="$el.removeAttribute('open')">
+            <summary class="btn btn-ghost btn-sm lg:min-h-8 list-none" :aria-label="$t('coord.lab_more')" :title="$t('coord.lab_more')"><span aria-hidden="true">…</span></summary>
+            <ul class="dropdown-content z-30 menu p-2 shadow bg-base-100 rounded-box w-64" @click="$el.closest('details').removeAttribute('open')">
+                <li><button type="button" :disabled="!opCount && draftId === null" @click="openName('saveAs')" x-text="$t('coord.lab_save_as')"></button></li>
+                <li><button type="button" :disabled="draftId === null" @click="openName('rename')" x-text="$t('coord.lab_rename')"></button></li>
+                <li><button type="button" class="text-error" :disabled="draftId === null" @click="askConfirm('delete')" x-text="$t('coord.lab_delete')"></button></li>
+            </ul>
+        </details>
+        <button type="button" class="btn btn-primary btn-sm lg:min-h-8" :disabled="!opCount || busy" @click="openApply()">
+            <span class="loading loading-spinner loading-xs" x-show="pendingKey === 'lab'"></span>
+            <span x-text="$t('coord.lab_apply')"></span>
+        </button>
+    </div>
+</div>
+{{ end }}

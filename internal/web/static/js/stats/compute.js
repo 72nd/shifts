@@ -99,19 +99,31 @@ export function thresholds(plan) {
   };
 }
 
+/** A shift is very popular when interest reaches this multiple of its places (popularity "auto"). */
+export const VERY_POPULAR_RATIO = 2;
+
 /**
- * Whether a shift counts as popular: the shift's own popularity setting, else the type's.
- * "auto" means more interested people (all statuses) than places.
+ * Popularity tier of a shift: the shift's own popularity setting, else the type's.
+ * "auto" means more interested people (all statuses) than places (tier 1), at least
+ * VERY_POPULAR_RATIO times the places (tier 2).
  * @param {Object} shift  API shift (popularity may be null/undefined)
- * @param {Object} type   API shift type (popularity: auto|popular|normal)
+ * @param {Object} type   API shift type (popularity: auto|popular|very_popular|normal)
  * @param {number} interest  participations of any status that people made themselves
  *   (entries added by the coordination are not interest)
+ * @returns {number} 0 = not popular, 1 = popular, 2 = very popular
  */
-export function isPopular(shift, type, interest) {
+export function popularTier(shift, type, interest) {
   const mode = shift.popularity || type?.popularity || 'auto';
-  if (mode === 'popular') return true;
-  if (mode === 'normal') return false;
-  return shift.required > 0 && interest > shift.required;
+  if (mode === 'very_popular') return 2;
+  if (mode === 'popular') return 1;
+  if (mode === 'normal') return 0;
+  if (!(shift.required > 0) || interest <= shift.required) return 0;
+  return interest >= VERY_POPULAR_RATIO * shift.required ? 2 : 1;
+}
+
+/** Whether a shift counts as popular (tier 1 or 2). */
+export function isPopular(shift, type, interest) {
+  return popularTier(shift, type, interest) > 0;
 }
 
 /**

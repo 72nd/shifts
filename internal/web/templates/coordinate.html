@@ -57,6 +57,13 @@
             <section role="tabpanel" id="coord-panel-people" aria-labelledby="coord-tab-people" x-show="tab === 'people'">
                 {{ template "coord-people" . }}
             </section>
+            <div x-data="coordLab">
+                <section role="tabpanel" id="coord-panel-lab" aria-labelledby="coord-tab-lab" x-show="tab === 'lab'" @keydown="onKey($event)">
+                    {{ template "coord-lab" . }}
+                </section>
+                {{ template "coord-lab-apply-modal" . }}
+                {{ template "coord-lab-name-modal" . }}
+            </div>
             <section role="tabpanel" id="coord-panel-settings" aria-labelledby="coord-tab-settings" x-show="tab === 'settings'">
                 {{ template "coord-settings" . }}
             </section>
@@ -91,5 +98,6 @@
 <script type="module" src="/static/js/coordinate/auto.js"></script>
 <script type="module" src="/static/js/coordinate/people.js"></script>
 <script type="module" src="/static/js/coordinate/settings.js"></script>
+<script type="module" src="/static/js/coordinate/lab-page.js"></script>
 <script type="module" src="/static/js/coordinate/page.js"></script>
 {{ end }}

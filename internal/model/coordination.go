@@ -152,3 +152,31 @@ type PersonLookupResponse struct {
 	AvailableUntil *DateTime      `json:"available_until" swaggertype:"string" example:"2024-12-22T14:00:00"`
 	Values         map[string]any `json:"values"`
 } // @name PersonLookupResponse
+
+// CoordinationDraftSummary is a saved lab variant without its operations
+// @Description A saved variant of the coordination lab (list entry)
+type CoordinationDraftSummary struct {
+	ID        int64  `json:"id" example:"1"`
+	Name      string `json:"name" example:"Variant A"`
+	OpCount   int    `json:"op_count" example:"12"`
+	CreatedAt string `json:"created_at" example:"2024-12-01T10:00:00Z"`
+	UpdatedAt string `json:"updated_at" example:"2024-12-01T10:00:00Z"`
+	// Set when the variant was marked as applied (RFC3339, UTC)
+	AppliedAt *string `json:"applied_at" example:"2024-12-02T09:30:00Z"`
+} // @name CoordinationDraftSummary
+
+// CoordinationDraft is a saved lab variant with its operations
+// @Description A saved variant of the coordination lab including the operations
+type CoordinationDraft struct {
+	CoordinationDraftSummary
+	Ops []CoordinationOp `json:"ops"`
+} // @name CoordinationDraft
+
+// CoordinationDraftRequest creates or completely replaces a variant
+// @Description Request body for saving a lab variant (max 2000 operations, name 1 to 80 characters)
+type CoordinationDraftRequest struct {
+	Name string           `json:"name" example:"Variant A"`
+	Ops  []CoordinationOp `json:"ops"`
+	// On update: true sets applied_at to now
+	Applied bool `json:"applied"`
+} // @name CoordinationDraftRequest

@@ -6,7 +6,7 @@
  */
 import { personKey } from '../stats/compute.js';
 import { applyOpsLocally } from './model.js';
-import { evaluate, rankCandidates } from './rank.js';
+import { compareKeys, evaluate, rankCandidates } from './rank.js';
 
 /**
  * @typedef {Object} AutoResult
@@ -19,16 +19,16 @@ import { evaluate, rankCandidates } from './rank.js';
  * @property {Array<{shiftId:number, name:string, neededIn:number}>} impacts
  *           assignments that were made although the person is needed in the concurrent shift neededIn
  *           (which still lacks experienced people after the run)
- * @property {{assigned:number, declined:number, free:number}} summary
+ * @property {{assigned:number, declined:number, free:number, byLot:number}} summary  byLot = assignments that a tie decided by lot
  */
 
 /**
  * @param {import('./model.js').CoordModel} model
  * @param {number[]} shiftIds  shifts to distribute (the current filter)
- * @param {{source?:'interested'|'all', declineRest?:boolean, lock?:boolean}} options
+ * @param {{source?:'interested'|'all', declineRest?:boolean, lock?:boolean, lottery?:Map<string, number>}} options  lottery decides ties (random number per person key); without it by name
  * @returns {AutoResult}
  */
-export function autoDistribute(model, shiftIds, { source = 'interested', declineRest = true, lock = false } = {}) {
+export function autoDistribute(model, shiftIds, { source = 'interested', declineRest = true, lock = false, lottery = null } = {}) {
   const selected = [];
   const skipped = [];
   for (const id of shiftIds) {
@@ -42,6 +42,7 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
   let current = model;
   const ops = [];
   const impacts = [];
+  let byLot = 0;
   const unfilled = [];
   const closed = new Set();
 
@@ -94,13 +95,14 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
     if (bestExp) best = bestExp;
     if (!best) break;
 
-    const pick = rankCandidates(current, best.id, source).ranked
-      .find(c => !c.declined && c.warnings.length === 0);
+    const [pick, runnerUp] = rankCandidates(current, best.id, source, lottery).ranked
+      .filter(c => !c.declined && c.warnings.length === 0);
     if (!pick) {
       // Cannot happen (eligible is non-empty); close the shift instead of looping.
       closed.add(best.id);
       continue;
     }
+    if (runnerUp && compareKeys(pick.keys, runnerUp.keys) === 0) byLot++;
     const op = { shift_id: best.id, name: current.persons.get(pick.key).name, status: 'assigned' };
     ops.push(op);
     if (pick.impacts.length) impacts.push({ shiftId: best.id, name: op.name, neededIn: pick.impacts[0].params.shiftId });
@@ -162,6 +164,7 @@ export function autoDistribute(model, shiftIds, { source = 'interested', decline
       assigned: ops.filter(o => o.status === 'assigned').length,
       declined: ops.filter(o => o.status === 'declined').length,
       free: unfilled.reduce((sum, u) => sum + u.free, 0),
+      byLot,
     },
   };
 }

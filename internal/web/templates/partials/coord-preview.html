@@ -4,6 +4,8 @@
         <div class="space-y-4">
             <h2 class="text-lg font-semibold"
                 x-text="$t('coord.preview_summary', { assigned: preview.result.summary.assigned, declined: preview.result.summary.declined, free: preview.result.summary.free })"></h2>
+            <p class="text-sm text-base-content/70" x-show="preview.result.summary.byLot > 0"
+                x-text="$t('coord.preview_by_lot', { count: preview.result.summary.byLot })"></p>
 
             <div role="alert" class="alert alert-warning" x-show="previewStale">
                 <span x-text="$t('coord.preview_stale')"></span>

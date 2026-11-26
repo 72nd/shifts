@@ -59,7 +59,7 @@
                         <td class="text-right tabular-nums" x-text="targetLabel($data, p)"></td>
                         <td class="text-right tabular-nums" x-text="number(p.hours)"></td>
                         <td class="text-right tabular-nums" x-text="number(p.load)"></td>
-                        <td class="text-right tabular-nums" x-text="p.popularReceived"></td>
+                        <td class="text-right tabular-nums" x-text="p.popularScore"></td>
                         <td class="text-right tabular-nums" x-text="p.wishesDeclined"></td>
                         <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
                             <td class="max-w-40 truncate" :title="fieldValue($data, p, f)" x-text="fieldValue($data, p, f)"></td>
@@ -87,7 +87,7 @@
                     <span class="block text-sm text-base-content/70"
                         x-text="number(p.hours) + ' ' + $t('coord.col_hours_short') + ', ' + $t('coord.col_load') + ' ' + number(p.load)"></span>
                     <span class="flex flex-wrap gap-1">
-                        <span class="badge badge-ghost badge-sm" x-show="levelLabel($data, p)" x-text="levelLabel($data, p)"></span>
+                        <span class="contents" x-show="model.experience.field && p.level >= 0">{{ template "coord-level-badge" "p.level" }}</span>
                         <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
                             <span class="badge badge-ghost badge-sm" x-show="fieldValue($data, p, f)" x-text="fieldValue($data, p, f)"></span>
                         </template>

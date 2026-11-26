@@ -1,0 +1,222 @@
+{
+ "name": "coordination-lab",
+ "summary": "One-day plan for trying the coordination lab: three shift types, two concurrent Bar shifts (Anna and Cem wish for both), a very popular Stage Tech shift at the same time (5 wishes for 2 places, Anna, Cem and Gus also wish for a Bar), Ben in an afternoon Bar shift and a Stage Tech shift that overlap, a required experience field with three levels that is set for about half of the people, and one shift that needs an experienced person.",
+ "weekday": 5,
+ "plan": {
+  "title_de": "Lab-Test {{year}}",
+  "title_en": "Lab Test {{year}}",
+  "description_de": "Testplan für die Koordination und das Lab. Ein Tag, drei Bereiche, gleichzeitige Schichten und Doppelwünsche.\n\n**Datum:** {{dates_de}}",
+  "description_en": "Test plan for the coordination and the lab. One day, three areas, concurrent shifts and double wishes.\n\n**Date:** {{dates_en}}",
+  "days": 1,
+  "is_multilingual": true,
+  "collaborative_mode": true,
+  "day_boundary_time": "04:00",
+  "time_zone": "Europe/Berlin"
+ },
+ "fields": [
+  {
+   "label_de": "Erfahrung",
+   "label_en": "Experience",
+   "kind": "choice",
+   "options": [
+    {
+     "de": "Neu",
+     "en": "New"
+    },
+    {
+     "de": "Erfahren",
+     "en": "Experienced"
+    },
+    {
+     "de": "Profi",
+     "en": "Pro"
+    }
+   ],
+   "editable_by": "participant",
+   "required": true,
+   "experience": true
+  }
+ ],
+ "people": [
+  {
+   "name": "Anna",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 2
+   }
+  },
+  {
+   "name": "Ben",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  },
+  {
+   "name": "Cem",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Dora",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 2
+   }
+  },
+  {
+   "name": "Eli",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 1
+   }
+  },
+  {
+   "name": "Gus",
+   "available_from": null,
+   "available_until": null,
+   "target_minutes": null,
+   "prefers_long_days": false,
+   "values": {
+    "0": 0
+   }
+  }
+ ],
+ "types": [
+  {
+   "title_de": "Bar",
+   "title_en": "Bar",
+   "description_de": "Getränkeausgabe im Bar-Zelt. Mindestens eine erfahrene Person pro Schicht.",
+   "description_en": "Drinks at the bar tent. At least one experienced person per shift.",
+   "location_de": "Bar-Zelt",
+   "location_en": "Bar tent",
+   "load_factor": 1.5,
+   "popularity": "auto",
+   "exp_min_count": 1,
+   "exp_min_level": 1,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "10:00",
+     "duration": 240,
+     "required": 2,
+     "comment_de": "Vormittags-Bar, Bar A",
+     "comment_en": "Morning bar, bar A",
+     "locked": false,
+     "participants": ["Anna", "Ben", "Cem"]
+    },
+    {
+     "day": 0,
+     "time": "10:00",
+     "duration": 240,
+     "required": 2,
+     "comment_de": "Vormittags-Bar, Bar B (gleichzeitig mit Bar A)",
+     "comment_en": "Morning bar, bar B (at the same time as bar A)",
+     "locked": false,
+     "participants": ["Anna", "Cem", "Gus"]
+    },
+    {
+     "day": 0,
+     "time": "14:00",
+     "duration": 240,
+     "required": 3,
+     "comment_de": "Nachmittags-Bar, Dora ist eingeteilt",
+     "comment_en": "Afternoon bar, Dora is assigned",
+     "locked": false,
+     "participants": ["Ben", "Dora"],
+     "assigned": ["Dora"]
+    }
+   ]
+  },
+  {
+   "title_de": "Hauptbühne",
+   "title_en": "Stage Tech",
+   "description_de": "Technik auf der Hauptbühne.",
+   "description_en": "Technology on the main stage.",
+   "location_de": "Hauptbühne",
+   "location_en": "Main stage",
+   "load_factor": 1.2,
+   "popularity": "auto",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "12:00",
+     "duration": 240,
+     "required": 2,
+     "comment_de": "Mittags-Technik, sehr beliebt (5 Wünsche für 2 Plätze)",
+     "comment_en": "Midday tech, very popular (5 wishes for 2 places)",
+     "locked": false,
+     "participants": ["Anna", "Cem", "Eli", "Gus", "Hana"]
+    },
+    {
+     "day": 0,
+     "time": "16:00",
+     "duration": 180,
+     "required": 3,
+     "comment_de": "Nachmittags-Technik, überschneidet sich mit Bar C",
+     "comment_en": "Afternoon tech, overlaps with bar C",
+     "locked": false,
+     "participants": ["Ben", "Ivo"]
+    }
+   ]
+  },
+  {
+   "title_de": "Aufbau",
+   "title_en": "Cleanup",
+   "description_de": "Aufräumen und Abbau.",
+   "description_en": "Cleaning up and dismantling.",
+   "location_de": "Gelände",
+   "location_en": "Site",
+   "load_factor": 2,
+   "popularity": "normal",
+   "exp_min_count": 0,
+   "shifts": [
+    {
+     "day": 0,
+     "time": "08:00",
+     "duration": 120,
+     "required": 2,
+     "comment_de": "Früher Aufbau",
+     "comment_en": "Early setup",
+     "locked": false,
+     "participants": ["Jonas"]
+    },
+    {
+     "day": 0,
+     "time": "18:00",
+     "duration": 120,
+     "required": 2,
+     "comment_de": "Abbau am Abend",
+     "comment_en": "Evening breakdown",
+     "locked": false,
+     "participants": ["Kim", "Lena"]
+    }
+   ]
+  }
+ ],
+ "coordination": {
+  "attendance_mode": "participant",
+  "default_target_minutes": 360,
+  "min_rest_minutes": 60,
+  "max_day_minutes": 600,
+  "show_declined": false
+ }
+}

@@ -2,8 +2,11 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 
 	"github.com/72nd/shifts/internal/db"
 	"github.com/72nd/shifts/internal/model"
@@ -76,4 +79,194 @@ func (s *Server) handleApplyCoordination(w http.ResponseWriter, r *http.Request)
 		response.Created[i] = model.CoordinationCreated{ShiftID: c.ShiftID, ParticipantID: c.ParticipantID, Name: c.Name}
 	}
 	s.respondJSON(w, response)
+}
+
+// draftError maps database errors of the lab variants to HTTP responses.
+func (s *Server) draftError(w http.ResponseWriter, err error, message string) {
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		s.RespondWithError(w, NewAppError(ErrResourceNotFound, "Variant not found", http.StatusNotFound, err))
+	case errors.Is(err, db.ErrLimitReached):
+		s.RespondWithError(w, NewAppError(ErrLimitReached, fmt.Sprintf("At most %d variants per plan", db.MaxDraftsPerPlan), http.StatusConflict, err))
+	default:
+		s.RespondWithError(w, NewAppError(ErrDatabaseError, message, http.StatusInternalServerError, err))
+	}
+}
+
+// getDraftID parses the variant ID from the URL path.
+func (s *Server) getDraftID(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
+	if err != nil {
+		s.RespondWithError(w, NewAppError(ErrInvalidInput, "Invalid variant ID", http.StatusBadRequest, err))
+		return 0, false
+	}
+	return id, true
+}
+
+// handleListDrafts lists the saved lab variants of a plan
+// @Summary List coordination variants
+// @Description Returns the saved variants of the coordination lab without their operations (with the operation count). Variants are private working states of the admins; they are not exported and not announced to other clients. Requires admin authentication.
+// @Tags Coordination
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param X-Admin-Token header string true "Admin token"
+// @Success 200 {array} model.CoordinationDraftSummary "Variants, most recently changed first"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/coordination/drafts [get]
+func (s *Server) handleListDrafts(w http.ResponseWriter, r *http.Request) {
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+	drafts, err := s.db.ListDrafts(plan.ID)
+	if err != nil {
+		s.draftError(w, err, "Failed to list variants")
+		return
+	}
+	s.respondJSON(w, drafts)
+}
+
+// handleCreateDraft saves a new lab variant
+// @Summary Create coordination variant
+// @Description Saves a variant of the coordination lab (name 1 to 80 characters, up to 2000 operations). At most 50 variants per plan. The operations are validated like those of the apply endpoint but not applied. Requires admin authentication.
+// @Tags Coordination
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param data body model.CoordinationDraftRequest true "Variant"
+// @Success 200 {object} model.CoordinationDraft "Created variant"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan not found"
+// @Failure 409 {string} string "Limit of 50 variants reached"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/coordination/drafts [post]
+func (s *Server) handleCreateDraft(w http.ResponseWriter, r *http.Request) {
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+	var req model.CoordinationDraftRequest
+	if !s.parseJSON(w, r, &req) {
+		return
+	}
+	if result := validation.ValidateCoordinationDraft(&req); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+	draft, err := s.db.CreateDraft(plan.ID, req.Name, req.Ops)
+	if err != nil {
+		s.draftError(w, err, "Failed to create variant")
+		return
+	}
+	s.respondJSON(w, draft)
+}
+
+// handleGetDraft returns one lab variant
+// @Summary Get coordination variant
+// @Description Returns a saved variant including its operations. Requires admin authentication.
+// @Tags Coordination
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param id path int true "Variant ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Success 200 {object} model.CoordinationDraft "Variant"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or variant not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/coordination/drafts/{id} [get]
+func (s *Server) handleGetDraft(w http.ResponseWriter, r *http.Request) {
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+	id, ok := s.getDraftID(w, r)
+	if !ok {
+		return
+	}
+	draft, err := s.db.GetDraft(plan.ID, id)
+	if err != nil {
+		s.draftError(w, err, "Failed to read variant")
+		return
+	}
+	s.respondJSON(w, draft)
+}
+
+// handleUpdateDraft replaces a lab variant
+// @Summary Update coordination variant
+// @Description Replaces name and operations of a variant. With applied set to true, applied_at is set to the current time (the variant is only marked, its operations are not applied). Concurrent writes: the last write wins. Requires admin authentication.
+// @Tags Coordination
+// @Accept json
+// @Produce json
+// @Param token path string true "Plan token"
+// @Param id path int true "Variant ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Param data body model.CoordinationDraftRequest true "Variant"
+// @Success 200 {object} model.CoordinationDraft "Updated variant"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or variant not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/coordination/drafts/{id} [put]
+func (s *Server) handleUpdateDraft(w http.ResponseWriter, r *http.Request) {
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+	id, ok := s.getDraftID(w, r)
+	if !ok {
+		return
+	}
+	var req model.CoordinationDraftRequest
+	if !s.parseJSON(w, r, &req) {
+		return
+	}
+	if result := validation.ValidateCoordinationDraft(&req); result.HasErrors() {
+		s.respondValidationError(w, result)
+		return
+	}
+	draft, err := s.db.UpdateDraft(plan.ID, id, req.Name, req.Ops, req.Applied)
+	if err != nil {
+		s.draftError(w, err, "Failed to update variant")
+		return
+	}
+	s.respondJSON(w, draft)
+}
+
+// handleDeleteDraft deletes a lab variant
+// @Summary Delete coordination variant
+// @Description Deletes a saved variant. Requires admin authentication.
+// @Tags Coordination
+// @Param token path string true "Plan token"
+// @Param id path int true "Variant ID"
+// @Param X-Admin-Token header string true "Admin token"
+// @Success 204 "Deleted"
+// @Failure 400 {string} string "Invalid input"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "Plan or variant not found"
+// @Failure 500 {string} string "Internal server error"
+// @Security AdminToken
+// @Router /plans/{token}/coordination/drafts/{id} [delete]
+func (s *Server) handleDeleteDraft(w http.ResponseWriter, r *http.Request) {
+	plan, ok := s.getPlanByToken(w, r)
+	if !ok {
+		return
+	}
+	id, ok := s.getDraftID(w, r)
+	if !ok {
+		return
+	}
+	if err := s.db.DeleteDraft(plan.ID, id); err != nil {
+		s.draftError(w, err, "Failed to delete variant")
+		return
+	}
+	s.respondNoContent(w)
 }

@@ -1,0 +1,20 @@
+{{ define "coord-lab" }}
+{{/* Lab tab content (from lg). Needs coordLab scope (lab-page.js) inside coordinationPage. Below lg only a hint is shown. */}}
+<template x-if="!isWide">
+    <div class="space-y-3">
+        <p class="text-base-content/70" x-text="$t('coord.lab_narrow')"></p>
+        <button type="button" class="btn min-h-11" @click="setTab('distribute')" x-text="$t('coord.lab_to_distribute')"></button>
+    </div>
+</template>
+<template x-if="isWide">
+    <div class="space-y-3 min-w-0">
+        {{ template "coord-lab-bar" . }}
+        <p class="sr-only" role="status" aria-live="polite" x-text="announce"></p>
+        <p class="text-base-content/70" x-show="!dayOptions.length" x-text="$t('coord.timeline_empty')"></p>
+        <div class="flex gap-3 items-start" x-show="dayOptions.length">
+            {{ template "coord-lab-grid" . }}
+            {{ template "coord-lab-side" . }}
+        </div>
+    </div>
+</template>
+{{ end }}

@@ -1,8 +1,8 @@
 /**
  * Coordination core: the public entry point. Pure functions without Alpine, DOM or fetch.
  *
- *   buildModel(plan, types, people, lotteryByKey)   → CoordModel         (model.js, typedefs there)
- *   rankCandidates(model, shiftId, source)           → ranked + unavailable (rank.js)
+ *   buildModel(plan, types, people)                 → CoordModel         (model.js, typedefs there)
+ *   rankCandidates(model, shiftId, source, draw)    → ranked + unavailable + tie (rank.js)
  *   autoDistribute(model, shiftIds, options)         → ops, lock, unfilled … (autodistribute.js)
  *   concurrentShifts(model, shiftId)                 → shifts overlapping in time (rank.js)
  *   buildTimeline(model, shiftIds, day) / buildPersonTimeline(model, day, shiftId)  (timeline.js)
@@ -13,14 +13,14 @@
  * (personKey, overlap, rest and day checks, popularity) live in ../stats/compute.js.
  */
 export { buildModel, applyOpsLocally, invertOps } from './model.js';
-export { rankCandidates, concurrentShifts } from './rank.js';
+export { rankCandidates, cutTie, concurrentShifts } from './rank.js';
 export { buildTimeline, buildPersonTimeline } from './timeline.js';
 export { autoDistribute } from './autodistribute.js';
 export { personKey } from '../stats/compute.js';
 
 /**
- * Random numbers for the lottery tie-break, one per person key. Create once per page load;
- * "draw again" creates new ones.
+ * Random numbers for a lot, one per person key (the draw of a tie, or the whole run of the auto
+ * distribution). Nothing in the ranking is random without one.
  * @param {Iterable<string>} keys
  * @returns {Map<string, number>}
  */

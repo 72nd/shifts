@@ -16,6 +16,7 @@ It prints the plan URL and the admin password.
 | Name | Content |
 |------|---------|
 | `summer-festival` | Two-day volunteer festival made for trying the coordination (switched on, day boundary 04:00, attendance by participants, default target 6 h). 7 types, 59 shifts, 154 sign-ups, one locked shift. Required select field "Experience" (New / Experienced / Pro; the option order is the level) is the experience field; 34 of 36 people with a record have a level, everyone else shows "Experience missing". **Bar** (1x Experienced; 2x on Sat 18:00 as per-shift override) and **Stage Tech** (popular, 1x Experienced) need experience. Load factors: Cleanup 2, Bar 1.5, Stage Tech 1.2. Bar shifts are overbooked (10 wishes for 4 places). Targets: Emma 600, Jonas 480, Hannah 240, Tariq 120 min. Absent: Mike/Tom/Yusuf leave Sat 18:00, Omar/Zoe arrive Sun 08:00, Elif/Ravi Sun 08:00-18:00, Lena/Rosa/Sven/Tilda/Uwe leave Sun 12:00. |
+| `coordination-lab` | One-day plan for the coordination lab (1 day, 7 shifts, 18 sign-ups). Bar A and Bar B run at the same time, so Anna and Cem have two wishes there. Stage Tech 12:00 is very popular (5 wishes for 2 places, automatic level 2) and overlaps both Bars. Ben has overlapping wishes in Bar C and Stage Tech 16:00. Bar C has Dora assigned. The required field "Experience" (New/Experienced/Pro) is set for six of the eleven people (Anna, Ben, Cem, Dora, Eli, Gus); the others have no record and show "Experience missing". Bars need one experienced person. |
 
 ## Adding a scenario
 
