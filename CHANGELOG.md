@@ -141,3 +141,4 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Compact Distribute Tab** Filters, view switcher, the action buttons of a shift and the "At the same time" chips take far less height on desktop. Touch sizes on small screens are unchanged.
 - **Enhancement: Set Experience in the Person Column** The experience level can now be changed directly in the person list of the distribute tab.
 - **Fix: Coordination Settings Layout** The area table headers no longer overlap, and the disabled sort buttons for person fields are small and unobtrusive. The settings sections are separated by lines and use more width.
+- **Fix: Version in the Footer** The footer showed v0.9.0 because `internal/web/version.go` had not been updated in the last releases. It now shows the current version, and `make build` fails if `version.go` and the newest `CHANGELOG.md` heading differ (`make check-version`).
