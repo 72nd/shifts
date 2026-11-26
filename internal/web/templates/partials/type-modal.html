@@ -132,20 +132,22 @@
                             <option value="normal" x-text="$t('coord.popularity_normal')"></option>
                         </select>
                     </div>
-                    <div class="form-control sm:col-span-2" x-show="experienceOptions().length">
-                        <label class="label py-1"><span class="label-text font-medium" x-text="$t('coord.exp_need')"></span></label>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span x-text="$t('coord.exp_need_min', { count: '' }).trim()"></span>
-                            <input type="number" min="0" x-model.number="shiftTypeModal.exp_min_count" class="input input-bordered input-sm w-20"
-                                   :aria-label="$t('coord.exp_need')" />
-                            <select x-model="shiftTypeModal.exp_min_level" class="select select-bordered select-sm min-w-0 flex-1" :aria-label="$t('coord.exp_need')">
+                    <fieldset class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3" x-show="experienceOptions().length">
+                        <legend class="label-text font-medium py-1" x-text="$t('coord.exp_need')"></legend>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text" x-text="$t('coord.exp_min_count')"></span></label>
+                            <input type="number" min="0" x-model.number="shiftTypeModal.exp_min_count" class="input input-bordered input-sm w-full" />
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text" x-text="$t('coord.exp_min_level')"></span></label>
+                            <select x-model="shiftTypeModal.exp_min_level" class="select select-bordered select-sm w-full">
                                 <option value="" x-text="$t('coord.field_unset')"></option>
                                 <template x-for="o in experienceOptions()" :key="o.id">
                                     <option :value="o.id" :selected="shiftTypeModal.exp_min_level === o.id" x-text="optionLabel(o)"></option>
                                 </template>
                             </select>
                         </div>
-                    </div>
+                    </fieldset>
                 </div>
             </details>
 
