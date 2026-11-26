@@ -26,8 +26,8 @@ Publishing is two separate user requests (finalize, then bump). Do not combine t
 1. The highest heading in `CHANGELOG.md` is the open release. Give it its summary: `## vX.Y.Z – Short summary`. That version is already in `version.go`; do not change it.
 2. Compare the bullets with `git log <last-tag>..HEAD`. Report missing or wrong entries; add them only if the commits make the content unambiguous.
 3. Check that the feature list in `README.md` and `internal/web/docs/help-{de,en}.md` match the release's `Feature` bullets.
-4. Run `go vet ./...` and `make build`. If either fails, report it instead of finalizing.
-5. Stop. Do **not** add the next heading, bump, commit, tag or push. Tell the user to: commit the finalize, create the tag `vX.Y.Z`, push it, run `make dist` and attach the Linux binaries (amd64, arm64) to the GitHub release. Wait for the bump request.
+4. Run `go vet ./...` and `task build`. If either fails, report it instead of finalizing.
+5. Stop. Do **not** add the next heading, bump, commit, tag or push. Tell the user to: commit the finalize, create the tag `vX.Y.Z`, push it, run `task dist` and attach the Linux binaries (amd64, arm64) to the GitHub release. Wait for the bump request.
 
 ## 2. Bump (user asks after the tag is pushed)
 
@@ -39,5 +39,5 @@ Only after the user confirms the finalized version is tagged and pushed.
    - If unsure, or the user names a bump, ask or follow the user.
 2. Insert an empty `## vX.Y.Z` heading (no summary) before `## Feature Request / Backlog`. Leave the closed release untouched.
 3. Set the same version in `internal/web/version.go` (`const Version = "vX.Y.Z"`, with `v` prefix).
-4. Run `make check-version`; it fails if `version.go` differs from the newest `CHANGELOG.md` heading (`make build` runs it too).
+4. Run `task check-version`; it fails if `version.go` differs from the newest `CHANGELOG.md` heading (`task build` runs it too).
 5. Add no bullets and do not commit.

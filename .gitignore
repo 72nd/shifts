@@ -43,5 +43,9 @@ SECRET.txt
 
 # Generated swagger documentation
 docs/
-# local tailwind standalone binary
+# Tailwind standalone CLI downloaded by `task tailwind:install`
+bin/
 opt/tailwindcss-*
+
+# Task runner cache
+.task/

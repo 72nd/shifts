@@ -1,0 +1,17 @@
+/* Input for the Tailwind standalone CLI. Generate static/css/tailwind.css with `task css`. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .container {
+        @apply mx-auto px-4 max-w-7xl;
+    }
+}
+
+/* Drag placeholder of the type sorting modal. The class is set by Sortable at runtime,
+   so it must stay outside @layer (rules in a layer are dropped when the scan does not
+   find the class in the templates). */
+.sortable-ghost {
+    @apply opacity-50;
+}

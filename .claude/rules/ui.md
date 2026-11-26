@@ -60,4 +60,4 @@ Reusable pieces are Go partials in `internal/web/templates/partials/`: `control-
 
 ## Check before reporting
 
-`go vet ./...`, `make build`, run `./shifts`, then look at the change at 390 px and 1280 px, in light and dark theme, in German and English. Take a screenshot if the environment allows it, and ask yourself which element can go.
+`go vet ./...`, `task css` (when Tailwind classes changed), `task build`, run `./shifts`, then look at the change at 390 px and 1280 px, in light and dark theme, in German and English. Take a screenshot if the environment allows it, and ask yourself which element can go.

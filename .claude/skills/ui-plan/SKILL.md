@@ -14,7 +14,7 @@ Rules: `.claude/rules/ui.md`. Read the neighbouring templates and partials first
 5. **States and texts.** Empty, loading, error, overlong, disabled. Give the texts in German and English with their flat i18n keys (German: gender-neutral, informal "Du"). Action names stay the same through the whole flow.
 6. **Reuse.** Which existing partials and daisyUI components are used, and which new partial is justified (needed a second time).
 
-Then list explicitly what is **not** in scope, so neighbouring ideas stay out, and name the checks: `go vet ./...`, `make build`, and what to look at in the running app (390 px and 1280 px, light and dark theme, de and en).
+Then list explicitly what is **not** in scope, so neighbouring ideas stay out, and name the checks: `go vet ./...`, `task css`, `task build`, and what to look at in the running app (390 px and 1280 px, light and dark theme, de and en).
 
 **Density check:** compare with the existing page (height, visible information, values shown twice). Say whether it is denser, equal or less dense; if less dense, justify it or rework it.
 

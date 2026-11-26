@@ -8,7 +8,7 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 
 - **KISS.** The feature set is essentially final. No speculative abstractions; code must stay quickly understandable for humans.
 - **Fixed stack:** Go, `gorilla/mux`, `go-sqlite3` (needs CGO), `bluemonday` for sanitising, `slog` for logging, config in `config.toml` (`config.template.toml` is the reference; `config.toml` is gitignored).
-- **Frontend:** Alpine.js stays in charge of rendering via HTML templating; JS models hold state and client/server communication. Tailwind + daisyUI. **No npm**, neither for development nor operation; third-party assets are vendored in `internal/web/static/vendor/`. Reusable UI pieces are Go `html/template` partials. Use semantic HTML elements or ARIA for accessibility. UI rules are in `.claude/rules/ui.md`; plan new pages and larger components with the `ui-plan` skill first.
+- **Frontend:** Alpine.js stays in charge of rendering via HTML templating; JS models hold state and client/server communication. Tailwind + daisyUI. **No npm**, neither for development nor operation; third-party assets are vendored in `internal/web/static/vendor/`. Tailwind is compiled by its standalone CLI (`task css`) into the committed `internal/web/static/css/tailwind.css`; run it after adding or changing Tailwind classes and commit the result. Reusable UI pieces are Go `html/template` partials. Use semantic HTML elements or ARIA for accessibility. UI rules are in `.claude/rules/ui.md`; plan new pages and larger components with the `ui-plan` skill first.
 - **i18n:** Alpine i18n plugin with flat JSON files `internal/web/static/i18n/{de,en}.json` (keep them flat). User-entered fields that need both languages (e.g. titles) must be filled in both.
 - **Language:** code, comments, log output, commit messages and the changelog are English. German UI text uses gender-neutral wording, otherwise a colon (`Teilnehmer:innen`), and addresses the user informally with "Du".
 
@@ -27,13 +27,13 @@ The original design brief is `opt/v2-grundprompt.txt` (German). Read it before m
 
 ## Commands
 
-- `make help` lists targets. `make install` generates Swagger docs and builds; `make build` only builds (`CGO_ENABLED=1`); `make dist` cross-compiles Linux binaries (needs cross compilers).
+- `task` lists tasks (`Taskfile.yml`). `task install` generates Swagger docs and builds; `task build` only builds (`CGO_ENABLED=1`); `task run` starts the app from the sources; `task css` regenerates the Tailwind stylesheet; `task dist` cross-compiles Linux binaries (needs cross compilers).
 - `go vet ./...` for static checks.
-- There are **no Go tests**. `load-test/` holds a Locust script. Verify changes with `go vet ./...`, `make build` and by running `./shifts` (port from `config.toml`) and exercising the feature.
+- There are **no Go tests**. `load-test/` holds a Locust script. Verify changes with `go vet ./...`, `task build` and by running `./shifts` (port from `config.toml`) and exercising the feature.
 
 ## Do not touch / do not read
 
-- `docs/` (Swagger output, gitignored and generated): never edit by hand; change handler annotations and run `make docs`.
+- `docs/` (Swagger output, gitignored and generated): never edit by hand; change handler annotations and run `task docs`.
 - `v1/`: legacy implementation, reference only.
 - `data/`, `local/`, `SECRET.txt`, `12w-deploy.md`: private runtime data, secrets and deployment notes. Do not read or print them.
 - `opt/`: design assets and notes. `opt/specStory.md` is a ~400 KB chat log; do not read it.

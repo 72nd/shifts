@@ -1,0 +1,170 @@
+# Taskfile for building the Shifts application (https://taskfile.dev).
+# Run `task` to list all tasks. Variables are passed like `task update MODE=dev`.
+version: '3'
+
+vars:
+  REPO_URL: git@github.com/72nd/schipla.git
+  BRANCH: '{{.BRANCH | default "v2"}}'
+  # tag | dev
+  MODE: '{{.MODE | default "tag"}}'
+  GO_OUTPUT: shifts
+  GO_MAIN: cmd/shifts/main.go
+  SWAG:
+    sh: echo "$(go env GOPATH)/bin/swag"
+  # Tailwind standalone CLI (no npm). Version 3 matches the former in-browser build.
+  TAILWIND_VERSION: v3.4.17
+  TAILWIND_BIN: bin/tailwindcss-{{.TAILWIND_VERSION}}
+  CSS_INPUT: internal/web/static/css/tailwind-input.css
+  CSS_OUTPUT: internal/web/static/css/tailwind.css
+
+tasks:
+  default:
+    desc: List all tasks
+    silent: true
+    cmds:
+      - task --list
+
+  all:
+    desc: Update to the latest release and rebuild (shortcut for update + install)
+    cmds:
+      - task: update
+      - task: install
+
+  install:
+    desc: Generate Swagger docs and compile the binary
+    cmds:
+      - task: docs
+      - task: build
+
+  update:
+    desc: Fetch and switch to the latest release tag (MODE=dev for the dev branch)
+    cmds:
+      - |
+        if [ ! -d ".git" ]; then
+          echo "No git repo found. Cloning..."
+          git clone {{.REPO_URL}} .
+        fi
+      - echo "Fetching latest changes and tags..."
+      - git fetch --all --tags
+      - |
+        if [ "{{.MODE}}" = "dev" ]; then
+          echo "Switching to dev mode (branch: {{.BRANCH}})..."
+          git checkout {{.BRANCH}}
+          git pull --ff-only origin {{.BRANCH}}
+        else
+          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Switching to latest tag ($LATEST_TAG)..."
+          git checkout $LATEST_TAG
+        fi
+
+  # swag parses the standard library with the go/parser it was built with, so a
+  # binary built by an older Go fails on newer stdlib syntax. Reinstall whenever
+  # the swag version or the Go version of the binary differs.
+  tools:
+    desc: Install the Swag CLI in the version from go.mod, built with the current Go toolchain
+    cmds:
+      - |
+        WANT_SWAG=$(go list -m -f '{{"{{.Version}}"}}' github.com/swaggo/swag)
+        WANT_GO=$(go env GOVERSION)
+        HAVE=$( [ -x "{{.SWAG}}" ] && go version -m "{{.SWAG}}" 2>/dev/null )
+        HAVE_GO=$(echo "$HAVE" | head -1 | awk '{print $2}')
+        HAVE_SWAG=$(echo "$HAVE" | awk '$1=="mod" && $2=="github.com/swaggo/swag" {print $3}')
+        if [ "$HAVE_SWAG" != "$WANT_SWAG" ] || [ "$HAVE_GO" != "$WANT_GO" ]; then
+          echo "Installing swag $WANT_SWAG with $WANT_GO..."
+          go install github.com/swaggo/swag/cmd/swag@$WANT_SWAG
+        else
+          echo "swag $HAVE_SWAG ($HAVE_GO) already installed"
+        fi
+
+  docs:
+    desc: Generate Swagger API documentation (runs tools first)
+    deps: [tools]
+    cmds:
+      - echo "Generating Swagger docs..."
+      - '{{.SWAG}} init -g {{.GO_MAIN}} -o docs --parseDependency --parseInternal'
+
+  tailwind:install:
+    desc: Download the Tailwind standalone CLI (pinned version) into bin/
+    status:
+      - test -x {{.TAILWIND_BIN}}
+    cmds:
+      - |
+        case "$(uname -s)-$(uname -m)" in
+          Darwin-arm64)  ASSET=tailwindcss-macos-arm64 ;;
+          Darwin-x86_64) ASSET=tailwindcss-macos-x64 ;;
+          Linux-x86_64)  ASSET=tailwindcss-linux-x64 ;;
+          Linux-aarch64|Linux-arm64) ASSET=tailwindcss-linux-arm64 ;;
+          *) echo "Unsupported platform $(uname -s)-$(uname -m)"; exit 1 ;;
+        esac
+        mkdir -p bin
+        echo "Downloading $ASSET {{.TAILWIND_VERSION}}..."
+        curl -fsSL -o {{.TAILWIND_BIN}} "https://github.com/tailwindlabs/tailwindcss/releases/download/{{.TAILWIND_VERSION}}/$ASSET"
+        chmod +x {{.TAILWIND_BIN}}
+
+  css:
+    desc: Generate the Tailwind stylesheet (commit the result, it is embedded in the binary)
+    deps: ['tailwind:install']
+    env:
+      BROWSERSLIST_IGNORE_OLD_DATA: "1"
+    cmds:
+      - '{{.TAILWIND_BIN}} -c tailwind.config.js -i {{.CSS_INPUT}} -o {{.CSS_OUTPUT}} --minify'
+
+  css:watch:
+    desc: Regenerate the Tailwind stylesheet whenever templates or scripts change
+    deps: ['tailwind:install']
+    env:
+      BROWSERSLIST_IGNORE_OLD_DATA: "1"
+    cmds:
+      - '{{.TAILWIND_BIN}} -c tailwind.config.js -i {{.CSS_INPUT}} -o {{.CSS_OUTPUT}} --watch'
+
+  check-version:
+    desc: Fail if internal/web/version.go differs from the newest CHANGELOG.md release heading
+    silent: true
+    cmds:
+      - |
+        CL=$(grep -oE '^## v[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | tail -1 | cut -c4-)
+        V=$(grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' internal/web/version.go)
+        if [ "$CL" != "$V" ]; then echo "Version mismatch: version.go=$V, CHANGELOG.md=$CL"; exit 1; fi
+
+  build:
+    desc: Compile the binary (CGO_ENABLED=1 required for SQLite)
+    deps: [check-version]
+    env:
+      CGO_ENABLED: "1"
+    cmds:
+      - echo "Building {{.GO_OUTPUT}}..."
+      - go build -o {{.GO_OUTPUT}} {{.GO_MAIN}}
+      - echo "Build complete ./{{.GO_OUTPUT}}"
+
+  run:
+    desc: Run the application without building a binary (needs config.toml; arguments after --)
+    env:
+      CGO_ENABLED: "1"
+    cmds:
+      - go run {{.GO_MAIN}} {{.CLI_ARGS}}
+
+  # Requires the cross-compiler aarch64-linux-gnu-gcc for the arm64 build.
+  dist:
+    desc: Cross-compile for linux/amd64 and linux/arm64 into dist/
+    cmds:
+      - mkdir -p dist
+      - echo "Building linux/amd64..."
+      - CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o dist/{{.GO_OUTPUT}}-linux-amd64 {{.GO_MAIN}}
+      - echo "Building linux/arm64..."
+      - CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc go build -o dist/{{.GO_OUTPUT}}-linux-arm64 {{.GO_MAIN}}
+      - ls -lh dist/
+
+  status:
+    desc: Show current git state and active branch
+    cmds:
+      - echo "MODE={{.MODE}}"
+      - echo "BRANCH={{.BRANCH}}"
+      - git --no-pager describe --tags --dirty --always
+      - git --no-pager branch --show-current
+
+  clean:
+    desc: Remove the compiled binary, generated docs/ folder, and dist/
+    cmds:
+      - echo "Cleaning up..."
+      - rm -f {{.GO_OUTPUT}}
+      - rm -rf docs dist

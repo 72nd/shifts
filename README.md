@@ -122,9 +122,10 @@ Run the application:
 
 - [Go 1.24](https://go.dev/dl/) or higher
 - SQLite3 development headers (required because the Go SQLite driver uses CGo)
-- The Swag CLI tool is also required to generate the API documentation. When building via the Makefile it is installed automatically; for a manual build see Option B below.
+- The Swag CLI tool is also required to generate the API documentation. When building via the Taskfile it is installed automatically; for a manual build see Option B below.
+- [Task](https://taskfile.dev/installation/) (a Makefile alternative) for Option A. Option B works without it.
 
-### Option A — Using the Makefile (recommended)
+### Option A — Using the Taskfile (recommended)
 
 1. Install the SQLite development headers:
    - **Debian / Ubuntu:** `sudo apt install libsqlite3-dev`
@@ -146,7 +147,7 @@ Run the application:
 
 4. Build the application — Swag is installed automatically if missing:
    ```bash
-   make install
+   task install
    ```
 
 5. Run the application:
@@ -154,7 +155,7 @@ Run the application:
    ./shifts
    ```
 
-Run `make help` to see all available targets.
+Run `task` to see all available tasks. `task run` starts the application directly from the sources without building a binary.
 
 ### Option B — Manual
 
@@ -197,18 +198,30 @@ Run `make help` to see all available targets.
    ```
 
 
+### Styles (Tailwind)
+
+The stylesheet `internal/web/static/css/tailwind.css` is generated with the [Tailwind standalone CLI](https://tailwindcss.com/blog/standalone-cli), so neither building nor running Shifts needs Node.js or npm. The generated file is committed and embedded in the binary; you only need to regenerate it after changing Tailwind classes in the templates or scripts:
+
+```bash
+task css          # one-off; downloads the pinned CLI into bin/ on first use
+task css:watch    # regenerate on every change while developing
+```
+
+Commit the regenerated `tailwind.css` together with the change.
+
+
 ## Updating
 
 To update an existing installation to the latest release, run:
 
 ```bash
-make all
+task all
 ```
 
 This fetches the latest release tag, regenerates the Swagger docs, and recompiles the binary in one step. To update to the latest development branch instead:
 
 ```bash
-make update MODE=dev && make install
+task update MODE=dev && task install
 ```
 
 The database schema is upgraded automatically on startup. Before the first migration on an existing database, Shifts writes a backup next to it (`<db_path>.<timestamp>.pre-migration.bak`). A database that was migrated by a newer version is not opened by an older binary; restore the backup to go back.
@@ -275,7 +288,7 @@ Live updates are sent over Server-Sent Events. Please check the following when y
 
 ## API Documentation
 
-The Swagger documentation is generated automatically during every build (via `make install` or `make docs`). To regenerate it manually, run from the project root:
+The Swagger documentation is generated automatically during every build (via `task install` or `task docs`). To regenerate it manually, run from the project root:
 
 ```bash
 swag init -g cmd/shifts/main.go -o docs --parseDependency --parseInternal
