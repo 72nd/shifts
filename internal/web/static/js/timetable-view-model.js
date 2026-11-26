@@ -63,6 +63,30 @@ function formatDisplayDate(date, locale, startDate = null) {
     return formatted;
 }
 
+/** The day entry for a key, created on first use. */
+function getDay(dayMap, key, date) {
+    if (!dayMap.has(key)) {
+        dayMap.set(key, { dateKey: key, date, columns: new Map() });
+    }
+    return dayMap.get(key);
+}
+
+function newColumn(typeMeta) {
+    return { typeId: typeMeta.id, typeTitle: typeMeta.title, color: typeMeta.color, shifts: [] };
+}
+
+/** The column of a shift type within a day, created on first use. */
+function getColumn(dayEntry, typeMeta) {
+    if (!dayEntry.columns.has(typeMeta.id)) {
+        dayEntry.columns.set(typeMeta.id, newColumn(typeMeta));
+    }
+    return dayEntry.columns.get(typeMeta.id);
+}
+
+/**
+ * One drawn box of a shift. `id` is the shift, `cellKey` the box: a shift reaching past
+ * midnight is drawn once per day it touches (see continuation boxes below).
+ */
 function normalizeShift({
     shift,
     typeMeta,
@@ -97,7 +121,7 @@ function normalizeShift({
     const isLocked = Boolean(shift.is_locked);
     const canRegister = !isLocked && (collaborativeMode || required === -1 || participants.length < required);
 
-    const result = {
+    return {
         id: shift.id,
         cellKey: String(shift.id), // expand/overflow state is kept per drawn box (a midnight shift has two)
         typeId: typeMeta.id,
@@ -129,8 +153,6 @@ function normalizeShift({
         typeColor: typeMeta.color,
         isLocked
     };
-    
-    return result;
 }
 
 /**
@@ -205,26 +227,8 @@ export function buildTimetableModel({
 
             const { dateKey, offsetMinutes, normalizedDate } = resolveDayContext(startDate, boundaryMinutes);
 
-            if (!dayMap.has(dateKey)) {
-                dayMap.set(dateKey, {
-                    dateKey,
-                    date: normalizedDate,
-                    columns: new Map()
-                });
-            }
-
-            const dayEntry = dayMap.get(dateKey);
-
-            if (!dayEntry.columns.has(typeMeta.id)) {
-                dayEntry.columns.set(typeMeta.id, {
-                    typeId: typeMeta.id,
-                    typeTitle: typeMeta.title,
-                    color: typeMeta.color,
-                    shifts: []
-                });
-            }
-
-            const column = dayEntry.columns.get(typeMeta.id);
+            const dayEntry = getDay(dayMap, dateKey, normalizedDate);
+            const column = getColumn(dayEntry, typeMeta);
             const normalized = normalizeShift({
                 shift,
                 typeMeta,
@@ -241,21 +245,10 @@ export function buildTimetableModel({
             while (rest > 0) {
                 continuationDate = addDays(continuationDate, 1);
                 const key = toDateKey(continuationDate);
-                if (!dayMap.has(key)) {
-                    dayMap.set(key, { dateKey: key, date: continuationDate, columns: new Map() });
-                }
-                const nextDay = dayMap.get(key);
-                if (!nextDay.columns.has(typeMeta.id)) {
-                    nextDay.columns.set(typeMeta.id, {
-                        typeId: typeMeta.id,
-                        typeTitle: typeMeta.title,
-                        color: typeMeta.color,
-                        shifts: []
-                    });
-                }
+                const nextColumn = getColumn(getDay(dayMap, key, continuationDate), typeMeta);
                 const visible = Math.min(rest, MINUTES_PER_DAY);
                 rest -= visible;
-                nextDay.columns.get(typeMeta.id).shifts.push({
+                nextColumn.shifts.push({
                     ...normalized,
                     startMinutes: 0,
                     endMinutes: Math.max(visible, 5),
@@ -272,12 +265,7 @@ export function buildTimetableModel({
         .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
         .map(dayEntry => {
             const columns = normalizedTypes.map(typeMeta => {
-                const column = dayEntry.columns.get(typeMeta.id) || {
-                    typeId: typeMeta.id,
-                    typeTitle: typeMeta.title,
-                    color: typeMeta.color,
-                    shifts: []
-                };
+                const column = dayEntry.columns.get(typeMeta.id) || newColumn(typeMeta);
                 assignOverlapLanes(column.shifts);
                 return {
                     ...column,

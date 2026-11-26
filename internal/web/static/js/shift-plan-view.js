@@ -10,7 +10,7 @@ import { SortTypesModal } from './sort-types-modal.js';
 import { SettingsModal } from './settings-modal.js';
 import { FilterManager } from './filter-manager.js';
 import { ExportModal } from './export-modal.js';
-import { buildTimetableModel } from './timetable-view-model.js';
+import { timetableViewState } from './timetable-view-state.js';
 import {
     parseDateTime, serializeDateTime, addMinutes as addWallMinutes, dateKey as toDateKey, logicalDay,
     formatTime as formatWallTime, formatDate as formatWallDate
@@ -18,8 +18,13 @@ import {
 import { parseBoundaryTime } from './timetable-view-layout.js';
 import { PlanRealtime } from './realtime.js';
 
+/** Adds the properties of `mixin` to `view`, keeping getters and setters (a spread would evaluate them). */
+function composeView(view, mixin) {
+    return Object.defineProperties(view, Object.getOwnPropertyDescriptors(mixin));
+}
+
 document.addEventListener('alpine:init', () => {
-    Alpine.data('shiftPlanView', () => ({
+    Alpine.data('shiftPlanView', () => composeView({
         // State
         plan: null,
         shiftTypes: [],
@@ -53,13 +58,6 @@ document.addEventListener('alpine:init', () => {
         // View state
         viewMode: 'timetable',
         planToken: '',
-        timetableLayoutObserver: null, // ResizeObserver: font size / width changes
-        timetableSlotPx: 0, // resolved slot height in px (from CSS --timetable-slot-height)
-        expandedTimetableShifts: {},
-        shiftOverflowState: {},
-        activeDayKey: null,
-        expandedTimetableGaps: {}, // collapsed empty stretches the user opened: { 'dateKey|start-end': true }
-        scrollTimeout: null,
 
         // Collision detection state
         participantCollisions: {}, // Map: participant name -> array of colliding shift IDs
@@ -166,15 +164,6 @@ document.addEventListener('alpine:init', () => {
             return this.filterManager.filterShiftTypes(this.shiftTypes);
         },
 
-        get timetableModel() {
-            return buildTimetableModel({
-                shiftTypes: this.filteredShiftTypes || [],
-                plan: this.plan || {},
-                locale: this.$locale(),
-                expandedGaps: this.expandedTimetableGaps
-            });
-        },
-
         // Filter functions
         filterShiftsByDate(shifts) {
             return shifts;
@@ -230,6 +219,7 @@ document.addEventListener('alpine:init', () => {
 
             // Initialize managers
             this.filterManager = new FilterManager();
+            this.initTimetableModel();
 
             // Filters and target shift from the URL, read once; the URL is not written back
             const urlParams = new URLSearchParams(window.location.search);
@@ -329,426 +319,6 @@ document.addEventListener('alpine:init', () => {
                     this.detectAllShiftOverflows();
                 }
             });
-        },
-
-        getTimetableColumnTemplate(day) {
-            const columnCount = day?.columns?.length || 0;
-            const count = Math.max(columnCount, 1);
-            return `repeat(${count}, minmax(220px, 1fr))`;
-        },
-
-        getTimetableDayShiftCount(day) {
-            if (!day?.columns) return 0;
-            return day.columns.reduce((acc, column) => acc + (column.shifts?.length || 0), 0);
-        },
-
-        /** Collapse or expand an empty stretch of a day (the band in the timetable). */
-        toggleTimetableGap(key) {
-            if (!key) return;
-            const next = { ...this.expandedTimetableGaps };
-            if (next[key]) {
-                delete next[key];
-            } else {
-                next[key] = true;
-            }
-            this.expandedTimetableGaps = next;
-            this.$nextTick(() => this.detectAllShiftOverflows());
-        },
-
-        getTimetableShiftStyle(shift) {
-            if (!shift) return {};
-            // Sizes follow the CSS variable (rem based), so they scale with the browser font size
-            const slot = 'var(--timetable-slot-height)';
-            // segmentTop: start relative to the visible segment (empty stretches are collapsed)
-            const top = `calc(${Math.max(0, shift.segmentTop ?? shift.startMinutes ?? 0)} * ${slot} / 15)`;
-            const height = `max(${slot}, calc(${shift.durationMinutes || 15} * ${slot} / 15))`;
-            const laneCount = Math.max(shift.laneCount || 1, 1);
-            const laneIndex = Math.min(shift.laneIndex || 0, laneCount - 1);
-            const widthPercent = 100 / laneCount;
-            const leftPercent = widthPercent * laneIndex;
-            const horizontalPadding = laneCount > 1 ? 6 : 4;
-
-            return {
-                top,
-                height,
-                left: `calc(${leftPercent}% + 2px)`,
-                width: `calc(${widthPercent}% - ${horizontalPadding}px)`,
-                '--shift-color': shift.typeColor || 'oklch(var(--p))'
-            };
-        },
-
-        isTimetableShiftExpanded(shiftId) {
-            return Boolean(this.expandedTimetableShifts?.[shiftId]);
-        },
-
-        toggleTimetableShift(shiftId) {
-            if (!shiftId) return;
-            // Only toggle if there's overflow
-            if (!this.hasShiftOverflow(shiftId)) return;
-            const nextState = { ...this.expandedTimetableShifts };
-            nextState[shiftId] = !nextState[shiftId];
-            this.expandedTimetableShifts = nextState;
-            this.$nextTick(() => this.detectAllShiftOverflows());
-        },
-
-        // Check if a shift cell has overflow
-        hasShiftOverflow(shiftId) {
-            return Boolean(this.shiftOverflowState?.[shiftId]);
-        },
-
-        /** Resolve --timetable-slot-height (rem or px) to pixels. */
-        readTimetableSlotPx() {
-            const container = this.$refs.timetableContainer;
-            if (!container) return 0;
-            const raw = getComputedStyle(container).getPropertyValue('--timetable-slot-height').trim();
-            const value = parseFloat(raw) || 0;
-            if (raw.endsWith('rem')) {
-                return value * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
-            }
-            return value;
-        },
-
-        /**
-         * Re-detect card overflow when the slot height (browser font size) or the
-         * container width changes; `resize` does not fire for font size changes.
-         */
-        observeTimetableLayout() {
-            this.$nextTick(() => {
-                const container = this.$refs.timetableContainer;
-                if (!container || typeof ResizeObserver === 'undefined') return;
-                if (this.timetableLayoutObserver) this.timetableLayoutObserver.disconnect();
-                this.timetableSlotPx = this.readTimetableSlotPx();
-                let lastWidth = container.clientWidth;
-                this.timetableLayoutObserver = new ResizeObserver(() => {
-                    const slotPx = this.readTimetableSlotPx();
-                    const width = container.clientWidth;
-                    // Only react to real changes: overflow state changes never resize these
-                    if (slotPx === this.timetableSlotPx && width === lastWidth) return;
-                    this.timetableSlotPx = slotPx;
-                    lastWidth = width;
-                    this.detectAllShiftOverflows();
-                });
-                this.timetableLayoutObserver.observe(container);
-                // The slot element resizes with the font size even if the container (max-height) does not
-                const slotEl = container.querySelector('.timetable-time-slot');
-                if (slotEl) this.timetableLayoutObserver.observe(slotEl);
-            });
-        },
-
-        /** One RAF pass over all timetable shift cells — single reactivity update (performance). */
-        detectAllShiftOverflows() {
-            requestAnimationFrame(() => {
-                const container = this.$refs.timetableContainer;
-                if (!container) return;
-                const newState = {};
-                container.querySelectorAll('[data-cell-key]').forEach(el => {
-                    const shiftId = el.dataset.cellKey;
-                    if (!shiftId) return;
-                    const contentEl = el.querySelector('.timetable-shift-content');
-                    if (!contentEl) return;
-                    const containerHeight = el.clientHeight;
-                    const contentHeight = contentEl.scrollHeight;
-                    const style = getComputedStyle(el);
-                    const paddingTop = parseFloat(style.paddingTop) || 0;
-                    const paddingBottom = parseFloat(style.paddingBottom) || 0;
-                    const availableHeight = containerHeight - paddingTop - paddingBottom;
-                    newState[shiftId] = contentHeight > (availableHeight - 3);
-                });
-                const old = this.shiftOverflowState || {};
-                const keys = Object.keys(newState);
-                const same = keys.length === Object.keys(old).length && keys.every(k => old[k] === newState[k]);
-                if (!same) this.shiftOverflowState = newState;
-            });
-        },
-
-        // Get the day navigation bar height from CSS variable
-        getDayNavHeight() {
-            const container = this.$refs.timetableContainer;
-            if (!container) return 40; // Fallback value
-            const computedStyle = getComputedStyle(container);
-            const height = computedStyle.getPropertyValue('--timetable-day-nav-height');
-            return height ? parseInt(height) : 40; // Default to 40px if not found
-        },
-
-        // Scroll to a specific day in the timetable
-        scrollToDay(dateKey) {
-            if (!dateKey || !this.timetableModel?.days) return;
-            
-            const container = this.$refs.timetableContainer;
-            if (!container) return;
-
-            // Find the day section element
-            const daySection = container.querySelector(`[data-day-key="${dateKey}"]`);
-            if (!daySection) return;
-
-            // Calculate the scroll position
-            // We need to account for the sticky headers
-            const dayNavHeight = this.getDayNavHeight();
-            const headerHeight = 36; // Height of type headers
-            
-            // Get the position of the day section relative to the container
-            const containerRect = container.getBoundingClientRect();
-            const dayRect = daySection.getBoundingClientRect();
-            
-            // Calculate scroll position: current scroll + offset from container top - sticky header heights
-            const scrollTop = container.scrollTop + (dayRect.top - containerRect.top) - dayNavHeight - headerHeight;
-
-            // Smooth scroll to the day
-            container.scrollTo({
-                top: Math.max(0, scrollTop),
-                behavior: 'smooth'
-            });
-
-            // Update active day immediately for better UX
-            this.activeDayKey = dateKey;
-        },
-
-        // Handle scroll events to update active day
-        handleTimetableScroll() {
-            // Debounce scroll handling
-            if (this.scrollTimeout) {
-                clearTimeout(this.scrollTimeout);
-            }
-
-            this.scrollTimeout = setTimeout(() => {
-                this.updateActiveDay();
-            }, 100);
-        },
-
-        // Update which day is currently visible based on scroll position
-        updateActiveDay() {
-            const container = this.$refs.timetableContainer;
-            if (!container || !this.timetableModel?.days || this.timetableModel.days.length === 0) {
-                return;
-            }
-
-            const containerRect = container.getBoundingClientRect();
-            const dayNavHeight = this.getDayNavHeight();
-            const headerHeight = 36; // Height of type headers
-            const viewportTop = container.scrollTop + dayNavHeight + headerHeight + 20; // Small offset for better UX
-
-            // Find which day section is currently most visible in the viewport
-            let activeDay = null;
-            let maxVisibleArea = 0;
-
-            this.timetableModel.days.forEach(day => {
-                const daySection = container.querySelector(`[data-day-key="${day.dateKey}"]`);
-                if (!daySection) return;
-
-                const dayRect = daySection.getBoundingClientRect();
-                const dayTop = dayRect.top - containerRect.top + container.scrollTop;
-                const dayBottom = dayTop + daySection.offsetHeight;
-                const containerBottom = container.scrollTop + container.clientHeight;
-
-                // Calculate how much of this day is visible
-                const visibleTop = Math.max(viewportTop, dayTop);
-                const visibleBottom = Math.min(containerBottom, dayBottom);
-                const visibleArea = Math.max(0, visibleBottom - visibleTop);
-
-                // If this day has more visible area than the current best, make it active
-                if (visibleArea > maxVisibleArea) {
-                    maxVisibleArea = visibleArea;
-                    activeDay = day.dateKey;
-                }
-            });
-
-            // Fallback: if no day found (shouldn't happen), use the first day
-            if (!activeDay && this.timetableModel.days.length > 0) {
-                activeDay = this.timetableModel.days[0].dateKey;
-            }
-
-            if (activeDay && this.activeDayKey !== activeDay) {
-                this.activeDayKey = activeDay;
-            }
-        },
-
-        // Initialize active day when timetable is shown
-        initTimetableActiveDay() {
-            this.$nextTick(() => {
-                if (this.timetableModel?.days && this.timetableModel.days.length > 0) {
-                    // Set initial active day to the first day
-                    this.activeDayKey = this.timetableModel.days[0].dateKey;
-                    // Update based on scroll position after a short delay
-                    setTimeout(() => {
-                        this.updateActiveDay();
-                    }, 100);
-                }
-            });
-        },
-
-        // Handle register button click in timetable view
-        handleTimetableRegister(shift) {
-            if (!shift) return;
-            
-            // Find the actual shift object from shiftTypes
-            let actualShift = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    break;
-                }
-            }
-            
-            if (!actualShift) return;
-            
-            // Open join modal
-            this.openJoinModal(actualShift);
-        },
-
-        // Handle right-click context menu for admins
-        handleTimetableShiftContextMenu(shift, event) {
-            if (!shift || !this.isAdmin) return;
-            
-            event.preventDefault();
-            
-            // Find the actual shift object and type from shiftTypes
-            let actualShift = null;
-            let actualType = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    actualType = type;
-                    break;
-                }
-            }
-            
-            if (!actualShift) return;
-            
-            this.showTimetableShiftContextMenu(actualShift, actualType, event);
-        },
-
-        handleTimetableShiftClick(shift, event) {
-            if (!shift) return;
-            
-            // Find the actual shift object and type from shiftTypes
-            let actualShift = null;
-            let actualType = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    actualType = type;
-                    break;
-                }
-            }
-            
-            if (!actualShift) return;
-            
-            // For admins on right-click, show context menu options
-            if (this.isAdmin && event.button === 2) {
-                event.preventDefault();
-                this.showTimetableShiftContextMenu(actualShift, actualType, event);
-                return;
-            }
-            
-            // Open join modal for normal click
-            this.openJoinModal(actualShift);
-        },
-
-        showTimetableShiftContextMenu(shift, type, event) {
-            // This will be handled by the template with x-data
-            // We just dispatch an event
-            this.$dispatch('show-timetable-context-menu', { 
-                shift, 
-                type,
-                x: event.clientX, 
-                y: event.clientY 
-            });
-        },
-
-        handleTimetableShiftEdit(shift, column) {
-            // Find the actual shift and type objects
-            let actualShift = null;
-            let actualType = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    actualType = type;
-                    break;
-                }
-            }
-            if (actualShift && actualType) {
-                this.openShiftModal(actualShift, actualType, false);
-            }
-        },
-
-        handleTimetableShiftDuplicate(shift, column) {
-            // Find the actual shift and type objects
-            let actualShift = null;
-            let actualType = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    actualType = type;
-                    break;
-                }
-            }
-            if (actualShift && actualType) {
-                this.openShiftModal(actualShift, actualType, true);
-            }
-        },
-
-        handleTimetableShiftDelete(shift, column) {
-            // Find the actual shift and type objects
-            let actualShift = null;
-            let actualType = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    actualType = type;
-                    break;
-                }
-            }
-            if (actualShift && actualType) {
-                this.openDeleteShiftModal(actualShift, actualType);
-            }
-        },
-
-        handleTimetableShiftToggleLock(shift, column) {
-            // Find the actual shift and type objects
-            let actualShift = null;
-            let actualType = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    actualType = type;
-                    break;
-                }
-            }
-            if (actualShift && actualType) {
-                if (actualShift.is_locked) {
-                    this.unlockShift(actualShift, actualType);
-                } else {
-                    this.lockShift(actualShift, actualType);
-                }
-            }
-        },
-
-        handleTimetableParticipantRemove(shift, participant, event) {
-            if (!shift || !participant) return;
-            event.stopPropagation();
-            
-            // Find the actual shift object from shiftTypes
-            let actualShift = null;
-            for (const type of this.shiftTypes) {
-                const found = type.shifts?.find(s => s.id === shift.id);
-                if (found) {
-                    actualShift = found;
-                    break;
-                }
-            }
-            
-            if (!actualShift) return;
-            if (actualShift.is_locked && !this.isAdmin) return;
-
-            // Open remove modal
-            this.openRemoveModal(actualShift, participant);
         },
 
         // Gruppiere Schichten nach Datum
@@ -1687,5 +1257,5 @@ document.addEventListener('alpine:init', () => {
                 alert(AlpineI18n.t('shift_plans.view.error_unlocking_shift'));
             }
         }
-    }));
+    }, timetableViewState()));
 }); 
