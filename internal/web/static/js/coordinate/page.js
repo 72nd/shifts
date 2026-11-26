@@ -55,6 +55,8 @@ document.addEventListener('alpine:init', () => {
 
         // Changes in flight and undo
         busy: false,
+        /** Inline level saving per person key: { saving: boolean, error: string } */
+        levelState: {},
         pendingKey: null, // person key or other id of the action in flight (for the loading state)
         actionError: null,
         // Error of the open modal; same shape as the other modals so the error-display partial works
@@ -131,6 +133,45 @@ document.addEventListener('alpine:init', () => {
         },
 
         // --- Server communication ---
+
+        /**
+         * Saves the experience level of a person inline (full person record, so nothing else is lost).
+         * A person without stored row gets a new record with name and level only. Used by the people
+         * tab and the person column of the distribute tab.
+         */
+        async setLevel(p, event) {
+            const select = event.target;
+            const fieldId = this.model.experience.field.id;
+            const stored = p.level >= 0 ? this.model.experience.options[p.level].id : '';
+            if (select.value === stored || this.busy) {
+                select.value = stored;
+                return;
+            }
+            const r = p.row;
+            const values = { ...(r?.values || {}) };
+            if (select.value) values[fieldId] = select.value;
+            else delete values[fieldId];
+            const body = {
+                name: p.name,
+                available_from: r?.available_from ?? null,
+                available_until: r?.available_until ?? null,
+                target_minutes: r?.target_minutes ?? null,
+                prefers_long_days: !!r?.prefers_long_days,
+                values,
+            };
+            this.levelState[p.key] = { saving: true, error: '' };
+            this.busy = true;
+            try {
+                await this.api('PUT', '/people', body);
+                this.levelState[p.key] = { saving: false, error: '' };
+                await this.load(true);
+            } catch (e) {
+                select.value = stored;
+                this.levelState[p.key] = { saving: false, error: e.message || this.$t('coord.error_action') };
+            } finally {
+                this.busy = false;
+            }
+        },
 
         /** Calls the API as admin. Throws an Error with .status on a failed response. */
         async api(method, path, body) {

@@ -5,7 +5,7 @@
 <div class="space-y-2 min-w-0">
     <label class="flex items-center gap-2 text-sm">
         <span class="shrink-0" x-text="$t('coord.people_sort')"></span>
-        <select class="select select-bordered select-sm h-11 min-h-11 min-w-0 flex-1" x-model="personSort">
+        <select class="select select-bordered select-sm h-8 min-h-8 min-w-0 flex-1" x-model="personSort">
             <option value="load" x-text="$t('coord.sort_load')"></option>
             <template x-if="model.experience.field">
                 <option value="experience" x-text="$t('coord.sort_experience')"></option>
@@ -29,17 +29,24 @@
             <h3 class="sticky top-0 z-10 bg-base-100 px-2 py-1 text-xs font-medium text-base-content/70" x-show="g.label" x-text="g.label"></h3>
             <ul class="divide-y divide-base-300">
                 <template x-for="p in g.persons" :key="p.key">
-                    <li>
-                        <button type="button"
-                            class="w-full min-h-11 px-2 grid gap-x-1 items-center text-left text-sm hover:bg-base-200"
-                            :style="{ gridTemplateColumns: personCols(model) }"
-                            :class="{ 'bg-base-200': highlightKey === p.key }"
+                    <li class="w-full min-h-11 lg:min-h-9 px-2 grid gap-x-1 items-center text-sm hover:bg-base-200"
+                        :style="{ gridTemplateColumns: personCols(model) }"
+                        :class="{ 'bg-base-200': highlightKey === p.key }">
+                        <button type="button" class="min-h-11 lg:min-h-9 min-w-0 text-left truncate" :title="p.name"
                             :aria-pressed="highlightKey === p.key ? 'true' : 'false'"
-                            @click="toggleHighlight(p.key)">
-                            <span class="truncate" :title="p.name" x-text="p.name"></span>
-                            <span class="truncate text-xs" x-show="model.experience.field"
-                                :title="p.level >= 0 ? t(model.experience.options[p.level]) : ''"
-                                x-text="p.level >= 0 ? t(model.experience.options[p.level]) : '–'"></span>
+                            @click="toggleHighlight(p.key)" x-text="p.name"></button>
+                        <span class="min-w-0" x-show="model.experience.field">
+                            <select class="select select-ghost select-xs w-full min-w-0 px-1"
+                                :class="{ 'select-error': levelState[p.key]?.error }"
+                                :aria-label="$t('coord.experience_of', { name: p.name })"
+                                :title="levelState[p.key]?.error || ''"
+                                :disabled="busy" @change="setLevel(p, $event)">
+                                <option value="" :selected="p.level < 0">–</option>
+                                <template x-for="o in model.experience.options" :key="o.id">
+                                    <option :value="o.id" :selected="p.level === o.level" x-text="t(o)"></option>
+                                </template>
+                            </select>
+                        </span>
                             <span class="text-right tabular-nums" x-text="number(p.hours)"></span>
                             <span class="text-right tabular-nums" x-show="model.flags.anyFactor" x-text="number(p.load)"></span>
                             <span class="text-right tabular-nums" x-show="model.flags.anyPopular" x-text="p.popularReceived"></span>
@@ -50,7 +57,6 @@
                                 </svg>
                                 <span class="sr-only" x-text="p.warnings.map(w => warningText(w)).join(', ')"></span>
                             </span>
-                        </button>
                     </li>
                 </template>
             </ul>

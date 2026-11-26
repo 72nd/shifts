@@ -203,7 +203,7 @@
     </nav>
 
     <!-- Main content -->
-    <main class="container py-8 px-3 flex-grow">
+    <main class="{{ block "main-class" . }}container{{ end }} py-8 px-3 flex-grow">
         {{ template "content" . }}
     </main>
 

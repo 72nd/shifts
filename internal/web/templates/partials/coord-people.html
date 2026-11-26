@@ -46,7 +46,7 @@
                         <td x-show="model.experience.field" @click.stop>
                             <select class="select select-bordered select-sm h-11 w-full min-w-28"
                                 :aria-label="$t('coord.experience_of', { name: p.name })"
-                                :disabled="levelState[p.key]?.saving" @change="setLevel($data, p, $event)">
+                                :disabled="levelState[p.key]?.saving" @change="setLevel(p, $event)">
                                 <option value="" :selected="p.level < 0">–</option>
                                 <template x-for="o in model.experience.options" :key="o.id">
                                     <option :value="o.id" :selected="p.level === o.level" x-text="t(o)"></option>

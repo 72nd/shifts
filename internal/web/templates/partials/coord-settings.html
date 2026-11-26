@@ -1,8 +1,8 @@
 {{ define "coord-settings" }}
-<div x-data="coordSettings" x-init="sync(plan, $data); $watch('plan', p => { if (!dirty) sync(p, $data) })" class="max-w-3xl space-y-8">
+<div x-data="coordSettings" x-init="sync(plan, $data); $watch('plan', p => { if (!dirty) sync(p, $data) })" class="max-w-5xl space-y-6">
 
     <!-- Person fields -->
-    <section class="space-y-3" aria-labelledby="coord-fields-heading">
+    <section class="space-y-3 border-t border-base-300 pt-4 first:border-t-0 first:pt-0" aria-labelledby="coord-fields-heading">
         <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 id="coord-fields-heading" class="text-lg font-semibold" x-text="$t('coord.fields')"></h2>
             <button type="button" class="btn min-h-11" @click="editField(null)" x-text="$t('coord.field_add')"></button>
@@ -11,12 +11,12 @@
         <ul class="divide-y divide-base-300">
             <template x-for="(f, i) in plan.fields" :key="f.id">
                 <li class="py-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span class="flex">
-                        <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="busy || i === 0"
+                    <span class="flex shrink-0">
+                        <button type="button" class="btn btn-ghost btn-xs btn-square min-h-11 min-w-11 lg:min-h-8 lg:min-w-8 disabled:bg-transparent disabled:border-transparent disabled:opacity-30" :disabled="busy || i === 0"
                             :aria-label="$t('coord.move_up')" @click="move($data, f.id, -1)">
                             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
                         </button>
-                        <button type="button" class="btn btn-ghost btn-sm min-h-11 min-w-11" :disabled="busy || i === plan.fields.length - 1"
+                        <button type="button" class="btn btn-ghost btn-xs btn-square min-h-11 min-w-11 lg:min-h-8 lg:min-w-8 disabled:bg-transparent disabled:border-transparent disabled:opacity-30" :disabled="busy || i === plan.fields.length - 1"
                             :aria-label="$t('coord.move_down')" @click="move($data, f.id, 1)">
                             <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                         </button>
@@ -36,10 +36,10 @@
         </ul>
     </section>
 
-    <form class="space-y-8" @submit.prevent="save($data)" @input="dirty = true" @change="dirty = true">
+    <form class="space-y-6" @submit.prevent="save($data)" @input="dirty = true" @change="dirty = true">
 
         <!-- Experience -->
-        <section class="space-y-2" aria-labelledby="coord-exp-heading">
+        <section class="space-y-2 border-t border-base-300 pt-4" aria-labelledby="coord-exp-heading">
             <h2 id="coord-exp-heading" class="text-lg font-semibold" x-text="$t('coord.experience')"></h2>
             <label class="flex flex-col gap-1 sm:max-w-sm">
                 <span class="text-sm" x-text="$t('coord.experience_field')"></span>
@@ -55,12 +55,12 @@
         </section>
 
         <!-- Areas (shift types); every row saves on its own -->
-        <section class="space-y-2" aria-labelledby="coord-areas-heading" x-show="types.length"
+        <section class="space-y-2 border-t border-base-300 pt-4" aria-labelledby="coord-areas-heading" x-show="types.length"
             x-data="coordAreas" x-init="sync(types, $data); $watch('types', t => sync(t, $data))"
             @input.stop @change.stop @keydown.enter.prevent>
             <h2 id="coord-areas-heading" class="text-lg font-semibold" x-text="$t('coord.areas')"></h2>
             <p class="text-sm text-base-content/70" x-text="$t('coord.areas_hint')"></p>
-            <div class="hidden md:grid grid-cols-[minmax(0,1fr)_5rem_11rem_minmax(0,16rem)] gap-3 text-sm text-base-content/70">
+            <div class="hidden md:grid grid-cols-[minmax(0,1fr)_8rem_11rem_minmax(0,16rem)] gap-3 text-sm text-base-content/70 [&>span]:min-w-0 [&>span]:break-words">
                 <span x-text="$t('coord.areas')"></span>
                 <span x-text="$t('coord.load_factor')"></span>
                 <span x-text="$t('coord.popularity')"></span>
@@ -69,7 +69,7 @@
             <ul class="divide-y divide-base-300">
                 <template x-for="type in types" :key="type.id">
                     <li class="py-3 md:py-1 space-y-1" x-show="rows[type.id]">
-                        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_5rem_11rem_minmax(0,16rem)] gap-x-3 gap-y-2 md:items-center">
+                        <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_8rem_11rem_minmax(0,16rem)] gap-x-3 gap-y-2 md:items-center">
                             <span class="font-medium truncate flex items-center gap-2" :title="typeTitle(type)">
                                 <span class="truncate" x-text="typeTitle(type)"></span>
                                 <span class="loading loading-spinner loading-xs shrink-0" x-show="rows[type.id]?.saving"></span>
@@ -118,7 +118,7 @@
         </section>
 
         <!-- Attendance -->
-        <fieldset class="space-y-1">
+        <fieldset class="space-y-1 border-t border-base-300 pt-4">
             <legend class="text-lg font-semibold mb-1" x-text="$t('coord.attendance')"></legend>
             <template x-for="mode in ['off', 'participant', 'admin']" :key="mode">
                 <label class="flex items-center gap-2 min-h-11 cursor-pointer">
@@ -129,7 +129,7 @@
         </fieldset>
 
         <!-- Working time -->
-        <section class="space-y-2" aria-labelledby="coord-rules-heading">
+        <section class="space-y-2 border-t border-base-300 pt-4" aria-labelledby="coord-rules-heading">
             <h2 id="coord-rules-heading" class="text-lg font-semibold" x-text="$t('coord.rules')"></h2>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <label class="flex flex-col gap-1 min-w-0">

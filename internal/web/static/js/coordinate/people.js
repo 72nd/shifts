@@ -16,8 +16,6 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('coordPeople', () => ({
         search: '',
         onlyWarnings: false,
-        /** Inline level saving per person key: { saving: boolean, error: string } */
-        levelState: {},
 
         /** People matching the search and the warnings filter, sorted by name. */
         rows(personList) {
@@ -51,41 +49,6 @@ document.addEventListener('alpine:init', () => {
             if (!first) return '';
             const text = page.$t('coord.field_missing', { field: page.fieldLabel(first) });
             return p.missingFields.length > 1 ? `${text} +${p.missingFields.length - 1}` : text;
-        },
-
-        /**
-         * Saves the experience level of a person inline (full person record, so nothing else is lost).
-         * A person without stored row gets a new record with name and level only.
-         */
-        async setLevel(page, p, event) {
-            const select = event.target;
-            const fieldId = page.model.experience.field.id;
-            const stored = p.level >= 0 ? page.model.experience.options[p.level].id : '';
-            if (select.value === stored || page.busy) return;
-            const r = p.row;
-            const values = { ...(r?.values || {}) };
-            if (select.value) values[fieldId] = select.value;
-            else delete values[fieldId];
-            const body = {
-                name: p.name,
-                available_from: r?.available_from ?? null,
-                available_until: r?.available_until ?? null,
-                target_minutes: r?.target_minutes ?? null,
-                prefers_long_days: !!r?.prefers_long_days,
-                values,
-            };
-            this.levelState[p.key] = { saving: true, error: '' };
-            page.busy = true;
-            try {
-                await page.api('PUT', '/people', body);
-                this.levelState[p.key] = { saving: false, error: '' };
-                await page.load(true);
-            } catch (e) {
-                select.value = stored;
-                this.levelState[p.key] = { saving: false, error: e.message || page.$t('coord.error_action') };
-            } finally {
-                page.busy = false;
-            }
         },
 
         /** Attendance as "Fr 18.07. 16:00 bis So 14:00" with open ends left out. */

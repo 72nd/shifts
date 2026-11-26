@@ -136,3 +136,8 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 
 
 ## v0.11.0
+
+- **Enhancement: Coordination Uses the Full Window Width** On wide screens the coordination page is no longer capped to the container width; the side columns of the distribute tab grow with it.
+- **Enhancement: Compact Distribute Tab** Filters, view switcher, the action buttons of a shift and the "At the same time" chips take far less height on desktop. Touch sizes on small screens are unchanged.
+- **Enhancement: Set Experience in the Person Column** The experience level can now be changed directly in the person list of the distribute tab.
+- **Fix: Coordination Settings Layout** The area table headers no longer overlap, and the disabled sort buttons for person fields are small and unobtrusive. The settings sections are separated by lines and use more width.

@@ -15,9 +15,9 @@
     <!-- Workbench: with the list (shifts, workbench, persons), under the timeline (workbench, persons) or alone (people view) -->
     <div class="grid gap-4 min-w-0"
         :class="activeView === 'list'
-            ? 'md:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)_20rem] md:grid-rows-[minmax(0,1fr)] md:h-[calc(100dvh-14rem)] md:min-h-[32rem]'
+            ? 'md:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[19rem_minmax(0,1fr)_22rem] 2xl:grid-cols-[22rem_minmax(0,1fr)_28rem] md:grid-rows-[minmax(0,1fr)] md:h-[calc(100dvh-14rem)] md:min-h-[32rem]'
             : (activeView === 'timeline'
-                ? 'xl:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] lg:h-[calc(100dvh-14rem-45vh)] lg:min-h-[20rem]'
+                ? 'xl:grid-cols-[minmax(0,1fr)_22rem] 2xl:grid-cols-[minmax(0,1fr)_28rem] lg:grid-rows-[minmax(0,1fr)] lg:h-[calc(100dvh-14rem-45vh)] lg:min-h-[20rem]'
                 : 'lg:grid-rows-[minmax(0,1fr)] lg:h-[calc(100dvh-14rem-45vh)] lg:min-h-[20rem]')">
 
         <!-- Shifts: grouped by day -->
@@ -78,7 +78,7 @@
             <template x-if="selectedShift">
                 <div class="space-y-4">
                     <!-- Head: stays visible while the lists scroll -->
-                    <header class="sticky top-0 z-10 bg-base-100 pb-2 space-y-2 min-w-0 border-b border-base-300">
+                    <header class="sticky top-0 z-10 bg-base-100 pb-2 space-y-1.5 min-w-0 border-b border-base-300">
                         <h2 class="text-lg font-semibold break-words" x-text="shiftLabel(selectedShift)"></h2>
                         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/70">
                             <span x-text="$t('coord.places', { occupied: selectedShift.occupancy, required: selectedShift.unlimited ? '∞' : selectedShift.required })"></span>
@@ -91,57 +91,53 @@
                             <span class="inline-flex items-center gap-1" x-show="selectedShift.locked"><span class="text-info">{{ template "lock-icon" }}</span><span x-text="$t('coord.locked')"></span></span>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-2" x-show="!selectedShift.unlimited">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-2" x-show="!selectedShift.unlimited">
                             <div class="join" role="group" :aria-label="$t('coord.auto_candidates')">
-                                <button type="button" class="btn btn-sm join-item min-h-11" :class="{ 'btn-active': source === 'interested' }"
+                                <button type="button" class="btn btn-sm join-item min-h-11 lg:min-h-8" :class="{ 'btn-active': source === 'interested' }"
                                     :aria-pressed="source === 'interested' ? 'true' : 'false'" @click="setSource('interested')" x-text="$t('coord.source_interested')"></button>
-                                <button type="button" class="btn btn-sm join-item min-h-11" :class="{ 'btn-active': source === 'all' }"
+                                <button type="button" class="btn btn-sm join-item min-h-11 lg:min-h-8" :class="{ 'btn-active': source === 'all' }"
                                     :aria-pressed="source === 'all' ? 'true' : 'false'" @click="setSource('all')" x-text="$t('coord.source_all')"></button>
                             </div>
-                            <button type="button" class="btn btn-ghost btn-sm min-h-11" @click="reroll()" x-text="$t('coord.reroll')"></button>
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-x-3 gap-y-2" x-show="!selectedShift.unlimited">
-                            <button type="button" class="btn btn-primary btn-sm min-h-11"
+                            <button type="button" class="btn btn-ghost btn-sm min-h-11 lg:min-h-8" @click="reroll()" x-text="$t('coord.reroll')"></button>
+                            <span class="hidden lg:block h-5 w-px bg-base-300" aria-hidden="true"></span>
+                            <button type="button" class="btn btn-primary btn-sm min-h-11 lg:min-h-8"
                                 :disabled="busy || suggestionCount(selectedShift, candidates.ranked) === 0"
                                 @click="apply(suggestionOps(selectedShift, candidates.ranked), { pending: 'suggestion' })">
                                 <span class="loading loading-spinner loading-sm" x-show="pendingKey === 'suggestion'"></span>
                                 <span x-text="$t('coord.take_suggestion_count', { count: suggestionCount(selectedShift, candidates.ranked) })"></span>
                             </button>
-                            <button type="button" class="btn btn-sm min-h-11" :disabled="busy || !selectedShift.wishes.length"
+                            <button type="button" class="btn btn-sm min-h-11 lg:min-h-8" :disabled="busy || !selectedShift.wishes.length"
                                 @click="apply(declineRestOps(selectedShift, model.persons), { lock: lockAfter ? [selectedShift.id] : [], pending: 'rest' })"
                                 x-text="$t('coord.decline_rest')"></button>
-                            <label class="flex items-center gap-2 min-h-11 cursor-pointer text-sm">
+                            <label class="flex items-center gap-2 min-h-11 lg:min-h-8 cursor-pointer text-sm">
                                 <input type="checkbox" class="checkbox checkbox-sm" x-model="lockAfter">
                                 <span x-text="$t('coord.and_lock')"></span>
                             </label>
                         </div>
 
                         <!-- At the same time: no bar without parallel shifts -->
-                        <div class="space-y-1" x-show="concurrent.length">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1" x-show="concurrent.length">
                             <h3 class="text-sm font-medium" x-text="$t('coord.concurrent')"></h3>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <template x-for="o in visibleConcurrent(concurrent)" :key="o.id">
-                                    <button type="button" class="btn btn-sm min-h-11 max-w-full font-normal gap-1"
-                                        :class="{ 'btn-active': hoverShiftId === o.id }"
-                                        :title="shiftLabel(o)"
-                                        @click="selectShift(o.id)"
-                                        @mouseenter="hoverShiftId = o.id" @mouseleave="hoverShiftId = null"
-                                        @focus="hoverShiftId = o.id" @blur="hoverShiftId = null">
-                                        <span class="tabular-nums" x-text="time(o.start)"></span>
-                                        <span class="truncate" x-text="typeTitle(o.type)"></span>
-                                        <span class="badge badge-sm" :class="{ 'badge-warning': o.overbooked }" x-text="occupancyBadge(o, occupancy(o))"></span>
-                                        <span x-show="o.popular">{{ template "coord-icon-star" }}</span>
-                                        <span class="inline-flex items-center gap-1 text-warning" x-show="o.expNeed.count > 0 && !o.expNeed.met">
-                                            <span aria-hidden="true">⚠</span>
-                                            <span x-text="$t('coord.exp_short', { have: o.expNeed.have, count: o.expNeed.count })"></span>
-                                        </span>
-                                    </button>
-                                </template>
-                                <button type="button" class="btn btn-ghost btn-sm min-h-11" x-show="!concurrentOpen && concurrent.length > visibleConcurrent(concurrent).length"
-                                    @click="concurrentOpen = true"
-                                    x-text="$t('coord.concurrent_more', { count: concurrent.length - visibleConcurrent(concurrent).length })"></button>
-                            </div>
+                            <template x-for="o in visibleConcurrent(concurrent)" :key="o.id">
+                                <button type="button" class="btn btn-xs min-h-8 lg:min-h-6 max-w-full font-normal gap-1"
+                                    :class="{ 'btn-active': hoverShiftId === o.id }"
+                                    :title="shiftLabel(o)"
+                                    @click="selectShift(o.id)"
+                                    @mouseenter="hoverShiftId = o.id" @mouseleave="hoverShiftId = null"
+                                    @focus="hoverShiftId = o.id" @blur="hoverShiftId = null">
+                                    <span class="tabular-nums" x-text="time(o.start)"></span>
+                                    <span class="truncate" x-text="typeTitle(o.type)"></span>
+                                    <span class="badge badge-xs" :class="{ 'badge-warning': o.overbooked }" x-text="occupancyBadge(o, occupancy(o))"></span>
+                                    <span x-show="o.popular">{{ template "coord-icon-star" }}</span>
+                                    <span class="inline-flex items-center gap-1 text-warning" x-show="o.expNeed.count > 0 && !o.expNeed.met">
+                                        <span aria-hidden="true">⚠</span>
+                                        <span x-text="$t('coord.exp_short', { have: o.expNeed.have, count: o.expNeed.count })"></span>
+                                    </span>
+                                </button>
+                            </template>
+                            <button type="button" class="btn btn-ghost btn-xs min-h-8 lg:min-h-6" x-show="!concurrentOpen && concurrent.length > visibleConcurrent(concurrent).length"
+                                @click="concurrentOpen = true"
+                                x-text="$t('coord.concurrent_more', { count: concurrent.length - visibleConcurrent(concurrent).length })"></button>
                         </div>
                     </header>
 

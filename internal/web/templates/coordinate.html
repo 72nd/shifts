@@ -1,7 +1,9 @@
 {{ template "base.html" . }}
 
+{{ define "main-class" }}w-full max-w-none{{ end }}
+
 {{ define "content" }}
-<div x-data="coordinationPage" class="container mx-auto p-4 space-y-4">
+<div x-data="coordinationPage" class="w-full p-0 sm:p-2 space-y-4">
     <header class="space-y-1 min-w-0">
         <a :href="backUrl()" class="link link-hover inline-flex items-center gap-1 min-h-11 text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
