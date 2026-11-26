@@ -86,8 +86,10 @@
                 </div>
             </div>
 
-            <!-- Unified Control Bar -->
-            {{ template "control-bar" . }}
+            <!-- Unified Control Bar (above the filters, whose card is z-20, so its dropdowns are not covered) -->
+            <div class="relative z-30">
+                {{ template "control-bar" . }}
+            </div>
 
             <!-- Include filters partial -->
             <div class="card card-bordered border-base-content/10 shadow">
