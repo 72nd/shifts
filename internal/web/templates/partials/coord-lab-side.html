@@ -19,8 +19,10 @@
         <thead>
             <tr>
                 <th scope="col" x-text="$t('coord.col_name')"></th>
-                <th scope="col" class="text-right" x-text="$t('coord.lab_col_hours')"></th>
-                <th scope="col" class="text-right" x-text="$t('coord.lab_col_load')"></th>
+                <th scope="col" class="text-right" :title="$t('coord.col_hours')" x-text="$t('coord.col_hours_short')"></th>
+                <th scope="col" class="text-right" x-show="model.flags.anyFactor" :title="$t('coord.col_load')" x-text="$t('coord.col_load_short')"></th>
+                <th scope="col" class="text-right" x-show="model.flags.anyFactor" :title="$t('coord.col_avg_factor')" x-text="$t('coord.col_avg_short')"></th>
+                <th scope="col" class="text-right" x-show="model.flags.anyPopular" role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</th>
             </tr>
         </thead>
         <tbody>
@@ -41,7 +43,9 @@
                         </div>
                     </th>
                     <td class="text-right tabular-nums whitespace-nowrap"><span x-text="number(r.live.hours)"></span> <span class="font-medium" x-text="delta(r.hoursDelta)"></span></td>
-                    <td class="text-right tabular-nums whitespace-nowrap"><span x-text="number(r.live.load)"></span> <span class="font-medium" x-text="delta(r.loadDelta)"></span></td>
+                    <td class="text-right tabular-nums whitespace-nowrap" x-show="model.flags.anyFactor"><span x-text="number(r.live.load)"></span> <span class="font-medium" x-text="delta(r.loadDelta)"></span></td>
+                    <td class="text-right tabular-nums whitespace-nowrap" x-show="model.flags.anyFactor"><span x-text="avgFactor(r.live)"></span><span class="font-medium" x-text="avgDelta(r)"></span></td>
+                    <td class="text-right tabular-nums" x-show="model.flags.anyPopular"><span x-text="r.live.popularScore"></span> <span class="font-medium" x-text="delta(r.scoreDelta)"></span></td>
                 </tr>
             </template>
         </tbody>
@@ -90,7 +94,7 @@
                             <td class="text-right tabular-nums" x-text="detail.hoursDelta ? number(detail.lab.hours) : ''"></td>
                         </tr>
                         <tr>
-                            <th scope="row" x-text="$t('coord.lab_col_load')"></th>
+                            <th scope="row" x-text="$t('coord.col_load')"></th>
                             <td class="text-right tabular-nums" x-text="number(detail.live.load)"></td>
                             <td class="text-right tabular-nums" x-text="detail.loadDelta ? number(detail.lab.load) : ''"></td>
                         </tr>

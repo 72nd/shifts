@@ -225,6 +225,14 @@ document.addEventListener('alpine:init', () => {
                 return (n > 0 ? '+' : '−') + this.pg.number(Math.abs(n));
             },
 
+            /** Change of the average load factor of a side row with sign ("+0.3"); '' if nearly zero or without hours. */
+            avgDelta(r) {
+                if (!(r.live.hours > 0) || !(r.lab.hours > 0)) return '';
+                const d = r.lab.load / r.lab.hours - r.live.load / r.live.hours;
+                if (Math.abs(d) < 0.05) return '';
+                return (d > 0 ? '+' : '−') + this.pg.number(Math.abs(d), 2);
+            },
+
             /** Shift of the lab model as "Bar, Sa 4.7. 20:00–24:00". */
             labShiftLabel(id) {
                 return this.pg.shiftLabel(this.labModel.shifts.get(id));

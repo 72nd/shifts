@@ -9,7 +9,7 @@
 
     <!-- Time views (from lg): a band above the workbench, filled by coord-timeline.html / coord-person-timeline.html -->
     <div x-show="!preview" class="min-w-0"
-        :class="activeView === 'list' ? 'space-y-3' : 'space-y-3 lg:space-y-0 lg:flex lg:flex-col lg:gap-3 lg:h-[calc(100dvh-14rem)] lg:min-h-[32rem]'">
+        :class="activeView === 'list' ? 'space-y-3' : 'space-y-3 lg:space-y-0 lg:flex lg:flex-col lg:gap-3 lg:h-[calc(100dvh-12rem)] lg:min-h-[36rem]'">
         {{ template "coord-timeline" . }}
         {{ template "coord-person-timeline" . }}
 
@@ -61,6 +61,7 @@
                                             <span class="inline-flex" x-show="cs.popular">{{ template "coord-icon-star" }}<span x-show="cs.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
                                             <span x-show="cs.expNeed.count > 0 && !cs.expNeed.met">{{ template "coord-icon-warning" }}</span>
                                             <span x-show="cs.locked" class="text-info">{{ template "lock-icon" }}</span>
+                                            <span class="text-xs tabular-nums text-base-content/70" :title="$t('coord.load_factor')" x-text="factorLabel(cs)"></span>
                                             <span class="badge badge-sm" :class="{ 'badge-warning': cs.overbooked }" x-text="occupancyBadge(cs, occupancy(cs))"></span>
                                         </span>
                                     </button>
@@ -87,7 +88,6 @@
                                 <span x-show="!selectedShift.expNeed.met">{{ template "coord-icon-warning" }}</span>
                                 <span x-text="$t('coord.exp_progress', { have: selectedShift.expNeed.have, count: selectedShift.expNeed.count, level: levelLabel(selectedShift) })"></span>
                             </span>
-                            <span x-show="model.flags.anyFactor" x-text="$t('coord.load_factor') + ' ' + number(selectedShift.factor)"></span>
                             <span class="inline-flex items-center gap-1" x-show="selectedShift.popular">{{ template "coord-icon-star" }}<span x-show="selectedShift.tier === 2">{{ template "coord-icon-star-very" }}</span><span x-text="$t(selectedShift.tier === 2 ? 'coord.very_popular' : 'coord.popular')"></span></span>
                             <span class="inline-flex items-center gap-1" x-show="selectedShift.locked"><span class="text-info">{{ template "lock-icon" }}</span><span x-text="$t('coord.locked')"></span></span>
                         </div>
@@ -129,6 +129,7 @@
                                     @focus="hoverShiftId = o.id" @blur="hoverShiftId = null">
                                     <span class="tabular-nums" x-text="time(o.start)"></span>
                                     <span class="truncate" x-text="typeTitle(o.type)"></span>
+                                    <span class="tabular-nums text-base-content/70" x-text="factorLabel(o)"></span>
                                     <span class="badge badge-xs" :class="{ 'badge-warning': o.overbooked }" x-text="occupancyBadge(o, occupancy(o))"></span>
                                     <span class="inline-flex" x-show="o.popular">{{ template "coord-icon-star" }}<span x-show="o.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
                                     <span class="inline-flex items-center gap-1 text-warning" x-show="o.expNeed.count > 0 && !o.expNeed.met">

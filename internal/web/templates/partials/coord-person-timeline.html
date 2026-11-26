@@ -10,7 +10,7 @@
         </div>
         <p class="text-base-content/70" x-show="personTimeline.rows.length && !personTimeline.hours.length" x-text="$t('coord.timeline_empty')"></p>
         <template x-for="pt in [personTimeline]" :key="currentTimelineDay">
-            <div x-show="pt.rows.length && pt.hours.length && !searchEmpty" class="lg:max-h-[45vh] overflow-auto border border-base-300 rounded-box">
+            <div x-show="pt.rows.length && pt.hours.length && !searchEmpty" class="lg:max-h-[32vh] overflow-auto border border-base-300 rounded-box">
                 <div :style="{ minWidth: timelineWidth(pt.hours, 11) }">
                     <!-- Hour header -->
                     <div class="sticky top-0 z-30 flex bg-base-100 border-b border-base-300">

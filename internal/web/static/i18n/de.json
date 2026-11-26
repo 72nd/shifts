@@ -634,6 +634,8 @@
         "places": "{occupied} von {required} Plätzen",
         "col_hours_short": "Std.",
         "col_load_short": "Last",
+        "col_avg_short": "Ø",
+        "col_avg_factor": "Durchschnittlicher Belastungsfaktor (Last pro Stunde)",
         "preview_skipped": "{count} Schichten ohne Platzbegrenzung wurden übersprungen.",
         "preview_assigned": "Eingeteilt:",
         "preview_declined": "Abgelehnt:",

@@ -16,8 +16,12 @@
             </div>
             <template x-for="row in grid.rows" :key="row.type.id">
                 <div class="flex border-b border-base-300 last:border-b-0">
-                    <div class="sticky left-0 z-10 w-32 shrink-0 bg-base-100 px-2 py-1 text-sm font-medium truncate"
-                        :title="typeTitle(row.type)" x-text="typeTitle(row.type)"></div>
+                    <div class="sticky left-0 z-10 w-32 shrink-0 bg-base-100 px-2 py-1 text-sm font-medium">
+                        <button type="button" class="block max-w-full truncate text-left hover:underline"
+                            :title="$t('shift_plans.view.edit_shift_type') + ': ' + typeTitle(row.type)"
+                            :aria-label="$t('shift_plans.view.edit_shift_type') + ': ' + typeTitle(row.type)"
+                            @click="openTypeModal(row.type)" x-text="typeTitle(row.type)"></button>
+                    </div>
                     <div class="relative min-w-0 flex-1">
                         <div class="absolute inset-0 grid" aria-hidden="true" :style="{ gridTemplateColumns: 'repeat(' + grid.columns + ', minmax(0, 1fr))' }">
                             <template x-for="(h, i) in grid.hours" :key="i">
@@ -35,9 +39,15 @@
                                         <div class="flex flex-wrap items-center gap-x-1.5 text-xs">
                                             <span class="tabular-nums" x-text="time(b.cs.start) + '–' + time(b.cs.end)"></span>
                                             <span class="tabular-nums font-medium" x-text="boxCount(b)"></span>
+                                            <span class="tabular-nums text-base-content/70" :title="$t('coord.load_factor')" x-text="factorLabel(b.cs)"></span>
                                             <span class="inline-flex" x-show="b.cs.popular">{{ template "coord-icon-star" }}<span x-show="b.cs.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
                                             <span class="inline-flex items-center gap-0.5" x-show="b.cs.expNeed.count > 0 && !b.cs.expNeed.met">{{ template "coord-icon-warning" }}<span class="tabular-nums" x-text="b.cs.expNeed.have + '/' + b.cs.expNeed.count"></span></span>
                                             <span class="text-info" x-show="b.cs.locked">{{ template "lock-icon" }}</span>
+                                            <button type="button" class="btn btn-ghost btn-xs btn-square h-5 min-h-5 w-5"
+                                                :aria-label="$t('shift_plans.view.edit_shift') + ': ' + shiftLabel(b.cs)"
+                                                :title="$t('shift_plans.view.edit_shift')" @click="openShiftModal(b.cs)">
+                                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2 2 0 112.828 2.828L11.828 15.83a2 2 0 01-.89.504L7 17l.666-3.938a2 2 0 01.504-.89z" /></svg>
+                                            </button>
                                             <button type="button" data-drop class="btn btn-xs btn-primary ml-auto" x-show="picked && picked.from !== b.cs.id"
                                                 @click="dropOn(b.cs.id)" x-text="$t('coord.lab_drop_here')"></button>
                                         </div>

@@ -634,6 +634,8 @@
         "places": "{occupied} of {required} places",
         "col_hours_short": "h",
         "col_load_short": "Load",
+        "col_avg_short": "Avg",
+        "col_avg_factor": "Average load factor (load per hour)",
         "preview_skipped": "{count} shifts with unlimited places were skipped.",
         "preview_assigned": "Assigned:",
         "preview_declined": "Declined:",

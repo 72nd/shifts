@@ -168,7 +168,7 @@ document.addEventListener('alpine:init', () => {
         /** Grid columns of the person table: only those that carry information. */
         personCols(model) {
             const f = model.flags;
-            return ['minmax(0,1fr)', model.experience.field ? '6.5rem' : null, '2.5rem', f.anyFactor ? '2.5rem' : null,
+            return ['minmax(0,1fr)', model.experience.field ? '6.5rem' : null, '2.5rem', f.anyFactor ? '2.5rem' : null, f.anyFactor ? '2.5rem' : null,
                 f.anyPopular ? '2rem' : null, f.anyDeclined ? '2rem' : null, '1.25rem'].filter(Boolean).join(' ');
         },
 

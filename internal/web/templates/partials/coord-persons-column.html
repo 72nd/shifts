@@ -20,6 +20,7 @@
         <span x-show="model.experience.field" x-text="$t('coord.col_level')"></span>
         <span class="text-right" :title="$t('coord.col_hours')" x-text="$t('coord.col_hours_short')"></span>
         <span class="text-right" x-show="model.flags.anyFactor" :title="$t('coord.col_load')" x-text="$t('coord.col_load_short')"></span>
+        <span class="text-right" x-show="model.flags.anyFactor" :title="$t('coord.col_avg_factor')" x-text="$t('coord.col_avg_short')"></span>
         <span class="text-right" x-show="model.flags.anyPopular" role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</span>
         <span class="text-right" x-show="model.flags.anyDeclined" role="img" :aria-label="$t('coord.col_declined')" :title="$t('coord.col_declined')">✗</span>
         <span></span>
@@ -56,6 +57,7 @@
                         </span>
                             <span class="text-right tabular-nums" x-text="number(p.hours)"></span>
                             <span class="text-right tabular-nums" x-show="model.flags.anyFactor" x-text="number(p.load)"></span>
+                            <span class="text-right tabular-nums" x-show="model.flags.anyFactor" x-text="avgFactor(p)"></span>
                             <span class="text-right tabular-nums" x-show="model.flags.anyPopular" x-text="p.popularScore"></span>
                             <span class="text-right tabular-nums" x-show="model.flags.anyDeclined" x-text="p.wishesDeclined"></span>
                             <span class="inline-flex justify-end text-warning" :title="p.warnings.map(w => warningText(w)).join(', ')">

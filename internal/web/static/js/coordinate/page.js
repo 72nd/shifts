@@ -11,6 +11,8 @@
 import { formatDate, formatTime, parseDate } from '../datetime.js';
 import { PlanRealtime } from '../realtime.js';
 import { personKey } from '../stats/compute.js';
+import { ShiftModal } from '../shift-modal.js';
+import { ShiftTypeModal } from '../shift-type-modal.js';
 import {
     buildModel, rankCandidates, concurrentShifts, buildTimeline, buildPersonTimeline,
     applyOpsLocally, invertOps, newLottery,
@@ -28,6 +30,8 @@ document.addEventListener('alpine:init', () => {
         adminToken: '',
         plan: null,
         types: [],
+        shiftModal: null, // edit dialogs of the plan page, opened from the lab
+        shiftTypeModal: null,
         people: [],
         model: null,
         draws: new Map(),      // shiftId → Map<personKey, number>: the lot drawn for a tie in that shift (not stored)
@@ -251,12 +255,46 @@ document.addEventListener('alpine:init', () => {
         /** Rebuilds the model from the loaded data (and everything derived from it). */
         rebuild() {
             this.model = buildModel(this.plan, this.types, this.people);
+            this.syncModals();
             if (this.selectedShiftId && !this.model.shifts.has(this.selectedShiftId)) this.selectedShiftId = null;
             this.refresh();
             // On a phone the shift is chosen with a select: start with the first one
             if (!this.selectedShiftId && this.shiftList.length && window.matchMedia('(max-width: 767px)').matches) {
                 this.selectShift(this.shiftList[0].id);
             }
+        },
+
+        /** Creates the shift and shift type dialogs once and keeps their data current; saving reloads the page data. */
+        syncModals() {
+            if (!this.shiftModal) {
+                const reload = () => this.load(true);
+                this.shiftModal = new ShiftModal(this.plan.start_date, this.types, this.token, this.adminToken, reload, this.plan.day_boundary_time);
+                this.shiftTypeModal = new ShiftTypeModal(this.plan.is_multilingual, this.token, this.adminToken, reload);
+            }
+            this.shiftModal.shiftTypes = this.types;
+            this.shiftTypeModal.isMultilingual = this.plan.is_multilingual;
+        },
+
+        get shiftTypes() {
+            return this.types;
+        },
+
+        openShiftModal(cs) {
+            this.shiftModal.openWith(cs.shift, cs.type);
+        },
+
+        openTypeModal(type) {
+            this.shiftTypeModal.openWith(type);
+        },
+
+        /** Options of the plan's experience field (empty if none is set), for the coordination part of the dialogs. */
+        experienceOptions() {
+            const field = (this.plan?.fields || []).find(f => f.id === this.plan.experience_field_id);
+            return field ? field.options : [];
+        },
+
+        optionLabel(o) {
+            return (this.lang() === 'en' ? o.en : o.de) || o.en || o.de || '';
         },
 
         /** Recomputes the filtered shift list and the candidates of the selected shift. */
@@ -607,8 +645,8 @@ document.addEventListener('alpine:init', () => {
             return new Intl.NumberFormat(this.lang() === 'en' ? 'en-GB' : 'de-DE', { maximumFractionDigits: 1 }).format((minutes || 0) / 60);
         },
 
-        number(n) {
-            return new Intl.NumberFormat(this.lang() === 'en' ? 'en-GB' : 'de-DE', { maximumFractionDigits: 1 }).format(n || 0);
+        number(n, digits = 1) {
+            return new Intl.NumberFormat(this.lang() === 'en' ? 'en-GB' : 'de-DE', { maximumFractionDigits: digits }).format(n || 0);
         },
 
         /** Minutes → "1:30". */
@@ -625,10 +663,20 @@ document.addEventListener('alpine:init', () => {
             return d ? formatTime(d, this.lang()) : '';
         },
 
-        /** "Bar, Sa 4.7. 20:00–24:00" for a model shift. */
+        /** Load factor of a shift as "×1.5". */
+        factorLabel(cs) {
+            return cs ? `×${this.number(cs.factor, 2)}` : '';
+        },
+
+        /** Average load factor (load per hour) of a person's numbers { hours, load }; "–" without hours. */
+        avgFactor(s) {
+            return s && s.hours > 0 ? this.number(s.load / s.hours, 2) : '–';
+        },
+
+        /** "Bar, Sa 4.7. 20:00–24:00, ×1.5" for a model shift. */
         shiftLabel(cs) {
             if (!cs) return '';
-            return `${this.typeTitle(cs.type)}, ${this.dayLabel(cs.start)} ${this.time(cs.start)}–${this.time(cs.end)}`;
+            return `${this.typeTitle(cs.type)}, ${this.dayLabel(cs.start)} ${this.time(cs.start)}–${this.time(cs.end)}, ${this.factorLabel(cs)}`;
         },
 
         /** "Bar 20:00" for a model shift (type and start time). */

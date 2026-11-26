@@ -1,4 +1,4 @@
 package web
 
 // Version is the current version of the application
-const Version = "v0.11.0"
+const Version = "v0.12.0"

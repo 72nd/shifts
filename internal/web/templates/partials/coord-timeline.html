@@ -5,7 +5,7 @@
     <div class="shrink-0">
         <p class="text-base-content/70" x-show="!timeline.rows.length" x-text="$t('coord.timeline_empty')"></p>
         <template x-for="tl in [timeline]" :key="currentTimelineDay">
-            <div x-show="tl.rows.length" class="lg:max-h-[30vh] overflow-auto border border-base-300 rounded-box">
+            <div x-show="tl.rows.length" class="lg:max-h-[22vh] overflow-auto border border-base-300 rounded-box">
                 <div :style="{ minWidth: timelineWidth(tl.hours, 9) }">
                     <!-- Hour header -->
                     <div class="sticky top-0 z-20 flex bg-base-100 border-b border-base-300">
@@ -46,6 +46,7 @@
                                                 @click="selectShift(b.cs.id)" @keydown="neighbourBar($event)">
                                                 <span x-show="isHighlighted(b.cs, highlightKey)" class="inline-block h-2 w-2 shrink-0 rounded-full bg-primary" role="img" :aria-label="$t('coord.person_involved')"></span>
                                                 <span class="truncate tabular-nums" x-text="occupancyBadge(b.cs, occupancy(b.cs))"></span>
+                                                <span class="shrink-0 tabular-nums text-base-content/70" x-text="factorLabel(b.cs)"></span>
                                                 <span class="shrink-0 inline-flex" x-show="b.cs.popular">{{ template "coord-icon-star" }}<span x-show="b.cs.tier === 2">{{ template "coord-icon-star-very" }}</span></span>
                                                 <span class="shrink-0" x-show="b.cs.expNeed.count > 0 && !b.cs.expNeed.met">{{ template "coord-icon-warning" }}</span>
                                                 <span class="shrink-0 text-info" x-show="b.cs.locked">{{ template "lock-icon" }}</span>

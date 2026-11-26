@@ -28,6 +28,7 @@
                     <th scope="col" class="text-right" x-text="$t('coord.col_target')"></th>
                     <th scope="col" class="text-right" x-text="$t('coord.col_hours')"></th>
                     <th scope="col" class="text-right" x-text="$t('coord.col_load')"></th>
+                    <th scope="col" class="text-right" x-show="model.flags.anyFactor" :title="$t('coord.col_avg_factor')" x-text="$t('coord.col_avg_short')"></th>
                     <th scope="col" class="text-right" role="img" :aria-label="$t('coord.col_popular')" :title="$t('coord.col_popular')">★</th>
                     <th scope="col" class="text-right" role="img" :aria-label="$t('coord.col_declined')" :title="$t('coord.col_declined')">✗</th>
                     <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
@@ -59,6 +60,7 @@
                         <td class="text-right tabular-nums" x-text="targetLabel($data, p)"></td>
                         <td class="text-right tabular-nums" x-text="number(p.hours)"></td>
                         <td class="text-right tabular-nums" x-text="number(p.load)"></td>
+                        <td class="text-right tabular-nums" x-show="model.flags.anyFactor" x-text="avgFactor(p)"></td>
                         <td class="text-right tabular-nums" x-text="p.popularScore"></td>
                         <td class="text-right tabular-nums" x-text="p.wishesDeclined"></td>
                         <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">
@@ -85,7 +87,7 @@
                 <button type="button" class="w-full min-h-11 py-2 text-left space-y-1" @click="edit(p.key)">
                     <span class="block font-medium truncate" x-text="p.name"></span>
                     <span class="block text-sm text-base-content/70"
-                        x-text="number(p.hours) + ' ' + $t('coord.col_hours_short') + ', ' + $t('coord.col_load') + ' ' + number(p.load)"></span>
+                        x-text="number(p.hours) + ' ' + $t('coord.col_hours_short') + ', ' + $t('coord.col_load') + ' ' + number(p.load) + (model.flags.anyFactor ? ', ' + $t('coord.col_avg_short') + ' ' + avgFactor(p) : '')"></span>
                     <span class="flex flex-wrap gap-1">
                         <span class="contents" x-show="model.experience.field && p.level >= 0">{{ template "coord-level-badge" "p.level" }}</span>
                         <template x-for="f in plan.fields.filter(f => f.id !== plan.experience_field_id)" :key="f.id">

@@ -150,7 +150,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Compact Filter Bar** The filters of the plan view are now a single row on desktop and a two-column grid on phones; the labels moved into the controls and the per-field clear buttons are gone ("Clear filters" and a × in the search field remain). On phones the filters still collapse behind the "Filters" header. The shift type dropdown now opens above the sticky day headings and matches the width of its field.
 
 
-## Unreleased
+## v0.12.0
 
 - **Enhancement: Coordination Lab** The new tab "Lab" (from 1024 px wide) tries out assignments on a day grid with all shifts and person chips before anything changes. People are moved by drag and drop or with the keyboard (Enter picks up, Enter on "Here" drops, Esc cancels). The side panel shows hours and load before and after the changes, per person and day. "Apply" writes the changes in one step, and "Undo" is offered while the page stays open.
 - **Feature: Named Lab Variants** Lab drafts can be saved on the server as named variants (up to 50 per plan, "Save" in the lab bar). Variants can be renamed, deleted or saved as new ones, and are applied to the current state of the plan.
@@ -160,3 +160,4 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: Compact Candidate and Person Rows** From `lg`, candidate, assigned and person rows take 32 px instead of up to 84 px. Their reasons are small badges in the same row.
 - **Feature: Person Search and Jump** The distribute tab has a "Search person" field that filters the People view and the person column; Enter highlights a single match. A jump icon in the candidate, assigned and person rows opens that person in the People view.
 - **Development: Migration 0005 Adds Coordination Drafts** New table `coordination_drafts` for the lab variants. Before the first pending migration of an existing database, an automatic backup is written next to it (`<db_path>.<timestamp>.pre-migration.bak`).
+- **Enhancement: Load Factor Everywhere in Coordination** The person tables of the distribute tab, the People tab and the lab show the average load factor ("Ø", load per hour) next to hours and load, and the lab uses the same short headers and column order as the distribute tab. Every shift label, list row, timeline bar and lab box shows its load factor (e.g. ×1.5). In the lab, the shift type name and a pencil button on each shift open the shift type and shift dialogs. With a timeline, the scroll area with candidates and persons is taller.
