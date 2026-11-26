@@ -135,7 +135,7 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Enhancement: View switcher as dropdown** The view switcher is a dropdown that shows the current view and lists all views. It is one partial for desktop and phone and stays narrow in the control bar, also for admins.
 
 
-## v0.11.0
+## v0.11.0 – Compact layouts and precompiled CSS
 
 - **Enhancement: Coordination Uses the Full Window Width** On wide screens the coordination page is no longer capped to the container width; the side columns of the distribute tab grow with it.
 - **Enhancement: Compact Distribute Tab** Filters, view switcher, the action buttons of a shift and the "At the same time" chips take far less height on desktop. Touch sizes on small screens are unchanged.
