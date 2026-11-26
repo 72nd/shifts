@@ -133,3 +133,6 @@ This release was prepared for 39c3 and now contains (hopefully) all features nec
 - **Development: Migration 0004 adds the coordination switch** New column `shift_plans.coordination_enabled` (default off). Plans that already hold coordination data are switched on by the migration. Before the first pending migration of an existing database, an automatic backup is written next to it (`<db_path>.<timestamp>.pre-migration.bak`).
 - **Feature: Chronological view** A third view "Chronological" lists all shifts of all areas in one sequence by start time, with one table and a sticky heading per day. Every row has the same controls as in the grouped list and a column for the shift type. Select it with the view switcher, `?view=chrono` or `default_view = "chrono"` in `config.toml`.
 - **Enhancement: View switcher as dropdown** The view switcher is a dropdown that shows the current view and lists all views. It is one partial for desktop and phone and stays narrow in the control bar, also for admins.
+
+
+## v0.11.0
